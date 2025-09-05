@@ -2,7 +2,7 @@
 
 ## Foreword
 
-This document was prepared by Peter Staar, Maroun touma and (FILL IN!). This International Standard specifies the DocTags format, a universal markup language for representing structured document content with semantic, spatial, and formatting information.
+This document was prepared by Peter Staar, Maroun touma and (FILL IN!). This International Standard specifies the DocTags format, a universal markup language for representing structured document content with semantic, spatial, formatting and conextual information.
 
 ## Introduction
 
@@ -13,6 +13,8 @@ DocTags addresses these challenges by providing a minimalist, unambiguous markup
 - Maintains spatial and layout information when appropriate
 - Supports complex document elements including tables, formulas, code, nested lists, and charts
 - Enables lossless round-trip conversion between formats regarding content
+- Preserve document attributes and annotations by various actors/algorithms
+- Encode inter-document dependencies and relationship when presented in context of a larger body of work 
 
 This standard builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
 
@@ -25,6 +27,7 @@ This International Standard specifies:
 - Methods for preserving formatting and text direction
 - Specifications for complex document elements (tables, charts, formulas, code, forms)
 - Requirements for conforming implementations
+- Attributes, annotations and contextual relationships between documents 
 
 ## DocTags Structure
 
@@ -85,7 +88,7 @@ Documents may be divided into pages using the self-closing `<page_break/>` eleme
 
 ## Token Vocabulary
 
-DocTags defines seven categories of tokens: **semantic**, **spatial**, **grouping**, **structural**, **content**, **formatting**, and **continuation** tokens.
+DocTags defines seven categories of tokens: **semantic**, **spatial**, **grouping**, **structural**, **content**, **formatting**, **continuation**, **attributes** and **classification** tokens.
 
 ### Semantic Tokens
 
@@ -216,16 +219,17 @@ For content spanning page breaks:
 | `<continue_row id="N"/>` | Content continues row-wise for the table (N is unique identifier), only used in OTSL |
 | `<continue_col id="N"/>` | Content continues column-wise (N is unique identifier), only used in OTSL |
 
-### Attributes Tokens
+### Attributes and classification Tokens
 
 Documents can have attributes:
 
 | Token | Description |
 |-------|-------------|
+| `<document_identification id="N" algorithm="sha256\|uuid\|"/>` | Assign a unique identifier to the document and algorithm used for assignment. |
 | `<language_identification id="N"/>` | Identify language such as english, german, french, spanish, japanese, etc. |
 | `<document_quality classifier="C" class="N" score="S"/>` | Content quality assessment using standard algorithms such as DCLM, gneissweb, etc. |
 | `<document_readability score="R"/>` | Indicates how easy a a document can be undertood by a general audiance |
-| `<general_topic topic="T"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. |
+| `<general_topic topic="T" algorithm="A"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. |
 
 
 ## Grammar and Structure Rules
@@ -550,7 +554,12 @@ DocTags Tokens
 │   ├── OTSL: otsl, fcel, ecel, lcel, ucel, xcel, nl, ched, rhed
 │   └── Form: key, implicit_key, value
 ├── Content Tokens
-│   ├── content, marker, class
+│   ├── content, marker
+|   └── Attributes and classification Token
+|   |   ├── <document_identification />
+|   |   ├── <Language_identification />
+|   |   ├── <Topic_classification />
+|   |
 │   └── <continue id="N"/>
 ├── Formatting Tokens
 │   └── bold, italic, strikethrough, superscript, subscript, rtl
@@ -558,6 +567,7 @@ DocTags Tokens
     ├── <page_break/>
     ├── <metadata>
     └── <body>
+
 ```
 
 This revised standard addresses the major inconsistencies while maintaining the core vision of DocTags as a universal document markup format.
