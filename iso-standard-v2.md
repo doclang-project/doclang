@@ -555,7 +555,7 @@ DocTags Tokens
 │   └── Form: key, implicit_key, value
 ├── Content Tokens
 │   ├── content, marker
-|   └── Attributes and classification Token
+|   └── Attributes and classification Tokens
 |   |   ├── <document_identification />
 |   |   ├── <Language_identification />
 |   |   ├── <Topic_classification />
