@@ -380,6 +380,28 @@ In case of page-layout information, the coordinates are provided at the semantic
 
 Extensive list of examples: [link](./form-examples/form-examples.md)
 
+### Cross-page structure
+
+We can capture content that is split across pages using the `thread_N` token, where `N` is a unique identifier.
+
+The basic structure is shown below, e.g. for a `text` tag:
+
+```xml
+<text>
+  <thread_1/>
+  This text item starts here
+</text>
+...
+<page_break/>
+...
+<text>
+  <thread_1/>
+  and continues here.
+</text>
+```
+
+Detailed examples: [link](./examples/cross_page/index.md)
+
 ### Inline structure
 
 The inline structure allows the document to have complex representation of text. Children of the inline group are not required to have location tokens.
