@@ -149,7 +149,7 @@ Tabular structure and header semantics in DocTags represented by optimized table
 Each new cell OTSL token (`<fcel/>` with it's semantic variants) is interleaved by the sequence of approptiate table cell content tokens (texts, lists, etc.).
 OTSL representation has minimized vocabulary and specific rules.
 The benefits of describing tables with OTSL in reducing number of structural tokens (5 essential in OTSL vs 28+ in HTML) and shorten structural sequence length to half of HTML representation on average.
-Structural tokens define the structure of a table: columns, rows, cells, merged cells. Each cell can then be specified with semantic vatiant token if it's: column-header, row-header, section row separator, or corner-header.
+Structural tokens define the structure of a table: columns, rows, cells, merged cells. Each cell can then be specified with semantic variant token if it's: column-header, row-header, section row separator, or corner-header.
 Semantic variants of `<fcel/>` token are following the same rules as `<fcel/>` token, and used just to distinguish a function of a table cell: type of header or separator.
 
 | Token | Semantic variant | Description |
@@ -222,10 +222,12 @@ Documents can have attributes:
 
 | Token | Description |
 |-------|-------------|
-| `<language_identification id="N"/>` | Identify language such as english, german, french, spanish, japanese, etc. The values for id should be from [iso-639-3](https://iso639-3.sil.org/about) identifiers for languages|
-| `<document_quality classifier="C" class="N" score="S"/>` | Content quality assessment using standard algorithms such as DCLM, gneissweb, etc. |
-| `<document_readability classifier="R" score="R"/>` | Indicates how easy a a document can be undertood by a general audiance. Classifier defines known classifier or method used to produce score|
-| `<general_topic topic_taxonomy="taxonomy" topic="T"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy |
+| `<language_identification id="N" classifier="C" score="S"//>` | Identify language such as english, german, french, spanish, japanese, etc. The values for id should be from [iso-639-3](https://iso639-3.sil.org/about) identifiers for languages, classifier is the classifier used to classify document's language and score is the confidence score of classifier for given language where 0<=Scores<=1 |
+| `<document_quality classifier="C" class="N" score="S"/>` | Content quality assessment using standard algorithms such as DCLM, gneissweb, etc. where 0<=Scores<=1 |
+| `<document_readability classifier="R" score="R"/>` | Indicates how easy a a document can be undertood by a general audiance. Classifier defines known classifier or method used to produce score where 0<=Scores<=1 |
+| `<general_topic topic_taxonomy="taxonomy" topic="T<list_item>" classifier="C<list_item>" score="S<list_item>"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier(s) used for classifying into the given topic(s) and score is the confidence score(s) of classifier(s) and 0<=Scores<=1 |
+| `<document_hash hash_function="C"/>` | Hash of the document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2 |
+| `<custom_attribute key="<list_item>" value="<list_item>" name="name"/>` | Any custom attribute that can be added later with its properties in keys and corresponding values. name should be unique name of the custom attribute or alternatively hash of 'value' using hashing function defined in 'key' and 'value'|
 
 
 ## Grammar and Structure Rules
