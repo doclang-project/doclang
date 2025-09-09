@@ -429,6 +429,11 @@ For any complex notation in text items (including section-headers, list-items, t
 </text>
 ```
 
+### Split tables
+
+Detailed examples: [link](./examples/split_tables/index.md)
+
+
 ### Formatting
 
 Formatting may be preserved through nested tags or escape sequences:
