@@ -222,10 +222,10 @@ Documents can have attributes:
 
 | Token | Description |
 |-------|-------------|
-| `<language_identification id="N"/>` | Identify language such as english, german, french, spanish, japanese, etc. |
+| `<language_identification id="N"/>` | Identify language such as english, german, french, spanish, japanese, etc. The values for id should be from [iso-639-3](https://iso639-3.sil.org/about) identifiers for languages|
 | `<document_quality classifier="C" class="N" score="S"/>` | Content quality assessment using standard algorithms such as DCLM, gneissweb, etc. |
-| `<document_readability score="R"/>` | Indicates how easy a a document can be undertood by a general audiance |
-| `<general_topic topic="T"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. |
+| `<document_readability classifier="R" score="R"/>` | Indicates how easy a a document can be undertood by a general audiance. Classifier defines known classifier or method used to produce score|
+| `<general_topic topic_taxonomy="taxonomy" topic="T"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy |
 
 
 ## Grammar and Structure Rules
