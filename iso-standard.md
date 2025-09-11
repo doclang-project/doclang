@@ -2,23 +2,23 @@
 
 ## Foreword
 
-This document was prepared by 
+This document was prepared by
 
-- Peter Staar, 
-- Maroun touma, 
-- Panos Vagenas and 
-- (FILL IN!). 
+- Peter Staar,
+- Maroun touma,
+- Panos Vagenas and
+- (FILL IN!).
 
-This International Standard specifies the DocTags format, a universal markup language for representing structured document content with semantic, spatial, and formatting information.
+This International Standard specifies the DocTags format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
 ## Introduction
 
-The proliferation of digital documents across diverse formats (PDF, HTML, Word, etc.) has created significant challenges in document processing, conversion, and understanding. Current approaches often result in loss of semantic information, structural relationships, or spatial context during document conversion.
+The proliferation of digital documents across diverse formats (PDF, HTML, Word, etc.) has created significant challenges in document processing, conversion, and understanding. Current approaches often result in loss of semantic information, structural relationships, or geometric context during document conversion.
 
 DocTags addresses these challenges by providing a minimalist, unambiguous markup format that:
 - Preserves complete document structure and semantics
-- Maintains spatial and layout information when appropriate
-- Supports complex document elements including tables, formulas, code, nested lists, and charts
+- Maintains geometric and layout information when appropriate
+- Supports complex document components including tables, formulas, code, nested lists, and charts
 - Enables lossless round-trip conversion between formats regarding content
 
 This standard builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
@@ -29,14 +29,39 @@ This International Standard specifies:
 
 - The syntax and semantics of the DocTags markup language
 - Rules for encoding document structure, content, and metadata
-- Mechanisms for representing spatial layout and pagination
+- Mechanisms for representing geometric layout and pagination
 - Methods for preserving formatting and text direction
-- Specifications for complex document elements (tables, charts, formulas, code, forms)
+- Specifications for complex document components (tables, charts, formulas, code, forms)
 - Requirements for conforming implementations
 
-## DocTags Structure
+## Terminology
 
-### Relationship to XML
+Relevant terms:
+
+Abstract concepts:
+- **document component**: A cohesive and meaningful part of the document, e.g. a table or a bold piece of text.
+
+From XML:
+- **element**: An XML element.
+- **attribute**: An XML attribute.
+- **tag**: An XML tag: can be a start-tag, an end-tag, or an empty-element tag (AKA self-closing tag).
+
+From HTML:
+- **flow content** AKA **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line and occupying the full width of its container; a typical HTML example is the `p` element (paragraph).
+- **phrasing content** AKA **inline element**: An element that can be used within flow content to shape its in-line structure; a typical HTML example is the `span` element.
+
+DocTags:
+- **(DocTags) token**: A low-level symbol capturing some aspect of a document or of a component thereof, expressed as a tag.
+
+<!-- for internal use:
+Docling:
+- **DoclingDocument**: The Python class used in Docling to represent a document
+- **(DoclingDocument) item**: Building block of a DoclingDocument; an item typically corresponds to a document component.
+- **(DoclingDocument) inline group**: A grouping of DoclingDocument items that are meant to be interpreted as a single
+  unit of text, i.e. without line breaks or vertical space between them.
+-->
+
+## DocTags Structure
 
 DocTags is a constrained subset of XML with the following characteristics:
 
@@ -45,9 +70,27 @@ DocTags is a constrained subset of XML with the following characteristics:
 - Character-based encoding using legal Unicode characters (except Null)
 - Standard XML parsing rules apply for markup vs content distinction
 
-### Document Definition and Versioning
+DocTags defines the following categories of elements:
 
-Every DocTags document is wrapped in a root `<doctag>` element with optional version specification:
+- **special**,
+- **geometric**,
+- **semantic**, <!-- perhaps block-level? -->
+- **formatting**, <!-- perhaps inline?
+- **grouping**,
+- **structural**,
+- **content**, and
+- **continuation** tokens.
+
+### Special Elements
+
+These elements have a specific purpose in defining the high-level structure of the document.
+
+#### The `doctag` Element
+
+Every DocTags document is wrapped in a `<doctag>` root element with an optional version specification,
+following Semantic Versioning (MAJOR.MINOR.PATCH). When no version is specified, the default is v1.0.0.
+
+Here is an example:
 
 ```xml
 <doctag version="1.0.0">
@@ -55,127 +98,140 @@ Every DocTags document is wrapped in a root `<doctag>` element with optional ver
 </doctag>
 ```
 
-Version numbering follows Semantic Versioning (MAJOR.MINOR.PATCH). When no version is specified, the default is v1.0.0.
+#### The `metadata` Element
 
-### Metadata and Document Structure
+The document can optionally begin with a `<metadata>` element, which can contain the following optional special elements:
+- `version`
+- `title`  <!-- NOTE: conflicts with semantic element -->
+- `author`, whereby multiple instances are allowed
+  - each `author` element can optionally begin with one or more `affiliation` elements
+- `date`
+- `language`, whereby multiple instances are allowed
+- `default_resolution`
 
-Optional metadata can be included using the `<metadata>` element:
-
-```xml
-<doctag version="1.2.3">
-  <metadata>
-    <version>1.2.3</version>
-    <title>Document Title</title>
-    <author>
-	Author Name
-	<affiliation></affiliation>
-    </author>
-    <date>2024-01-01</date>
-    <language>en</language>
-    <default_resolution width="512" height="512"/>
-  </metadata>
-  <body>
-    <!-- document content -->
-  </body>
-</doctag>
-```
-
-The keys `version`, `title`, `abstract`, `author`, `affiliation`, `date`, `reference`, `language` and `default_resolution` are protected.
-
-Documents may be divided into pages using the self-closing `<page_break/>` element,
+Here is an example:
 
 ```xml
 <doctag>
-  <!-- page 1 content -->
-  <page_break/>
-  <!-- page 2 content -->
+  <metadata>
+    <version>1.2.3</version>
+    <title>Document Title</title>
+    <author>Author 1 Name</author>
+    <author>
+      <affiliation>Author 2 Affiliation A</affiliation>
+      <affiliation>Author 2 Affiliation B</affiliation>
+      Author 2 Name
+    </author>
+    <date>2024-01-01</date>
+    <language>en</language>
+    <language>de</language>
+    <default_resolution width="512" height="512"/>
+  </metadata>
+  <!-- document content -->
 </doctag>
 ```
 
-#### Attributes Tokens
+#### The `page_break` Element
 
-Documents can have attributes in the `<metadata>`:
+A document may be divided into pages using the `<page_break/>` empty-element tag.
 
-| Token | Description |
-|-------|-------------|
-| `<language id="N"/>` | Identify language such as english, german, french, spanish, japanese, etc. |
-| `<topic topic="T"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. |
+Here is an example:
 
+```xml
+<doctag>
+  <!-- first page content -->
+  <page_break/>
+  <!-- second page content -->
+</doctag>
+```
 
-## Token Vocabulary
+### Geometric Elements
 
-DocTags defines seven categories of tokens: **formatting**, **spatial**, **semantic**,  **grouping**, **structural**, **content**, and **continuation** tokens.
+#### The `loc` Element
 
-### String Formatting Tokens
-
-In every string, we can add (recursively) formatting tokens. These formatting tokens can only appear within a string, i.e. within the range of the formatting, only other formatting strings are allowed. 
-
-| Token | Description |
-|-------|-------------|
-| `<bold>` | Bold text |
-| `<italic>` | Italic text |
-| `<strikethrough>` | Strike-through text |
-| `<superscript>` | Superscript |
-| `<subscript>` | Subscript |
-| `<rtl>` | Right-to-left text direction |
-| `<inline_formula>` | Inline formula |
-| `<inline_code>` | Inline code |
-| `<br/>`| Break line |
-
-
-### Spatial Tokens
-
-Spatial information uses a set of location elements with value (and optional resolution) attributes of the format `<loc value="integer" resolution="integer">` with 0<=value<=resolution.
+The `loc` (location) element represents spatial information with value (and optional resolution) attributes of the format `<loc value="integer" resolution="integer">` with 0<=value<=resolution.
 
 - Single coordinate at (100, 200): `<loc value="100"/><loc value="200"/>`
 - Bounding box with (x0, y0) = (100, 200) and (x1, y1) = (300, 400): `<loc value="100"/><loc value="200"/><loc value="300"/><loc value="400"/>`
 
 If no resolution is provided, coordinates are normalized to the document's default resolution from the `metadata` (default: 512×512).
 
-### Semantic Tokens
+The `loc` element may only be used in elements which are meant to be interpreted as block-level, as specified further below.
 
-These tokens represent the semantic content of document. For each semantic block, it should be allowed to add bounding box information via the spatial tokens.   
+### Semantic Elements
 
-| Token | Description | 
+Semantic elements represent semantic blocks of the document and are meant to be interpreted as block-level elements.
+Each semantic element may begin with a bounding box, capturing the element's bounding box.
+
+| Element | Description |
 |-------|-------------|
-| `<title>` | Document or section title | 
-| `<section_header level="N">` | Section header (N ≥ 1) | 
-| `<text>` | Generic text content | 
-| `<caption>` | Caption for floating elements |
-| `<footnote>` | Footnote content |
-| `<page_header>` | Page header content |
-| `<page_footer>` | Page footer content |
-| `<list_item>` | List item |
-| `<form_item>` | Form item (with 1 key and 1 or more values as children) | 
-| `<form_header>` | Form item | 
-| `<form_text>` | Form text | 
-| `<key>` | key of the form item: can only be a child of `form_item` |
-| `<value>` | value of the form item: can only be a child of `form_item`  |
-| `<checkbox selected=true>` | Selected checkbox item | 
-| `<checkbox selected=false>` | Unselected checkbox item | 
-| `<otsl>` | Table structure | 
-| `<formula>` | Mathematical expression | 
-| `<code>` | Code block | 
-| `<picture>` | Image or graphic element | 
-| `<form>` | Form structure | 
+| `title` | Document or section title |
+| `section_header` | Section header, with optional level N ≥ 1 |
+| `text` | Generic text content |  <!--  TODO: rename to `paragraph` -->
+| `caption` | Caption for floating elements |
+| `footnote` | Footnote content |
+| `page_header` | Page header content |
+| `page_footer` | Page footer content |
+| `list_item` | List item |
+| `form_item` | Form item (with 1 key and 1 or more values as children) |
+| `form_header` | Form item |
+| `form_text` | Form text |
+| `key` | key of the form item: can only be a child of `form_item` |
+| `value` | value of the form item: can only be a child of `form_item`  |
+| `checkbox selected=true` | Selected checkbox item |
+| `checkbox selected=false` | Unselected checkbox item |
+| `otsl` | Table structure |
+| `formula` | Mathematical expression |
+| `code` | Code block |
+| `picture` | Image or graphic element |
+| `form` | Form structure |
 
-### Grouping Tokens
+### Formatting Elements
 
-These tokens organize semantic content into logical structures. Groups can in not have any location tokens and are intended to create the semantic tree.
+Formatting elements represent formatting information within the content of a semantic element and are meant to be interpreted as inline elements. Formatting elements can be nested, e.g. `<bold><italic>bold italic</italic></bold>`.
 
-| Token | Description | Allowed Children |
+| Token | Description |
+|-------|-------------|
+| `bold` | Bold text |
+| `italic` | Italic text |
+| `strikethrough` | Strike-through text |
+| `superscript` | Superscript |
+| `subscript` | Subscript |
+| `rtl` | Right-to-left text direction |
+| `inline_formula` | Inline formula |
+| `inline_code` | Inline code |
+| `inline_picture` | Inline picture |
+| `br`| Break line (empty-element tag) |
+
+<!-->
+### Floating Elements
+
+Floating elements are elements whose interpretation depends on the context:
+- When used as direct content of a semantic element, they are treated as inline elements and do not have geometric information
+- Otherwise, they are treated as block-level elements and can begin with a bounding box
+
+| `formula` | Mathematical expression |
+| `code` | Code block |
+| `picture` | Image or graphic element |
+-->
+
+### Grouping Elements
+
+These elements organize semantic content into logical structures. Groups can in not have any location tokens and are intended to create the semantic tree.
+
+| Element | Description | Allowed Children |
 |-------|-------------|------------------|
 | `<section level="N">` | Document section (N ≥ 1) | semantic, grouping |
 | `<list ordered=true>` | Numbered list | list\_item, checkbox\_* |
 | `<list ordered=false>` | Bulleted list | list\_item, checkbox\_* |
-| `<group type="table">` | | allows to add as children: `caption`, `footnote`, `otsl`| 
-| `<group type="document_index">` | | allows to add as children: `caption`, `footnote`, `otsl` | 
+| `<group type="table">` | | allows to add as children: `caption`, `footnote`, `otsl`|
+| `<group type="document_index">` | | allows to add as children: `caption`, `footnote`, `otsl` |
 | `<group type="form">` | | allows to add as children: `caption`, `footnote`, `form` |
 | `<group type="formula">` | | allows to add as children: `caption`, `footnote`, `formula` |
 | `<group type="code">` | | allows to add as children: `caption`, `footnote`, `code` |
 | `<group type="picture">` | | allows to add as children: `caption`, `footnote`, `picture` |
 
-**footnote**: What we currently have as instantiations of `FloatingItem` (eg TableItem) should have been groups, as the `FloatingItem` contains captions, the `data structure` (eg the `data` in TableItem or the `graph` in FormItem) and the footnotes. As a matter of fact, it is currently even more mis-constructed, since the `ProvenanceItem` of the `TableItem` will in fact point to location of only the table, while the captions and foornotes will have their own `ProvenanceItem`. 
+**footnote**: What we currently have as instantiations of `FloatingItem` (eg TableItem) should have been groups, as the `FloatingItem` contains captions, the `data structure` (eg the `data` in TableItem or the `graph` in FormItem) and the footnotes. As a matter of fact, it is currently even more mis-constructed, since the `ProvenanceItem` of the `TableItem` will in fact point to location of only the table, while the captions and foornotes will have their own `ProvenanceItem`.
 
 ### Optimized Table Structure Language (OTSL)
 
@@ -203,7 +259,7 @@ Semantic variants of `<fcel/>` token are following the same rules as `<fcel/>` t
 | `<nl/>`| - | new line, table row separator |
 
 OTSL enables easy error detection and correction during sequence generation, making it LLM friendly.
-A notable attribute of OTSL is that it has the capability of achieving lossless conversion to HTML.
+A notable trait of OTSL is that it has the capability of achieving lossless conversion to HTML.
 
 The OTSL representation follows these syntax rules:
 
@@ -348,14 +404,14 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 Fundamentally, forms are complex list with special list-items. This is why we introduced several new semantic items in the token-space,
 
-| Token | Description | 
+| Token | Description |
 |-------|-------------|
-| `<form_item>` | Form item (with 1 key and 1 or more values as children) | 
-| `<form_header>` | Form item: this is specifically for headers in the form. | 
-| `<form_text>` | Form text: this is specifically for text-blocks in the form | 
+| `<form_item>` | Form item (with 1 key and 1 or more values as children) |
+| `<form_header>` | Form item: this is specifically for headers in the form. |
+| `<form_text>` | Form text: this is specifically for text-blocks in the form |
 | `<key>` | key of the form item: can only be a child of `form_item` |
 | `<value>` | value of the form item: can only be a child of `form_item`  |
-| `<form>` | Form structure | 
+| `<form>` | Form structure |
 
 Notice that if we have captions or footnotes for the form, we will always start with the group of type form. Next, we can start with the form.
 
@@ -575,19 +631,19 @@ Example 7 has a classical duality between tables and explicit key-values,
 <form>
     <form_item>
         <key>Adjusted CVSS v3.1 Score</key>
-        <value>10.0</value>        
+        <value>10.0</value>
     </form_item>
     <form_item>
         <key>Vector</key>
-        <value>AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H</value>        
+        <value>AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H</value>
     </form_item>
     <form_item>
         <key>Likelihood</key>
-        <value>Very High</value>        
+        <value>Very High</value>
     </form_item>
     <form_item>
         <key>Impact</key>
-        <value>Catastrophic</value>        
+        <value>Catastrophic</value>
     </form_item>
     <form_header>
     	 Affected Systems
@@ -596,7 +652,7 @@ Example 7 has a classical duality between tables and explicit key-values,
     <ched/>IP Address<ched/>Port<ched/>Service<ched/>Version<nl/>
     <fcell/>10.0.0.101<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
     <fcell/>10.0.0.102<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
-    <fcell/>10.0.0.103<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>        
+    <fcell/>10.0.0.103<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
     </otsl>
 </form>
 </textarea></td><td>
@@ -715,7 +771,7 @@ For tables that are broken across pages, we need to introduce two differnt token
 A conforming DocTags parser SHALL:
 
 1. **Syntax Validation**: Recognize all tokens defined in this standard
-2. **Spatial Processing**: Handle coordinate and bounding box elements correctly
+2. **Geometric Processing**: Handle coordinate and bounding box elements correctly
 3. **Version Support**: Process version information and apply appropriate parsing rules
 4. **Hierarchy Validation**: Enforce parent-child relationship rules
 5. **Continuation Handling**: Correctly link continued content across page breaks
@@ -740,11 +796,11 @@ A conforming DocTags serializer SHALL:
 - OTSL tokens must appear only within `<otsl>` elements
 - Continuation tokens must be properly paired
 
-#### Spatial Validation
+#### Geometric Validation
 
 - Coordinates must be within [0, resolution] bounds
 - Bounding boxes must satisfy x0 ≤ x1 and y0 ≤ y1
-- Spatial elements should appear in reading order when possible
+- Geometric elements should appear in reading order when possible
 
 #### Content Validation
 
@@ -796,7 +852,7 @@ DocTags Tokens
 ├── Grouping Tokens
 │   ├── section, group, inline
 │   └── ordered_list, unordered_list
-├── Spatial Tokens
+├── Geometric Tokens
 │   ├── <coord x="N" y="N"/>
 │   └── <bbox x0="N" y0="N" x1="N" y1="N"/>
 ├── Structural Tokens
