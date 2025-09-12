@@ -34,6 +34,9 @@ This International Standard specifies:
 - Specifications for complex document elements (tables, charts, formulas, code, forms)
 - Requirements for conforming implementations
 
+## What DocTags is not
+
+
 ## DocTags Structure
 
 ### Relationship to XML
@@ -157,7 +160,8 @@ These tokens represent the semantic content of document. For each semantic block
 | `<formula>` | Mathematical expression | 
 | `<code>` | Code block | 
 | `<picture>` | Image or graphic element | 
-| `<form>` | Form structure | 
+| `<form>` | Form structure |
+| `<watermark>` | To know if page is watermarked, whole page or section of page can be watermaked |
 
 ### Grouping Tokens
 
