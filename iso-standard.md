@@ -99,7 +99,7 @@ Documents can have attributes in the `<metadata>`:
 | Token | Description |
 |-------|-------------|
 | `<language id="N"/>` | Identify language such as english, german, french, spanish, japanese, etc. |
-| `<topic topic="T"/>` | topic that the document is most likely to fall in such as Science and Technology, Legal, etc. |
+| `<classification topic="T"/>` | classification that the document is most likely to fall in such as Science and Technology, Legal, etc. A document can have mutiple classification toekns |
 
 
 ## Token Vocabulary
@@ -125,10 +125,10 @@ In every string, we can add (recursively) formatting tokens. These formatting to
 
 ### Spatial Tokens
 
-Spatial information uses a set of location elements with value (and optional resolution) attributes of the format `<loc value="integer" resolution="integer">` with 0<=value<=resolution.
+Spatial information uses a set of location elements with 2 dimetion coordinates (and optional resolution_x & resolution_y) attributes of the format `<location x="integer" y="integer" resolution_x="integer" resolution_y="integer">` with 0<=value<resolution.
 
-- Single coordinate at (100, 200): `<loc value="100"/><loc value="200"/>`
-- Bounding box with (x0, y0) = (100, 200) and (x1, y1) = (300, 400): `<loc value="100"/><loc value="200"/><loc value="300"/><loc value="400"/>`
+- Single coordinate at (100, 200): `<location x="100" y="200"/>`
+- Bounding box with (x0, y0) = (100, 200) and (x1, y1) = (300, 400): `<location x="100" y="200"/><loc x="300" y="400"/>`
 
 If no resolution is provided, coordinates are normalized to the document's default resolution from the `metadata` (default: 512×512).
 
@@ -151,17 +151,17 @@ These tokens represent the semantic content of document. For each semantic block
 | `<form_text>` | Form text | 
 | `<key>` | key of the form item: can only be a child of `form_item` |
 | `<value>` | value of the form item: can only be a child of `form_item`  |
-| `<checkbox selected=true>` | Selected checkbox item | 
-| `<checkbox selected=false>` | Unselected checkbox item | 
+| `<checkbox selected=true\|false>` | Selected checkbox (true) or Unselected checkbox (false)  | 
 | `<otsl>` | Table structure | 
 | `<formula>` | Mathematical expression | 
-| `<code>` | Code block | 
+| `<code lang="C++" >` | Code block with optional name of the programming language attribute | 
 | `<picture>` | Image or graphic element | 
 | `<form>` | Form structure | 
+| `<signature signed=true\|false>` | Signture item, signed=false means it is empty |
 
 ### Grouping Tokens
 
-These tokens organize semantic content into logical structures. Groups can in not have any location tokens and are intended to create the semantic tree.
+These tokens organize semantic content into logical structures. Groups can not have any location tokens and are intended to create the semantic tree.
 
 | Token | Description | Allowed Children |
 |-------|-------------|------------------|
@@ -281,17 +281,17 @@ In case of page-layout information, the coordinates are provided only at the sem
 ```xml
 <doctag version="1.0.0">
   <title>
-    <loc value="10"/><loc value="20"/><loc value="30"/><loc value="40"/>
+    <location x="10" y="20"/><location x="30" y="40"/>
     Research Paper Title
   </title>
 
   <section level="1">
     <section_header level="1">
-      <loc value="10"/><loc value="20"/><loc value="30"/><loc value="40"/>
+     <location x="10" y="20"/><location x="30" y="40"/>
       Abstract
     </section_header>
     <text>
-      <loc value="10"/><loc value="20"/><loc value="30"/><loc value="40"/>
+      <location x="10" y="20"/><location x="30" y="40"/>
       This paper presents...
     </text>
   </section>
@@ -312,10 +312,10 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 ```xml
 <table_group>
-  <caption><loc value=x0/>...<loc value=y1/>
+  <caption><location x=x0/>...<location y=y1/>
     Table 1: Experimental Results
   </caption>
-  <otsl><loc value=x0/>...<loc value=y1/>
+  <otsl><location x=x0/>...<location y=y1/>
     <ched/>Method<ched/>Accuracy<nl/>
     <fcel/>Baseline<fcel/>0.85<nl/>
     <fcel/>Proposed<fcel/>0.92<nl/>
@@ -327,18 +327,18 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 ```xml
 <unordered_list>
-  <list_item><loc value=x0/>...<loc value=y1/>
+  <list_item><location x=x0/>...<location y=y1/>
     <marker>•</marker>
     First item with <bold>bold</bold> text
   </list_item>
-  <list_item><loc value=x0/>...<loc value=y1/>
+  <list_item><location x=x0/>...<location y=y1/>
     <marker>•</marker>
     Second item
   </list_item>
-  <checkbox selected=true><loc value=x0/>...<loc value=y1/>
+  <checkbox selected=true><location x=x0/>...<location y=y1/>
       Completed task
   </checkbox>
-  <checkbox selected=false><loc value=x0/>...<loc value=y1/>
+  <checkbox selected=false><location x=x0/>...<location y=y1/>
       Pending task
   </checkbox>
 </unordered_list>
