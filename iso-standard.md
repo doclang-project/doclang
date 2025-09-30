@@ -140,7 +140,7 @@ DocTags defines the following categories of elements:
 - **formatting**: Inline elements that modify textual presentation within semantic content (e.g., `bold`, `italic`, `strikethrough`, `superscript`, `subscript`, `rtl`, `inline_formula`, `inline_code`, `inline_picture`, `br`).
 - **grouping**: Elements that organize semantic blocks into logical hierarchies and composites (e.g., `section`, `list`, `group type=*`) and never carry location tokens.
 - **structural**: Sequence tokens that define internal structure for complex constructs (primarily OTSL table layout: `otsl`, `fcel`, `ecel`, `lcel`, `ucel`, `xcel`, `nl`, `ched`, `rhed`, `corn`, `srow`; and form parts like `key`/`value`).
-- **content**: Lightweight content helpers used inside semantic blocks for explicit payload and annotations (e.g., `content`, `summary`, `class`, `marker`).
+- **content**: Lightweight content helpers used inside semantic blocks for explicit payload and annotations (e.g., `marker`).
 - **binary data**: Elements that embed or reference non-text payloads for media—either inline as `base64` or via `uri`—allowed under `picture`, `inline_picture`, or at page level.
 - **continuation** tokens: Markers that indicate content spanning pages or table boundaries (e.g., `<thread id="N"/>`, `continue_row`, `continue_col`) to stitch fragmented content.
 
@@ -186,7 +186,7 @@ Here is an example:
 <doctag>
   <metadata>
     <version>1.2.3</version>
-    <title>Document Title</title>
+    <heading level="1">Document Title</heading>
     <author>Author 1 Name</author>
     <author>
       <affiliation>Author 2 Affiliation A</affiliation>
@@ -272,11 +272,11 @@ Usage examples:
 
 ```xml
 <!-- Bounding box on a title -->
-<title>
+<heading level="1">
   <location value="100"/><location value="620"/>
   <location value="900"/><location value="680"/>
   Annual Report
-  </title>
+</heading>
 
 <!-- Paragraph anchored by a bounding box -->
 <text>
@@ -364,7 +364,7 @@ Each semantic element may begin with a bounding box, capturing the element's bou
 | Element | Description |
 |-------|-------------|
 | `title` | Document or section title |
-| `section_header` | Section header, with optional level N ≥ 1 |
+| `heading` | Section header, with optional level N ≥ 1 |
 | `text` | Generic text content |  <!--  TODO: rename to `paragraph` -->
 | `caption` | Caption for floating elements |
 | `footnote` | Footnote content |
@@ -408,15 +408,9 @@ These elements organize semantic content into logical structures. Groups can not
 
 | Element | Description | Allowed Children |
 |-------|-------------|------------------|
-| `<section level="N">` | Document section (N ≥ 1) | semantic, grouping |
 | `<list ordered=true>` | Numbered list | list\_item, checkbox |
 | `<list ordered=false>` | Bulleted list | list\_item, checkbox |
-| `<group type="table">` | | allows to add as children: `caption`, `footnote`, `otsl`|
-| `<group type="document_index">` | | allows to add as children: `caption`, `footnote`, `otsl` |
-| `<group type="form">` | | allows to add as children: `caption`, `footnote`, `form` |
-| `<group type="formula">` | | allows to add as children: `caption`, `footnote`, `formula` |
-| `<group type="code">` | | allows to add as children: `caption`, `footnote`, `code` |
-| `<group type="picture">` | | allows to add as children: `caption`, `footnote`, `picture` |
+| `<group>` | Generic group enabling e.g. association of caption or footnote with the respective document components | |
 
 **footnote regarding docling-core**: What we currently have as instantiations of `FloatingItem` (e.g., TableItem) should have been groups, as the `FloatingItem` contains captions, the `data structure` (e.g., the `data` in TableItem or the `graph` in FormItem) and the footnotes. As a matter of fact, it is currently even more mis-constructed, since the `ProvenanceItem` of the `TableItem` will in fact point to location of only the table, while the captions and footnotes will have their own `ProvenanceItem`.
 
@@ -461,10 +455,23 @@ The OTSL representation follows these syntax rules:
 
 | Token | Description |
 |-------|-------------|
-| `<content>` | Explicit content wrapper: this wrapper is mostly optional but can be useful for the case os escaping. |
-| `<summary>` | This token allows to provide a short summary of the content. |
-| `<class>` | Classification (language, chart type, etc.) |
 | `<marker>`| Marker (eg for in section-header, list-item, etc) |
+| `<facets>`| Container meant for application-specific properties for derived information, such as summary, classification label, etc. |
+
+The present standard does not prescribe the specific `facets` content, but a possible instantiation could be:
+
+```xml
+<doctag>
+  <picture>
+    <facets>
+      <summary>This image shows the distribution of the various data points in the dataset</summary>
+      <class>pie_chart</class>
+    </facets>
+    <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
+    <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
+  </picture>
+</facets>
+```
 
 ### Continuation Tokens
 
@@ -472,9 +479,8 @@ For content spanning page breaks:
 
 | Token | Description |
 |-------|-------------|
-| `<thread id="N"/>` | Content continues (N is a unique identifier) |
-| `<continue_row id="N"/>` | Content continues row-wise for the table (N is unique identifier), only used in OTSL |
-| `<continue_col id="N"/>` | Content continues column-wise (N is unique identifier), only used in OTSL |
+| `<thread_N/>` | Special element for capturing content that spans across pages ([example](./examples/cross_page/index.md)) |
+| `<h_thread_N/>` | Special element for horizontal stitching of table content ([example](./examples/split_tables/index.md)) |
 
 ### Binary Data Elements
 
@@ -530,12 +536,12 @@ In the simplest document example, document elements are in a flat list,
 
 ```xml
 <doctag version="1.0.0">
-  <title>Research Paper Title</title>
-  <section_header level="1">Abstract</section_header>
+  <heading level="1">Research Paper Title</heading>
+  <heading level="2">Abstract</heading>
   <text>This paper presents...</text>
-  <section_header level="1">Introduction</section_header>
+  <heading level="2">Introduction</heading>
   <text>In recent years...</text>
-  <section_header level="2">Background</section_header>
+  <heading level="3">Background</heading>
   <text>Previous work has shown...</text>
 </doctag>
 ```
@@ -544,19 +550,19 @@ The user is allowed to add sections or groups as they see fit, but it is not a s
 
 ```xml
 <doctag version="1.0.0">
-  <title>Research Paper Title</title>
+  <heading level="1">Research Paper Title</heading>
 
   <section level="1">
-    <section_header level="1">Abstract</section_header>
+    <heading level="2">Abstract</heading>
     <text>This paper presents...</text>
   </section>
 
   <section level="1">
-    <section_header level="1">Introduction</section_header>
+    <heading level="2">Introduction</heading>
     <text>In recent years...</text>
 
     <section level="2">
-      <section_header level="2">Background</section_header>
+      <heading level="3">Background</heading>
       <text>Previous work has shown...</text>
     </section>
   </section>
@@ -567,16 +573,16 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 ```xml
 <doctag version="1.0.0">
-  <title>
+  <heading level="1">
     <location value="10"/><location value="20"/><location value="30"/><location value="40"/>
     Research Paper Title
-  </title>
+  </heading>
 
   <section level="1">
-    <section_header level="1">
+    <heading level="2">
       <location value="10"/><location value="20"/><location value="30"/><location value="40"/>
       Abstract
-    </section_header>
+    </heading>
     <text>
       <location value="10"/><location value="20"/><location value="30"/><location value="40"/>
       This paper presents...
@@ -584,11 +590,11 @@ In case of page-layout information, the coordinates are provided only at the sem
   </section>
 
   <section level="1">
-    <section_header level="1">Introduction</section_header>
+    <heading level="2">Introduction</heading>
     <text>In recent years...</text>
 
     <section level="2">
-      <section_header level="2">Background</section_header>
+      <heading level="3">Background</heading>
       <text>Previous work has shown...</text>
     </section>
   </section>
@@ -653,7 +659,7 @@ Block with language classification via `<class>`
 Grouped code with caption and coordinates
 
 ```xml
-<group type="code">
+<group>
   <caption>
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Listing 1: Minimal HTTP server
@@ -734,7 +740,7 @@ Block formula with optional marker (numbering/label)
 Grouped formula with caption and coordinates
 
 ```xml
-<group type="formula">
+<group>
   <caption>
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Equation for the normal distribution
@@ -788,13 +794,13 @@ Notes
 
 DocTags separates the table’s structure from its surrounding semantics:
 
-- `group type="table"`: Semantic container that may include `caption`, multiple `footnote` elements, and exactly one `otsl` child for the structure. Do not put coordinates on the `group`.
+- `group`: Semantic container that may include `caption`, multiple `footnote` elements, and exactly one `otsl` child for the structure. Do not put coordinates on the `group`.
 - `otsl`: The structural table token sequence. Put the table region’s coordinates on `otsl` for each page fragment. Cells are created by structural tokens (e.g., `<fcel/>`, `<ched/>`) and their content follows immediately after each cell token.
 
 Basic example
 
 ```xml
-<group type="table">
+<group>
   <caption>
     <location value="40"/><location value="80"/><location value="540"/><location value="110"/>
     Table 1: Experimental Results
@@ -817,7 +823,7 @@ Peculiarities and continuation
 Use `<continue_row id="..."/>` at the end of the first fragment and the start of the next fragment’s `otsl`.
 
 ```xml
-<group type="table">
+<group>
   <caption>Table 2: Long Results</caption>
   <otsl>
     <location value="40"/><location value="120"/><location value="540"/><location value="760"/>
@@ -828,7 +834,7 @@ Use `<continue_row id="..."/>` at the end of the first fragment and the start of
   </otsl>
 </group>
 <page_break/>
-<group type="table">
+<group>
   <otsl>
     <location value="40"/><location value="80"/><location value="540"/><location value="300"/>
     <continue_row id="T-rows"/>
@@ -844,7 +850,7 @@ Use `<continue_col id="..."/>` to indicate that columns continue on an adjacent 
 
 ```xml
 <!-- Left page -->
-<group type="table">
+<group>
   <otsl>
     <location value="40"/><location value="120"/><location value="300"/><location value="760"/>
     <ched/>Metric<ched/>Model A<nl/>
@@ -855,7 +861,7 @@ Use `<continue_col id="..."/>` to indicate that columns continue on an adjacent 
 </group>
 
 <!-- Right page -->
-<group type="table">
+<group>
   <otsl>
     <location value="320"/><location value="120"/><location value="820"/><location value="760"/>
     <continue_col id="T-cols"/>
@@ -871,7 +877,7 @@ Use `<continue_col id="..."/>` to indicate that columns continue on an adjacent 
 Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
 
 ```xml
-<group type="table">
+<group>
   <caption>Table 3: Rich Cells</caption>
   <otsl>
     <location value="40"/><location value="200"/><location value="560"/><location value="620"/>
@@ -888,7 +894,7 @@ Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the 
     <fcel/>
       <text>Nested table</text>
     <fcel/>
-      <group type="table">
+      <group>
         <caption>Inner table</caption>
         <otsl>
           <ched/>Key<ched/>Value<nl/>
@@ -1060,7 +1066,7 @@ Fundamentally, forms are complex list with special list-items. This is why we in
 Notice that if we have captions or footnotes for the form, we will always start with the group of type form. Next, we can start with the form.
 
 ```xml
-<group type="form">
+<group>
    <form>
       ... # (nested list of form, form_items, etc)
    </form>
@@ -1484,55 +1490,53 @@ The `<class>` token supports extensible vocabularies:
 | 7 |  | `minute` | Yes | Yes | Minutes component of a timestamp; attribute: `value` in [0, 59]. |
 | 8 |  | `second` | Yes | Yes | Seconds component of a timestamp; attribute: `value` in [0, 59]. |
 | 9 |  | `centisecond` | Yes | Yes | Centiseconds component of a timestamp; attribute: `value` in [0, 99]. |
-| 10 | Semantic Tokens | `title` | No | No | Document or section title. |
-| 11 |  | `section_header` | No | Yes | Section header; attribute: `level` (N ≥ 1). |
-| 12 |  | `text` | No | No | Generic text content. |
-| 13 |  | `caption` | No | No | Caption for floating/grouped elements. |
-| 14 |  | `footnote` | No | No | Footnote content. |
-| 15 |  | `page_header` | No | No | Page header content. |
-| 16 |  | `page_footer` | No | No | Page footer content. |
-| 17 |  | `watermark` | No | No | Watermark indicator or content. |
-| 18 |  | `picture` | No | No | Image/graphic; may contain `base64` or `uri`. |
-| 19 |  | `form` | No | No | Form structure container. |
-| 20 |  | `formula` | No | No | Mathematical expression block. |
-| 21 |  | `code` | No | No | Code block; may include classification via `class` token. |
-| 22 |  | `list_item` | No | No | List item content. |
-| 23 |  | `checkbox` | No | Yes | Checkbox item; attribute: `selected`. |
-| 24 | Grouping Tokens | `section` | No | Yes | Document section; attribute: `level` (N ≥ 1). |
-| 25 |  | `list` | No | Yes | List container; attribute: `ordered` (true/false). |
-| 26 |  | `group` | No | Yes | Generic group; attribute: `type` (e.g., table, form, code). |
-| 27 | Formatting Tokens | `bold` | No | No | Bold text. |
-| 28 |  | `italic` | No | No | Italic text. |
-| 29 |  | `strikethrough` | No | No | Strike-through text. |
-| 30 |  | `superscript` | No | No | Superscript text. |
-| 31 |  | `subscript` | No | No | Subscript text. |
-| 32 |  | `rtl` | No | No | Right-to-left text direction. |
-| 33 |  | `inline_formula` | No | No | Inline formula. |
-| 34 |  | `inline_code` | No | No | Inline code. |
-| 35 |  | `inline_picture` | No | No | Inline image/graphic. |
-| 36 |  | `br` | Yes | No | Line break. |
-| 37 | Structural Tokens (OTSL) | `otsl` | No | No | Table structure container. |
-| 38 |  | `fcel` | Yes | No | New cell with content. |
-| 39 |  | `ecel` | Yes | No | New cell without content. |
-| 40 |  | `ched` | Yes | No | Column header cell. |
-| 41 |  | `rhed` | Yes | No | Row header cell. |
-| 42 |  | `corn` | Yes | No | Corner header cell. |
-| 43 |  | `srow` | Yes | No | Section row separator cell. |
-| 44 |  | `lcel` | Yes | No | Merge with left neighbor (horizontal span). |
-| 45 |  | `ucel` | Yes | No | Merge with upper neighbor (vertical span). |
-| 46 |  | `xcel` | Yes | No | Merge with left and upper neighbors (2D span). |
-| 47 |  | `nl` | Yes | No | New line (row separator). |
-| 48 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker; attribute: `id`. |
-| 49 |  | `continue_row` | Yes | Yes | Row continuation; attribute: `id`. |
-| 50 |  | `continue_col` | Yes | Yes | Column continuation; attribute: `id`. |
-| 51 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
-| 52 |  | `uri` | No | No | External resource reference. |
-| 53 | Content Tokens | `marker` | No | No | List/form marker content. |
-| 54 |  | `class` | No | No | Classification token (e.g., language, chart type). |
-| 55 |  | `content` | No | No | Generic content wrapper. |
-| 56 | Structural Tokens (Form) | `key` | No | No | Form item key (child of `form_item`). |
-| 57 |  | `implicit_key` | No | No | Implicit key in forms. |
-| 58 |  | `value` | No | No | Form item value (child of `form_item`). |
+| 10 | Semantic Tokens | `heading` | No | Yes | Section header; attribute: `level` (N ≥ 1). |
+| 11 |  | `text` | No | No | Generic text content. |
+| 12 |  | `caption` | No | No | Caption for floating/grouped elements. |
+| 13 |  | `footnote` | No | No | Footnote content. |
+| 14 |  | `page_header` | No | No | Page header content. |
+| 15 |  | `page_footer` | No | No | Page footer content. |
+| 16 |  | `watermark` | No | No | Watermark indicator or content. |
+| 17 |  | `picture` | No | No | Image/graphic; may contain `base64` or `uri`. |
+| 18 |  | `form` | No | No | Form structure container. |
+| 19 |  | `formula` | No | No | Mathematical expression block. |
+| 20 |  | `code` | No | No | Code block; may include classification via `class` token. |
+| 21 |  | `list_item` | No | No | List item content. |
+| 22 |  | `checkbox` | No | Yes | Checkbox item; attribute: `selected`. |
+| 23 | Grouping Tokens | `section` | No | Yes | Document section; attribute: `level` (N ≥ 1). |
+| 24 |  | `list` | No | Yes | List container; attribute: `ordered` (true/false). |
+| 25 |  | `group` | No | Yes | Generic group. |
+| 26 | Formatting Tokens | `bold` | No | No | Bold text. |
+| 27 |  | `italic` | No | No | Italic text. |
+| 28 |  | `strikethrough` | No | No | Strike-through text. |
+| 29 |  | `superscript` | No | No | Superscript text. |
+| 30 |  | `subscript` | No | No | Subscript text. |
+| 31 |  | `rtl` | No | No | Right-to-left text direction. |
+| 32 |  | `inline_formula` | No | No | Inline formula. |
+| 33 |  | `inline_code` | No | No | Inline code. |
+| 34 |  | `inline_picture` | No | No | Inline image/graphic. |
+| 35 |  | `br` | Yes | No | Line break. |
+| 36 | Structural Tokens (OTSL) | `otsl` | No | No | Table structure container. |
+| 37 |  | `fcel` | Yes | No | New cell with content. |
+| 38 |  | `ecel` | Yes | No | New cell without content. |
+| 39 |  | `ched` | Yes | No | Column header cell. |
+| 40 |  | `rhed` | Yes | No | Row header cell. |
+| 41 |  | `corn` | Yes | No | Corner header cell. |
+| 42 |  | `srow` | Yes | No | Section row separator cell. |
+| 43 |  | `lcel` | Yes | No | Merge with left neighbor (horizontal span). |
+| 44 |  | `ucel` | Yes | No | Merge with upper neighbor (vertical span). |
+| 45 |  | `xcel` | Yes | No | Merge with left and upper neighbors (2D span). |
+| 46 |  | `nl` | Yes | No | New line (row separator). |
+| 47 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker; attribute: `id`. |
+| 48 |  | `continue_row` | Yes | Yes | Row continuation; attribute: `id`. |
+| 49 |  | `continue_col` | Yes | Yes | Column continuation; attribute: `id`. |
+| 50 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
+| 51 |  | `uri` | No | No | External resource reference. |
+| 52 | Content Tokens | `marker` | No | No | List/form marker content. |
+| 53 |  | `facets` | No | No | Container for application-specific properties for derived information, such as summary, classification label, etc. |
+| 54 | Structural Tokens (Form) | `key` | No | No | Form item key (child of `form_item`). |
+| 55 |  | `implicit_key` | No | No | Implicit key in forms. |
+| 56 |  | `value` | No | No | Form item value (child of `form_item`). |
 
 ### Metadata Sub-elements
 
