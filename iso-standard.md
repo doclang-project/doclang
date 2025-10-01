@@ -134,7 +134,7 @@ DocTags defines the following categories of elements:
 
 - **special**: Elements that establish document scope and pagination, such as `doctag`, `page_break`, and `time_break`.
 - **provenance**: Elements that can provide visual or time grounding. The visual grounding is necessary for documents with pagination, the temporal grounding is necessary for audio based documents (music and movies).
-	- **spatial**: Elements that capture spatial position as normalized coordinates/bounding boxes (via repeated `location`) anchoring block-level content to the page.
+	- **geometric**: Elements that capture geometric position as normalized coordinates/bounding boxes (via repeated `location`) anchoring block-level content to the page.
 	- **time**: Elements that capture temporal positions using `<hour value={integer}/><minute value={integer}/><second value={integer}/><centisecond value={integer}/>` for a timestamp and a double timestamp for time intervals.
 - **semantic**: Block-level elements that convey document meaning (e.g., titles, paragraphs, captions, lists, forms, tables, formulas, code, pictures), optionally preceded by location tokens.
 - **formatting**: Inline elements that modify textual presentation within semantic content (e.g., `bold`, `italic`, `strikethrough`, `superscript`, `subscript`, `rtl`, `inline_formula`, `inline_code`, `inline_picture`, `br`).
@@ -142,6 +142,7 @@ DocTags defines the following categories of elements:
 - **structural**: Sequence tokens that define internal structure for complex constructs (primarily OTSL table layout: `otsl`, `fcel`, `ecel`, `lcel`, `ucel`, `xcel`, `nl`, `ched`, `rhed`, `corn`, `srow`; and form parts like `key`/`value`).
 - **content**: Lightweight content helpers used inside semantic blocks for explicit payload and annotations (e.g., `marker`).
 - **binary data**: Elements that embed or reference non-text payloads for media—either inline as `base64` or via `uri`—allowed under `picture`, `inline_picture`, or at page level.
+- **metadata**: Elements that provide metadata about the document or its components, contained within `head` and `meta` respectively.
 - **continuation** tokens: Markers that indicate content spanning pages or table boundaries (e.g., `<thread id="N"/>`, `continue_row`, `continue_col`) to stitch fragmented content.
 
 ### Special Elements
@@ -150,72 +151,29 @@ These elements have a specific purpose in defining the high-level structure of t
 
 #### The `doctag` Element
 
-Every DocTags document is wrapped in a `<doctag>` root element with an optional version specification,
-following Semantic Versioning (MAJOR.MINOR.PATCH). When no version is specified, the default is v1.0.0.
-
-Here is an example:
-
-```xml
-<doctag version="1.0.0">
-  <!-- document content -->
-</doctag>
-```
-
-#### The `metadata` Element
-
-The document can optionally begin with a `<metadata>` element, which can contain the following optional special elements:
-
-- `version`
-- `title`  <!-- NOTE: conflicts with semantic element -->
-- `author`, whereby multiple instances are allowed
-  - each `author` element can optionally begin with one or more `affiliation` elements
-- `date`
-- `language`, whereby multiple instances are allowed
-- `default_resolution`
-- `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
-- `language`, Identifies the document language (e.g., English, German, French, Spanish, Japanese). The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
-- `document_quality`,Content quality assessment score using standard algorithms such as DCLM, gneissweb, etc. where 0<=Scores<=1
-- `document_readability`,Indicates how easy a a document can be undertood by a general audiance. Classifier defines known classifier or method used to produce score where 0<=Scores<=1
-- `general_topic`,Topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
-- `document_hash`, Hash of the document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
-- `custom_attribute`, Any custom attribute that can be added later with its properties in keys and corresponding values. This can be one or more.
+Every DocTags document is wrapped in a `<doctag>` root element.
 
 Here is an example:
 
 ```xml
 <doctag>
-  <metadata>
-    <version>1.2.3</version>
-    <author>Author 1 Name</author>
-    <author>
-      <affiliation>Author 2 Affiliation A</affiliation>
-      <affiliation>Author 2 Affiliation B</affiliation>
-      Author 2 Name
-    </author>
-    <date>2024-01-01</date>
-    <language classifier="fastText" score="0.7">eng</language>
-    <language classifier="fastText" score="0.2">spa</language>
-    <document_quality classifier="dclm">0.8</document_quality>
-    <document_readability classifier="fastText_readability">0.4</document_readability>
-    <general_topic topic_taxonomy="taxonomy" classifier="WatsonNLP" score="0.5">Technology</general_topic>
-    <general_topic topic_taxonomy="taxonomy" classifier="WatsonNLP" score="0.5">Math</general_topic>
-    <document_hash hash_function="sha256sum"/>75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
-    <custom_attribute key="hate" name="HAP"/>0.1</custom_attribute>
-    <custom_attribute key="abuse" name="HAP"/>0.1</custom_attribute>
-    <custom_attribute key="profanity" name="HAP"/>0.1</custom_attribute>
-    <default_resolution width="512" height="512"/>
-    <page_size width="612" height="792"/>
-    <page_size page_no="4" width="792" height="612"/>
-    <processing_tool>docling</processing_tool>
-  </metadata>
-  <!-- document content -->
+  <!-- rest of the document -->
 </doctag>
 ```
 
-These annotations can provide semantic insights or quality assessments for post processing purpose.
+#### The `version` Element
 
-<!-- I think we should allow metadata to be embded into any tag -->
+The `doctag` element can optionally begin with a `version` element, following Semantic Versioning (MAJOR.MINOR.PATCH).
+When no version is specified, the default is v1.0.0
 
+Here is an example:
+
+```xml
+<doctag>
+  <version>1.0.0</version>
+  <!-- rest of the document -->
+</doctag>
+```
 
 #### The `page_break` Element
 
@@ -251,7 +209,7 @@ The content between two `<time_break/>` is in itself a doctag document, if it is
 
 #### The `location` Element
 
-The `location` element represents spatial information with value (and optional resolution) attributes of the format `<location value="integer" resolution="integer"/>` with 0 <= value <= resolution.
+The `location` element represents geometric information with value (and optional resolution) attributes of the format `<location value="integer" resolution="integer"/>` with 0 <= value <= resolution.
 
 - Single coordinate at (100, 200): `<location value="100"/><location value="200"/>`
 - Bounding box with (x0, y0) = (100, 200) and (x1, y1) = (300, 400): `<location value="100"/><location value="200"/><location value="300"/><location value="400"/>`
@@ -331,7 +289,7 @@ Encoding rules:
 - Normalization: Out-of-range carry is not allowed. Producers MUST pre-normalize (e.g., 0h 61m 5s must be encoded as 1h 1m 5s).
 - Monotonicity (intervals): The end timestamp MUST represent a time that is greater than or equal to the start timestamp when converted to total seconds. Equal start and end encodes a zero-length anchor.
 - Placement: Timestamp tokens MAY only be used on elements intended to be interpreted as block-level (see Semantic Elements). When present, they MUST precede the element’s textual content and any inline formatting tokens.
-- Coexistence with location: When both spatial `location` tokens and `timestamp` tokens are present, both sets MUST appear before content. The relative order between spatial and temporal tokens has no semantic impact; serializers SHOULD use a consistent order.
+- Coexistence with location: When both geometric `location` tokens and `timestamp` tokens are present, both sets MUST appear before content. The relative order between geometric and temporal tokens has no semantic impact; serializers SHOULD use a consistent order.
 - Interpretation: Timestamps are relative to the media’s timeline (e.g., an audio/video track or timed transcript) and are not wall-clock times; time zones and dates do not apply.
 
 Usage examples:
@@ -470,6 +428,98 @@ The present standard does not prescribe the specific `facets` content, but a pos
     <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
   </picture>
 </facets>
+```
+
+### Metadata Elements
+
+Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
+- deriveable from the document
+  - either directly, e.g. a summary of a certain component
+  - or in combination with other context, e.g. from external knowledge sources
+- or reflects properties of the upstream pipeline, e.g. the VLM that generated the document.
+
+As applications can have varying requirements, this standard defines a set of reserved metadata elements for common use
+cases, but also allows for custom metadata elements to be added.
+To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
+
+Document-level metadata is contained in the `<head>` element, while component-level metadata is contained in an `<meta>`
+element within the respective component element. We discuss the details in the subsections below.
+
+#### The `head` Element
+
+After the optional `version` element, the `doctag` element can continue with an optional `<head>` element.
+Below we list the reserved metadata elements to be used within `<head>`:
+
+- `title`
+- each `author` element can optionally begin with one or more `affiliation` elements
+- `date`
+- `default_resolution`
+- `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
+- `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
+- `generated_by`, upstream pipeline information, e.g. VLM ID
+- `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
+- `summary`, a summary of the document
+- `document_hash`, Hash of the document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
+
+Here is an example:
+
+```xml
+<doctag>
+  <head>
+    <!-- reserved elements -->
+    <title>My Company's Annual Report</title>
+    <author_info>
+      <author>Author 1 Name</author>
+      <author>
+        <affiliation>Affiliation A</affiliation>
+        <affiliation>Affiliation B</affiliation>
+        Author 2 Name
+      </author>
+    </author_info>
+    <date>2024-01-01</date>
+    <language classifier="fastText" score="0.7">eng</language>
+    <language classifier="fastText" score="0.2">spa</language>
+    <topic topic_taxonomy="taxonomy" score="0.5">Technology</topic>
+    <topic topic_taxonomy="taxonomy" score="0.5">Math</topic>
+    <document_hash hash_function="sha256sum"/>75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
+    <summary>This is a summary of the document</summary>
+    <generated_by>example_vlm_org/example_vlm_name</generated_by>
+    <default_resolution width="512" height="512"/>
+    <page_size width="612" height="792"/>
+    <page_size page_no="4" width="792" height="612"/>
+
+      <!-- examples of custom elements -->
+    <my_company_hap_filter_hate/>0.1</my_company_hap_filter_hate>
+    <my_company_hap_filter_abuse/>0.1</my_company_hap_filter_abuse>
+    <my_company_hap_filter_profanity/>0.1</my_company_hap_filter_profanity>
+  </head>
+  <!-- document content -->
+</doctag>
+```
+
+### The `meta` Element
+
+The `meta` element is used to contain metadata about a specific component of the document.
+
+Below we list the reserved metadata elements to be used within `<meta>`:
+
+- `summary`
+- `class`
+- `language`
+
+Here is an example usage, for instance considering a picture:
+
+```xml
+<doctag>
+  <picture>
+    <meta>
+      <summary>This image shows the distribution of the various data points in the dataset</summary>
+      <class>pie_chart</class>
+    </meta>
+    <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
+    <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
+  </picture>
+</doctag>
 ```
 
 ### Continuation Tokens
@@ -1435,7 +1485,7 @@ A conforming DocTags serializer SHALL:
 - Normalization: Out-of-range carry is not allowed; producers MUST pre-normalize values (e.g., 61 minutes becomes 1 hour and 1 minute).
 - Monotonicity (intervals): End time MUST be greater than or equal to start time when converted to total seconds.
 - Placement: Timestamp tokens MAY only appear on block-level elements and MUST precede textual content and inline formatting when present.
-- Coexistence: When both spatial and temporal tokens are present, both appear before content; relative order has no semantic effect.
+- Coexistence: When both geometric and temporal tokens are present, both appear before content; relative order has no semantic effect.
 - Interpretation: Values are relative to a media timeline (not wall-clock), so dates/time zones do not apply.
 
 #### Content Validation
@@ -1484,7 +1534,7 @@ The `<class>` token supports extensible vocabularies:
 | 2 | Special Elements | `page_break` | Yes | No | Page delimiter. |
 | 3 |  | `time_break` | Yes | No | Temporal segment delimiter. |
 | 4 |  | `metadata` | No | No | Document metadata container. |
-| 5 | Geometric Tokens | `location` | Yes | Yes | Spatial coordinate; attributes: `value`, optional `resolution`. |
+| 5 | Geometric Tokens | `location` | Yes | Yes | Geometric coordinate; attributes: `value`, optional `resolution`. |
 | 6 | Temporal Tokens | `hour` | Yes | Yes | Hours component of a timestamp; attribute: `value` in [0, 99]. |
 | 7 |  | `minute` | Yes | Yes | Minutes component of a timestamp; attribute: `value` in [0, 59]. |
 | 8 |  | `second` | Yes | Yes | Seconds component of a timestamp; attribute: `value` in [0, 59]. |
