@@ -132,7 +132,7 @@ DocTags is a constrained subset of XML with the following characteristics:
 
 DocTags defines the following categories of elements:
 
-- **special**: Elements that establish document scope and pagination, such as `doctag`, `metadata`, and `page_break`.
+- **special**: Elements that establish document scope and pagination, such as `doctag`, `page_break`, and `time_break`.
 - **provenance**: Elements that can provide visual or time grounding. The visual grounding is necessary for documents with pagination, the temporal grounding is necessary for audio based documents (music and movies).
 	- **spatial**: Elements that capture spatial position as normalized coordinates/bounding boxes (via repeated `location`) anchoring block-level content to the page.
 	- **time**: Elements that capture temporal positions using `<hour value={integer}/><minute value={integer}/><second value={integer}/><centisecond value={integer}/>` for a timestamp and a double timestamp for time intervals.
@@ -186,7 +186,6 @@ Here is an example:
 <doctag>
   <metadata>
     <version>1.2.3</version>
-    <heading level="1">Document Title</heading>
     <author>Author 1 Name</author>
     <author>
       <affiliation>Author 2 Affiliation A</affiliation>
@@ -1527,16 +1526,15 @@ The `<class>` token supports extensible vocabularies:
 | 44 |  | `ucel` | Yes | No | Merge with upper neighbor (vertical span). |
 | 45 |  | `xcel` | Yes | No | Merge with left and upper neighbors (2D span). |
 | 46 |  | `nl` | Yes | No | New line (row separator). |
-| 47 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker; attribute: `id`. |
-| 48 |  | `continue_row` | Yes | Yes | Row continuation; attribute: `id`. |
-| 49 |  | `continue_col` | Yes | Yes | Column continuation; attribute: `id`. |
-| 50 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
-| 51 |  | `uri` | No | No | External resource reference. |
-| 52 | Content Tokens | `marker` | No | No | List/form marker content. |
-| 53 |  | `facets` | No | No | Container for application-specific properties for derived information, such as summary, classification label, etc. |
-| 54 | Structural Tokens (Form) | `key` | No | No | Form item key (child of `form_item`). |
-| 55 |  | `implicit_key` | No | No | Implicit key in forms. |
-| 56 |  | `value` | No | No | Form item value (child of `form_item`). |
+| 47 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker`. |
+| 48 |  | `h_thread` | Yes | Yes | Continutation marker for horizontal table stitching. |
+| 49 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
+| 50 |  | `uri` | No | No | External resource reference. |
+| 51 | Content Tokens | `marker` | No | No | List/form marker content. |
+| 52 |  | `facets` | No | No | Container for application-specific properties for derived information, such as summary, classification label, etc. |
+| 53 | Structural Tokens (Form) | `key` | No | No | Form item key (child of `form_item`). |
+| 54 |  | `implicit_key` | No | No | Implicit key in forms. |
+| 55 |  | `value` | No | No | Form item value (child of `form_item`). |
 
 ### Metadata Sub-elements
 
