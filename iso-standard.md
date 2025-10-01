@@ -1526,7 +1526,7 @@ The `<class>` token supports extensible vocabularies:
 | 44 |  | `ucel` | Yes | No | Merge with upper neighbor (vertical span). |
 | 45 |  | `xcel` | Yes | No | Merge with left and upper neighbors (2D span). |
 | 46 |  | `nl` | Yes | No | New line (row separator). |
-| 47 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker`. |
+| 47 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker. |
 | 48 |  | `h_thread` | Yes | Yes | Continutation marker for horizontal table stitching. |
 | 49 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
 | 50 |  | `uri` | No | No | External resource reference. |
