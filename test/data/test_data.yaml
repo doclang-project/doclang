@@ -1,0 +1,325 @@
+"fixtures":
+- "doctags": |-
+    <doctag>
+      <group>
+        <title>My title here</title>
+        <text>My text here</text>
+      </group>
+    </doctag>
+  "output": |-
+    doctag
+      group
+        title
+          text_content  My title here
+        text
+          text_content  My text here
+- "doctags": |-
+    <doctag>
+      <list>
+        <list_item>Single item</list_item>
+      </list>
+    </doctag>
+  "output": |-
+    doctag
+      list
+        list_item
+          text_content  Single item
+- "doctags": |-
+    <doctag>
+      <list>
+        <list_item>First item</list_item>
+        <list_item>Second item</list_item>
+      </list>
+    </doctag>
+  "output": |-
+    doctag
+      list
+        list_item
+          text_content  First item
+        list_item
+          text_content  Second item
+- "doctags": |-
+    <doctag>
+      <list>
+        <list_item>
+          <italic>Single italic item</italic>
+        </list_item>
+      </list>
+    </doctag>
+  "output": |-
+    doctag
+      list
+        list_item
+          italic
+            text_content  Single italic item
+- "doctags": |-
+    <doctag>
+      <list>
+        <list_item>
+          <text>First paragraph</text>
+          <text>Another paragraph</text>
+        </list_item>
+      </list>
+    </doctag>
+  "output": |-
+    doctag
+      list
+        list_item
+          text
+            text_content  First paragraph
+          text
+            text_content  Another paragraph
+- "doctags": |-
+    <doctag>
+      <title>
+        <location_12/>
+        <location_42/>
+        <location_24/>
+        <location_19/>
+        Title
+      </title>
+    </doctag>
+  "output": |-
+    doctag
+      title
+        brect
+          12
+          42
+          24
+          19
+        text_content  Title
+- "doctags": |-
+    <doctag>
+      <section_header>This is my section</section_header>
+    </doctag>
+  "output": |-
+    doctag
+      section_header
+        text_content  This is my section
+- "doctags": |-
+    <doctag>
+      <text>My text</text>
+    </doctag>
+  "output": |-
+    doctag
+      text
+        text_content  My text
+- "doctags": |-
+    <doctag>
+      <caption>Caption</caption>
+    </doctag>
+  "output": |-
+    doctag
+      caption
+        text_content  Caption
+- "doctags": |-
+    <doctag>
+      <title>
+        <italic>Welcome</italic>
+      </title>
+    </doctag>
+  "output": |-
+    doctag
+      title
+        italic
+          text_content  Welcome
+- "doctags": |-
+    <doctag>
+      <bold>foo</bold>
+    </doctag>
+  "output": |-
+    doctag
+      bold
+        text_content  foo
+- "doctags": |-
+    <doctag>
+      <italic>bar</italic>
+    </doctag>
+  "output": |-
+    doctag
+      italic
+        text_content  bar
+- "doctags": |-
+    <doctag>
+      <bold>
+        <italic>baz</italic>
+      </bold>
+    </doctag>
+  "output": |-
+    doctag
+      bold
+        italic
+          text_content  baz
+- "doctags": |-
+    <doctag>
+      <bold>
+        <code>
+          <python/>
+          print('Hello')
+        </code>
+      </bold>
+    </doctag>
+  "output": |-
+    doctag
+      bold
+        code
+          language_name  python
+          text_content  print('Hello')
+- "doctags": |-
+    <doctag>
+      <code>This is some code.</code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        text_content  This is some code.
+- "doctags": |-
+    <doctag>
+      <code>This is more code.
+    It has two lines.</code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        text_content  This is more code.
+    It has two lines.
+- "doctags": |-
+    <doctag>
+      <code/>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        text_content
+- "doctags": |-
+    <doctag>
+      <code>print('Hello world')</code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        text_content  print('Hello world')
+- "doctags": |-
+    <doctag>
+      <code>
+        <python/>
+        print('Hello')
+      </code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        language_name  python
+        text_content  print('Hello')
+- "doctags": |-
+    <doctag>
+      <code>
+        <python/>
+    <![CDATA[hi</code>]]>  </code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        language_name  python
+        text_content
+          cdata_section
+            cdata_content  hi</code>
+- "doctags": |-
+    <doctag>
+      <code>
+        <python/>
+      </code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        language_name  python
+        text_content
+          cdata_section
+- "doctags": |-
+    <doctag>
+      <code>
+        <python/>
+    <![CDATA[]]]]><![CDATA[>]]>  </code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        language_name  python
+        text_content
+          cdata_section
+            cdata_content  ]]
+          cdata_section
+            cdata_content  >
+- "doctags": |-
+    <doctag><code><python/><![CDATA[]]>]]></code></doctag>
+  "output": |-
+    Raised lark.exceptions.UnexpectedCharacters.
+- "doctags": |-
+    <doctag><code><python/><![CDATA[This contains ]]> in the middle]]></code></doctag>
+  "output": |-
+    Raised lark.exceptions.UnexpectedCharacters.
+- "doctags": |-
+    <doctag>
+      <code>
+        <java/>
+        <location_12/>
+        <location_42/>
+        <location_24/>
+        <location_19/>
+        system.out.println(&quot;Hello&quot;)
+      </code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        language_name  java
+        brect
+          12
+          42
+          24
+          19
+        text_content  system.out.println("Hello")
+- "doctags": |-
+    <doctag><code>system.out.println("Hello")<java/></code></doctag>
+  "output": |-
+    Raised lark.exceptions.UnexpectedCharacters.
+- "doctags": |-
+    <doctag>
+      <code lang="python">Hi</code>
+    </doctag>
+  "output": |-
+    doctag
+      code
+        language_name  python
+        text_content  Hi
+- "doctags": |-
+    <doctag><code>Tag mismatch</formula></doctag>
+  "output": |-
+    Raised lark.exceptions.UnexpectedCharacters.
+- "doctags": |-
+    <doctag>
+      <formula>This is some formula.</formula>
+    </doctag>
+  "output": |-
+    doctag
+      formula
+        text_content  This is some formula.
+- "doctags": |-
+    <doctag>
+      <formula/>
+    </doctag>
+  "output": |-
+    doctag
+      formula
+        text_content
+- "doctags": |-
+    <doctag>This is just regular text.</doctag>
+  "output": |-
+    doctag
+      text_content  This is just regular text.
+- "doctags": |-
+    <doctag/>
+  "output": |-
+    doctag
+      text_content

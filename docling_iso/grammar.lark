@@ -1,0 +1,52 @@
+?start: doctag
+
+doctag: "<doctag>" top_level "</doctag>"
+
+?top_level: list | group | semantic
+list: "<list>" list_item* "</list>"
+list_item: "<list_item>" semantic* "</list_item>"
+
+group: "<group>" semantic* "</group>"
+
+?semantic: title | section_header | text | caption | formatting
+title: "<title>" [brect] formatting* "</title>"
+section_header: "<section_header>" [brect] formatting* "</section_header>"
+text: "<text>" [brect] formatting* "</text>"
+caption: "<caption>" [brect] formatting* "</caption>"
+
+?formatting: bold | italic | verbatim
+bold: "<bold>" formatting* "</bold>"
+italic: "<italic>" formatting* "</italic>"
+
+?verbatim: code | formula | text_content
+
+code: "<code lang='" language_name "'>" [brect] text_content "</code>"
+    | "<code>" [language] [brect] text_content "</code>"
+
+formula: "<formula>" [brect] text_content "</formula>"
+
+?brect: location location location location
+?location: "<location_" LOCATION_VALUE "/>"
+
+?language: "<" language_name "/>"
+language_name: LANGUAGE_NAME
+
+text_content: (cdata_section | TEXT)*
+
+cdata_section: "<![CDATA[" [cdata_content] "]]>"
+
+cdata_content: CDATA
+
+%ignore WS
+
+CDATA: /(?:(?!]]>)[\s\S])+/
+
+// The terminal still requires at least one character to avoid the error
+
+
+LOCATION_VALUE: /0|[1-9][0-9]*/
+LANGUAGE_NAME: /(python|java)/
+
+TEXT: /[^<&>]+/
+
+WS: /[ \t\r\n]+/

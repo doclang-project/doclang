@@ -1,0 +1,10 @@
+fail_fast: true
+repos:
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Pytest
+        entry: uv run --no-sync pytest
+        pass_filenames: false
+        language: system
+        files: '\.py$'
