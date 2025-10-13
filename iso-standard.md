@@ -48,11 +48,11 @@ This standard specifies:
 The motivation for this new markup language is twofold,
 
 1. It is created from the ground up to be able to represent complex, multimodal content with visual grounding in plain text with markup
-2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between DocTags tokens and LLM tokens) and efficiently (== minimal token count). 
+2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between DocTags tokens and LLM tokens) and efficiently (== minimal token count).
 
 As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
 
-There is an exception for meta-data markup. Meta-data is not intended to be used or produced by LLMs, so it is in general possible to include an expanded set of protected markup tokens. Nevertheless, we do want to normalize as much as possible this representation. 
+There is an exception for meta-data markup. Meta-data is not intended to be used or produced by LLMs, so it is in general possible to include an expanded set of protected markup tokens. Nevertheless, we do want to normalize as much as possible this representation.
 
 Such requirements preclude us from using existing markup languages such as Markdown (incomplete scope), HTML (not concise enough), LaTeX (ambiguity of representation) etc.
 
@@ -67,6 +67,12 @@ Such requirements preclude us from using existing markup languages such as Markd
          alt="HTML vs OTSL" style="width:1000px">
     <figcaption>Examples of real-world document fragments and their Doctags representation</figcaption>
 </figure>
+
+A specific class of related formats is the one operating on the OCR level, including [PageXML](https://github.com/PRImA-Research-Lab/PAGE-XML), [ALTO XML](https://github.com/altoxml), and [hOCR](https://github.com/kba/hocr-spec).
+
+Beyond certain low-level similarities (e.g. presence of bounding box information), the DocTags format is significantly differentiated as it is designed to be AI-native:
+- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocTags is designed for LLM/VLM generation, with token efficiency in mind.
+- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocTags also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
 
 ## Terminology
 
@@ -106,7 +112,7 @@ This denotes an `elem` element, including its properties (`size` and `color`) an
 For an element with multiple possible property values, the attribute syntax can lead to an increased complexity of the respective possible tokenized representations.
 For instance, the following could all be valid variants of an `elem` start tag: `<elem size="300" color="#aabbcc">`, `<elem size="42">`, `<elem color="#112233">`, `<elem>`.
 
-Aiming at LM-friendliness, in such cases, the ISO DocTags format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
+Aiming at LLM-friendliness, in such cases, the ISO DocTags format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
 The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, self-closing elements are used too.
 
 This representation can reduce the number of tokens, making it easier for language models to learn and predict.
@@ -604,9 +610,7 @@ Examples:
 
 ### Vector graphics Elements
 
-If you want to include vector graphics elements, the doctags allow you to include
-
-1. SVG: enclosed in `<svg> ... </svg>`
+If you want to include vector graphics elements, DocTags allow you to include SVG: enclosed in `<svg> ... </svg>`.
 
 ## Grammar and Structure Rules
 
@@ -689,7 +693,7 @@ Basic inline code
 
 ```xml
 <text>
-  Install with <inline_code>pip install doctags</inline_code> and run.
+  Install with <inline_code>pip install docling</inline_code> and run.
   For environment checks, use <inline_code>python --version</inline_code>.
   Inline code preserves spacing and punctuation.
   <br/>
@@ -1437,7 +1441,7 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
           <key>Ammontare reddito</key>
           <value></value>
       </form_item>
-      ...    
+      ...
   </form>
   ```
 </details>
@@ -1742,7 +1746,7 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   <!-- blank line after <summary> is important -->
 
   ![Form Example](examples/form/form_15_large_key.png)
-  
+
   ```xml
   ...
   <heading>Part III</heading>
