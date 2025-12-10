@@ -2340,7 +2340,7 @@ The `<class>` token supports extensible vocabularies:
 | 18 |  | `form` | No | No | Form structure container. |
 | 19 |  | `formula` | No | No | Mathematical expression block. |
 | 20 |  | `code` | No | No | Code block; may include classification via `class` token. |
-| 21 |  | `vpoint` | No | No | A group capturing a list item comprising more than just simple textual content i.e. nesting, pictures etc. |
+| 21 |  | `vpoint` | No | No | "Virtual point": a group capturing a list item comprising more than just simple textual content i.e. nesting, pictures etc. |
 | 22 |  | `point` | No | No | Represents a list item "representative" (including marker information): the whole list item in case of simple textual content, or the leading text case of a more complex list item. |
 | 23 |  | `checkbox` | No | Yes | Checkbox item; attribute: `selected`. |
 | 24 | Grouping Tokens | `section` | No | Yes | Document section; attribute: `level` (N ≥ 1). |
