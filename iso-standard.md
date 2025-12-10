@@ -339,7 +339,7 @@ Each semantic element may begin with a bounding box, capturing the element's bou
 | `page_header` | Page header content |
 | `page_footer` | Page footer content |
 | `watermark` | Page contains watermark | <!-- watermark can be text or image - do we want to capture that? also do we want to know if watermark is in background or overlay?-->
-| `list_item` | List item |
+| `point` | List item |
 | `form_item` | Form item (with 1 key and 1 or more values as children) |
 | `form_heading` | Form header |
 | `form_text` | Form text |
@@ -376,8 +376,8 @@ These elements organize semantic content into logical structures. Groups can not
 
 | Element | Description | Allowed Children |
 |-------|-------------|------------------|
-| `<list ordered=true>` | Numbered list | list\_item, checkbox |
-| `<list ordered=false>` | Bulleted list | list\_item, checkbox |
+| `<list ordered="true">` | Numbered list | list\_item, checkbox |
+| `<list ordered="false">` | Bulleted list | list\_item, checkbox |
 | `<group>` | Generic group enabling e.g. association of caption or footnote with the respective document components | |
 
 **footnote regarding docling-core**: What we currently have as instantiations of `FloatingItem` (e.g., TableItem) should have been groups, as the `FloatingItem` contains captions, the `data structure` (e.g., the `data` in TableItem or the `graph` in FormItem) and the footnotes. As a matter of fact, it is currently even more mis-constructed, since the `ProvenanceItem` of the `TableItem` will in fact point to location of only the table, while the captions and footnotes will have their own `ProvenanceItem`.
@@ -540,7 +540,7 @@ Here is an example:
 </doctag>
 ```
 ##### Governance metadata
-In addition to the core metadata elements, publishers can optionally provide metadata pertaining to document governance. These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements. 
+In addition to the core metadata elements, publishers can optionally provide metadata pertaining to document governance. These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
 
 - `licenses` Indicate one or more licenses covering use of the documents.
 - `data_classification` One or more data classifications can be given for the document content. In general, data classification is not globally standardized. Organizations usually define a classification system suitable for their respective mission. These elements allow an organization to classify document sensitivity in their own terms.
@@ -1058,10 +1058,10 @@ Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the 
     <fcel/>
       <text>Pipeline steps</text>
     <fcel/>
-      <list ordered=false>
-        <list_item><marker>•</marker>Ingest</list_item>
-        <list_item><marker>•</marker>Process</list_item>
-        <list_item><marker>•</marker>Export</list_item>
+      <list ordered="false">
+        <point><marker>•</marker>Ingest</point>
+        <point><marker>•</marker>Process</point>
+        <point><marker>•</marker>Export</point>
       </list>
     <nl/>
     <fcel/>
@@ -1097,133 +1097,156 @@ Notes
 
 ### Lists
 
-Lists are containers of homogeneous items. Allowed direct children are only `list_item` and `checkbox`. Both can include an optional `<marker>` to hold the printed bullet/number/checkbox symbol. When needed, the `<marker>` may also carry its own `<location>` coordinates to capture where the glyph appears on the page.
+Lists are containers of homogeneous items. Allowed direct children are only `point` and `checkbox`. Both can include an optional `<marker>` to hold the printed bullet/number/checkbox symbol. When needed, the `<marker>` may also carry its own `<location>` coordinates to capture where the glyph appears on the page.
+The `ordered` attribute is optional and defaults to `false` (i.e. unordered list).
 
-Unordered list with optional markers
+#### List Examples
 
-```xml
-<list ordered=false>
-  <list_item>
-    <marker>•</marker>
-    First item with <bold>bold</bold> text
-  </list_item>
-  <list_item>
-    <!-- Marker with its own coordinates -->
-    <marker>
-      <location value="50"/><location value="110"/><location value="60"/><location value="120"/>
-      •
-    </marker>
-    Second item
-  </list_item>
-</list>
-```
+<details>
+  <summary>Unordered list with optional markers</summary>
 
-Ordered list; markers are optional and can hold the printed numbering
+  <!-- blank line after <summary> is important -->
 
-```xml
-<list ordered=true>
-  <list_item>
-    <marker>1.</marker>
-    Install dependencies
-  </list_item>
-  <list_item>
-    <marker>2.</marker>
-    Run tests
-  </list_item>
-  <list_item>
-    <!-- No marker provided; numbering can be inferred from order -->
-    Ship release
-  </list_item>
-</list>
-```
+  ```xml
+  <list ordered="true">
+    <point>
+      <marker>•</marker>
+      First item with <bold>bold</bold> text
+    </point>
+    <point>
+      <!-- Marker with its own coordinates -->
+      <marker>
+        <location value="50"/><location value="110"/><location value="60"/><location value="120"/>
+        •
+      </marker>
+      Second item
+    </point>
+  </list>
+  ```
+</details>
 
-Checkbox items with selection state; markers optional
+<details>
 
-```xml
-<list ordered=false>
-  <checkbox selected=true>
-    <marker>[x]</marker>
-    Completed task
-  </checkbox>
-  <checkbox selected=false>
-    <marker>[ ]</marker>
-    Pending task
-  </checkbox>
-</list>
-```
+  <summary>Ordered list; markers are optional and can hold the printed numbering</summary>
 
-Nested lists (mixing ordered and unordered)
+  ```xml
+  <list ordered="true">
+    <point>
+      <marker>1.</marker>
+      Install dependencies
+    </point>
+    <point>
+      <marker>2.</marker>
+      Run tests
+    </point>
+    <point>
+      <!-- No marker provided; numbering can be inferred from order -->
+      Ship release
+    </point>
+  </list>
+  ```
 
-```xml
-<list ordered=true>
-  <list_item>
-    <marker>1.</marker>
-    Setup project
-    <list ordered=false>
-      <list_item>
-        <marker>•</marker>
-        Create virtual environment
-      </list_item>
-      <list_item>
-        <marker>•</marker>
-        Configure linter
-      </list_item>
-    </list>
-  </list_item>
-  <list_item>
-    <marker>2.</marker>
-    Implement features
-  </list_item>
-</list>
-```
+</details>
 
-Page breaks and continuation
+<details>
 
-Lists can span multiple pages. Use `<thread id="..."/>` to indicate continuation. You may thread the whole list and, if a particular `list_item` is broken, also thread the item itself.
+  <summary>Checkbox items with selection state; markers optional</summary>
 
-List split across pages
+  ```xml
+  <list ordered="false">
+    <checkbox selected=true>
+      <marker>[x]</marker>
+      Completed task
+    </checkbox>
+    <checkbox selected=false>
+      <marker>[ ]</marker>
+      Pending task
+    </checkbox>
+  </list>
+  ```
+</details>
 
-```xml
-<list ordered=true>
-  <thread id="L1"/>
-  <list_item><marker>1.</marker>First item</list_item>
-  <list_item><marker>2.</marker>Second item</list_item>
-</list>
-<page_break/>
-<list ordered=true>
-  <thread id="L1"/>
-  <list_item><marker>3.</marker>Third item</list_item>
-</list>
-```
+<details>
 
-Single list-item broken by a page break
+  <summary>Nested lists (mixing ordered and unordered)</summary>
 
-```xml
-<list ordered=false>
-  <thread id="L2"/>
-  <list_item>
-    <thread id="I7"/>
-    <marker>•</marker>
-    This item starts on page 1 and continues
-  </list_item>
-</list>
-<page_break/>
-<list ordered=false>
-  <thread id="L2"/>
-  <list_item>
-    <thread id="I7"/>
-    on page 2 until it ends.
-  </list_item>
-</list>
-```
+  ```xml
+  <list ordered="true">
+    <point>
+      <marker>1.</marker>
+      Setup project
+      <list ordered="false">
+        <point>
+          <marker>•</marker>
+          Create virtual environment
+        </point>
+        <point>
+          <marker>•</marker>
+          Configure linter
+        </point>
+      </list>
+    </point>
+    <point>
+      <marker>2.</marker>
+      Implement features
+    </point>
+  </list>
+  ```
+</details>
 
-Notes
+##### Page breaks and continuation
 
-- Only `list_item` and `checkbox` are valid as children of `list`.
-- `<marker>` is optional on both `list_item` and `checkbox`. Include it when the printed glyph/number is visible.
-- `<marker>` can include its own `location` coordinates to pinpoint bullet/number placement.
-- Lists can nest; place the nested `list` inside a `list_item` of the parent list.
-- When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
+Lists can span multiple pages. Use `<thread id="..."/>` to indicate continuation. You may thread the whole list and, if a particular `point` is broken, also thread the item itself.
+
+<details>
+
+  <summary>List split across pages</summary>
+
+  ```xml
+  <list ordered="true">
+    <thread id="L1"/>
+    <point><marker>1.</marker>First item</point>
+    <point><marker>2.</marker>Second item</point>
+  </list>
+  <page_break/>
+  <list ordered="true">
+    <thread id="L1"/>
+    <point><marker>3.</marker>Third item</point>
+  </list>
+  ```
+</details>
+
+<details>
+  <summary>Single list-item broken by a page break</summary>
+
+  ```xml
+  <list ordered="false">
+    <thread id="L2"/>
+    <point>
+      <thread id="I7"/>
+      <marker>•</marker>
+      This item starts on page 1 and continues
+    </point>
+  </list>
+  <page_break/>
+  <list ordered="false">
+    <thread id="L2"/>
+    <point>
+      <thread id="I7"/>
+      on page 2 until it ends.
+    </point>
+  </list>
+  ```
+
+  Notes
+
+  - Only `point`, `vpoint`, and `checkbox` are valid as children of `list`.
+  - `<marker>` is optional on both `point` and `checkbox`. Include it when the printed glyph/number is visible.
+  - `<marker>` can include its own `location` coordinates to pinpoint bullet/number placement.
+  - Lists can nest; place the nested `list` inside a `point` of the parent list.
+  - When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
+
+</details>
 
 ### Forms
 
@@ -1860,10 +1883,10 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   </otsl>
   <form_item><key>10</key><value></value></form_item>
   <text>11 If you checked (in Part I):</text>
-  <list>
-      <list_item>Box 6, add $5,000 to the taxable...</list_item>
-      <list_item>Box 2, 4, or 9, enter your taxable...</list_item>
-      <list_item>BBox 5, add your taxable disabilit...</list_item>
+  <list ordered="true">
+      <point>Box 6, add $5,000 to the taxable...</point>
+      <point>Box 2, 4, or 9, enter your taxable...</point>
+      <point>BBox 5, add your taxable disabilit...</point>
   </list>
   <form_item><key>11</key><value>.</value></form_item>
   <picture><class>pictogram</class></picture>
@@ -1974,44 +1997,46 @@ The scenario in the above figure is represented as follows:
     Our multi-faceted DE&I program includes the following initiatives:
 </text>
 
-<unordered_list>
+<list ordered="true">
     <thread_1/>
-    <list_item>
+    <point>
         <loc_15/><loc_25/><loc_35/><loc_45/>
         Mentorships and internship programs featuring diverse employees and students
-    </list_item>
+    </point>
     ...
-    <list_item>
-        <loc_20/><loc_30/><loc_40/><loc_50/>
-        Build Science, Technology, Engineering and Mathematics (STEM) employee candidate pipeline via involvement with:
-        <unordered_list>
-            <list_item>
+    <vpoint>
+        <point>
+          <loc_20/><loc_30/><loc_40/><loc_50/>
+          Build Science, Technology, Engineering and Mathematics (STEM) employee candidate pipeline via involvement with:
+        </point>
+        <list ordered="true">
+            <point>
                 <loc_25/><loc_35/><loc_45/><loc_55/>
                 Historically Black Colleges and Universities (HBCUs) site visits and career fairs
-            </list_item>
+            </point>
             ...
-            <list_item>
+            <point>
                 <loc_30/><loc_40/><loc_50/><loc_60/>
                 San Diego Squared (STEM-focused nonprofit organization connecting underrepresented student to the power
                 of STEM by providing access to education, mentorship and resources to develop STEM careers)
-            </list_item>
-        </unordered_list>
-    </list_item>
-</unordered_list>
+            </point>
+        </list>
+    </vpoint>
+</list>
 
 <page_footer><loc_35/><loc_45/><loc_55/><loc_65/>16 Neurocrine Biosciences</page_footer>
 
 <page_break/>
 
-<unordered_list>
+<list ordered="true">
     <thread_1/>
-    <list_item>
+    <point>
         <loc_40/><loc_50/><loc_60/><loc_70/>
         Build upon DE&I employee education initiatives including:
         ...
-    </list_item>
+    </point>
     ...
-</unordered_list>
+</list>
 ...
 ```
 </details>
@@ -2177,17 +2202,17 @@ A more complicated example is shown below in which we break the content of a lis
 
 ```xml
 <doctag>
-  <list ordered=true>
+  <list ordered="true">
     <thread id="1"/>
-    <list_item>First item</list_item>
-    <list_item><thread id="2"/>Second </list_item>
+    <point>First item</point>
+    <point><thread id="2"/>Second </point>
     ...
   </list>
   <page_footer>...</page_footer>
   <page_break/>
-  <list ordered=true>
+  <list ordered="true">
     <thread id="1"/>
-    <list_item><thread id="2"/>item</list_item>
+    <point><thread id="2"/>item</point>
   </list>
   ...
 </doctag>
@@ -2315,41 +2340,42 @@ The `<class>` token supports extensible vocabularies:
 | 18 |  | `form` | No | No | Form structure container. |
 | 19 |  | `formula` | No | No | Mathematical expression block. |
 | 20 |  | `code` | No | No | Code block; may include classification via `class` token. |
-| 21 |  | `list_item` | No | No | List item content. |
-| 22 |  | `checkbox` | No | Yes | Checkbox item; attribute: `selected`. |
-| 23 | Grouping Tokens | `section` | No | Yes | Document section; attribute: `level` (N ≥ 1). |
-| 24 |  | `list` | No | Yes | List container; attribute: `ordered` (true/false). |
-| 25 |  | `group` | No | Yes | Generic group. |
-| 26 | Formatting Tokens | `bold` | No | No | Bold text. |
-| 27 |  | `italic` | No | No | Italic text. |
-| 28 |  | `strikethrough` | No | No | Strike-through text. |
-| 29 |  | `superscript` | No | No | Superscript text. |
-| 30 |  | `subscript` | No | No | Subscript text. |
-| 31 |  | `rtl` | No | No | Right-to-left text direction. |
-| 32 |  | `inline_formula` | No | No | Inline formula. |
-| 33 |  | `inline_code` | No | No | Inline code. |
-| 34 |  | `inline_picture` | No | No | Inline image/graphic. |
-| 35 |  | `br` | Yes | No | Line break. |
-| 36 | Structural Tokens (OTSL) | `otsl` | No | No | Table structure container. |
-| 37 |  | `fcel` | Yes | No | New cell with content. |
-| 38 |  | `ecel` | Yes | No | New cell without content. |
-| 39 |  | `ched` | Yes | No | Column header cell. |
-| 40 |  | `rhed` | Yes | No | Row header cell. |
-| 41 |  | `corn` | Yes | No | Corner header cell. |
-| 42 |  | `srow` | Yes | No | Section row separator cell. |
-| 43 |  | `lcel` | Yes | No | Merge with left neighbor (horizontal span). |
-| 44 |  | `ucel` | Yes | No | Merge with upper neighbor (vertical span). |
-| 45 |  | `xcel` | Yes | No | Merge with left and upper neighbors (2D span). |
-| 46 |  | `nl` | Yes | No | New line (row separator). |
-| 47 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker. |
-| 48 |  | `h_thread` | Yes | Yes | Continutation marker for horizontal table stitching. |
-| 49 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
-| 50 |  | `uri` | No | No | External resource reference. |
-| 51 | Content Tokens | `marker` | No | No | List/form marker content. |
-| 52 |  | `facets` | No | No | Container for application-specific properties for derived information, such as summary, classification label, etc. |
-| 53 | Structural Tokens (Form) | `key` | No | No | Form item key (child of `form_item`). |
-| 54 |  | `implicit_key` | No | No | Implicit key in forms. |
-| 55 |  | `value` | No | No | Form item value (child of `form_item`). |
+| 21 |  | `vpoint` | No | No | A group capturing a list item comprising more than just simple textual content i.e. nesting, pictures etc. |
+| 22 |  | `point` | No | No | Represents a list item "representative" (including marker information): the whole list item in case of simple textual content, or the leading text case of a more complex list item. |
+| 23 |  | `checkbox` | No | Yes | Checkbox item; attribute: `selected`. |
+| 24 | Grouping Tokens | `section` | No | Yes | Document section; attribute: `level` (N ≥ 1). |
+| 25 |  | `list` | No | Yes | List container; attribute: `ordered` (true/false). |
+| 26 |  | `group` | No | Yes | Generic group. |
+| 27 | Formatting Tokens | `bold` | No | No | Bold text. |
+| 28 |  | `italic` | No | No | Italic text. |
+| 29 |  | `strikethrough` | No | No | Strike-through text. |
+| 30 |  | `superscript` | No | No | Superscript text. |
+| 31 |  | `subscript` | No | No | Subscript text. |
+| 32 |  | `rtl` | No | No | Right-to-left text direction. |
+| 33 |  | `inline_formula` | No | No | Inline formula. |
+| 34 |  | `inline_code` | No | No | Inline code. |
+| 35 |  | `inline_picture` | No | No | Inline image/graphic. |
+| 36 |  | `br` | Yes | No | Line break. |
+| 37 | Structural Tokens (OTSL) | `otsl` | No | No | Table structure container. |
+| 38 |  | `fcel` | Yes | No | New cell with content. |
+| 39 |  | `ecel` | Yes | No | New cell without content. |
+| 40 |  | `ched` | Yes | No | Column header cell. |
+| 41 |  | `rhed` | Yes | No | Row header cell. |
+| 42 |  | `corn` | Yes | No | Corner header cell. |
+| 43 |  | `srow` | Yes | No | Section row separator cell. |
+| 44 |  | `lcel` | Yes | No | Merge with left neighbor (horizontal span). |
+| 45 |  | `ucel` | Yes | No | Merge with upper neighbor (vertical span). |
+| 46 |  | `xcel` | Yes | No | Merge with left and upper neighbors (2D span). |
+| 47 |  | `nl` | Yes | No | New line (row separator). |
+| 48 | Continuation Tokens | `thread` | Yes | Yes | Continuation marker. |
+| 49 |  | `h_thread` | Yes | Yes | Continutation marker for horizontal table stitching. |
+| 50 | Binary Data Tokens | `base64` | No | No | Embedded binary data (base64). |
+| 51 |  | `uri` | No | No | External resource reference. |
+| 52 | Content Tokens | `marker` | No | No | List/form marker content. |
+| 53 |  | `facets` | No | No | Container for application-specific properties for derived information, such as summary, clasification label, etc. |
+| 54 | Structural Tokens (Form) | `key` | No | No | Form item key (child of `form_item`). |
+| 55 |  | `implicit_key` | No | No | Implicit key in forms. |
+| 56 |  | `value` | No | No | Form item value (child of `form_item`). |
 
 ### Metadata Sub-elements
 
