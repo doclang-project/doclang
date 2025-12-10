@@ -1172,7 +1172,7 @@ The `ordered` attribute is optional and defaults to `false` (i.e. unordered list
 
   ```xml
   <list ordered="true">
-    <point>
+    <vpoint>
       <marker>1.</marker>
       Setup project
       <list ordered="false">
@@ -1185,7 +1185,7 @@ The `ordered` attribute is optional and defaults to `false` (i.e. unordered list
           Configure linter
         </point>
       </list>
-    </point>
+    </vpoint>
     <point>
       <marker>2.</marker>
       Implement features
