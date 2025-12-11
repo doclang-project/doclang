@@ -345,8 +345,8 @@ Each semantic element may begin with a bounding box, capturing the element's bou
 | `form_text` | Form text |
 | `key` | key of the form item: can only be a child of `form_item` |
 | `value` | value of the form item: can only be a child of `form_item`  |
-| `checkbox selected=true` | Selected checkbox item |
-| `checkbox selected=false` | Unselected checkbox item |
+| `checkbox selected="true"` | Selected checkbox item |
+| `checkbox selected="false"` | Unselected checkbox item |
 | `otsl` | Table structure |
 | `formula` | Mathematical expression |
 | `code` | Code block |
@@ -374,15 +374,15 @@ These elements organize semantic content into logical structures. Groups can not
 
 | Element | Description | Allowed Children |
 |-------|-------------|------------------|
-| `<list ordered=true>` | Numbered list | list\_text, checkbox |
-| `<list ordered=false>` | Bulleted list | list\_text, checkbox |
+| `<list ordered="true">` | Numbered list | list\_text, checkbox |
+| `<list ordered="false">` | Bulleted list | list\_text, checkbox |
 | `<group>` | Generic group enabling e.g. association of caption or footnote with the respective document components | |
 | `<floating_group class="table|picture|form|code">` | Floating container that groups a floating component with its associated caption, footnotes, and metadata. No `location` tokens. | table, picture, form, code (as appropriate) |
 
-List groups
+Lists
 
-- Primary children: In list-oriented groups, the primary children are `list_text` elements.
-- Associated children: Other elements may appear between or after `list_text` items — e.g., `text`, `checkbox`, `otsl`, nested `list`, etc. These are logically associated with the most recent preceding `list_text`, which acts as the item container (equivalent to an HTML `<li>`).
+- Primary children: In lists, the primary children are `list_text` elements.
+- Associated children: Other elements may appear between or after `list_text` items — e.g., `text`, `checkbox`, `otsl`, nested `list`, etc. These are logically associated with the most recent preceding `list_text`, which acts as the start delimiter of a list item (i.e. of what would be an HTML `<li>`).
 
 **footnote regarding docling-core**: What we currently have as instantiations of `FloatingItem` (e.g., TableItem) should have been groups, as the `FloatingItem` contains captions, the `data structure` (e.g., the `data` in TableItem or the `graph` in FormItem) and the footnotes. As a matter of fact, it is currently even more mis-constructed, since the `ProvenanceItem` of the `TableItem` will in fact point to location of only the table, while the captions and footnotes will have their own `ProvenanceItem`.
 
@@ -544,7 +544,7 @@ Here is an example:
 </doctag>
 ```
 ##### Governance metadata
-In addition to the core metadata elements, publishers can optionally provide metadata pertaining to document governance. These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements. 
+In addition to the core metadata elements, publishers can optionally provide metadata pertaining to document governance. These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
 
 - `licenses` Indicate one or more licenses covering use of the documents.
 - `data_classification` One or more data classifications can be given for the document content. In general, data classification is not globally standardized. Organizations usually define a classification system suitable for their respective mission. These elements allow an organization to classify document sensitivity in their own terms.
@@ -1062,7 +1062,7 @@ Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the 
     <fcel/>
       <text>Pipeline steps</text>
     <fcel/>
-      <list ordered=false>
+      <list ordered="false">
         <list_text><marker>•</marker>Ingest</list_text>
         <list_text><marker>•</marker>Process</list_text>
         <list_text><marker>•</marker>Export</list_text>
@@ -1106,7 +1106,7 @@ Lists are containers of homogeneous items. Allowed direct children are only `lis
 Unordered list with optional markers
 
 ```xml
-<list ordered=false>
+<list ordered="false">
   <list_text>
     <marker>•</marker>
     First item with <bold>bold</bold> text
@@ -1125,7 +1125,7 @@ Unordered list with optional markers
 Ordered list; markers are optional and can hold the printed numbering
 
 ```xml
-<list ordered=true>
+<list ordered="true">
   <list_text>
     <marker>1.</marker>
     Install dependencies
@@ -1144,7 +1144,7 @@ Ordered list; markers are optional and can hold the printed numbering
 Checkbox items with selection state; markers optional
 
 ```xml
-<list ordered=false>
+<list ordered="false">
   <checkbox selected=true>
     <marker>[x]</marker>
     Completed task
@@ -1159,11 +1159,11 @@ Checkbox items with selection state; markers optional
 Nested lists (mixing ordered and unordered)
 
 ```xml
-<list ordered=true>
+<list ordered="true">
   <list_text>
     <marker>1.</marker>
     Setup project
-    <list ordered=false>
+    <list ordered="false">
       <list_text>
         <marker>•</marker>
         Create virtual environment
@@ -1188,13 +1188,13 @@ Lists can span multiple pages. Use `<thread id="..."/>` to indicate continuation
 List split across pages
 
 ```xml
-<list ordered=true>
+<list ordered="true">
   <thread id="L1"/>
   <list_text><marker>1.</marker>First item</list_text>
   <list_text><marker>2.</marker>Second item</list_text>
 </list>
 <page_break/>
-<list ordered=true>
+<list ordered="true">
   <thread id="L1"/>
   <list_text><marker>3.</marker>Third item</list_text>
 </list>
@@ -1203,7 +1203,7 @@ List split across pages
 Single list-item broken by a page break
 
 ```xml
-<list ordered=false>
+<list ordered="false">
   <thread id="L2"/>
   <list_text>
     <thread id="I7"/>
@@ -1212,7 +1212,7 @@ Single list-item broken by a page break
   </list_text>
 </list>
 <page_break/>
-<list ordered=false>
+<list ordered="false">
   <thread id="L2"/>
   <list_text>
     <thread id="I7"/>
@@ -1864,7 +1864,7 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   </otsl>
   <form_item><key>10</key><value></value></form_item>
   <text>11 If you checked (in Part I):</text>
-  <list>
+  <list ordered="false">
       <list_text>Box 6, add $5,000 to the taxable...</list_text>
       <list_text>Box 2, 4, or 9, enter your taxable...</list_text>
       <list_text>BBox 5, add your taxable disabilit...</list_text>
@@ -2050,10 +2050,10 @@ the thread elements (more details further below):
 
 The scenario in the above figure is represented below.
 
-- We introduce a new horizontal thread token, `h_thread id`, which is used to capture table content that spans pages sidewise,
+- We introduce a new horizontal thread token, `h_thread`, which is used to capture table content that spans pages sidewise,
 similarly to the usual thread tokens `thread`.
 - Only the content that is visible within the page is included in the OTSL token (e.g. see "2025 d").
-- When thread linking is resolvable through `ucel`/`lcel` or `h_thread id`, the `thread` token is not used, as it would be redundant.
+- When thread linking is resolvable through `ucel`/`lcel` or `h_thread`, the `thread` token is not used, as it would be redundant.
 - When thread linking must be captured, we capture it the earliest possible, i.e. we don't wait for the bottom-most cell
 to be reached to add the thread for "Europe" in the example above.
 
@@ -2181,7 +2181,7 @@ A more complicated example is shown below in which we break the content of a lis
 
 ```xml
 <doctag>
-  <list ordered=true>
+  <list ordered="true">
     <thread id="1"/>
     <list_text>First item</list_text>
     <list_text><thread id="2"/>Second </list_text>
@@ -2189,7 +2189,7 @@ A more complicated example is shown below in which we break the content of a lis
   </list>
   <page_footer>...</page_footer>
   <page_break/>
-  <list ordered=true>
+  <list ordered="true">
     <thread id="1"/>
     <list_text><thread id="2"/>item</list_text>
   </list>
@@ -2322,13 +2322,13 @@ The `<class>` token supports extensible vocabularies:
 | 21 |  | `formula` | No | No | — | Mathematical expression block. |
 | 22 |  | `code` | No | No | — | Code block. |
 | 23 |  | `list_text` | No | No | — | List item content. |
-| 24 |  | `checkbox` | No | Yes | `selected` | Checkbox item; `selected` in {`true`,`false`}. |
+| 24 |  | `checkbox` | No | Yes | `selected` | Checkbox item; optional `selected` in {`true`,`false`} defaults to `false`. |
 | 25 |  | `form_item` | No | No | — | Form item; exactly one `key`; one or more of `value`/`checkbox`/`marker`/`hint`. |
 | 26 |  | `form_heading` | No | Yes | `level?` | Form header; optional `level` (N ≥ 1). |
 | 27 |  | `form_text` | No | No | — | Form text block. |
 | 28 |  | `hint` | No | No | — | Hint for a fillable field (format/example/description). |
 | 29 | Grouping Tokens | `section` | No | Yes | `level` | Document section; `level` (N ≥ 1). |
-| 30 |  | `list` | No | Yes | `ordered` | List container; `ordered` in {`true`,`false`}. |
+| 30 |  | `list` | No | Yes | `ordered` | List container; optional `ordered` in {`true`,`false`} defaults to `false`. |
 | 31 |  | `group` | No | Yes | `type?` | Generic group; no `location` tokens; associates composite content (e.g., captions/footnotes). |
 | 32 |  | `floating_group` | No | Yes | `class` in {`table`,`picture`,`form`,`code`} | Floating container that groups a floating component with its caption, footnotes, and metadata; no `location` tokens. |
 | 33 | Formatting Tokens | `bold` | No | No | — | Bold text. |
