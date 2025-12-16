@@ -17,7 +17,7 @@ This document was prepared by
 - Marlene Wolfgruber,
 - Maxime Vermeir,
 - Morgan Logue,
-- Alexander Eremenko,
+- Andrew Pery,
 - (FILL IN!).
 
 This International Standard specifies the DocTags format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
@@ -539,18 +539,282 @@ Here is an example:
   <!-- document content -->
 </doctag>
 ```
-##### Governance metadata
-In addition to the core metadata elements, publishers can optionally provide metadata pertaining to document governance. These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements. 
+##### Governance and compliance metadata
 
-- `licenses` Indicate one or more licenses covering use of the documents.
-- `data_classification` One or more data classifications can be given for the document content. In general, data classification is not globally standardized. Organizations usually define a classification system suitable for their respective mission. These elements allow an organization to classify document sensitivity in their own terms.
+In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
+These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
+
+Governance and compliance metadata MUST be expressed at the document level inside `<head>`.
+Component-level governance (e.g., component-specific redaction or extraction restrictions) MAY be expressed inside a component’s `<meta>` when appropriate.
+
+###### Standards reference and interpretation
+
+The standards referenced throughout this Governance and Compliance section are provided to support alignment, interpretation, and interoperability.
+They are **informative**, not normative, unless explicitly stated otherwise.
+
+These references are intended to:
+- Clarify regulatory or industry concepts reflected by the metadata elements
+- Assist implementers in mapping DocTags governance signals to existing compliance programs
+- Avoid re-defining legal or regulatory obligations within this standard
+
+DocTags governance metadata does **not** claim conformance to any listed framework by itself.
+Rather, it provides structured, machine-readable signals that downstream systems MAY use to support compliance, risk management, and audit workflows.
+
+The following standards and regulations are commonly referenced:
+
+| Standard / Regulation | Scope and relevance |
+|---|---|
+| **GDPR (EU General Data Protection Regulation)** | Governs processing of personal data, including lawful basis, purpose limitation, data minimization, retention, data subject rights, and cross-border transfer obligations. |
+| **EU AI Act** | Establishes obligations related to AI system risk categories, data governance, transparency, and human oversight for AI systems placed on or used within the EU. |
+| **ISO/IEC 27001** | International standard for information security management systems (ISMS), covering access control, asset management, logging, and security controls. |
+| **ISO/IEC 27701** | Extension to ISO/IEC 27001 focused on privacy information management (PIMS), including controller/processor roles and personal data handling. |
+| **ISO/IEC 23894** | Guidance on AI risk management, including lifecycle governance, human oversight, and accountability for AI systems. |
+| **HIPAA** | U.S. regulation governing protected health information (PHI), including privacy, security, and breach notification requirements. |
+| **PCI DSS** | Security standard for handling payment card data, including storage, processing, and transmission controls. |
+| **FedRAMP** | U.S. government program defining security requirements for cloud services used by federal agencies. |
+
+Where multiple standards are referenced for a single metadata element, the intent is to indicate conceptual alignment rather than impose cumulative obligations.
+Implementers SHOULD consult authoritative sources and legal counsel to determine applicability within their specific legal and regulatory context.
+
+###### Governance narrative and flow
+
+Governance metadata is intended to travel with the document and provide downstream systems with machine-readable constraints.
+The diagram below illustrates how the four governance areas map to common document-to-AI workflows.
+
+```mermaid
+flowchart LR
+  D["Document content<br/>(DocTags body)"] --> H["<head><br/>Governance metadata"]
+
+  H --> PII["Privacy & PII controls<br/>(pii_*)"]
+  H --> EXT["Extraction controls<br/>(extraction_*)"]
+  H --> RAG["RAG controls<br/>(rag_*)"]
+  H --> TRN["Training controls<br/>(training_*)"]
+
+  D --> X["Extraction pipeline"]
+  EXT --> X
+  PII --> X
+  X --> XD["Extracted dataset / fields"]
+
+  D --> I["Index/Embed pipeline"]
+  RAG --> I
+  PII --> I
+  I --> E["Embeddings / index"]
+
+  E --> Q["Retrieve"]
+  RAG --> Q
+  Q --> M["Model inference"]
+  M --> O["Output"]
+  RAG --> O
+  PII --> O
+
+  D --> T["Training / fine-tuning pipeline"]
+  TRN --> T
+  PII --> T
+  T --> TD["Training dataset"]
+  T --> TM["Trained model"]
+```
+
+###### Naming and terminology conventions
+
+This section uses the following terminology consistently:
+
+- **RAG** refers to retrieval-augmented generation workflows that embed/index content and retrieve it at inference time.
+- **Extraction** refers to producing structured outputs (fields/records) derived from document content.
+- **Training** refers to using content for model training, fine-tuning, evaluation, or benchmarking.
+- **Artifacts** refers to derived outputs created by processing the document (e.g., extracted datasets, embeddings/indexes, caches, training datasets).
+
+Where an element carries an enumerated value (e.g., `pii_status`, `rag_embedding_scope`), implementations SHOULD use a controlled vocabulary.
+Where an element carries a boolean, implementations SHOULD use explicit `true` / `false` values.
+
+###### Governance overview
+
+Governance metadata is intended to be machine-actionable: it should enable downstream systems (including AI systems) to determine what is permitted, under what constraints, and with what obligations.
+
+###### Licensing and rights
+
+- `licenses` Indicate one or more licenses covering use of the document.
+
+###### Data classification and privacy posture
+
+- `data_classification` One or more data classifications can be given for the document content.
+  In general, data classification is not globally standardized. Organizations usually define a classification system suitable for their respective mission.
+  These elements allow an organization to classify document sensitivity in their own terms.
+
+###### Acceptable use and purpose limitation
+
 - `acceptable_use` Organizations may express acceptable use cases for the provided document data.
-- `stewardship` Provides the name of a person and/or organization with governance responsibility at the document owning  organzation.
-- `access_policy` Provides the ability to express access policy as well as enumerate roles allowed to access the data. Similar to data classification, there are no standards specifying role semantics. This element allows organizations to describe access policy and roles in their own terms.
-- `retention_policy` Allows organizations to state retention objectives for the document data.
-- `compliance_requirements` States the compliance frameworks - regulatory or industrial - governing the lifecycle and use of the documents.
 
-Example use of these elements is shown below:
+###### Stewardship and contact
+
+- `stewardship` Provides the name of a person and/or organization with governance responsibility at the document owning organization.
+
+###### Access control policy
+
+- `access_policy` Provides the ability to express access policy as well as enumerate roles allowed to access the data.
+  Similar to data classification, there are no standards specifying role semantics.
+  This element allows organizations to describe access policy and roles in their own terms.
+
+###### Retention and deletion
+
+- `retention_policy` Allows organizations to state retention objectives for the document data.
+
+###### Compliance frameworks
+
+- `compliance_requirements` States the compliance frameworks (regulatory or industrial) governing the lifecycle and use of the documents.
+
+###### Privacy and PII controls
+
+This subsection defines governance signals related to personal data detection, sensitivity, and permitted handling.
+Implementations SHOULD use these elements to drive privacy-aware processing (e.g., redaction, restricted access, minimization).
+
+The following optional elements MAY be provided to describe personal data presence, sensitivity, permitted processing, and privacy-related obligations.
+Unless otherwise required by an implementation, these elements are intended to be expressed at the document level inside `<head>`.
+
+| Element | Purpose | Standards alignment (non-exhaustive) |
+|---|---|---|
+| `pii_status` | Indicates whether the document contains PII. | ISO 27701; ISO 27001 A.5/A.8; GDPR Art. 4(1), 5(1) |
+| `pii_sensitivity_level` | Classifies the sensitivity level of detected PII. | ISO 27701; GDPR Art. 9–10 |
+| `pii_source_type` | Identifies the origin/source of PII (e.g., provided by user, derived, third-party). | GDPR Art. 13–14 |
+| `controller_processor_role` | Defines the organizational role for processing (controller/processor or equivalent). | GDPR Art. 24–28 |
+| `pii_processing_purpose` | Specifies the purpose of processing (purpose limitation). | GDPR Art. 5(1)(b), Art. 6 |
+| `pii_lawful_basis` | Records lawful basis for processing. | GDPR Art. 6(1) |
+| `special_category_condition` | Condition for processing special-category data (if applicable). | GDPR Art. 9(2) |
+| `pii_minimisation_status` | Indicates whether minimisation has been applied (data minimisation / privacy by design). | GDPR Art. 5(1)(c), Art. 25 |
+| `pii_transformation_level` | Indicates transformation applied to PII (e.g., redacted, masked, pseudonymized). | GDPR Recital 26; GDPR Art. 4(5) |
+| `reidentification_risk` | Expresses assessed risk of re-identification where transformations are used. | ISO 27701; GDPR Recital 26 |
+| `access_control_level` | Required access tier/controls for handling this document. | ISO 27001 A.9; GDPR Art. 32 |
+| `ai_use_restriction` | Indicates allowed AI uses or prohibitions for this document’s content. | GDPR Art. 5(1)(b–c) |
+| `cross_border_transfer_status` | Indicates whether cross-border transfers occur/are allowed. | GDPR Art. 44–49 |
+| `transfer_mechanism` | Indicates transfer mechanism where applicable (e.g., adequacy, SCCs). | GDPR Art. 45–47 |
+| `retention_category` | Indicates retention category for personal data contained in the document. | GDPR Art. 5(1)(e) |
+| `dsr_impact_flag` | Signals potential impact on data subject rights (DSR handling implications). | GDPR Art. 12–23 |
+| `dpia_required` | Indicates whether a DPIA is required for intended processing. | GDPR Art. 35–36 |
+| `children_pii_present` | Flags whether children’s data is present. | GDPR Art. 8 |
+| `automated_decisioning_relevance` | Indicates whether automated decision-making/profiling obligations apply. | GDPR Art. 22 |
+| `logging_monitoring_enabled` | Indicates whether logging/monitoring is enabled for access and processing (accountability/auditability). | ISO 27001 A.12/A.16; GDPR Art. 5(2) |
+
+Implementations SHOULD define controlled vocabularies (and, where applicable, boolean conventions) for these elements.
+If an organization already has established internal taxonomies for classification, purpose, lawful basis, access tiers, or transfer mechanisms, those SHOULD be used consistently.
+
+###### Data extraction controls
+
+This subsection defines governance signals that constrain automated extraction, transformation, and downstream use of extracted fields.
+Implementations SHOULD use these elements to ensure purpose limitation and auditability of extraction.
+
+The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the document.
+These elements are intended to guide downstream systems that perform field extraction, transformation, enrichment, or export.
+Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level using `<meta>` where finer-grained control is required.
+
+| Element | Purpose | Standards alignment (non-exhaustive) |
+|---|---|---|
+| `extraction_permitted` | Indicates whether automated data extraction is permitted at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `extraction_scope` | Defines which parts or components of the document may be extracted (e.g., full document, tables only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `extraction_purpose` | Specifies the allowed purpose(s) for extracted data. | GDPR Art. 5(1)(b); ISO 27701 |
+| `extraction_granularity` | Indicates permitted level of granularity (e.g., aggregate only, field-level, record-level). | GDPR Art. 5(1)(c) |
+| `pii_extraction_allowed` | Indicates whether PII may be included in extracted outputs. | GDPR Art. 6; ISO 27701 |
+| `sensitive_data_extraction_allowed` | Indicates whether special-category or sensitive data may be extracted. | GDPR Art. 9–10 |
+| `extraction_transformation_required` | Specifies required transformations during extraction (e.g., redaction, masking, pseudonymization). | GDPR Art. 25; Recital 26 |
+| `extraction_output_constraints` | Constrains allowed output formats or destinations for extracted data. | ISO 27001 A.8; GDPR Art. 32 |
+| `downstream_sharing_permitted` | Indicates whether extracted data may be shared with downstream systems or third parties. | GDPR Art. 5(1)(a,b); Art. 28 |
+| `downstream_usage_restrictions` | Specifies restrictions on how extracted data may be used downstream. | GDPR Art. 5(1)(b) |
+| `extraction_audit_required` | Indicates whether extraction activities must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
+| `extraction_audit_retention` | Specifies retention period for extraction audit logs. | GDPR Art. 5(1)(e) |
+| `human_in_the_loop_required` | Indicates whether human review/approval is required before or after extraction. | ISO 23894; ISO 27701 |
+| `automated_decisioning_dependency` | Indicates whether extracted data feeds automated decision-making systems. | GDPR Art. 22 |
+
+Implementations SHOULD define controlled vocabularies for scope, purpose, granularity, transformations, and output constraints.
+Where extraction interacts with PII, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
+
+###### RAG and retrieval controls
+
+This subsection defines governance signals that constrain whether and how document content may be embedded, indexed, chunked, retrieved, and presented to models during retrieval-augmented generation.
+Implementations SHOULD use these elements to control exposure, leakage risk, and attribution requirements.
+
+The following optional elements MAY be provided to govern whether and how document content may be embedded, indexed, retrieved, and surfaced to models or users as part of retrieval-augmented generation (RAG) workflows.
+These elements are intended to control exposure risk, attribution, and downstream use of retrieved content.
+Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level using `<meta>` where finer-grained control is required.
+
+| Element | Purpose | Standards alignment (non-exhaustive) |
+|---|---|---|
+| `rag_permitted` | Indicates whether the document may be used in RAG workflows at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `rag_indexing_allowed` | Indicates whether the document content may be indexed or embedded for retrieval. | GDPR Art. 5(1)(b,c); ISO 27001 A.8 |
+| `rag_embedding_scope` | Defines which parts or components of the document may be embedded (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `rag_chunking_constraints` | Specifies constraints on chunking strategy (e.g., max size, boundaries, semantic-only). | ISO 23894; privacy-by-design principles |
+| `rag_query_restrictions` | Defines restrictions on the types of queries that may retrieve this content. | GDPR Art. 5(1)(b) |
+| `rag_output_attribution_required` | Indicates whether attribution or citation is required when content is retrieved or surfaced. | ISO 27001 A.18; copyright best practice |
+| `rag_output_transformation_required` | Specifies required transformations on retrieved content (e.g., summarization, redaction). | GDPR Art. 25; Recital 26 |
+| `rag_pii_exposure_allowed` | Indicates whether retrieved content may expose PII. | GDPR Art. 6; Art. 32 |
+| `rag_sensitive_data_exposure_allowed` | Indicates whether special-category or sensitive data may be exposed via retrieval. | GDPR Art. 9–10 |
+| `rag_downstream_sharing_permitted` | Indicates whether retrieved content may be shared beyond the immediate RAG response. | GDPR Art. 5(1)(a,b); Art. 28 |
+| `rag_caching_allowed` | Indicates whether retrieved content may be cached for performance or reuse. | ISO 27001 A.8; GDPR Art. 5(1)(e) |
+| `rag_cache_retention` | Specifies retention period for cached embeddings or retrieved content. | GDPR Art. 5(1)(e) |
+| `rag_audit_required` | Indicates whether retrieval events must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
+| `rag_audit_retention` | Specifies retention period for RAG access and retrieval logs. | GDPR Art. 5(1)(e) |
+| `rag_model_scope` | Restricts which models or model classes may access this content via RAG. | ISO 23894; internal governance |
+
+Implementations SHOULD define controlled vocabularies for embedding scope, chunking constraints, query restrictions, and model scope.
+Where RAG interacts with PII or sensitive data, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
+
+###### Document training controls
+
+This subsection defines governance signals that constrain whether and how document content may be used for training, fine-tuning, or evaluation of models.
+Implementations SHOULD use these elements to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
+
+The following optional elements MAY be provided to govern whether and how document content may be used for model training, fine-tuning, evaluation, or benchmarking.
+These elements are intended to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
+Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level using `<meta>` where finer-grained control is required.
+
+| Element | Purpose | Standards alignment (non-exhaustive) |
+|---|---|---|
+| `training_permitted` | Indicates whether the document may be used for any form of model training or fine-tuning. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `training_scope` | Defines which parts or components of the document may be used for training (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `training_purpose` | Specifies the intended purpose of training (e.g., general models, domain-specific models, evaluation only). | GDPR Art. 5(1)(b) |
+| `training_model_type` | Restricts the types or classes of models that may be trained using this content. | ISO 23894; internal governance |
+| `training_data_retention` | Specifies retention period for training datasets derived from this document. | GDPR Art. 5(1)(e) |
+| `training_dataset_reuse_allowed` | Indicates whether derived training datasets may be reused beyond the initial training purpose. | GDPR Art. 5(1)(b) |
+| `training_derivative_sharing_permitted` | Indicates whether trained models or derivatives may be shared with third parties. | GDPR Art. 28; licensing obligations |
+| `training_pii_included` | Indicates whether training data may include PII. | GDPR Art. 6; ISO 27701 |
+| `training_sensitive_data_included` | Indicates whether special-category or sensitive data may be included in training. | GDPR Art. 9–10 |
+| `training_transformation_required` | Specifies required transformations prior to training (e.g., anonymization, pseudonymization). | GDPR Art. 25; Recital 26 |
+| `training_provenance_required` | Indicates whether provenance metadata must be retained for training records. | ISO 27001 A.12; AI accountability best practice |
+| `training_audit_required` | Indicates whether training usage must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
+| `training_audit_retention` | Specifies retention period for training-related audit logs. | GDPR Art. 5(1)(e) |
+| `model_output_usage_constraints` | Specifies constraints on use of models trained on this content (e.g., internal-only, non-commercial). | Licensing and IP best practice |
+| `right_to_be_forgotten_applicability` | Indicates whether erasure obligations apply to trained models or datasets. | GDPR Art. 17; emerging AI guidance |
+
+Implementations SHOULD define controlled vocabularies for training scope, purpose, model type, and transformation requirements.
+Where training involves personal or sensitive data, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
+
+###### Minimal and full governance profiles
+
+Implementations may adopt either a minimal governance profile (recommended baseline) or a full governance profile (richer control surface).
+These profiles are informative and provided to encourage consistent adoption.
+
+**Minimal profile (recommended baseline)**
+
+| Area | Recommended elements |
+|---|---|
+| Licensing & compliance | `licenses`, `compliance_requirements` |
+| Classification & access | `data_classification`, `access_policy` (or `access_control_level` where used), `retention_policy` |
+| PII | `pii_status`, `pii_sensitivity_level` (when `pii_status` is `present`) |
+| Extraction | `extraction_permitted`, `pii_extraction_allowed` |
+| RAG | `rag_permitted`, `rag_indexing_allowed`, `rag_pii_exposure_allowed` |
+| Training | `training_permitted`, `training_pii_included` |
+
+**Full profile (expanded control surface)**
+
+The full profile includes the minimal profile plus additional elements from the PII, Extraction, RAG, and Training subsections to express:
+- purpose limitation and lawful basis
+- component-level scope constraints
+- transformation requirements (redaction/masking/pseudonymization)
+- caching/index retention and auditability
+- model scope restrictions and provenance requirements
+
+Producers SHOULD avoid emitting elements with ambiguous free-text values when a controlled vocabulary is available.
+
+###### Example
+
+Example use of the governance and compliance elements is shown below:
 
 ```xml
 <doctag>
@@ -562,20 +826,19 @@ Example use of these elements is shown below:
     </author_info>
     <date>2024-01-01</date>
     <language classifier="fastText" score="0.7">eng</language>
-    <language classifier="fastText" score="0.2">spa</language>
     <topic topic_taxonomy="taxonomy" score="0.5">Technology</topic>
     <document_hash hash_function="sha256sum"/>75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
     <summary>This is a summary of the document</summary>
     <generated_by>example_vlm_org/example_vlm_name</generated_by>
 
     <licenses>
-     <license>https://www.apache.org/licenses/LICENSE-2.0</license>
+      <license>https://www.apache.org/licenses/LICENSE-2.0</license>
     </licenses>
 
     <data_classification>
       <data_class>confidential</data_class>
       <data_class>personal information</data_class>
-    </data_classificiation>
+    </data_classification>
 
     <acceptable_use>
       <purpose>General-purpose language models</purpose>
@@ -583,28 +846,28 @@ Example use of these elements is shown below:
     </acceptable_use>
 
     <stewardship>
-       <steward>
-         <name>Charles Owens</name>
-         <contact>abc@some.org</contact>
-         <org>Dataset Organzation</org>
+      <steward>
+        <name>Charles Owens</name>
+        <contact>abc@some.org</contact>
+        <org>Dataset Organization</org>
       </steward>
-    <stewardship>
+    </stewardship>
 
     <access_policy>
       <policy>
         <ref>http://www.some.org/policies/AC-2345</ref>
         <roles>
-           <role>viewer</role>
-           <role>reader</role>
+          <role>viewer</role>
+          <role>reader</role>
         </roles>
       </policy>
-    </acess_policy>
+    </access_policy>
 
     <retention_policy>
       <policy>
         <ref>http://www.some.org/policies/AC-2345</ref>
         <retention_period unit="year">5</retention_period>
-        <deletion_method>permamenent secure deletion</<deletion_method>>
+        <deletion_method>permanent secure deletion</deletion_method>
         <documentation>record deletion event, date, method and personnel responsible</documentation>
       </policy>
     </retention_policy>
@@ -621,6 +884,116 @@ Example use of these elements is shown below:
   <!-- document content -->
 </doctag>
 ```
+
+###### Consolidated example (PII + extraction + RAG + training)
+
+The following example illustrates a single `<head>` that combines Privacy and PII controls, Data extraction controls, RAG and retrieval controls, and Document training controls.
+Implementations MAY choose to interpret these as organization-wide defaults for the document, and MAY override at component level using `<meta>` for finer-grained control.
+
+```xml
+<doctag>
+  <head>
+    <!-- core metadata (illustrative) -->
+    <title>Customer Support Case File</title>
+    <date>2025-01-15</date>
+    <language classifier="fastText" score="0.92">eng</language>
+    <generated_by>example_pipeline/doc_ingest_v2</generated_by>
+
+    <!-- licensing / classification / compliance (existing governance elements) -->
+    <licenses>
+      <license>https://www.apache.org/licenses/LICENSE-2.0</license>
+    </licenses>
+
+    <data_classification>
+      <data_class>confidential</data_class>
+      <data_class>personal information</data_class>
+    </data_classification>
+
+    <acceptable_use>
+      <purpose>Customer support automation</purpose>
+      <purpose>Internal analytics</purpose>
+    </acceptable_use>
+
+    <compliance_requirements>
+      <compliance_req>GDPR</compliance_req>
+      <compliance_req>ISO/IEC 27001</compliance_req>
+      <compliance_req>ISO/IEC 27701</compliance_req>
+    </compliance_requirements>
+
+    <!-- Privacy and PII controls -->
+    <pii_status>present</pii_status>
+    <pii_sensitivity_level>medium</pii_sensitivity_level>
+    <pii_source_type>user_provided</pii_source_type>
+    <controller_processor_role>controller</controller_processor_role>
+    <pii_processing_purpose>case_resolution</pii_processing_purpose>
+    <pii_lawful_basis>legitimate_interest</pii_lawful_basis>
+    <pii_minimisation_status>applied</pii_minimisation_status>
+    <pii_transformation_level>pseudonymized</pii_transformation_level>
+    <reidentification_risk>low</reidentification_risk>
+    <access_control_level>restricted</access_control_level>
+    <ai_use_restriction>no_general_training</ai_use_restriction>
+    <cross_border_transfer_status>not_permitted</cross_border_transfer_status>
+    <retention_category>support_case_records</retention_category>
+    <dsr_impact_flag>true</dsr_impact_flag>
+    <dpia_required>false</dpia_required>
+    <logging_monitoring_enabled>true</logging_monitoring_enabled>
+
+    <!-- Data extraction controls -->
+    <extraction_permitted>true</extraction_permitted>
+    <extraction_scope>tables_and_forms_only</extraction_scope>
+    <extraction_purpose>case_metrics</extraction_purpose>
+    <extraction_granularity>field_level</extraction_granularity>
+    <pii_extraction_allowed>false</pii_extraction_allowed>
+    <sensitive_data_extraction_allowed>false</sensitive_data_extraction_allowed>
+    <extraction_transformation_required>redact</extraction_transformation_required>
+    <extraction_output_constraints>internal_systems_only</extraction_output_constraints>
+    <downstream_sharing_permitted>false</downstream_sharing_permitted>
+    <extraction_audit_required>true</extraction_audit_required>
+    <extraction_audit_retention unit="day">90</extraction_audit_retention>
+    <human_in_the_loop_required>true</human_in_the_loop_required>
+
+    <!-- RAG and retrieval controls -->
+    <rag_permitted>true</rag_permitted>
+    <rag_indexing_allowed>true</rag_indexing_allowed>
+    <rag_embedding_scope>summaries_only</rag_embedding_scope>
+    <rag_chunking_constraints>max_512_tokens</rag_chunking_constraints>
+    <rag_query_restrictions>support_intent_only</rag_query_restrictions>
+    <rag_output_attribution_required>true</rag_output_attribution_required>
+    <rag_output_transformation_required>summarize_and_redact</rag_output_transformation_required>
+    <rag_pii_exposure_allowed>false</rag_pii_exposure_allowed>
+    <rag_sensitive_data_exposure_allowed>false</rag_sensitive_data_exposure_allowed>
+    <rag_downstream_sharing_permitted>false</rag_downstream_sharing_permitted>
+    <rag_caching_allowed>true</rag_caching_allowed>
+    <rag_cache_retention unit="day">30</rag_cache_retention>
+    <rag_audit_required>true</rag_audit_required>
+    <rag_audit_retention unit="day">90</rag_audit_retention>
+    <rag_model_scope>enterprise_internal_models</rag_model_scope>
+
+    <!-- Document training controls -->
+    <training_permitted>false</training_permitted>
+    <training_scope>none</training_scope>
+    <training_purpose>none</training_purpose>
+    <training_model_type>none</training_model_type>
+    <training_dataset_reuse_allowed>false</training_dataset_reuse_allowed>
+    <training_derivative_sharing_permitted>false</training_derivative_sharing_permitted>
+    <training_pii_included>false</training_pii_included>
+    <training_sensitive_data_included>false</training_sensitive_data_included>
+    <training_provenance_required>true</training_provenance_required>
+    <training_audit_required>true</training_audit_required>
+    <training_audit_retention unit="day">365</training_audit_retention>
+    <model_output_usage_constraints>internal_only</model_output_usage_constraints>
+    <right_to_be_forgotten_applicability>true</right_to_be_forgotten_applicability>
+
+  </head>
+  <!-- document content -->
+</doctag>
+```
+
+Notes:
+
+- The example uses illustrative values. Implementations SHOULD define controlled vocabularies for enums such as `pii_status`, `pii_sensitivity_level`, `extraction_scope`, `rag_embedding_scope`, and `training_model_type`.
+- When `training_permitted` is `false`, implementations SHOULD treat training-related fields as either omitted or set to explicit "none" values.
+- Where retention elements include a `unit` attribute, producers MUST use consistent units and pre-normalized values.
 
 ### The `meta` Element
 
