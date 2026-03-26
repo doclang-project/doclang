@@ -1,4 +1,4 @@
-# ISO XXX - DocTags: Universal Document Markup Format (Revised)
+# ISO XXX - Doclang: Universal Document Markup Format (Revised)
 
 ## Foreword
 
@@ -24,13 +24,13 @@ This document was prepared by
 | Yousaf Shah | IBM | syshah@us.ibm.com |
 | Maroun Touma | IBM | touma@us.ibm.com |
 
-This International Standard specifies the DocTags format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
+This International Standard specifies the Doclang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
 ## Introduction
 
 The proliferation of digital documents across diverse formats (PDF, HTML, Word, etc.) has created significant challenges in document processing, conversion, and understanding. These were mainly designed for efficient rendering and often result in loss of semantic information, structural relationships, or geometric context during document conversion.
 
-DocTags addresses these challenges by providing a minimalist, unambiguous markup format that:
+Doclang addresses these challenges by providing a minimalist, unambiguous markup format that:
 
 - Preserves complete document structure and semantics
 - Maintains geometric and layout information when appropriate
@@ -45,7 +45,7 @@ This standard builds upon research in document understanding and is intended to 
 
 This standard specifies:
 
-- The syntax and semantics of the DocTags markup language
+- The syntax and semantics of the Doclang markup language
 - Rules for encoding document structure, content, and metadata
 - Primitives for representing geometric layout and pagination
 - Methods for expressing formatting and text direction
@@ -57,7 +57,7 @@ This standard specifies:
 The motivation for this new markup language is twofold,
 
 1. It is created from the ground up to be able to represent complex, multimodal content with visual grounding in plain text with markup
-2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between DocTags tokens and LLM tokens) and efficiently (== minimal token count).
+2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between Doclang tokens and LLM tokens) and efficiently (== minimal token count).
 
 As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
 
@@ -68,21 +68,22 @@ Such requirements preclude us from using existing markup languages such as Markd
 <figure style="text-align: left">
     <img src="resources/html_v_otsl.png"
          alt="HTML vs OTSL" style="width:700px">
-    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to Doctags (OTSL tags). HTML sequence is both longer and uses more tokens than Doctags/OTSL</figcaption>
+    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to Doclang (OTSL tags). HTML sequence is both longer and uses more tokens than Doclang/OTSL</figcaption>
 </figure>
 
+<!-- TODO: update image text for Doclang: replace <section> with <heading>, add CDATA in <code> -->
 <figure style="text-align: left">
-    <img src="resources/doctags_example.png"
+    <img src="resources/doclang_example.png"
          alt="HTML vs OTSL" style="width:1000px">
-    <figcaption>Examples of real-world document fragments and their Doctags representation</figcaption>
+    <figcaption>Examples of real-world document fragments and their Doclang representation</figcaption>
 </figure>
 
 A specific class of related formats is the one operating on the OCR level, including [PageXML](https://github.com/PRImA-Research-Lab/PAGE-XML), [ALTO XML](https://github.com/altoxml), and [hOCR](https://github.com/kba/hocr-spec).
 
-Beyond certain low-level similarities (e.g. presence of bounding box information), the DocTags format is significantly differentiated as it is designed to be AI-native:
+Beyond certain low-level similarities (e.g. presence of bounding box information), the Doclang format is significantly differentiated as it is designed to be AI-native:
 
-- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocTags is designed for LLM/VLM generation, with token efficiency in mind.
-- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocTags also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
+- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while Doclang is designed for LLM/VLM generation, with token efficiency in mind.
+- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, Doclang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
 
 ## Terminology
 
@@ -101,9 +102,9 @@ Adopted from HTML:
 - **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line and occupying the full width of its container; a typical HTML example is the `p` element (paragraph).
 - **inline element**: An element that can be used within block element to shape its in-line structure; a typical HTML example is the `span` element.
 
-Native to DocTags:
+Native to Doclang:
 
-- **(DocTags) token**: A low-level symbol capturing some aspect of a document or of a component thereof, expressed as a tag.
+- **(Doclang) token**: A low-level symbol capturing some aspect of a document or of a component thereof, expressed as a tag.
 
 <!-- for internal use:
 Docling:
@@ -122,7 +123,7 @@ This denotes an `elem` element, including its properties (`size` and `color`) an
 For an element with multiple possible property values, the attribute syntax can lead to an increased complexity of the respective possible tokenized representations.
 For instance, the following could all be valid variants of an `elem` start tag: `<elem size="300" color="#aabbcc">`, `<elem size="42">`, `<elem color="#112233">`, `<elem>`.
 
-Aiming at LLM-friendliness, in such cases, the ISO DocTags format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
+Aiming at LLM-friendliness, in such cases, the ISO Doclang format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
 The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, self-closing elements are used too.
 
 This representation can reduce the number of tokens, making it easier for language models to learn and predict.
@@ -138,18 +139,18 @@ The content of the elements is encoded according to the following rules:
   - either by escaping with the respective XML entities, e.g. `<` becomes `&lt;`,
   - or using the CDATA section syntax, e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`
 
-## DocTags Structure
+## Doclang Structure
 
-DocTags is a constrained subset of XML with the following characteristics:
+Doclang is a constrained subset of XML with the following characteristics:
 
 - Simplified syntax with a finite set of allowed tags
 - Constrained use of attributes on most elements
 - Character-based encoding using legal Unicode characters (except Null)
 - Standard XML parsing rules apply for markup vs content distinction
 
-DocTags defines the following categories of elements:
+Doclang defines the following categories of elements:
 
-- **special**: Elements that establish document scope and pagination, such as `doctag`, `page_break`, and `time_break`.
+- **special**: Elements that establish document scope and pagination, such as `doclang`, `page_break`, and `time_break`.
 - **provenance**: Elements that can provide visual or time grounding. The visual grounding is necessary for documents with pagination, the temporal grounding is necessary for audio based documents (music and movies).
   - **geometric**: Elements that capture geometric position as normalized coordinates/bounding boxes (via repeated `location`) anchoring block-level content to the page.
   - **time**: Elements that capture temporal positions using `<hour value={integer}/><minute value={integer}/><second value={integer}/><centisecond value={integer}/>` for a timestamp and a double timestamp for time intervals.
@@ -166,29 +167,29 @@ DocTags defines the following categories of elements:
 
 These elements have a specific purpose in defining the high-level structure of the document.
 
-#### The `doctag` Element
+#### The `doclang` Element
 
-Every DocTags document is wrapped in a `<doctag>` root element.
+Every Doclang document is wrapped in a `<doclang>` root element.
 
 Here is an example:
 
 ```xml
-<doctag>
+<doclang>
   <!-- rest of the document -->
-</doctag>
+</doclang>
 ```
 
 #### The `version` Attribute
 
-The `doctag` root element MAY carry an optional `version` attribute following Semantic Versioning (MAJOR.MINOR.PATCH).
+The `doclang` root element MAY carry an optional `version` attribute following Semantic Versioning (MAJOR.MINOR.PATCH).
 When no version is specified, the default is `1.0.0`.
 
 Example:
 
 ```xml
-<doctag version="1.0.0">
+<doclang version="1.0.0">
   <!-- rest of the document -->
-</doctag>
+</doclang>
 ```
 
 #### The `page_break` Element
@@ -198,28 +199,28 @@ A paginated document may be divided into pages using the `<page_break/>` empty-e
 Here is an example:
 
 ```xml
-<doctag>
+<doclang>
   <!-- first page content -->
   <page_break/>
   <!-- second page content -->
-</doctag>
+</doclang>
 ```
 
-The content between two `<page_break/>` is in itself a doctag document, if it is sandwiched between `<doctag>...</doctag>`.
+The content between two `<page_break/>` is in itself a Doclang document, if it is sandwiched between `<doclang>...</doclang>`.
 
 #### The `time_break` Element
 
 Audio-based documents may be divided into timed segments. These timed segments can be indicated by the `<time_break/>` symbol.
 
 ```xml
-<doctag>
+<doclang>
   <!-- first page content -->
   <time_break/>
   <!-- second page content -->
-</doctag>
+</doclang>
 ```
 
-The content between two `<time_break/>` is in itself a doctag document, if it is sandwiched between `<doctag>...</doctag>`.
+The content between two `<time_break/>` is in itself a Doclang document, if it is sandwiched between `<doclang>...</doclang>`.
 
 ### Provenance Elements
 
@@ -387,7 +388,7 @@ Lists
 
 ### Optimized Table Structure Language (OTSL)
 
-Tabular structure and header semantics in DocTags represented by optimized table-structure language (OTSL) tokens.
+Tabular structure and header semantics in Doclang represented by optimized table-structure language (OTSL) tokens.
 
 Each new cell OTSL token (`<fcel/>` with its semantic variants) is interleaved by the sequence of appropriate table cell content tokens (texts, lists, etc.).
 OTSL representation has minimized vocabulary and specific rules.
@@ -464,7 +465,7 @@ Example:
 The present standard does not prescribe the specific `facets` content, but a possible instantiation could be:
 
 ```xml
-<doctag>
+<doclang>
   <picture>
     <facets>
       <summary>This image shows the distribution of the various data points in the dataset</summary>
@@ -473,7 +474,7 @@ The present standard does not prescribe the specific `facets` content, but a pos
     <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
     <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
   </picture>
-</doctag>
+</doclang>
 ```
 
 ### Metadata Elements
@@ -494,7 +495,7 @@ element within the respective component element. We discuss the details in the s
 
 #### The `head` Element
 
-After the optional `version` element, the `doctag` element can continue with an optional `<head>` element.
+After the optional `version` element, the `doclang` element can continue with an optional `<head>` element.
 Below we list the reserved core metadata elements to be used within `<head>`:
 
 - `title`
@@ -511,7 +512,7 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 Here is an example:
 
 ```xml
-<doctag>
+<doclang>
   <head>
     <!-- reserved elements -->
     <title>My Company's Annual Report</title>
@@ -541,7 +542,7 @@ Here is an example:
     <my_company_hap_filter_profanity/>0.1</my_company_hap_filter_profanity>
   </head>
   <!-- document content -->
-</doctag>
+</doclang>
 ```
 ##### Governance metadata
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to document governance. These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
@@ -557,7 +558,7 @@ In addition to the core metadata elements, publishers can optionally provide met
 Example use of these elements is shown below:
 
 ```xml
-<doctag>
+<doclang>
   <head>
     <!-- reserved elements -->
     <title>My Company's Annual Report</title>
@@ -623,7 +624,7 @@ Example use of these elements is shown below:
 
   </head>
   <!-- document content -->
-</doctag>
+</doclang>
 ```
 
 ### The `meta` Element
@@ -639,7 +640,7 @@ Below we list the reserved metadata elements to be used within `<meta>`:
 Here is an example usage, for instance considering a picture:
 
 ```xml
-<doctag>
+<doclang>
   <picture>
     <meta>
       <summary>This image shows the distribution of the various data points in the dataset</summary>
@@ -648,7 +649,7 @@ Here is an example usage, for instance considering a picture:
     <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
     <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
   </picture>
-</doctag>
+</doclang>
 ```
 
 ### Continuation Tokens
@@ -703,7 +704,7 @@ Examples:
 
 ### Vector graphics Elements
 
-If you want to include vector graphics elements, DocTags allow you to include SVG: enclosed in `<svg> ... </svg>`.
+If you want to include vector graphics elements, Doclang allow you to include SVG: enclosed in `<svg> ... </svg>`.
 
 ## Grammar and Structure Rules
 
@@ -712,7 +713,7 @@ If you want to include vector graphics elements, DocTags allow you to include SV
 In the simplest document example, document elements are in a flat list,
 
 ```xml
-<doctag version="1.0.0">
+<doclang version="1.0.0">
   <heading level="1">Research Paper Title</heading>
   <heading level="2">Abstract</heading>
   <text>This paper presents...</text>
@@ -720,13 +721,13 @@ In the simplest document example, document elements are in a flat list,
   <text>In recent years...</text>
   <heading level="3">Background</heading>
   <text>Previous work has shown...</text>
-</doctag>
+</doclang>
 ```
 
 In case of page-layout information, the coordinates are provided only at the semantic element level. Coordinates are not allowed at the group level.
 
 ```xml
-<doctag version="1.0.0">
+<doclang version="1.0.0">
   <heading level="1">
     <location value="10"/><location value="20"/><location value="30"/><location value="40"/>
     Research Paper Title
@@ -746,7 +747,7 @@ In case of page-layout information, the coordinates are provided only at the sem
 
   <heading level="3">Background</heading>
   <text>Previous work has shown...</text>
-</doctag>
+</doclang>
 ```
 
 ### Code snippets
@@ -775,7 +776,7 @@ Basic inline code
   <br/>
   Code fragments can mix with <bold>formatting</bold> seamlessly.
   <br/>
-  Use backticks sparingly; DocTags uses explicit tokens instead.
+  Use backticks sparingly; Doclang uses explicit tokens instead.
   <br/>
   End of examples.
 
@@ -940,7 +941,7 @@ Notes
 
 ### Tables
 
-DocTags separates the table’s structure from its surrounding semantics:
+Doclang separates the table’s structure from its surrounding semantics:
 
 - `group`: Semantic container that may include `caption`, multiple `footnote` elements, and exactly one `otsl` child for the structure. Do not put coordinates on the `group`.
 - `otsl`: The structural table token sequence. Put the table region’s coordinates on `otsl` for each page fragment. Cells are created by structural tokens (e.g., `<fcel/>`, `<ched/>`) and their content follows immediately after each cell token.
@@ -1068,7 +1069,7 @@ Notes
 - Coordinates go on `otsl`, `caption`, and other semantic children; never on the `group`.
 - Row- and column-wise splits use `continue_row` and `continue_col` respectively; merge fragments by matching `id`s.
 - OTSL follows the rectangular rule; ensure each row has the same number of structural tokens up to `<nl/>`.
-- Rich cells can include any valid DocTags content; keep content immediately after the corresponding cell token.
+- Rich cells can include any valid Doclang content; keep content immediately after the corresponding cell token.
 
 ### Lists
 
@@ -2137,20 +2138,20 @@ Page breaks are complex components that interrupt the flow of a document. They c
 An easy example is below,
 
 ```xml
-<doctag>
+<doclang>
   <text><thread id="1"/>This paragraph spans across</text>
   <caption>Some caption</caption>
   <page_break/>
   <text><thread id="1"/>multiple pages.</text>
-</doctag>
+</doclang>
 ```
 
-Often, we have more complicated page breaks, in which a (nested) list is split across pages and further interrupted by other semantic elements (think page footers). In this case, we demand that all elements of the first page are added and/or closed **before** the page break and then opened again in the appropriate way after the page break, with the intent that the content in between the page breaks is a valid DocTags tree.
+Often, we have more complicated page breaks, in which a (nested) list is split across pages and further interrupted by other semantic elements (think page footers). In this case, we demand that all elements of the first page are added and/or closed **before** the page break and then opened again in the appropriate way after the page break, with the intent that the content in between the page breaks is a valid Doclang tree.
 
 A more complicated example is shown below in which we break the content of a list-item,
 
 ```xml
-<doctag>
+<doclang>
   <list class="ordered">
     <thread id="1"/>
     <list_text>First item</list_text>
@@ -2164,7 +2165,7 @@ A more complicated example is shown below in which we break the content of a lis
     <list_text><thread id="2"/>item</list_text>
   </list>
   ...
-</doctag>
+</doclang>
 ```
 
 Above, `<thread id="1"/>` captures that the list itself is split, while `<thread id="2"/>` captures that a particular
@@ -2176,7 +2177,7 @@ For tables that are broken across pages, we need to introduce two differnt token
 
 ### Parser Requirements
 
-A conforming DocTags parser SHALL:
+A conforming Doclang parser SHALL:
 
 1. **Syntax Validation**: Recognize all tokens defined in this standard
 2. **Geometric Processing**: Handle coordinate and bounding box elements correctly
@@ -2187,9 +2188,9 @@ A conforming DocTags parser SHALL:
 
 ### Serializer Requirements
 
-A conforming DocTags serializer SHALL:
+A conforming Doclang serializer SHALL:
 
-1. **Valid Output**: Generate syntactically correct DocTags documents
+1. **Valid Output**: Generate syntactically correct Doclang documents
 2. **Coordinate Normalization**: Ensure coordinates fit within specified resolution
 3. **Structure Preservation**: Maintain element hierarchy and relationships
 4. **Version Specification**: Include appropriate version information
@@ -2199,7 +2200,7 @@ A conforming DocTags serializer SHALL:
 
 #### Required Structure Validation
 
-- Root element must be `<doctag>`
+- Root element must be `<doclang>`
 - List items must appear only within list groupings
 - OTSL tokens must appear only within `<otsl>` elements
 - Continuation tokens must be properly paired
@@ -2269,7 +2270,7 @@ The `<class>` token supports extensible vocabularies:
 
 | # | Category | Token | Self-Closing [Yes/No] | Parametrized [Yes/No] | Attributes | Description |
 |---|----------|-------|-----------------------|-----------------------|------------|-------------|
-| 1 | Root Elements | `doctag` | No | Yes | `version` | Root container; optional semantic version `version`. |
+| 1 | Root Elements | `doclang` | No | Yes | `version` | Root container; optional semantic version `version`. |
 | 2 | Special Elements | `page_break` | Yes | No | — | Page delimiter. |
 | 3 |  | `time_break` | Yes | No | — | Temporal segment delimiter. |
 | 4 | Metadata Containers | `head` | No | No | — | Document-level metadata container. |
