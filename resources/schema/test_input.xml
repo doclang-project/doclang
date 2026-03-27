@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<doclang
+  xmlns="http://www.doclang.ai/schema/v1"
+  version="1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.doclang.ai/schema/v1 doclang.xsd"
+>
+
+  <!-- Example 0: Head element with arbitrary metadata -->
+  <head>
+    <title>Document Metadata</title>
+    <author>John Doe</author>
+    <date>2024-03-27</date>
+    <keywords>doclang, schema, test</keywords>
+    <custom-field type="internal">
+      <id>DOC-12345</id>
+      <status>draft</status>
+    </custom-field>
+  </head>
+
+  <!-- Example 1: Simple heading with level attribute -->
+  <heading level="1">Introduction</heading>
+
+  <!-- Example 1b: Title element -->
+  <title>Document Title: A Comprehensive Guide</title>
+
+  <!-- Example 1c: Title with formatting -->
+  <title>
+    <bold>Advanced Topics</bold> in <italic>Machine Learning</italic>
+  </title>
+
+  <!-- Example 1d: Code element with class attribute -->
+  <code class="python">
+    def hello_world():<br/>
+    <content>    print("Hello, World!")</content>
+  </code>
+
+  <!-- Example 1e: Code element without class attribute -->
+  <code>
+    SELECT * FROM users WHERE id = 1;
+  </code>
+
+  <!-- Example 1f: Code with formatting -->
+  <code class="java">
+    <bold>public</bold> class Main {<br/>
+    <content>    // Main method</content>
+  </code>
+
+  <!-- Example 1g: Formula element -->
+  <formula>
+    E = mc<superscript>2</superscript>
+  </formula>
+
+  <!-- Example 1h: Formula with complex formatting -->
+  <formula>
+    x = <superscript>-b ± √(b<superscript>2</superscript> - 4ac)</superscript> / <subscript>2a</subscript>
+  </formula>
+
+  <!-- Example 1i: Field region (empty) -->
+  <field_region>
+  </field_region>
+
+  <!-- Example 1j: Field region with text elements -->
+  <field_region>
+    <text>Name: John Doe</text>
+    <text>Email: john@example.com</text>
+    <text>Phone: +1-555-0123</text>
+  </field_region>
+
+  <!-- Example 1ka: Field heading with default level (1) -->
+  <field_heading>
+    <bold>Customer Information</bold>
+  </field_heading>
+
+  <!-- Example 1kb: Field heading with explicit level 1 -->
+  <field_heading level="1">
+    Section A: Personal Details
+  </field_heading>
+
+  <!-- Example 1kc: Field heading with level 2 -->
+  <field_heading level="2">
+    <italic>Subsection:</italic> Contact Information
+  </field_heading>
+
+  <!-- Example 1kd: Field heading with level 3 and nested elements -->
+  <field_heading level="3">
+    <text>Address Details</text>
+  </field_heading>
+
+  <!-- Example 1k: Field item with text -->
+  <field_item>
+    <text>Customer Name</text>
+  </field_item>
+
+  <!-- Example 1l: Key with inline formatting -->
+  <key>
+    <bold>Invoice Number:</bold>
+  </key>
+
+  <!-- Example 1la: Key with plain text (mixed content) -->
+  <key>Name:</key>
+
+  <!-- Example 1lb: Key with text and formatting mixed -->
+  <key>Customer <bold>ID</bold>:</key>
+
+  <!-- Example 1lc: Key with content element -->
+  <key>
+    <content>Email Address:</content>
+  </key>
+
+  <!-- Example 1ld: Key with multiple formatting -->
+  <key>
+    <bold>Customer</bold> <italic>Reference</italic> Number
+  </key>
+
+  <!-- Example 1m: Value with plain text (default read_only) -->
+  <value>INV-2024-001</value>
+
+  <!-- Example 1ma: Value with text and formatting mixed (explicit read_only) -->
+  <value class="read_only">Status: <bold>Active</bold></value>
+
+  <!-- Example 1mb: Value with content element (fillable) -->
+  <value class="fillable">
+    <content>john.doe@example.com</content>
+  </value>
+
+  <!-- Example 1mc: Value with formatting (fillable) -->
+  <value class="fillable">
+    <italic>Confidential</italic>
+  </value>
+
+  <!-- Example 1n: Field region with key-value pairs (mixed content and class attributes) -->
+  <field_region>
+    <key><bold>Name:</bold></key>
+    <value class="read_only">John Doe</value>
+    <key>Email:</key>
+    <value class="fillable"><content>john@example.com</content></value>
+    <key><italic>Phone:</italic></key>
+    <value class="fillable">+1-555-0123</value>
+    <key>Status:</key>
+    <value class="read_only">Active (<bold>Verified</bold>)</value>
+  </field_region>
+
+  <!-- Example 2: Text with formatting -->
+  <text>
+    This is <bold>bold text</bold> and this is <italic>italic text</italic>.
+  </text>
+
+  <!-- Example 2b: Text with content element (whitespace preserved by schema default) -->
+  <text>
+    <content>  This text   has    multiple    spaces   preserved  </content>
+  </text>
+
+  <!-- Example 3: New formatting elements -->
+  <text>
+    <strikethrough>deleted text</strikethrough>, <underline>underlined text</underline>, <superscript>x²</superscript>, and <subscript>H₂O</subscript>
+  </text>
+
+  <!-- Example 4: Picture with URI -->
+  <picture>
+    <uri>https://example.com/image.jpg</uri>
+  </picture>
+
+  <!-- Example 5: Picture with component header and URI (new location and layer syntax) -->
+  <picture>
+    <meta>image-metadata</meta>
+    <location value="10" resolution="72"/>
+    <location value="20" resolution="72"/>
+    <location value="200"/>
+    <location value="150"/>
+    <layer class="body"/>
+    <uri>https://example.com/photo.png</uri>
+  </picture>
+
+  <!-- Example 6: Picture without URI -->
+  <picture>
+    <meta>embedded-image</meta>
+  </picture>
+
+  <!-- Example 7: Caption element -->
+  <caption>Figure 1: Sample diagram showing the process flow</caption>
+
+  <!-- Example 8: Caption with formatting -->
+  <caption>
+    <bold>Table 1:</bold> <italic>Results of the experiment</italic>
+  </caption>
+
+  <!-- Example 8b: Page header element -->
+  <page_header>Document Title - Page 1</page_header>
+
+  <!-- Example 8c: Page header with formatting -->
+  <page_header>
+    <bold>Annual Report 2024</bold> | Section 3
+  </page_header>
+
+  <!-- Example 8d: Page footer element -->
+  <page_footer>Copyright © 2024 - Page 1 of 10</page_footer>
+
+  <!-- Example 8e: Page footer with formatting -->
+  <page_footer>
+    <italic>Confidential</italic> | Page <bold>5</bold>
+  </page_footer>
+
+  <!-- Example 9: Text with inline picture -->
+  <text>
+    This paragraph contains an inline <picture><uri>icon.svg</uri></picture> image.
+  </text>
+
+  <!-- Example 10: Text with hint element -->
+  <text>
+    This is important information <hint>hover for details</hint> in the text.
+  </text>
+
+  <!-- Example 11: Hint with formatted content -->
+  <text>
+    See the <hint><bold>tooltip</bold></hint> for more information.
+  </text>
+
+  <!-- Example 12: Text with line breaks -->
+  <text>
+    First line<br/>
+    Second line<br/>
+    Third line
+  </text>
+
+  <!-- Example 13: Text with checkbox (default unselected, explicit selected, explicit unselected) -->
+  <text>
+    Task list: <checkbox/> Item 1, <checkbox class="selected"/> Item 2, <checkbox class="unselected"/> Item 3
+  </text>
+
+  <!-- Example 14: Simple list with list_text -->
+  <list>
+    <list_text>Shopping list:</list_text>
+    <list_text>Apples</list_text>
+    <list_text>Bananas</list_text>
+    <list_text>Oranges</list_text>
+  </list>
+
+  <!-- Example 15: List with formatted list_text and checkboxes -->
+  <list>
+    <list_text><bold>To-Do List</bold></list_text>
+    <list_text><checkbox/> Complete task 1 <hint>due today</hint></list_text>
+    <list_text><checkbox/> Complete task 2</list_text>
+    <list_text><marker>!</marker> <italic>Important</italic> task 3</list_text>
+  </list>
+
+  <!-- Example 16: Simple OTSL table -->
+  <otsl>
+    <text>Cell 1</text>
+    <fcel/>
+    <text>Cell 2</text>
+    <nl/>
+    <text>Cell 3</text>
+    <fcel/>
+    <text>Cell 4</text>
+  </otsl>
+
+  <!-- Example 17: OTSL table with headers -->
+  <otsl>
+    <text>Header 1</text>
+    <ched/>
+    <text>Header 2</text>
+    <nl/>
+    <text>Data 1</text>
+    <fcel/>
+    <text>Data 2</text>
+  </otsl>
+
+  <!-- Example 18: Complex OTSL table with various separators -->
+  <otsl>
+    <text>Corner</text>
+    <corn/>
+    <text>Col Header</text>
+    <nl/>
+    <text>Row Header</text>
+    <rhed/>
+    <text>Data</text>
+    <nl/>
+    <text>Spanning</text>
+    <srow/>
+    <text>Row</text>
+  </otsl>
+
+  <!-- Example 19: Floating group with table -->
+  <floating_group class="table">
+    <caption>Table 1: Sample Data</caption>
+    <otsl>
+      <text>Name</text>
+      <fcel/>
+      <text>Age</text>
+      <nl/>
+      <text>Alice</text>
+      <fcel/>
+      <text>30</text>
+      <nl/>
+      <text>Bob</text>
+      <fcel/>
+      <text>25</text>
+    </otsl>
+  </floating_group>
+
+  <!-- Example 20: Floating group with picture -->
+  <floating_group class="picture">
+    <picture>
+      <meta>main-figure</meta>
+      <uri>diagram.svg</uri>
+    </picture>
+    <caption>Figure 2: System architecture diagram</caption>
+    <text>This diagram illustrates the overall system design.</text>
+  </floating_group>
+
+  <!-- Example 21: Floating group with multiple pictures -->
+  <floating_group class="picture">
+    <heading level="3">Photo Gallery</heading>
+    <picture>
+      <uri>photo1.jpg</uri>
+    </picture>
+    <caption>Photo 1</caption>
+    <picture>
+      <uri>photo2.jpg</uri>
+    </picture>
+    <caption>Photo 2</caption>
+  </floating_group>
+
+  <!-- Example 22: Text with complete component header (new layer syntax) -->
+  <text>
+    <meta>metadata-info</meta>
+    <location value="10"/>
+    <location value="20"/>
+    <location value="100"/>
+    <location value="50"/>
+    <layer class="furniture"/>
+    Regular text with <handwriting>handwritten notes</handwriting> and <marker>important</marker> markers.
+  </text>
+
+  <!-- Example 23: Caption with component header -->
+  <caption>
+    <meta>caption-meta</meta>
+    <location value="0"/>
+    <location value="200"/>
+    <location value="400"/>
+    <location value="220"/>
+    <layer class="background"/>
+    <bold>Figure 3:</bold> Complex visualization with <hint>interactive elements</hint>
+  </caption>
+
+  <!-- Example 24: Complex nested formatting -->
+  <text>
+    <hint><bold>This is bold with <italic>nested italic</italic> and tooltip</bold></hint>, plus <marker>mark</marker> and <checkbox/>.
+  </text>
+
+  <!-- Example 25: OTSL with component header and all separator types -->
+  <otsl>
+    <meta>table-meta-1</meta>
+    <location value="100"/>
+    <location value="100"/>
+    <location value="500"/>
+    <location value="300"/>
+    <text>A</text>
+    <fcel/>
+    <text>B</text>
+    <ecel/>
+    <text>C</text>
+    <nl/>
+    <text>D</text>
+    <lcel/>
+    <text>E</text>
+    <ucel/>
+    <text>F</text>
+    <xcel/>
+    <text>G</text>
+  </otsl>
+
+  <!-- Example 26: Floating group with table and multiple elements -->
+  <floating_group class="table">
+    <heading level="2">Sales Report</heading>
+    <text>Q1 2024 results:</text>
+    <otsl>
+      <meta>sales-table</meta>
+      <text>Product</text>
+      <ched/>
+      <text>Sales</text>
+      <nl/>
+      <text>Widget A</text>
+      <fcel/>
+      <text>$1000</text>
+      <nl/>
+      <text>Widget B</text>
+      <fcel/>
+      <text>$1500</text>
+    </otsl>
+    <caption>Table 2: Q1 Sales Data</caption>
+  </floating_group>
+
+  <!-- Example 27: All new formatting elements together -->
+  <text>
+    Normal text, <bold>bold</bold>, <italic>italic</italic>, <strikethrough>deleted</strikethrough>,
+    <superscript>superscript</superscript>, <subscript>subscript</subscript>,
+    <rtl>right-to-left</rtl>, and <handwriting>handwritten</handwriting>.
+  </text>
+
+  <!-- Example 28: Nested new formatting -->
+  <text>
+    <bold><strikethrough>Bold strikethrough</strikethrough></bold> and
+    <italic><superscript>Italic superscript</superscript></italic>
+  </text>
+
+  <!-- Example 29: Text with multiple line breaks -->
+  <text>
+    Paragraph 1<br/>
+    <br/>
+    Paragraph 2 after double break
+  </text>
+
+  <!-- Example 30: RTL text with formatting -->
+  <text>
+    <rtl>E<bold>D</bold>C<italic>B</italic>A</rtl>
+  </text>
+
+  <!-- Example 31: Scientific notation with super/subscript -->
+  <text>
+    E = mc<superscript>2</superscript> and H<subscript>2</subscript>O
+  </text>
+
+  <!-- Example 32: List with nested elements -->
+  <list>
+    <list_text>Data items:</list_text>
+    <text>First item</text>
+    <text>Second item</text>
+    <caption>List caption</caption>
+  </list>
+
+  <!-- Example 33: Layer with class attribute -->
+  <text>
+    <layer class="body"/>
+    Text with layer (body class)
+    <code>inline code and formula NOK</code>
+    <code><![CDATA[<bold>print("hi")</bold>]]></code>
+    <code><![CDATA[<bold>print("hi")</bold>]]></code>
+  </text>
+
+  <!-- Example 34: List with inline stuff -->
+  <list>
+    <list_text>
+      Text with inline stuff
+      <formula>
+        E = mc<superscript>2</superscript>
+      </formula>
+    </list_text>
+    <list_text>
+      <code><bold><content>print("hi")</content></bold></code>
+      <code><![CDATA[<bold>print("hi")</bold>]]></code>
+      <picture>
+        <uri>https://example.com/image.jpg</uri>
+      </picture>
+    </list_text>
+  </list>
+
+</doclang>
