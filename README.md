@@ -1,6 +1,6 @@
-# Doclang ISO standard
+# DocLang ISO standard
 
-This repo keeps all the documentation for the ISO standardization of Doclang.
+This repo keeps all the documentation for the ISO standardization of DocLang.
 
 ## ISO standard
 

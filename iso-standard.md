@@ -1,4 +1,4 @@
-# ISO XXX - Doclang: Universal Document Markup Format (Revised)
+# ISO XXX - DocLang: Universal Document Markup Format (Revised)
 
 ## Foreword
 
@@ -24,13 +24,13 @@ This document was prepared by
 | Yousaf Shah | IBM | syshah@us.ibm.com |
 | Maroun Touma | IBM | touma@us.ibm.com |
 
-This International Standard specifies the Doclang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
+This International Standard specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
 ## Introduction
 
 The proliferation of digital documents across diverse formats (PDF, HTML, Word, etc.) has created significant challenges in document processing, conversion, and understanding. These were mainly designed for efficient rendering and often result in loss of semantic information, structural relationships, or geometric context during document conversion.
 
-Doclang addresses these challenges by providing a minimalist, unambiguous markup format that:
+DocLang addresses these challenges by providing a minimalist, unambiguous markup format that:
 
 - Preserves complete document structure and semantics
 - Maintains geometric and layout information when appropriate
@@ -45,7 +45,7 @@ This standard builds upon research in document understanding and is intended to 
 
 This standard specifies:
 
-- The syntax and semantics of the Doclang markup language
+- The syntax and semantics of the DocLang markup language
 - Rules for encoding document structure, content, and metadata
 - Primitives for representing geometric layout and pagination
 - Methods for expressing formatting and text direction
@@ -57,7 +57,7 @@ This standard specifies:
 The motivation for this new markup language is twofold,
 
 1. It is created from the ground up to be able to represent complex, multimodal content with visual grounding in plain text with markup
-2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between Doclang tokens and LLM tokens) and efficiently (== minimal token count).
+2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between DocLang tokens and LLM tokens) and efficiently (== minimal token count).
 
 As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
 
@@ -68,22 +68,22 @@ Such requirements preclude us from using existing markup languages such as Markd
 <figure style="text-align: left">
     <img src="resources/html_v_otsl.png"
          alt="HTML vs OTSL" style="width:700px">
-    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to Doclang (OTSL tags). HTML sequence is both longer and uses more tokens than Doclang/OTSL</figcaption>
+    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to DocLang (OTSL tags). HTML sequence is both longer and uses more tokens than DocLang/OTSL</figcaption>
 </figure>
 
-<!-- TODO: update image text for Doclang: replace <section> with <heading>, add CDATA in <code> -->
+<!-- TODO: update image text for DocLang: replace <section> with <heading>, add CDATA in <code> -->
 <figure style="text-align: left">
     <img src="resources/doclang_example.png"
          alt="HTML vs OTSL" style="width:1000px">
-    <figcaption>Examples of real-world document fragments and their Doclang representation</figcaption>
+    <figcaption>Examples of real-world document fragments and their DocLang representation</figcaption>
 </figure>
 
 A specific class of related formats is the one operating on the OCR level, including [PageXML](https://github.com/PRImA-Research-Lab/PAGE-XML), [ALTO XML](https://github.com/altoxml), and [hOCR](https://github.com/kba/hocr-spec).
 
-Beyond certain low-level similarities (e.g. presence of bounding box information), the Doclang format is significantly differentiated as it is designed to be AI-native:
+Beyond certain low-level similarities (e.g. presence of bounding box information), the DocLang format is significantly differentiated as it is designed to be AI-native:
 
-- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while Doclang is designed for LLM/VLM generation, with token efficiency in mind.
-- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, Doclang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
+- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocLang is designed for LLM/VLM generation, with token efficiency in mind.
+- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocLang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
 
 ## Terminology
 
@@ -102,9 +102,9 @@ Adopted from HTML:
 - **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line and occupying the full width of its container; a typical HTML example is the `p` element (paragraph).
 - **inline element**: An element that can be used within block element to shape its in-line structure; a typical HTML example is the `span` element.
 
-Native to Doclang:
+Native to DocLang:
 
-- **(Doclang) token**: A low-level symbol capturing some aspect of a document or of a component thereof, expressed as a tag.
+- **(DocLang) token**: A low-level symbol capturing some aspect of a document or of a component thereof, expressed as a tag.
 
 <!-- for internal use:
 Docling:
@@ -123,7 +123,7 @@ This denotes an `elem` element, including its properties (`size` and `color`) an
 For an element with multiple possible property values, the attribute syntax can lead to an increased complexity of the respective possible tokenized representations.
 For instance, the following could all be valid variants of an `elem` start tag: `<elem size="300" color="#aabbcc">`, `<elem size="42">`, `<elem color="#112233">`, `<elem>`.
 
-Aiming at LLM-friendliness, in such cases, the ISO Doclang format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
+Aiming at LLM-friendliness, in such cases, the ISO DocLang format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
 The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, self-closing elements are used too.
 
 This representation can reduce the number of tokens, making it easier for language models to learn and predict.
@@ -139,16 +139,16 @@ The content of the elements is encoded according to the following rules:
   - either by escaping with the respective XML entities, e.g. `<` becomes `&lt;`,
   - or using the CDATA section syntax, e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`
 
-## Doclang Structure
+## DocLang Structure
 
-Doclang is a constrained subset of XML with the following characteristics:
+DocLang is a constrained subset of XML with the following characteristics:
 
 - Simplified syntax with a finite set of allowed tags
 - Constrained use of attributes on most elements
 - Character-based encoding using legal Unicode characters (except Null)
 - Standard XML parsing rules apply for markup vs content distinction
 
-Doclang defines the following categories of elements:
+DocLang defines the following categories of elements:
 
 - **special**: Elements that establish document scope and pagination, such as `doclang`, `page_break`, and `time_break`.
 - **provenance**: Elements that can provide visual or time grounding. The visual grounding is necessary for documents with pagination, the temporal grounding is necessary for audio based documents (music and movies).
@@ -169,7 +169,7 @@ These elements have a specific purpose in defining the high-level structure of t
 
 #### The `doclang` Element
 
-Every Doclang document is wrapped in a `<doclang>` root element.
+Every DocLang document is wrapped in a `<doclang>` root element.
 
 Here is an example:
 
@@ -206,7 +206,7 @@ Here is an example:
 </doclang>
 ```
 
-The content between two `<page_break/>` is in itself a Doclang document, if it is sandwiched between `<doclang>...</doclang>`.
+The content between two `<page_break/>` is in itself a DocLang document, if it is sandwiched between `<doclang>...</doclang>`.
 
 #### The `time_break` Element
 
@@ -220,7 +220,7 @@ Audio-based documents may be divided into timed segments. These timed segments c
 </doclang>
 ```
 
-The content between two `<time_break/>` is in itself a Doclang document, if it is sandwiched between `<doclang>...</doclang>`.
+The content between two `<time_break/>` is in itself a DocLang document, if it is sandwiched between `<doclang>...</doclang>`.
 
 ### Provenance Elements
 
@@ -388,7 +388,7 @@ Lists
 
 ### Optimized Table Structure Language (OTSL)
 
-Tabular structure and header semantics in Doclang represented by optimized table-structure language (OTSL) tokens.
+Tabular structure and header semantics in DocLang represented by optimized table-structure language (OTSL) tokens.
 
 Each new cell OTSL token (`<fcel/>` with its semantic variants) is interleaved by the sequence of appropriate table cell content tokens (texts, lists, etc.).
 OTSL representation has minimized vocabulary and specific rules.
@@ -704,7 +704,7 @@ Examples:
 
 ### Vector graphics Elements
 
-If you want to include vector graphics elements, Doclang allow you to include SVG: enclosed in `<svg> ... </svg>`.
+If you want to include vector graphics elements, DocLang allow you to include SVG: enclosed in `<svg> ... </svg>`.
 
 ## Grammar and Structure Rules
 
@@ -776,7 +776,7 @@ Basic inline code
   <br/>
   Code fragments can mix with <bold>formatting</bold> seamlessly.
   <br/>
-  Use backticks sparingly; Doclang uses explicit tokens instead.
+  Use backticks sparingly; DocLang uses explicit tokens instead.
   <br/>
   End of examples.
 
@@ -941,7 +941,7 @@ Notes
 
 ### Tables
 
-Doclang separates the table’s structure from its surrounding semantics:
+DocLang separates the table’s structure from its surrounding semantics:
 
 - `group`: Semantic container that may include `caption`, multiple `footnote` elements, and exactly one `otsl` child for the structure. Do not put coordinates on the `group`.
 - `otsl`: The structural table token sequence. Put the table region’s coordinates on `otsl` for each page fragment. Cells are created by structural tokens (e.g., `<fcel/>`, `<ched/>`) and their content follows immediately after each cell token.
@@ -1069,7 +1069,7 @@ Notes
 - Coordinates go on `otsl`, `caption`, and other semantic children; never on the `group`.
 - Row- and column-wise splits use `continue_row` and `continue_col` respectively; merge fragments by matching `id`s.
 - OTSL follows the rectangular rule; ensure each row has the same number of structural tokens up to `<nl/>`.
-- Rich cells can include any valid Doclang content; keep content immediately after the corresponding cell token.
+- Rich cells can include any valid DocLang content; keep content immediately after the corresponding cell token.
 
 ### Lists
 
@@ -2146,7 +2146,7 @@ An easy example is below,
 </doclang>
 ```
 
-Often, we have more complicated page breaks, in which a (nested) list is split across pages and further interrupted by other semantic elements (think page footers). In this case, we demand that all elements of the first page are added and/or closed **before** the page break and then opened again in the appropriate way after the page break, with the intent that the content in between the page breaks is a valid Doclang tree.
+Often, we have more complicated page breaks, in which a (nested) list is split across pages and further interrupted by other semantic elements (think page footers). In this case, we demand that all elements of the first page are added and/or closed **before** the page break and then opened again in the appropriate way after the page break, with the intent that the content in between the page breaks is a valid DocLang tree.
 
 A more complicated example is shown below in which we break the content of a list-item,
 
@@ -2177,7 +2177,7 @@ For tables that are broken across pages, we need to introduce two differnt token
 
 ### Parser Requirements
 
-A conforming Doclang parser SHALL:
+A conforming DocLang parser SHALL:
 
 1. **Syntax Validation**: Recognize all tokens defined in this standard
 2. **Geometric Processing**: Handle coordinate and bounding box elements correctly
@@ -2188,9 +2188,9 @@ A conforming Doclang parser SHALL:
 
 ### Serializer Requirements
 
-A conforming Doclang serializer SHALL:
+A conforming DocLang serializer SHALL:
 
-1. **Valid Output**: Generate syntactically correct Doclang documents
+1. **Valid Output**: Generate syntactically correct DocLang documents
 2. **Coordinate Normalization**: Ensure coordinates fit within specified resolution
 3. **Structure Preservation**: Maintain element hierarchy and relationships
 4. **Version Specification**: Include appropriate version information
