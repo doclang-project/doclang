@@ -160,6 +160,19 @@
   <xs:element name="uri" type="xs:anyURI"/>
 
   <!-- ============================================ -->
+  <!-- HYPERLINK ELEMENT: uri + optional formatting_cat (with mixed content) -->
+  <!-- ============================================ -->
+
+  <xs:element name="hyperlink">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element ref="dl:uri"/>
+        <xs:group ref="dl:formatting_group" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
   <!-- PICTURE ELEMENT: component_header + optional uri -->
   <!-- ============================================ -->
 
@@ -204,7 +217,7 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- HEADLESS_TXT: formatting, marker, hint, checkbox, br (no picture) -->
+  <!-- HEADLESS_TXT: formatting, marker, hint, hyperlink, checkbox, br (no picture) -->
   <!-- Reuses formatting_group -->
   <!-- ============================================ -->
 
@@ -213,6 +226,7 @@
       <xs:group ref="dl:formatting_group"/>
       <xs:element ref="dl:marker"/>
       <xs:element ref="dl:hint"/>
+      <xs:element ref="dl:hyperlink"/>
       <xs:element ref="dl:checkbox"/>
       <xs:element ref="dl:br"/>
     </xs:choice>

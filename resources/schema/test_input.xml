@@ -147,6 +147,26 @@
     This is <bold>bold text</bold> and this is <italic>italic text</italic>.
   </text>
 
+  <!-- Example 2a: Text with hyperlink (uri only) -->
+  <text>
+    Visit our website at <hyperlink><uri>https://example.com</uri></hyperlink> for more information.
+  </text>
+
+  <!-- Example 2a1: Text with hyperlink (uri + text) -->
+  <text>
+    Click <hyperlink><uri>https://example.com/docs</uri>here</hyperlink> to read the documentation.
+  </text>
+
+  <!-- Example 2a2: Text with hyperlink (uri + formatted text) -->
+  <text>
+    Download the <hyperlink><uri>https://example.com/file.pdf</uri><italic>PDF file</italic></hyperlink> now.
+  </text>
+
+  <!-- Example 2a3: Text with hyperlink (uri + nested formatting) -->
+  <text>
+    See <hyperlink><uri>https://example.com/article</uri><bold>this <italic>important</italic> article</bold></hyperlink> for details.
+  </text>
+
   <!-- Example 2b: Text with content element (whitespace preserved by schema default) -->
   <text>
     <content>  This text   has    multiple    spaces   preserved  </content>
