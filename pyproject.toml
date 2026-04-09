@@ -1,14 +1,22 @@
 [project]
-name = "doctags-iso"
+name = "doclang"
 version = "0.1.0"
-description = "Add your description here"
+description = "DocLang XML validation tool with XSD and Schematron support"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "lark>=1.3.0",
     "lxml>=6.0.2",
     "python-docx>=1.2.0",
+    "saxonche>=12.9.0",
+    "typer>=0.15.1",
+    "rich>=13.9.4",
 ]
+
+[project.scripts]
+doclang = "doclang.cli:app"
+
+[tool.setuptools.package-data]
+doclang = ["*.xsd", "*.sch"]
 
 [dependency-groups]
 dev = [
@@ -18,5 +26,8 @@ dev = [
     "pytest~=8.3",
 ]
 
+[tool.uv]
+package = true
+
 [tool.setuptools.packages.find]
-include = ["docling_iso*"]
+include = ["doclang*"]

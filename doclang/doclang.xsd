@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <xs:schema
-  targetNamespace="http://www.doclang.ai/schema/v1"
-  xmlns:dl="http://www.doclang.ai/schema/v1"
+  targetNamespace="https://www.doclang.ai/ns/v1"
+  xmlns:dl="https://www.doclang.ai/ns/v1"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   version="1.0.0"

@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<doclang
-  xmlns="http://www.doclang.ai/schema/v1"
-  version="1.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.doclang.ai/schema/v1 doclang.xsd"
->
+<doclang xmlns="https://www.doclang.ai/ns/v1" version="1.0.0">
 
   <!-- Example 0: Head element with arbitrary metadata -->
   <head>

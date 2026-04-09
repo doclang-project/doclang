@@ -8,18 +8,32 @@ The official ISO standard is described in the Markdown file [iso-standard.md](./
 
 To create the Word document, simply run `uv run ./docling_iso/write_iso_draft.py`.
 
-## XSD Schema
+## Validation
 
-The XSD schema can be found in [doclang.xsd](./resources/schema/doclang.xsd).
+The `doclang` package provides XSD schema and Schematron validation tools via CLI.
 
-To validate an XML file:
-1. ensure it references the contains `xmlns="http://www.doclang.ai/schema/v1"` in the `doclang` element, e.g.:
-    ```xml
-    <doclang xmlns="http://www.doclang.ai/schema/v1">
-        <!-- ... -->
-    </doclang>
-    ```
-2. run `validate.py`, e.g. to check the test sample, from the `./resources/schema` directory run:
-    ```shell
-    uv run python ./validate.py test_input.xml doclang.xsd
-    ```
+### Quick Start
+
+> [!TIP]
+> If running from local repo clone, prepend command below with `uv run `.
+
+Validate a document:
+
+```bash
+doclang validate path/to/document.xml
+```
+
+### Development
+
+Run tests:
+
+```bash
+uv run pytest
+```
+
+See [doclang/README.md](./doclang/README.md) for complete documentation on:
+- XSD schema structure and validation
+- Schematron business rules
+- CLI usage and options
+- Namespace injection for documents without xmlns
+- Running tests with pytest

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang version="1.0.0">
+    <heading level="1">Test Document</heading>
+    <text>This document has no namespace declaration.</text>
+    <text>The validator should automatically add the DocLang namespace.</text>
+</doclang>
