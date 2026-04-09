@@ -42,4 +42,12 @@
     </sch:rule>
   </sch:pattern>
 
+  <sch:pattern id="floating-group-code">
+    <sch:rule context="dl:floating_group[@class='code']">
+      <sch:assert test="count(.//dl:code) >= 1">
+        A floating_group with class="code" must contain at least one code element.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
 </sch:schema>

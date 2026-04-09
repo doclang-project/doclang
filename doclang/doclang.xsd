@@ -450,6 +450,7 @@
           <xs:restriction base="xs:string">
             <xs:enumeration value="picture"/>
             <xs:enumeration value="table"/>
+            <xs:enumeration value="code"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

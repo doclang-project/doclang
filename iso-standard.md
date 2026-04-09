@@ -380,7 +380,7 @@ These elements organize semantic content into logical structures. Groups can not
 |-------|-------------|------------------|
 | `<list class="ordered\|unordered">` | List | Any, with every new list item being introduced by a `list_text` element |
 | `<group>` | Generic group enabling e.g. association of caption or footnote with the respective document components | |
-| `<floating_group class="table\|picture">` | Floating container that groups a floating component with its associated caption, footnotes, and metadata. No `location` tokens. | table, picture (as appropriate) |
+| `<floating_group class="table\|picture\|code">` | Floating container that groups a floating component with its associated caption, footnotes, and metadata. No `location` tokens. | table, picture, code (as appropriate) |
 
 Lists
 
@@ -2904,7 +2904,7 @@ The `<class>` token supports extensible vocabularies:
 | 26 |  | `hint` | No | No | — | Hint for a fillable field (format/example/description). |
 | 31 | Grouping Tokens | `group` | No | Yes | `type?` | Generic group; no `location` tokens; associates composite content (e.g., captions/footnotes). |
 | 32 |  | `list` | No | Yes | `class` in {`unordered`, `ordered`}; defaults to `unordered` | List container. |
-| 27 |  | `floating_group` | No | Yes | `class` in {`table`,`picture`} | Floating container that groups a floating component with its caption, footnotes, and metadata; no `location` tokens. |
+| 27 |  | `floating_group` | No | Yes | `class` in {`table`,`picture`,`code`} | Floating container that groups a floating component with its caption, footnotes, and metadata; no `location` tokens. |
 | 34 | Formatting Tokens | `bold` | No | No | — | Bold text. |
 | 35 |  | `italic` | No | No | — | Italic text. |
 | 36 |  | `underline` | No | No | — | Underlined text. |
