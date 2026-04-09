@@ -12,28 +12,10 @@ To create the Word document, simply run `uv run ./docling_iso/write_iso_draft.py
 
 The `doclang` package provides XSD schema and Schematron validation tools via CLI.
 
-### Quick Start
-
-> [!TIP]
-> If running from local repo clone, prepend command below with `uv run `.
-
-Validate a document:
+Quick usage example:
 
 ```bash
-doclang validate path/to/document.xml
+uv run doclang validate path/to/file.dclg.xml
 ```
 
-### Development
-
-Run tests:
-
-```bash
-uv run pytest
-```
-
-See [doclang/README.md](./doclang/README.md) for complete documentation on:
-- XSD schema structure and validation
-- Schematron business rules
-- CLI usage and options
-- Namespace injection for documents without xmlns
-- Running tests with pytest
+For details, check out [doclang/README.md](./doclang/README.md).
