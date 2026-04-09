@@ -157,7 +157,7 @@ DocLang defines the following categories of elements:
 - **semantic**: Block-level elements that convey document meaning (e.g., titles, paragraphs, captions, lists, forms, tables, formulas, code, pictures), optionally preceded by location tokens.
 - **formatting**: Inline elements that modify textual presentation within semantic content (e.g., `bold`, `italic`, `strikethrough`, `superscript`, `subscript`, `rtl`, `inline class="formula|code|picture"`, `br`).
 - **grouping**: Elements that organize semantic blocks into logical hierarchies and composites (e.g., `list`, `group type=*`) and never carry location tokens.
-- **structural**: Sequence tokens that define internal structure for complex constructs (primarily OTSL table layout: `otsl`, `fcel`, `ecel`, `lcel`, `ucel`, `xcel`, `nl`, `ched`, `rhed`, `corn`, `srow`; and form parts like `key`/`value`).
+- **structural**: Sequence tokens that define internal structure for complex constructs (primarily OTSL table layout: `otsl`, `fcel`, `ecel`, `lcel`, `ucel`, `xcel`, `nl`, `ched`, `rhed`, `corn`, `srow`; and field parts like `key`/`value`).
 - **content**: Lightweight content helpers used inside semantic blocks for explicit payload and annotations (e.g., `marker`, `checkbox`).
 - **binary data**: Elements that embed or reference non-text payloads for media—either inline as `base64` or via `uri`—allowed under `picture`, `inline class="picture"`, or at page level.
 - **metadata**: Elements that provide metadata about the document or its components, contained within `head` and `meta` respectively.
@@ -344,16 +344,15 @@ Each semantic element may begin with a bounding box, capturing the element's bou
 | `page_footer` | Page footer content |
 | `watermark` | Page contains watermark | <!-- watermark can be text or image - do we want to capture that? also do we want to know if watermark is in background or overlay?-->
 | `list_text` | Leading text of a list item, including any available marker or checkbox information |
-| `form_item` | Form item (with 1 key and 1 or more values as children) |
-| `form_heading` | Form header |
-| `form_text` | Form text |
-| `key` | key of the form item: can only be a child of `form_item` |
-| `value` | value of the form item: can only be a child of `form_item`  |
+| `field_item` | Field item container with optional key and multiple values |
+| `field_region` | Field region container with one or more field items |
+| `field_heading` | Field heading within a field region, with optional level N ≥ 1 |
+| `key` | Key of the field item: can be a descendant of `field_item` |
+| `value` | Value of the field item: can be a descendant of `field_item`; optional `class` attribute with values `read_only` (default) or `fillable` |
 | `otsl` | Table structure |
 | `formula` | Mathematical expression |
 | `code` | Code block |
 | `picture` | Image or graphic element; might have a binary data child (`base64` or `uri`) |
-| `form` | Form structure |
 
 ### Formatting Elements
 
@@ -363,10 +362,13 @@ Formatting elements represent formatting information within the content of a sem
 |-------|-------------|
 | `bold` | Bold text |
 | `italic` | Italic text |
+| `underline` | Underlined text |
 | `strikethrough` | Strike-through text |
 | `superscript` | Superscript |
 | `subscript` | Subscript |
+| `handwriting` | Handwritten text |
 | `rtl` | Right-to-left text direction |
+| `hyperlink` | Hyperlink with URI and optional formatted text content |
 | `inline class="formula\|code\|picture"` | Inline content: formula, code, or picture. If `class="picture"`, may include one of `base64` or `uri` as a child. |
 | `br`| Line break (empty-element tag) |
 
@@ -378,7 +380,7 @@ These elements organize semantic content into logical structures. Groups can not
 |-------|-------------|------------------|
 | `<list class="ordered\|unordered">` | List | Any, with every new list item being introduced by a `list_text` element |
 | `<group>` | Generic group enabling e.g. association of caption or footnote with the respective document components | |
-| `<floating_group class="table\|picture\|form\|code">` | Floating container that groups a floating component with its associated caption, footnotes, and metadata. No `location` tokens. | table, picture, form, code (as appropriate) |
+| `<floating_group class="table\|picture">` | Floating container that groups a floating component with its associated caption, footnotes, and metadata. No `location` tokens. | table, picture (as appropriate) |
 
 Lists
 
@@ -458,7 +460,7 @@ Example:
 
 | Token | Description |
 |-------|-------------|
-| `<marker>`| Marker (eg for in section-header, list-item, form-item, etc) |
+| `<marker>`| Marker (eg in `list_item`, within `field_item`, etc) |
 | `<checkbox>`| Self-closing elemnt for checkbox status; optional `selected` in {`true`,`false`} defaults to `false`. |
 | `<facets>`| Container meant for application-specific properties for derived information, such as summary, classification label, etc. |
 
@@ -1573,35 +1575,34 @@ Notes
 - Lists can nest as shown above.
 - When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
 
-### Forms
+### Fields
 
-Fundamentally, forms are complex list with special list-items. This is why we introduced several new semantic items in the token-space,
+Fields provide a flexible structure for representing key-value data and structured content. The field elements allow for more flexible document structures where keys and values may be separated by other content or organized in complex layouts.
 
 | Token | Description |
 |-------|-------------|
-| `<form_item>` | Form item (with 1 key and 1 or more values as children) |
-| `<form_heading>` | Form header: this is specifically for headers in the form. Has an optional attribute `level` |
-| `<form_text>` | Form text: this is specifically for text-blocks in the form |
-| `<key>` | key of the form item: can only be a child of `form_item` |
-| `<value>` | value of the form item: can only be a child of `form_item`  |
-| `<hint>` | a hint for a fillable value field, can describe a format, or an example, or an extra description, a hint |
-| `<form>` | Form structure |
+| `<field_region>` | Field region container; contains at least one `field_item` as descendant |
+| `<field_item>` | Field item container; may contain 0-1 `key` and 0-many `value` elements as descendants |
+| `<field_heading>` | Field heading within a field region; has an optional attribute `level` |
+| `<key>` | Key of the field item: can be a descendant of `field_item` |
+| `<value>` | Value of the field item: can be a descendant of `field_item`; optional `class` attribute with values `read_only` (default) or `fillable` |
+| `<hint>` | Hint for a fillable value field; recommended to be used within the context of a `field_item`; can describe a format, example, or additional description |
 
-Notice that if we have captions or footnotes for the form, we will always start with the group of type form. Next, we can start with the form.
+#### Field Structure Rules
 
-```xml
-<group>
-   <form>
-      ... # (nested list of form, form_items, etc)
-   </form>
-</group>
-```
+- A `field_region` must contain at least one `field_item` as a descendant (not necessarily a direct child)
+- A `field_item` may contain 0 or 1 `key` element as a descendant
+- A `field_item` may contain 0 or more `value` elements as descendants
+- Values within a `field_item` are implicitly associated with the `key` in that item
+- A `field_heading` should have a `field_region` as an ancestor
+- Field elements can contain any other DocLang elements (text, pictures, lists, etc.)
+- The `value` element has an optional `class` attribute:
+  - `class="read_only"` (default): Indicates a pre-filled, non-editable value
+  - `class="fillable"`: Indicates an empty or editable field that can be filled in
+- The `hint` element is recommended to be used within a `field_item` context to provide guidance for fillable values
+- `<key>` or `<value>` are not necessarily just textual and can contain pictures, multiline text, etc.
 
-If no caption/footnotes are present, one can skip the group of type form. In order to represent the hierarchy, we use the concept of nested forms. The children of a form item are supposed to be on the same level and the form-headers will be in reading-order, i.e. the form-items following the form-header will belong to that form header (similarly to items following the section-headers).
-
-One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a child, but potentially one or more children of the type of `<value>`, `<checkbox>` and `<marker>` as well as `<hint>`. `<key>` or `<value>` not necessarily just textual and can contain a picture, multiline text, etc.
-
-#### Form Examples
+#### Field region examples
 
 <details>
   <summary>Simple key-values</summary>
@@ -1611,21 +1612,21 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ![Form Example](examples/form/form_00.png)
 
   ```xml
-  <form>
-      <form_item>
+  <field_region>
+      <field_item>
           <key>Firma:</key>
           <value>Holcim ... GmbH</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Datum:</key>
         <value>23.08.2019</value>
-      </form_item>
+      </field_item>
       ...
-      <form_item>
+      <field_item>
           <key>Petrograph. Typ:</key>
           <value>Quartiarer Sand + Kies</value>
-      </form_item>
-  </form>
+      </field_item>
+  </field_region>
   ```
 
 </details>
@@ -1638,43 +1639,43 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ![Form Example](examples/form/form_01.png)
 
   ```xml
-  <form>
-    <form_heading>
+  <field_region>
+    <field_heading>
         <marker>14.</marker>
         Transport Information
-    </form_heading>
-    <form>
-        <form_heading>
+    </field_heading>
+    <field_region>
+        <field_heading>
             Land transport ... (Germany)
-        </form_heading>
-        <form_item>
+        </field_heading>
+        <field_item>
             <key>GGVS/GGVE class:</key>
             <value>8</value>
-        </form_item>
-        <form_item>
+        </field_item>
+        <field_item>
             <key>ADR/RID class:</key>
             <value>8</value>
-        </form_item>
+        </field_item>
         ...
-    </form>
-    <form_item>
+    </field_region>
+    <field_item>
         <key>River transport ADN/ADNR</key>
         <value>not examined</value>
-    </form_item>
-    <form>
-        <form_heading>
+    </field_item>
+    <field_region>
+        <field_heading>
             Sea transport IMDG
-        </form_heading>
+        </field_heading>
         ...
-    </form>
+    </field_region>
     ...
-    <form_text>
+    <text>
         The transport ... considered.
-    </form_text>
-    <form_text>
+    </text>
+    <text>
         THESE TRANSPORT ... PACK!
-    </form_text>
-  </form>
+    </text>
+  </field_region>
   ```
 
 </details>
@@ -1687,63 +1688,63 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   <table><tr><td>
 
   ```xml
-  <form>
-      <form_item>
+  <field_region>
+      <field_item>
           <key>Description</key>
           <value>A.A. Cat</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Quant.</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Un</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Measure</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Price (in currency)</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Un</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Total</key>
           <value></value>
-      </form_item>
-      <form_text></form_text>
-      <form>
-          <form_item>
+      </field_item>
+      <text></text>
+      <field_region>
+          <field_item>
               <key>Delivery Cost</key>
               <value></value>
-          </form_item>
-          <form_item>
+          </field_item>
+          <field_item>
               <key>Maintenance</key>
               <value></value>
-          </form_item>
+          </field_item>
           ...
-      <form>
-      <form>
-          <form_item>
+      <field_region>
+      <field_region>
+          <field_item>
               <key>Date and time of delivery:</key>
               <value></value>
-          </form_item>
+          </field_item>
           ...
-          <form_item>
+          <field_item>
               <key>Guarantee</key>
               <value></value>
-          </form_item>
+          </field_item>
           <text>
               Delivery Suppl...Finance Department
           </text>
-      </form>
+      </field_region>
       ...
-  </form>
+  </field_region>
   ```
 
   </td><td style="vertical-align: top;">
@@ -1761,59 +1762,59 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ![Form Example](examples/form/form_03.png)
 
   ```xml
-  <form>
-    <form_heading>Information about you</form_heading>
-    <form_item>
+  <field_region>
+    <field_heading>Information about you</field_heading>
+    <field_item>
         <key>
             \*Family Name (Last Name)
         </key>
         <value>staar</value>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>\*Given Name (First Name)</key>
         <value>peter</value>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>\*Middle Name (if applicable)</key>
         <value>WJ</value>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>I am in the United States as a:</key>
         <text><checkbox class="unselected"/>Visitor</text>
         <text><checkbox class="unselected"/>Student</text>
         <text><checkbox class="unselected"/>Permanent Resident</text>
         <text><checkbox class="unselected"/>Other (Specify)</text>
         <value></value>
-    <form_item>
-    <form_item>
+    <field_item>
+    <field_item>
         <key>Country of Citizenship</key>
         <value></value>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>\*Date of Birth</key>
         <value></value>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>Alien Registration Number (A-Number) (if any)</key>
         <value>A-</value>
-    </form_item>
-    <form_heading>Information About Your Address</form_heading>
-    <form_text>\*Present Physical Address ()No Po Boxes</form_text>
-    <form_item>
+    </field_item>
+    <field_heading>Information About Your Address</field_heading>
+    <text>\*Present Physical Address ()No Po Boxes</text>
+    <field_item>
         <key>\*Street ... Name</key>
         <value></value>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>Apt.</key>
         <checkbox class="unselected"/>
-    </form_item>
-    <form_item>
+    </field_item>
+    <field_item>
         <key>Ste.</key>
         <checkbox class="unselected"/>
-    </form_item>
+    </field_item>
     ...
 
-  </form>
+  </field_region>
   ```
 
 </details>
@@ -1826,65 +1827,65 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ![Form Example](examples/form/form_07.png)
 
   ```xml
-  <form>
-      <form_heading level="1">M31</form_heading>
-      <form_heading level="2">REDDITI DI CAPITALE SOGGETTI AD IMPOSIZIONE SOSTITUTIVA</form_heading>
-      <form_item>
+  <field_region>
+      <form_heading level="1">M31</field_heading>
+      <form_heading level="2">REDDITI DI CAPITALE SOGGETTI AD IMPOSIZIONE SOSTITUTIVA</field_heading>
+      <field_item>
         <marker>1</marker>
           <key>Tipo</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>Codice Stato estero</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>3</marker>
           <key>Ammontare reddito</key>
           <value>,00</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>4</marker>
           <key>Aliquota %</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>5</marker>
           <key>Credito IVCA</key>
           <value>,00</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>6</marker>
           <key>Proventi particolari</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>7</marker>
           <key>Opzione tassazione ordinaria</key>
           <value></value>
-      </form_item>
-      <form_heading level="1">M32</form_heading>
-      <form_heading level="2">PROVENTI DELLE OBBLIGAZIONI NON ASSOGGETTATI A IMPOSTA SOSTITUTIVA</form_heading>
-      <form_item>
+      </field_item>
+      <form_heading level="1">M32</field_heading>
+      <form_heading level="2">PROVENTI DELLE OBBLIGAZIONI NON ASSOGGETTATI A IMPOSTA SOSTITUTIVA</field_heading>
+      <field_item>
           <marker>1</marker>
           <key>Ammontare reddito</key>
           <value>,00</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>Aliquota %</key>
           <value></value>
-      </form_item>
-      <form_heading level="1">M33</form_heading>
-      <form_heading level="2">PROVENTI DERIVANTI DA DEPOSITI IN GARANZIA</form_heading>
-      <form_item>
+      </field_item>
+      <form_heading level="1">M33</field_heading>
+      <form_heading level="2">PROVENTI DERIVANTI DA DEPOSITI IN GARANZIA</field_heading>
+      <field_item>
           <marker>1</marker>
           <key>Ammontare reddito</key>
           <value>,00</value>
-      </form_item>
+      </field_item>
       ...
-  </form>
+  </field_region>
   ```
 
 </details>
@@ -1897,33 +1898,33 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ![Form Example](examples/form/form_06.png)
 
   ```xml
-  <form>
-      <form_item>
+  <field_region>
+      <field_item>
           <key>Adjusted CVSS v3.1 Score</key>
           <value>10.0</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Vector</key>
           <value>AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Likelihood</key>
           <value>Very High</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Impact</key>
           <value>Catastrophic</value>
-      </form_item>
-      <form_heading>
+      </field_item>
+      <field_heading>
         Affected Systems
-      </form_heading>
+      </field_heading>
       <otsl>
       <ched/>IP Address<ched/>Port<ched/>Service<ched/>Version<nl/>
       <fcell/>10.0.0.101<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
       <fcell/>10.0.0.102<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
       <fcell/>10.0.0.103<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
       </otsl>
-  </form>
+  </field_region>
   ```
 
 </details>
@@ -1938,40 +1939,40 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ```xml
   <heading level="1">QUADRO W - Investimenti e...</heading>
   <heading level="2">SEZIONE I - DATI RELATIVI...</heading>
-  <form>
-      <form_heading level="1">W1</form_heading>
-      <form_item>
+  <field_region>
+      <form_heading level="1">W1</field_heading>
+      <field_item>
           <marker>1</marker>
           <key>CODICE TITOLO POSSESSO</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>TIPO CONTRIBUENTE - IVAFE</key>
           <value></value>
-      </form_item>
+      </field_item>
       ...
-      <form_heading level="1">W2</form_heading>
-      <form_item>
+      <form_heading level="1">W2</field_heading>
+      <field_item>
           <marker>1</marker>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>3</marker>
           <value></value>
-      </form_item>
+      </field_item>
       ...
-  </form>
+  </field_region>
   ```
 
 </details>
 
 <details>
-  <summary>Another complex form deconstructed into form items</summary>
+  <summary>Another complex form deconstructed into field items</summary>
 
   <!-- blank line after <summary> is important -->
 
@@ -1981,53 +1982,53 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
 
   ```xml
   <heading level="1">QUADRO C - Redditi di lavoro...</heading>
-  <form>
-      <form_heading level="1">SEZIONE I - RE...</form_heading>
-      <form_item>
+  <field_region>
+      <form_heading level="1">SEZIONE I - RE...</field_heading>
+      <field_item>
           <key>Casi particolari</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
         <key>Codice Stato estero</key>
         <value></value>
-      </form_item>
-      <form_heading level="2">C1</form_heading>
-      <form_item>
+      </field_item>
+      <form_heading level="2">C1</field_heading>
+      <field_item>
           <marker>1</marker>
           <key>TIPO</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>INDETERMINATO/DETERMINATO</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>3</marker>
           <key>REDDITO (punti 1,2,3 CU 2025)</key>
           <value>,00</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>4</marker>
           <key>ALTRI DATI</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_heading level="2">C2</form_heading>
-      <form_item>
+      </field_item>
+      <form_heading level="2">C2</field_heading>
+      <field_item>
           <marker>1</marker>
           <key>TIPO</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>INDETERMINATO/DETERMINATO</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>3</marker>
           <key>REDDITO (punti 1,2,3 CU 2025)</key>
           <value>,00</value>
-      </form_item>
+      </field_item>
       ...
   ```
 
@@ -2035,52 +2036,52 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
 
   ```xml
       ...
-      <form_item>
+      <field_item>
           <marker>4</marker>
           <key>ALTRI DATI</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_heading level="2">C3</form_heading>
-      <form_item>
+      </field_item>
+      <form_heading level="2">C3</field_heading>
+      <field_item>
           <marker>1</marker>
           <key>TIPO</key>
           <value></value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>INDETERMINATO/DETERMINATO</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>3</marker>
           <key>REDDITO (punti 1,2,3 CU 2025)</key>
           <value>,00</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>4</marker>
           <key>ALTRI DATI</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_heading level="2">C4</form_heading>
+      </field_item>
+      <form_heading level="2">C4</field_heading>
       <form_heading level="3">SOMME PER PREMI...
-      </form_heading>
-      <form_item>
+      </field_heading>
+      <field_item>
           <marker>1</marker>
           <key>TIPOLOGIA LIMITE</key>
           <checkbox class="unselected"/>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>2</marker>
           <key>SOMME A TASSAZIONE ORDINARIA</key>
           <value>,00</value>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <marker>3</marker>
           <key>SOMME A IMPOSTA SOSTITUTIVA</key>
           <value>,00</value>
-      </form_item>
+      </field_item>
       ...
-  </form>
+  </field_region>
   ```
 
   </td></tr></table>
@@ -2094,65 +2095,65 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   ![Form Example](examples/form/form_19_water_damage.png)
 
   ```xml
-  <form>
-      <form_heading>COCHER LES CASES CONCERNEES</form_heading>
-      <form_item>
+  <field_region>
+      <field_heading>COCHER LES CASES CONCERNEES</field_heading>
+      <field_item>
           <key>La cause du sinistre se situe-t-elle chez vous ?</key>
           <text><checkbox class="unselected"/><marker>A</marker>oui</text>
           <text><checkbox class="unselected"/><marker>A</marker>non</text>
           <text><checkbox class="unselected"/><marker>B</marker>oui</text>
           <text><checkbox class="unselected"/><marker>B</marker>non</text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Êtes-vous assuré en dégâts des eaux ?</key>
           <text><checkbox class="unselected"/><marker>A</marker>oui</text>
           <text><checkbox class="unselected"/><marker>A</marker>non</text>
           <text><checkbox class="unselected"/><marker>B</marker>oui</text>
           <text><checkbox class="unselected"/><marker>B</marker>non</text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Si vous êtes occupant et que vous allez déménager avez-vous donné ou reçu congé ?</key>
           <text><checkbox class="unselected"/><marker>A</marker>avant le sinistre</text>
           <text><checkbox class="unselected"/><marker>A</marker>après le sinistre</text>
           <text><checkbox class="unselected"/><marker>B</marker>avant le sinistre</text>
           <text><checkbox class="unselected"/><marker>B</marker>après le sinistre</text>
-      </form_item>
-      <form_heading>NATURE DES DOMMAGES peinture et/ou papier peint</form_heading>
-      <form_item>
+      </field_item>
+      <field_heading>NATURE DES DOMMAGES peinture et/ou papier peint</field_heading>
+      <field_item>
           <key>revêtements (sol, mur, plafond)</key>
           <text><checkbox class="unselected"/><marker>A</marker>collés</text>
           <text><checkbox class="unselected"/><marker>A</marker>agrafés ou cloués</text>
           <text><checkbox class="unselected"/><marker>B</marker>collés</text>
           <text><checkbox class="unselected"/><marker>B</marker>agrafés ou cloués</text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Ces aménagements ont-ils été exécutés à vos frais ?</key>
           <text><checkbox class="unselected"/><marker>A</marker>oui</text>
           <text><checkbox class="unselected"/><marker>A</marker>non</text>
           <text><checkbox class="unselected"/><marker>B</marker>oui</text>
           <text><checkbox class="unselected"/><marker>B</marker>non</text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Autres dommages immobiliers (carrelage, parquet, plâtrerie...)</key>
           <text><checkbox class="unselected"/><marker>A</marker></text>
           <text><checkbox class="unselected"/><marker>B</marker></text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Objets mobiliers</key>
           <text><checkbox class="unselected"/><marker>A</marker></text>
           <text><checkbox class="unselected"/><marker>B</marker></text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Matériels ou marchandises</key>
           <text><checkbox class="unselected"/><marker>A</marker></text>
           <text><checkbox class="unselected"/><marker>B</marker></text>
-      </form_item>
-      <form_item>
+      </field_item>
+      <field_item>
           <key>Autres dommages</key>
           <value><marker>A</marker><hint>(à préciser)</hint></value>
           <value><marker>B</marker><hint>(à préciser)</hint></value>
-      </form_item>
-  </form>
+      </field_item>
+  </field_region>
   ```
 
 </details>
@@ -2176,14 +2177,14 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   </otsl>
   ...
   *FORMS referred above:
-  *FORM1*: <form_item><key>300</key><value></value><hint>EUR</hint></form_item>
-  *FORM2*: <form_item><key>400</key><value></value><hint>EUR</hint></form_item>
-  *FORM4*: <form_item><key>401</key><value></value></form_item>
-  *FORM5*: <form_item><key>302</key><value></value></form_item>
-  *FORM3*: <form_item><key>301</key><value></value></form_item>
-  *FORM6*: <form_item><key>402</key><value></value></form_item>
-  *FORM7*: <form_item><key>309</key><value></value></form_item>
-  *FORM8*: <form_item><key>409</key><value></value></form_item>
+  *FORM1*: <field_item><key>300</key><value></value><hint>EUR</hint></field_item>
+  *FORM2*: <field_item><key>400</key><value></value><hint>EUR</hint></field_item>
+  *FORM4*: <field_item><key>401</key><value></value></field_item>
+  *FORM5*: <field_item><key>302</key><value></value></field_item>
+  *FORM3*: <field_item><key>301</key><value></value></field_item>
+  *FORM6*: <field_item><key>402</key><value></value></field_item>
+  *FORM7*: <field_item><key>309</key><value></value></field_item>
+  *FORM8*: <field_item><key>409</key><value></value></field_item>
   ```
 
 </details>
@@ -2206,18 +2207,18 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
   <fcel/>Box 3, 5, or 6<fcel/>$7,500<nl>
   <fcel/>Box 8 or 9<fcel/>$3,750<nl>
   </otsl>
-  <form_item><key>10</key><value></value></form_item>
+  <field_item><key>10</key><value></value></field_item>
   <text>11 If you checked (in Part I):</text>
   <list class="unordered">
       <list_text>Box 6, add $5,000 to the taxable...</list_text>
       <list_text>Box 2, 4, or 9, enter your taxable...</list_text>
       <list_text>BBox 5, add your taxable disabilit...</list_text>
   </list>
-  <form_item><key>11</key><value>.</value></form_item>
+  <field_item><key>11</key><value>.</value></field_item>
   <picture><class>pictogram</class></picture>
   <text>For more details on what to include on line 11...</text>
   <text>12 If you completed line 11, enter the smaller...</text>
-  <form_item><key>12</key><value>74,992</value></form_item>
+  <field_item><key>12</key><value>74,992</value></field_item>
   ...
   ```
 
@@ -2232,18 +2233,183 @@ One peculiarity with the `<form_item>` is that it can have only 1 `<key>` as a c
 
   ```xml
   ...
-  <form>
-    <form_item>
+  <field_region>
+    <field_item>
       <key>Source</key>
       <value>www.pansi.org.uk and ... projections).</value>
-    </form_item>
-  </form>
+    </field_item>
+  </field_region>
   ...
   ```
 
 </details>
 
 Detailed examples can be seen here: [Form Examples](/examples/form/form-examples.md)
+
+### Fields
+
+Fields can be used for representing key-value data in a flexible structure where keys and values may be separated by other content or organized in complex layouts.
+
+#### Field Elements
+
+| Element | Description |
+|---------|-------------|
+| `field_region` | Container for a region containing field items and related content |
+| `field_item` | Container that associates keys with values; may contain 0-1 `key` and 0-many `value` elements as descendants |
+| `field_heading` | Heading within a field region, with optional level N ≥ 1 |
+
+#### Field Structure Rules
+
+- A `field_region` must contain at least one `field_item` as a descendant (not necessarily a direct child)
+- A `field_item` may contain 0 or 1 `key` element as a descendant
+- A `field_item` may contain 0 or more `value` elements as descendants
+- Values within a `field_item` are implicitly associated with the `key` in that item
+- A `field_heading` should have a `field_region` as an ancestor
+- Field elements can contain any other DocLang elements (text, pictures, lists, etc.)
+
+#### Field Examples
+
+Basic field region with simple key-value pairs:
+
+```xml
+<field_region>
+  <field_item>
+    <key>Name:</key>
+    <value>John Smith</value>
+  </field_item>
+  <field_item>
+    <key>Date of Birth:</key>
+    <value>1985-03-15</value>
+  </field_item>
+  <field_item>
+    <key>Address:</key>
+    <value>123 Main Street, Anytown, USA</value>
+  </field_item>
+</field_region>
+```
+
+Field region with headings and complex layout:
+
+```xml
+<field_region>
+  <field_heading level="1">Personal Information</field_heading>
+
+  <field_item>
+    <text><key>Full Name:</key></text>
+    <text><value>Jane Doe</value></text>
+  </field_item>
+
+  <field_item>
+    <text><key>Email:</key></text>
+    <text><value>jane.doe@example.com</value></text>
+  </field_item>
+
+  <field_heading level="2">Employment Details</field_heading>
+
+  <field_item>
+    <text><key>Company:</key></text>
+    <text><value>Acme Corporation</value></text>
+  </field_item>
+
+  <field_item>
+    <text><key>Position:</key></text>
+    <text><value>Senior Engineer</value></text>
+  </field_item>
+</field_region>
+```
+
+Field item with multiple values:
+
+```xml
+<field_region>
+  <field_item>
+    <key>Phone Numbers:</key>
+    <value>+1-555-0100 (Home)</value>
+    <value>+1-555-0101 (Work)</value>
+    <value>+1-555-0102 (Mobile)</value>
+  </field_item>
+</field_region>
+```
+
+Field item without a key (value-only):
+
+```xml
+<field_region>
+  <field_heading>Additional Notes</field_heading>
+  <field_item>
+    <value>This is a standalone value without an explicit key.</value>
+    <value>Multiple values can be provided.</value>
+  </field_item>
+</field_region>
+```
+
+Fillable fields with hints:
+
+```xml
+<field_region>
+  <field_heading>Application Form</field_heading>
+
+  <field_item>
+    <key>Full Name:</key>
+    <value class="fillable"></value>
+    <hint>Enter your first and last name</hint>
+  </field_item>
+
+  <field_item>
+    <key>Date of Birth:</key>
+    <value class="fillable"></value>
+    <hint>Format: YYYY-MM-DD</hint>
+  </field_item>
+
+  <field_item>
+    <key>Email Address:</key>
+    <value class="fillable"></value>
+    <hint>example@domain.com</hint>
+  </field_item>
+
+  <field_item>
+    <key>Status:</key>
+    <value class="read_only">Pending Review</value>
+  </field_item>
+</field_region>
+```
+
+Field region with mixed content:
+
+```xml
+<field_region>
+  <location value="50"/><location value="100"/>
+  <location value="500"/><location value="400"/>
+
+  <field_heading level="1">Product Specifications</field_heading>
+
+  <text>The following specifications apply to Model XYZ-2000:</text>
+
+  <field_item>
+    <key>Dimensions:</key>
+    <value>10cm × 15cm × 5cm</value>
+  </field_item>
+
+  <field_item>
+    <key>Weight:</key>
+    <value>250g</value>
+  </field_item>
+
+  <picture>
+    <uri>assets/product-diagram.png</uri>
+    <caption>Product diagram showing key components</caption>
+  </picture>
+
+  <field_item>
+    <key>Materials:</key>
+    <list class="unordered">
+      <list_text><marker>•</marker><value>Aluminum alloy frame</value></list_text>
+      <list_text><marker>•</marker><value>Tempered glass display</value></list_text>
+      <list_text><marker>•</marker><value>Silicone rubber grips</value></list_text>
+    </list>
+  </field_item>
+</field_region>
+```
 
 ### Split structure
 
@@ -2497,9 +2663,76 @@ to be reached to add the thread for "Europe" in the example above.
 
 Formatting may be preserved through nested tags or escape sequences:
 
-- Bold, italic, underline, strikethrough
+- Bold, italic, underline, strikethrough, handwriting
 - Superscript, subscript
+- Hyperlinks
 - Text direction markers
+
+Examples of basic formatting:
+
+```xml
+<text>
+  This text contains <bold>bold</bold>, <italic>italic</italic>,
+  <underline>underlined</underline>, and <strikethrough>struck-through</strikethrough> text.
+</text>
+```
+
+Nested formatting:
+
+```xml
+<text>
+  You can combine <bold><italic>bold and italic</italic></bold> or
+  <underline><bold>underlined and bold</bold></underline> text.
+</text>
+```
+
+Handwriting formatting (for handwritten annotations or text):
+
+```xml
+<text>
+  The printed text says "Sign here:" followed by
+  <handwriting>John Smith</handwriting> in handwritten form.
+</text>
+```
+
+Superscript and subscript:
+
+```xml
+<text>
+  The formula for water is H<subscript>2</subscript>O, and
+  Einstein's equation is E=mc<superscript>2</superscript>.
+</text>
+```
+
+Hyperlinks with URI and optional formatted content:
+
+```xml
+<text>
+  Visit our <hyperlink><uri>https://www.example.com</uri>website</hyperlink> for more information.
+</text>
+
+<text>
+  For details, see the <hyperlink><uri>https://docs.example.com/api</uri><bold>API documentation</bold></hyperlink>.
+</text>
+
+<text>
+  Email us at <hyperlink><uri>mailto:info@example.com</uri>info@example.com</hyperlink>.
+</text>
+```
+
+The `hyperlink` element contains:
+1. A required `uri` child element with the link target
+2. Optional text content and/or formatting elements that represent the visible link text
+
+If no text content is provided after the `uri`, implementations should display the URI itself as the link text.
+
+Right-to-left text direction:
+
+```xml
+<text>
+  This sentence contains <rtl>نص عربي</rtl> (Arabic text) within it.
+</text>
+```
 
 #### Page Break with Continuation
 
@@ -2662,45 +2895,48 @@ The `<class>` token supports extensible vocabularies:
 | 17 |  | `page_footer` | No | No | — | Page footer content. |
 | 18 |  | `watermark` | No | No | — | Watermark indicator or content. |
 | 19 |  | `picture` | No | No | — | Block image/graphic; at most one of `base64`/`uri`; may include `meta` for classification; `otsl` may encode chart data. |
-| 20 |  | `form` | No | No | — | Form structure container. |
-| 21 |  | `formula` | No | No | — | Mathematical expression block. |
-| 22 |  | `code` | No | No | — | Code block. |
-| 23 |  | `list_text` | No | No | — | Leading text of a list item, including any available marker or checkbox information. |
-| 24 |  | `form_item` | No | No | — | Form item; exactly one `key`; one or more of `value`/`checkbox`/`marker`/`hint`. |
-| 25 |  | `form_heading` | No | Yes | `level?` | Form header; optional `level` (N ≥ 1). |
-| 26 |  | `form_text` | No | No | — | Form text block. |
-| 27 |  | `hint` | No | No | — | Hint for a fillable field (format/example/description). |
-| 28 | Grouping Tokens | `group` | No | Yes | `type?` | Generic group; no `location` tokens; associates composite content (e.g., captions/footnotes). |
-| 39 |  | `list` | No | Yes | `class` in {`unordered`, `ordered`}; defaults to `unordered` | List container. |
-| 30 |  | `floating_group` | No | Yes | `class` in {`table`,`picture`,`form`,`code`} | Floating container that groups a floating component with its caption, footnotes, and metadata; no `location` tokens. |
-| 31 | Formatting Tokens | `bold` | No | No | — | Bold text. |
-| 32 |  | `italic` | No | No | — | Italic text. |
-| 33 |  | `strikethrough` | No | No | — | Strike-through text. |
-| 34 |  | `superscript` | No | No | — | Superscript text. |
-| 35 |  | `subscript` | No | No | — | Subscript text. |
-| 36 |  | `rtl` | No | No | — | Right-to-left text direction. |
-| 37 |  | `inline` | No | Yes | `class` in {`formula`,`code`,`picture`} | Inline content; if `class="picture"`, may include one of `base64` or `uri`. |
-| 38 |  | `br` | Yes | No | — | Line break. |
-| 39 | Structural Tokens (OTSL) | `otsl` | No | No | — | Table structure container. |
-| 40 |  | `fcel` | Yes | No | — | New cell with content. |
-| 41 |  | `ecel` | Yes | No | — | New cell without content. |
-| 42 |  | `ched` | Yes | No | — | Column header cell. |
-| 43 |  | `rhed` | Yes | No | — | Row header cell. |
-| 44 |  | `corn` | Yes | No | — | Corner header cell. |
-| 45 |  | `srow` | Yes | No | — | Section row separator cell. |
-| 46 |  | `lcel` | Yes | No | — | Merge with left neighbor (horizontal span). |
-| 47 |  | `ucel` | Yes | No | — | Merge with upper neighbor (vertical span). |
-| 48 |  | `xcel` | Yes | No | — | Merge with left and upper neighbors (2D span). |
-| 49 |  | `nl` | Yes | No | — | New line (row separator). |
-| 50 | Continuation Tokens | `thread` | Yes | Yes | `id` | Continuation marker for split content; reuse same `id` across parts. |
-| 51 |  | `h_thread` | Yes | Yes | `id` | Horizontal stitching marker for split tables; reuse same `id`. |
-| 52 | Binary Data Tokens | `base64` | No | No | — | Embedded binary data (base64). |
-| 53 |  | `uri` | No | No | — | External resource reference. |
-| 54 | Content Tokens | `marker` | No | No | — | List/form marker content. |
-| 55 |  | `checkbox` | Yes | Yes | `class` in {`unselected`, `selected`}; defaults to `unselected` | Checkbox status. |
-| 56 |  | `facets` | No | No | — | Container for application-specific derived properties. |
-| 57 | Structural Tokens (Form) | `key` | No | No | — | Form item key (child of `form_item`). |
-| 58 |  | `value` | No | No | — | Form item value (child of `form_item`). |
+| 20 |  | `formula` | No | No | — | Mathematical expression block. |
+| 21 |  | `code` | No | No | — | Code block. |
+| 22 |  | `list_text` | No | No | — | Leading text of a list item, including any available marker or checkbox information. |
+| 23 |  | `field_region` | No | No | — | Field region container; contains at least one `field_item` as descendant. |
+| 24 |  | `field_item` | No | No | — | Field item container; may contain 0-1 `key` and 0-many `value` elements as descendants. |
+| 25 |  | `field_heading` | No | Yes | `level?` | Field heading within a field region; optional `level` (N ≥ 1). |
+| 26 |  | `hint` | No | No | — | Hint for a fillable field (format/example/description). |
+| 31 | Grouping Tokens | `group` | No | Yes | `type?` | Generic group; no `location` tokens; associates composite content (e.g., captions/footnotes). |
+| 32 |  | `list` | No | Yes | `class` in {`unordered`, `ordered`}; defaults to `unordered` | List container. |
+| 27 |  | `floating_group` | No | Yes | `class` in {`table`,`picture`} | Floating container that groups a floating component with its caption, footnotes, and metadata; no `location` tokens. |
+| 34 | Formatting Tokens | `bold` | No | No | — | Bold text. |
+| 35 |  | `italic` | No | No | — | Italic text. |
+| 36 |  | `underline` | No | No | — | Underlined text. |
+| 37 |  | `strikethrough` | No | No | — | Strike-through text. |
+| 38 |  | `handwriting` | No | No | — | Handwritten text. |
+| 39 |  | `superscript` | No | No | — | Superscript text. |
+| 40 |  | `subscript` | No | No | — | Subscript text. |
+| 41 |  | `rtl` | No | No | — | Right-to-left text direction. |
+| 42 |  | `hyperlink` | No | No | — | Hyperlink; contains required `uri` child and optional formatted text content. |
+| 43 |  | `inline` | No | Yes | `class` in {`formula`,`code`,`picture`} | Inline content; if `class="picture"`, may include one of `base64` or `uri`. |
+| 44 |  | `br` | Yes | No | — | Line break. |
+| 45 | Structural Tokens (OTSL) | `otsl` | No | No | — | Table structure container. |
+| 46 |  | `fcel` | Yes | No | — | New cell with content. |
+| 47 |  | `ecel` | Yes | No | — | New cell without content. |
+| 48 |  | `ched` | Yes | No | — | Column header cell. |
+| 49 |  | `rhed` | Yes | No | — | Row header cell. |
+| 50 |  | `corn` | Yes | No | — | Corner header cell. |
+| 51 |  | `srow` | Yes | No | — | Section row separator cell. |
+| 52 |  | `lcel` | Yes | No | — | Merge with left neighbor (horizontal span). |
+| 53 |  | `ucel` | Yes | No | — | Merge with upper neighbor (vertical span). |
+| 54 |  | `xcel` | Yes | No | — | Merge with left and upper neighbors (2D span). |
+| 55 |  | `nl` | Yes | No | — | New line (row separator). |
+| 56 | Continuation Tokens | `thread` | Yes | Yes | `id` | Continuation marker for split content; reuse same `id` across parts. |
+| 57 |  | `h_thread` | Yes | Yes | `id` | Horizontal stitching marker for split tables; reuse same `id`. |
+| 58 | Binary Data Tokens | `base64` | No | No | — | Embedded binary data (base64). |
+| 59 |  | `uri` | No | No | — | External resource reference. |
+| 60 | Content Tokens | `marker` | No | No | — | List/field marker content. |
+| 61 |  | `checkbox` | Yes | Yes | `class` in {`unselected`, `selected`}; defaults to `unselected` | Checkbox status. |
+| 62 |  | `facets` | No | No | — | Container for application-specific derived properties. |
+| 63 |  | `hint` | No | No | — | Hint for fillable field; recommended within `field_item` context. |
+| 64 | Structural Tokens (Field) | `key` | No | No | — | Field item key. |
+| 65 |  | `value` | No | Yes | `class` in {`read_only`, `fillable`}; defaults to `read_only` | Field item value; `read_only` for pre-filled values, `fillable` for editable fields. |
 
 ### Metadata Sub-elements
 
