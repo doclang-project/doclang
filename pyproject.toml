@@ -10,6 +10,7 @@ dependencies = [
     "saxonche>=12.9.0",
     "typer>=0.15.1",
     "rich>=13.9.4",
+    "docling>=2.0.0",
 ]
 
 [project.scripts]

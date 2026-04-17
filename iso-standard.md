@@ -61,7 +61,7 @@ The motivation for this new markup language is twofold,
 
 As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
 
-There is an exception for meta-data markup. Meta-data is not intended to be used or produced by LLMs, so it is in general possible to include an expanded set of protected markup tokens. Nevertheless, we do want to normalize as much as possible this representation.
+There is an exception for meta-data markup. Meta-data is not intended to be heavily used or produced by LLMs, so it is in general possible to include an expanded set of protected markup tokens. Nevertheless, we do want to normalize as much as possible this representation.
 
 Such requirements preclude us from using existing markup languages such as Markdown (incomplete scope), HTML (not concise enough), LaTeX (ambiguity of representation) etc.
 
@@ -99,20 +99,10 @@ Adopted from XML:
 
 Adopted from HTML:
 
-- **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line and occupying the full width of its container; a typical HTML example is the `p` element (paragraph).
-- **inline element**: An element that can be used within block element to shape its in-line structure; a typical HTML example is the `span` element.
+- **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
+- **inline element**: An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
 
-Native to DocLang:
-
-- **(DocLang) token**: A low-level symbol capturing some aspect of a document or of a component thereof, expressed as a tag.
-
-<!-- for internal use:
-Docling:
-- **DoclingDocument**: The Python class used in Docling to represent a document
-- **(DoclingDocument) item**: Building block of a DoclingDocument; an item typically corresponds to a document component.
-- **(DoclingDocument) inline group**: A grouping of DoclingDocument items that are meant to be interpreted as a single
-  unit of text, i.e. without line breaks or vertical space between them.
--->
+Note that, whether block-level or inline, an element may contain *explicit* new lines.
 
 ## Property Semantics
 
@@ -123,21 +113,60 @@ This denotes an `elem` element, including its properties (`size` and `color`) an
 For an element with multiple possible property values, the attribute syntax can lead to an increased complexity of the respective possible tokenized representations.
 For instance, the following could all be valid variants of an `elem` start tag: `<elem size="300" color="#aabbcc">`, `<elem size="42">`, `<elem color="#112233">`, `<elem>`.
 
-Aiming at LLM-friendliness, in such cases, the ISO DocLang format favors an alternative representation of property semantics, namely captured as respective elements leading the content.
-The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, self-closing elements are used too.
+Aiming at LLM-friendliness, in such cases, the DocLang format often favors an alternative representation of property semantics, namely captured as respective elements leading the content.
+The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, empty elements are used too.
 
-This representation can reduce the number of tokens, making it easier for language models to learn and predict.
+This representation can reduce the number of tokens and streamline how XML is mapped to them, making it easier for language models to learn and predict.
 
 For elements with a strictly limited set of possible property values, attributes are still used.
 
-## Content encoding
+## Content Encoding and Whitespace Handling
 
-The content of the elements is encoded according to the following rules:
+As DocLang is XML, standard XML encoding rules apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 is assumed
+- special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
 
-- unicode textual content is encoded as utf-8.
-- special characters reserved by XML, such as `<` (complete list defined in Appendix B), can be represented:
-  - either by escaping with the respective XML entities, e.g. `<` becomes `&lt;`,
-  - or using the CDATA section syntax, e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`
+DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides a dedicated element for whitespace preservation (i.e. `xml:space="preserve"` behavior).
+
+## Head and Body Areas
+
+Core document components such as paragraphs, tables, images etc., can have various properties associated with them.
+To separate between the component's properties and its actual content, respective DocLang elements follow a two-part scheme.
+
+The element's XML content begins with an optional *component head*, which is a sequence of dedicated elements that establish the element's properties.
+The component's effective content, e.g. paragraph text, is then captured by the remaining of the XML content, an area which is called the *component body*.
+
+The overall DocLang document follows a similar structure: Any global document properties are captured in the optional *global head* and the remaining content is called the *global body*.
+Unlike the component head, the global head is encapsulated in a dedicated `<head>` element — the body is still unwrapped.
+
+While the details are specified in the sections further below, this snippet shows an example of this scheme:
+
+```xml
+<doclang>
+  <!-- document head: -->
+  <head>
+    <date>2020-01-01</date>
+    <topic>General</topic>
+  </head>
+
+  <!-- document body: -->
+  <text>
+    <!-- component body: -->
+    Headless paragraph
+  </text>
+  <text>
+    <!-- component head: -->
+    <meta><summary>A salutation.</summary></meta>
+    <location value="60"/><location value="260"/>
+    <location value="440"/><location value="270"/>
+
+    <!-- component body: -->
+    <italic>Hello</italic>
+    <content> world!</content>
+  </text>
+</doclang>
+```
+
 
 ## DocLang Structure
 

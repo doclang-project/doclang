@@ -79,6 +79,19 @@ Additional business rules that XSD cannot express, using XSLT 3.0 and XPath 3.1:
 
 The validation uses XSLT 3.0 for modern XPath features.
 
+## Validation with VS Code
+
+In VS Code you can use [Red Hat's XML extension](https://open-vsx.org/vscode/item?itemName=redhat.vscode-xml) and enable IDE-native XSD validation by adding the following to your `settings.json` (ℹ️ replacing the actual XSD path):
+
+```xml
+    "xml.fileAssociations": [
+        {
+            "pattern": "**/*.dclg.xml",
+            "systemId": "file:///absolute/path/to/doclang.xsd",
+        }
+    ],
+```
+
 ## References
 
 - [XSD 1.0 Specification](https://www.w3.org/TR/xmlschema-1/)

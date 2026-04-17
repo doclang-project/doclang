@@ -50,7 +50,7 @@ ISO_TEMPLATE = ISO_STANDARDS_DIR / "ISO_standard_template.dotx"
 DEFAULT_MD = ROOT / "iso-standard.md"
 
 
-VERSION_FILENAME_RE = re.compile(r"^doctags_draft_v(\d+)\.(\d+)\.(\d+)\.docx$")
+VERSION_FILENAME_RE = re.compile(r"^doclang_draft_v(\d+)\.(\d+)\.(\d+)\.docx$")
 
 
 def find_latest_version(dir_path: Path) -> Optional[Tuple[int, int, int]]:
@@ -100,7 +100,7 @@ def compute_version(x: Optional[int], y: Optional[int], z: Optional[int]) -> Tup
 
 
 def out_path_for_version(x: int, y: int, z: int) -> Path:
-    return ISO_STANDARDS_DIR / f"doctags_draft_v{x}.{y}.{z}.docx"
+    return ISO_STANDARDS_DIR / f"doclang_draft_v{x}.{y}.{z}.docx"
 
 
 def add_toc(document: Document) -> None:
@@ -723,7 +723,7 @@ def build_document(md_path: Path, out_path: Path, copy_iso_style: bool = True) -
         replace_docx_parts_from_template(ISO_TEMPLATE, iso_styled_path, to_copy)
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Write doctags ISO draft DOCX from markdown")
+    parser = argparse.ArgumentParser(description="Write DocLang ISO draft DOCX from markdown")
     parser.add_argument("--x", type=int, default=None, help="Version X (major)")
     parser.add_argument("--y", type=int, default=None, help="Version Y (minor)")
     parser.add_argument("--z", type=int, default=None, help="Version Z (patch)")
@@ -739,7 +739,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     out_path = out_path_for_version(x, y, z)
 
     print(out_path)
-    
+
     md_path = Path(args.input)
     if not md_path.exists():
         print(f"Input markdown not found: {md_path}", file=sys.stderr)
