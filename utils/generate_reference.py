@@ -295,26 +295,6 @@ def generate_output_markdown(elements_by_category, attributes_by_element, conten
         for category in ordered_categories:
             all_elements.extend(elements_by_category[category])
 
-        # Generate Table of Contents in collapsible details/summary
-        f.write("<details>\n")
-        f.write("  <summary>Table of Contents</summary>\n\n")
-
-        for category in ordered_categories:
-            display_category = format_category_for_display(category)
-            # Create anchor link (lowercase, replace spaces with hyphens)
-            anchor = display_category.lower().replace(' ', '-')
-            f.write(f"- [{display_category}](#{anchor})\n")
-
-            # List elements under each category
-            elements = elements_by_category[category]
-            for element in elements:
-                normalized_element = normalize_element_name(element)
-                # Create anchor for element
-                element_anchor = create_element_anchor(normalized_element)
-                f.write(f"  - [{normalized_element}](#{element_anchor})\n")
-
-        f.write("\n</details>\n\n---\n\n")
-
         for category in ordered_categories:
             # Write category as H3
             # Format category for display (add "Elements" suffix)

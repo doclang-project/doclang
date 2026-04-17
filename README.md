@@ -6,7 +6,11 @@ This repo keeps all the documentation for the ISO standardization of DocLang.
 
 The official ISO standard is described in the Markdown file [iso-standard.md](./iso-standard.md).
 
-To create the Word document, simply run `uv run ./docling_iso/write_iso_draft.py`.
+To create the Word document, simply run:
+
+```bash
+uv run python utils/write_iso_draft.py
+```
 
 ## Reference
 

@@ -4,7 +4,6 @@
 Generate an ISO draft DOCX from iso-standard.md.
 
 Features:
-- Determines output version X.Y.Z (defaults to latest X.Y and Z+1).
 - Parses markdown headings, paragraphs, lists, code blocks, tables, images.
 - Embeds images referenced in the markdown into the DOCX.
 - Inserts a Word Table of Contents field (updates on open in Word).
@@ -48,59 +47,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ISO_STANDARDS_DIR = ROOT / "iso-standards"
 ISO_TEMPLATE = ISO_STANDARDS_DIR / "ISO_standard_template.dotx"
 DEFAULT_MD = ROOT / "iso-standard.md"
-
-
-VERSION_FILENAME_RE = re.compile(r"^doclang_draft_v(\d+)\.(\d+)\.(\d+)\.docx$")
-
-
-def find_latest_version(dir_path: Path) -> Optional[Tuple[int, int, int]]:
-    latest: Optional[Tuple[int, int, int]] = None
-    if not dir_path.exists():
-        return None
-    for name in os.listdir(dir_path):
-        m = VERSION_FILENAME_RE.match(name)
-        if not m:
-            continue
-        x, y, z = map(int, m.groups())
-        if latest is None or (x, y, z) > latest:
-            latest = (x, y, z)
-    return latest
-
-
-def compute_version(x: Optional[int], y: Optional[int], z: Optional[int]) -> Tuple[int, int, int]:
-    latest = find_latest_version(ISO_STANDARDS_DIR)
-    if x is None and y is None and z is None:
-        # Use latest X.Y and increment Z. Default to 0.0.1 when no prior drafts.
-        if latest is None:
-            return (0, 0, 1)
-        lx, ly, lz = latest
-        return (lx, ly, lz + 1)
-
-    # Some values provided. Fill missing ones sensibly.
-    if x is None or y is None:
-        if latest is None:
-            # Start new series if no latest exists.
-            x = x if x is not None else 0
-            y = y if y is not None else 0
-        else:
-            lx, ly, _ = latest
-            x = x if x is not None else lx
-            y = y if y is not None else ly
-    if z is None:
-        # When X/Y are explicitly set, start at Z=0; otherwise continue from latest.
-        if latest is None:
-            z = 0
-        else:
-            lx, ly, lz = latest
-            if x == lx and y == ly:
-                z = lz + 1
-            else:
-                z = 0
-    return (int(x), int(y), int(z))
-
-
-def out_path_for_version(x: int, y: int, z: int) -> Path:
-    return ISO_STANDARDS_DIR / f"doclang_draft_v{x}.{y}.{z}.docx"
+OUTPUT_DOCX = ISO_STANDARDS_DIR / "doclang_draft.docx"
 
 
 def add_toc(document: Document) -> None:
@@ -724,9 +671,6 @@ def build_document(md_path: Path, out_path: Path, copy_iso_style: bool = True) -
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Write DocLang ISO draft DOCX from markdown")
-    parser.add_argument("--x", type=int, default=None, help="Version X (major)")
-    parser.add_argument("--y", type=int, default=None, help="Version Y (minor)")
-    parser.add_argument("--z", type=int, default=None, help="Version Z (patch)")
     parser.add_argument(
         "--input",
         type=str,
@@ -735,10 +679,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     args = parser.parse_args(argv)
-    x, y, z = compute_version(args.x, args.y, args.z)
-    out_path = out_path_for_version(x, y, z)
-
-    print(out_path)
+    out_path = OUTPUT_DOCX
 
     md_path = Path(args.input)
     if not md_path.exists():
