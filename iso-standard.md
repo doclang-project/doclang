@@ -177,336 +177,9 @@ DocLang is a constrained subset of XML with the following characteristics:
 - Character-based encoding using legal Unicode characters (except Null)
 - Standard XML parsing rules apply for markup vs content distinction
 
-DocLang defines the following categories of elements:
+The individual DocLang elements are specified in the [reference](#appendix-a-reference).
 
-- **special**: Elements that establish document scope and pagination, such as `doclang`, `page_break`, and `time_break`.
-- **provenance**: Elements that can provide visual or time grounding. The visual grounding is necessary for documents with pagination, the temporal grounding is necessary for audio based documents (music and movies).
-  - **geometric**: Elements that capture geometric position as normalized coordinates/bounding boxes (via repeated `location`) anchoring block-level content to the page.
-  - **time**: Elements that capture temporal positions using `<hour value={integer}/><minute value={integer}/><second value={integer}/><centisecond value={integer}/>` for a timestamp and a double timestamp for time intervals.
-- **semantic**: Block-level elements that convey document meaning (e.g., titles, paragraphs, captions, lists, forms, tables, formulas, code, pictures), optionally preceded by location tokens.
-- **formatting**: Inline elements that modify textual presentation within semantic content (e.g., `bold`, `italic`, `strikethrough`, `superscript`, `subscript`, `rtl`, `inline class="formula|code|picture"`, `br`).
-- **grouping**: Elements that organize semantic blocks into logical hierarchies and composites (e.g., `list`, `group type=*`) and never carry location tokens.
-- **structural**: Sequence tokens that define internal structure for complex constructs (primarily OTSL table layout: `otsl`, `fcel`, `ecel`, `lcel`, `ucel`, `xcel`, `nl`, `ched`, `rhed`, `corn`, `srow`; and field parts like `key`/`value`).
-- **content**: Lightweight content helpers used inside semantic blocks for explicit payload and annotations (e.g., `marker`, `checkbox`).
-- **binary data**: Elements that embed or reference non-text payloads for media—either inline as `base64` or via `uri`—allowed under `picture`, `inline class="picture"`, or at page level.
-- **metadata**: Elements that provide metadata about the document or its components, contained within `head` and `meta` respectively.
-- **continuation** tokens: Markers that indicate content spanning pages or table boundaries (e.g., `thread`, `h_thread`, each with a required `id` attribute) to stitch split content (e.g., across columns or pages).
-
-### Special Elements
-
-These elements have a specific purpose in defining the high-level structure of the document.
-
-#### The `doclang` Element
-
-Every DocLang document is wrapped in a `<doclang>` root element.
-
-Here is an example:
-
-```xml
-<doclang>
-  <!-- rest of the document -->
-</doclang>
-```
-
-#### The `version` Attribute
-
-The `doclang` root element MAY carry an optional `version` attribute following Semantic Versioning (MAJOR.MINOR.PATCH).
-When no version is specified, the default is `1.0.0`.
-
-Example:
-
-```xml
-<doclang version="1.0.0">
-  <!-- rest of the document -->
-</doclang>
-```
-
-#### The `page_break` Element
-
-A paginated document may be divided into pages using the `<page_break/>` empty-element tag.
-
-Here is an example:
-
-```xml
-<doclang>
-  <!-- first page content -->
-  <page_break/>
-  <!-- second page content -->
-</doclang>
-```
-
-The content between two `<page_break/>` is in itself a DocLang document, if it is sandwiched between `<doclang>...</doclang>`.
-
-#### The `time_break` Element
-
-Audio-based documents may be divided into timed segments. These timed segments can be indicated by the `<time_break/>` symbol.
-
-```xml
-<doclang>
-  <!-- first page content -->
-  <time_break/>
-  <!-- second page content -->
-</doclang>
-```
-
-The content between two `<time_break/>` is in itself a DocLang document, if it is sandwiched between `<doclang>...</doclang>`.
-
-### Provenance Elements
-
-#### The `location` Element
-
-The `location` element represents geometric information with value (and optional resolution) attributes of the format `<location value="integer" resolution="integer"/>` with 0 <= value <= resolution.
-
-- Single coordinate at (100, 200): `<location value="100"/><location value="200"/>`
-- Bounding box with (x0, y0) = (100, 200) and (x1, y1) = (300, 400): `<location value="100"/><location value="200"/><location value="300"/><location value="400"/>`
-
-Coordinate system and encoding rules:
-
-- Origin: The origin of the coordinate system is the bottom-left corner of the page.
-- Point: Use exactly 2 consecutive `location` tokens to encode a point; the first token is x, the second is y.
-- Bounding box: Use exactly 4 consecutive `location` tokens to encode a bounding box in strict order: x0, y0, x1, y1.
-- Rotated rectangle: Use exactly 8 consecutive `location` tokens to encode a (potentially rotated) rectangle in strict order: x0, y0, x1, y1, x2, y2, x3, y3; x0, y0 and x1, y1 lie along the bottom edge in reading order.
-- Normalization: Each `location`’s `value` is an integer in `[0, resolution]`; if a `location` specifies a `resolution` attribute it is used for that token, otherwise the `head.default_resolution` applies. When neither is available, use `512×512` as the implicit default.
-- Connection to page size: The boxes are proportional to the page where they belong, they will not capture the actual size or aspect ratio. Those can be reconstructed with the `page_size` metadata.
-
-The `location` element may only be used in elements which are meant to be interpreted as block-level, as specified further below.
-
-Usage examples:
-
-```xml
-<!-- Bounding box on a title -->
-<heading level="1">
-  <location value="50"/><location value="310"/>
-  <location value="450"/><location value="340"/>
-  Annual Report
-</heading>
-
-<!-- Paragraph anchored by a bounding box -->
-<text>
-  <location value="60"/><location value="260"/>
-  <location value="440"/><location value="270"/>
-  This paragraph is spatially anchored on the page.
-</text>
-
-<!-- Picture with 8-point rotated rectangle -->
-<picture>
-  <location value="200"/><location value="200"/>
-  <location value="400"/><location value="180"/>
-  <location value="420"/><location value="380"/>
-  <location value="220"/><location value="400"/>
-  <uri>assets/fig2.png</uri>
-  <caption>Figure 2: Rotated component</caption>
-</picture>
-
-<!-- Mixed per-token resolution overriding default -->
-<text>
-  <location value="100" resolution="1000"/>
-  <location value="200" resolution="1000"/>
-  <location value="900" resolution="1000"/>
-  <location value="800" resolution="1000"/>
-  Coordinates expressed in a 1000×1000 grid.
-</text>
-```
-
-#### The `timestamp` Element
-
-The `timestamp` element represents temporal provenance using four self-closing tokens:
-`<hour value="integer"/>`, `<minute value="integer"/>`, `<second value="integer"/>` and `<centisecond value="integer"/>`, where the first 3 tokens are compulsory and the last one is optional.
-
-- Point in time with second-level precision: Use 3 consecutive tokens to encode a single timestamp in strict order: hour, minute, second.
-- Point in time with sub-second precision: Use 4 consecutive tokens to encode a single timestamp in strict order: hour, minute, second, centisecond.
-- Time interval with second-level precision: Use exactly 6 consecutive tokens to encode a range: first the start timestamp (hour, minute, second), then the end timestamp (hour, minute, second).
-- Time interval with sub-second precision: Use exactly 8 consecutive tokens to encode a range: first the start timestamp (hour, minute, second, centisecond), then the end timestamp (hour, minute, second, centisecond).
-
-Examples:
-
-- Single timestamp at 0:01:23: `<hour value="0"/><minute value="1"/><second value="23"/>`
-- Single timestamp with sub-second precision at 12:34:56.12: `<hour value="12"/><minute value="34"/><second value="56"/><centisecond value="12"/>`
-- Interval from 00:00:10 to 00:01:05:
-  `<hour value="0"/><minute value="0"/><second value="10"/><hour value="0"/><minute value="1"/><second value="5"/>`
-- Interval with sub-second precision from 01:20:00.0 to 02:05:30.67:
-  `<hour value="1"/><minute value="20"/><second value="0"/><centisecond value="0"/><hour value="2"/><minute value="5"/><second value="30.123"/><centisecond value="67"/>`
-
-Encoding rules:
-
-- Ordering: The token order is strictly `hour`, then `minute`, then `second`, then `centisecond`; for intervals, emit start triplet first, then end triplet. In case of sub-second timestamps use a quadruplet in the order `hour`, then `minute`, then `second`, then `centisecond`; for internals with sub-second precison use 2 quadruplets, first the start quadruplet and then the end quadruplet.
-- Ranges: `hour.value` is an integer in `[0, 99]`; `minute.value` is an integer in `[0, 59]`; `second.value` is an integer in `[0, 59]`; `centisecond.value` is an integer in `[0, 99]`.
-- Normalization: Out-of-range carry is not allowed. Producers MUST pre-normalize (e.g., 0h 61m 5s must be encoded as 1h 1m 5s).
-- Monotonicity (intervals): The end timestamp MUST represent a time that is greater than or equal to the start timestamp when converted to total seconds. Equal start and end encodes a zero-length anchor.
-- Placement: Timestamp tokens MAY only be used on elements intended to be interpreted as block-level (see Semantic Elements). When present, they MUST precede the element’s textual content and any inline formatting tokens.
-- Coexistence with location: When both geometric `location` tokens and `timestamp` tokens are present, both sets MUST appear before content. The relative order between geometric and temporal tokens has no semantic impact; serializers SHOULD use a consistent order.
-- Interpretation: Timestamps are relative to the media’s timeline (e.g., an audio/video track or timed transcript) and are not wall-clock times; time zones and dates do not apply.
-
-Usage examples:
-
-```xml
-<text>
-  <hour value="0"/><minute value="2"/><second value="15"/>
-  Speaker starts the introduction.
-  <br/>
-  Main points follow.
-  <br/>
-  Conclusion.
-  <br/>
-</text>
-
-<text>
-  <hour value="0"/><minute value="5"/><second value="0"/><centisecond value="72"/>
-  <hour value="0"/><minute value="6"/><second value="30"/><centisecond value="15"/>
-  Applause segment
-</text>
-```
-
-### Semantic Elements
-
-Semantic elements represent semantic blocks of the document and are meant to be interpreted as block-level elements.
-Each semantic element may begin with a bounding box, capturing the element's bounding box.
-
-| Element | Description |
-|-------|-------------|
-| `title` | Document title |
-| `heading` | Section header, with optional level N ≥ 1 |
-| `text` | Generic text content |  <!--  TODO: rename to `paragraph` -->
-| `caption` | Caption for floating elements |
-| `footnote` | Footnote content |
-| `page_header` | Page header content |
-| `page_footer` | Page footer content |
-| `watermark` | Page contains watermark | <!-- watermark can be text or image - do we want to capture that? also do we want to know if watermark is in background or overlay?-->
-| `list_text` | Leading text of a list item, including any available marker or checkbox information |
-| `field_item` | Field item container with optional key and multiple values |
-| `field_region` | Field region container with one or more field items |
-| `field_heading` | Field heading within a field region, with optional level N ≥ 1 |
-| `key` | Key of the field item: can be a descendant of `field_item` |
-| `value` | Value of the field item: can be a descendant of `field_item`; optional `class` attribute with values `read_only` (default) or `fillable` |
-| `otsl` | Table structure |
-| `formula` | Mathematical expression |
-| `code` | Code block |
-| `picture` | Image or graphic element; might have a binary data child (`base64` or `uri`) |
-
-### Formatting Elements
-
-Formatting elements represent formatting information within the content of a semantic element and are meant to be interpreted as inline elements. Formatting elements can be nested, e.g. `<bold><italic>bold italic</italic></bold>`.
-
-| Token | Description |
-|-------|-------------|
-| `bold` | Bold text |
-| `italic` | Italic text |
-| `underline` | Underlined text |
-| `strikethrough` | Strike-through text |
-| `superscript` | Superscript |
-| `subscript` | Subscript |
-| `handwriting` | Handwritten text |
-| `rtl` | Right-to-left text direction |
-| `hyperlink` | Hyperlink with URI and optional formatted text content |
-| `inline class="formula\|code\|picture"` | Inline content: formula, code, or picture. If `class="picture"`, may include one of `base64` or `uri` as a child. |
-| `br`| Line break (empty-element tag) |
-
-### Grouping Elements
-
-These elements organize semantic content into logical structures. Groups can not have any location tokens and are intended to create the semantic tree.
-
-| Element | Description | Allowed Children |
-|-------|-------------|------------------|
-| `<list class="ordered\|unordered">` | List | Any, with every new list item being introduced by a `list_text` element |
-| `<group>` | Generic group enabling e.g. association of caption or footnote with the respective document components | |
-| `<floating_group class="table\|picture\|code">` | Floating container that groups a floating component with its associated caption, footnotes, and metadata. No `location` tokens. | table, picture, code (as appropriate) |
-
-Lists
-
-- Can in principle contain any children, with every new list item being introduced by a `list_text` element, which also contains any marker and checkbox information.
-
-**footnote regarding docling-core**: What we currently have as instantiations of `FloatingItem` (e.g., TableItem) should have been groups, as the `FloatingItem` contains captions, the `data structure` (e.g., the `data` in TableItem or the `graph` in FormItem) and the footnotes. As a matter of fact, it is currently even more mis-constructed, since the `ProvenanceItem` of the `TableItem` will in fact point to location of only the table, while the captions and footnotes will have their own `ProvenanceItem`.
-
-### Optimized Table Structure Language (OTSL)
-
-Tabular structure and header semantics in DocLang represented by optimized table-structure language (OTSL) tokens.
-
-Each new cell OTSL token (`<fcel/>` with its semantic variants) is interleaved by the sequence of appropriate table cell content tokens (texts, lists, etc.).
-OTSL representation has minimized vocabulary and specific rules.
-The benefits of describing tables with OTSL in reducing number of structural tokens (5 essential in OTSL vs 28+ in HTML) and shorten structural sequence length to half of HTML representation on average.
-
-Structural tokens define the structure of a table: columns, rows, cells, merged cells. Each cell can then be specified with a semantic variant token if it is a column header, row header, section row separator, or corner header.
-Semantic variants of `<fcel/>` token are following the same rules as `<fcel/>` token, and used just to distinguish a function of a table cell: type of header or separator.
-
-| Token | Semantic variant | Description |
-|-------|---------|-------------|
-| `<otsl>` | - | start of table data structure |
-| `<fcel/>`| `<fcel/>` | a new cell with content |
-|          | `<ecel/>` | a new cell without content |
-|          | `<ched/>`| a new column header cell |
-|          | `<rhed/>`| a new row header cell |
-|          | `<corn/>`| a new corner header cell |
-|          | `<srow/>`| a new section row cell |
-| `<lcel/>`| - | left-looking cell, merging with the left neighbor cell to create a horizontal span |
-| `<ucel/>`| - | up-looking cell, merging structure with the upper neighbor cell to create a vertical span |
-| `<xcel/>`| - | cross cell to merge with both left and upper neighbor cells, for 2D spans |
-| `<nl/>`| - | new line, table row separator |
-
-OTSL enables easy error detection and correction during sequence generation, making it LLM friendly.
-A notable trait of OTSL is that it has the capability of achieving lossless conversion to HTML.
-
-The OTSL representation follows these syntax rules:
-
-- Left-looking cell rule: The left neighbour of an `<lcel/>` must be either another `<lcel/>` or one of the variants of `<fcel/>`.
-- Up-looking cell rule: The upper neighbour of a `<ucel/>` must be either another `<ucel/>` or one of the variants of `<fcel/>`.
-- Cross cell rule: The left neighbour of an `<xcel/>` cell must be either another `<xcel/>` or a `<ucel/>`, and the upper neighbour of an `<xcel/>` must be either another `<xcel/>` or an `<lcel/>`.
-- First row rule: Only `<lcel/>` and `<fcel/>`(with variants) are allowed in the first row.
-- First column rule: Only `<ucel/>` cells and `<fcel/>`(with variants) are allowed in the first column.
-- Rectangular rule: The table representation of structural OTSL tokens is always rectangular - all rows must have an equal number of OTSL tokens, terminated with `<nl/>` token.
-
-Example:
-
-```xml
-<otsl>
-  <ecel/>          <lcel/>                <ched/>Observer 1<lcel/>         <lcel/><nl/>
-  <ucel/>          <xcel/>                <ched/>benign    <ched/>malignant<ched/>Total observer 2<nl/>
-  <rhed/>Observer 2<rhed/>Benign          <fcel/>13        <fcel/>2        <fcel/>15<nl/>
-  <ucel/>          <rhed/>malignant       <fcel/>0         <fcel/>62       <fcel/>62<nl/>
-  <ucel/>          <rhed/>Total observer 1<fcel/>13        <fcel/>64       <fcel/>77<nl/>
-</otsl>
-```
-
-### Pictures of Charts
-
-`<picture>` can include `<class>` with picture classification value. In cases of numerical charts, it is also possible to include `<otsl>` that contain numerical data of a chart. This is applicable for charts with data series that can be represented in a tabular fashion: `bar_chart`, `line_chart`, `pie_chart`, `area_chart`, `scatter_plot`, `bubble_chart`, etc:
-
-```xml
-<picture>
-  <location value="50"/><location value="50"/>
-  <location value="150"/><location value="150"/>
-  <uri>assets/bar_chart.png</uri>
-  <class>bar_chart</class>
-  <otsl>
-    <ched/>sales<ched/>2022<ched/>2023<ched/>2024<ched/>2025<nl/>
-    <rhed/>ABCDE<fcel/>100M<fcel/>120M<fcel/>110M<fcel/>105M<nl/>
-    <rhed/>FGHIJ<fcel/>125M<fcel/>150M<fcel/>175M<fcel/>200M<nl/>
-    <rhed/>KLMNO<fcel/>300M<fcel/>270M<fcel/>250M<fcel/>210M<nl/>
-  </otsl>
-</picture>
-```
-
-### Content Tokens
-
-| Token | Description |
-|-------|-------------|
-| `<marker>`| Marker (eg in `list_item`, within `field_item`, etc) |
-| `<checkbox>`| Self-closing elemnt for checkbox status; optional `selected` in {`true`,`false`} defaults to `false`. |
-| `<facets>`| Container meant for application-specific properties for derived information, such as summary, classification label, etc. |
-
-The present standard does not prescribe the specific `facets` content, but a possible instantiation could be:
-
-```xml
-<doclang>
-  <picture>
-    <facets>
-      <summary>This image shows the distribution of the various data points in the dataset</summary>
-      <class>pie_chart</class>
-    </facets>
-    <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
-    <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
-  </picture>
-</doclang>
-```
+<!-- NOTE: truncated content now provided by reference -->
 
 ### Metadata Elements
 
@@ -1056,59 +729,7 @@ Here is an example usage, for instance considering a picture:
 </doclang>
 ```
 
-### Continuation Tokens
-
-For content spanning page breaks:
-
-| Token | Description |
-|-------|-------------|
-| `<thread id="N"/>` | Special element for capturing content that spans across pages (see [Split Structure](#split-structure)); `id` is a required identifier reused across parts. |
-| `<h_thread id="N"/>` | Special element for horizontal stitching of table content (see [Split Structure](#split-structure)); `id` is a required identifier reused across parts. |
-
-### Binary Data Elements
-
-Binary data elements encode non-text payloads that semantic content can reference or embed. They can appear directly under a page’s flow (page-level) or as children of elements that carry binary payloads.
-
-- `base64`: Embeds binary data as a base64-encoded string between the tags.
-- `uri`: Provides a reference to an external or local resource via a valid URI or filesystem path.
-
-Usage rules:
-
-- Allowed parents: `picture`, `inline class="picture"`, and page-level flow (i.e., between `page_break` markers) when associating a resource with the current page.
-- For `picture` and `inline class="picture"`, include at most one of `base64` or `uri` as a child.
-- Content of `base64` is a raw base64 string (no data URI prefix).
-- Content of `uri` must be a valid URI or filesystem path resolvable by the implementation.
-
-Examples:
-
-```xml
-<!-- Block image with a URI -->
-<picture>
-  <location value="100"/><location value="200"/><location value="300"/><location value="400"/>
-  <uri>assets/figures/fig1.png</uri>
-  <caption>Figure 1: System diagram</caption>
-</picture>
-
-<!-- Block image with embedded base64 -->
-<picture>
-  <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
-  <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
-</picture>
-
-<!-- Inline image referenced by URI inside text -->
-<text>
-  The logo <inline class="picture"><uri>assets/logo.png</uri></inline> appears here.
-</text>
-
-<!-- Page-level binary payload associated with the current page -->
-<page_break/>
-<uri>assets/page_2_background.png</uri>
-<text>Page 2 content...</text>
-```
-
-### Vector graphics Elements
-
-If you want to include vector graphics elements, DocLang allow you to include SVG: enclosed in `<svg> ... </svg>`.
+<!-- NOTE: truncated content now provided by reference -->
 
 ## Grammar and Structure Rules
 
@@ -2899,119 +2520,1528 @@ The `<class>` token supports extensible vocabularies:
 7. ISO 8601
 8. Semantic Versioning 2.0.0 (semver.org)
 
-## Appendix A: Complete Token Reference
+## Appendix A: Reference
 
-### Token Table
+<!-- NOTE: for reference updates, generate using generate_reference.py -->
 
-| # | Category | Token | Self-Closing [Yes/No] | Parametrized [Yes/No] | Attributes | Description |
-|---|----------|-------|-----------------------|-----------------------|------------|-------------|
-| 1 | Root Elements | `doclang` | No | Yes | `version` | Root container; optional semantic version `version`. |
-| 2 | Special Elements | `page_break` | Yes | No | — | Page delimiter. |
-| 3 |  | `time_break` | Yes | No | — | Temporal segment delimiter. |
-| 4 | Metadata Containers | `head` | No | No | — | Document-level metadata container. |
-| 5 |  | `meta` | No | No | — | Component-level metadata container. |
-| 6 | Geometric Tokens | `location` | Yes | Yes | `value`, `resolution?` | Geometric coordinate; `value` in [0, res]; optional `resolution`. |
-| 7 | Temporal Tokens | `hour` | Yes | Yes | `value` | Hours component; `value` in [0, 99]. |
-| 8 |  | `minute` | Yes | Yes | `value` | Minutes component; `value` in [0, 59]. |
-| 9 |  | `second` | Yes | Yes | `value` | Seconds component; `value` in [0, 59]. |
-| 10 |  | `centisecond` | Yes | Yes | `value` | Centiseconds component; `value` in [0, 99]. |
-| 11 | Semantic Tokens | `title` | No | No | — | Document or section title (content). |
-| 12 |  | `heading` | No | Yes | `level` | Section header; `level` (N ≥ 1). |
-| 13 |  | `text` | No | No | — | Generic text content. |
-| 14 |  | `caption` | No | No | — | Caption for floating/grouped elements. |
-| 15 |  | `footnote` | No | No | — | Footnote content. |
-| 16 |  | `page_header` | No | No | — | Page header content. |
-| 17 |  | `page_footer` | No | No | — | Page footer content. |
-| 18 |  | `watermark` | No | No | — | Watermark indicator or content. |
-| 19 |  | `picture` | No | No | — | Block image/graphic; at most one of `base64`/`uri`; may include `meta` for classification; `otsl` may encode chart data. |
-| 20 |  | `formula` | No | No | — | Mathematical expression block. |
-| 21 |  | `code` | No | No | — | Code block. |
-| 22 |  | `list_text` | No | No | — | Leading text of a list item, including any available marker or checkbox information. |
-| 23 |  | `field_region` | No | No | — | Field region container; contains at least one `field_item` as descendant. |
-| 24 |  | `field_item` | No | No | — | Field item container; may contain 0-1 `key` and 0-many `value` elements as descendants. |
-| 25 |  | `field_heading` | No | Yes | `level?` | Field heading within a field region; optional `level` (N ≥ 1). |
-| 26 |  | `hint` | No | No | — | Hint for a fillable field (format/example/description). |
-| 31 | Grouping Tokens | `group` | No | Yes | `type?` | Generic group; no `location` tokens; associates composite content (e.g., captions/footnotes). |
-| 32 |  | `list` | No | Yes | `class` in {`unordered`, `ordered`}; defaults to `unordered` | List container. |
-| 27 |  | `floating_group` | No | Yes | `class` in {`table`,`picture`,`code`} | Floating container that groups a floating component with its caption, footnotes, and metadata; no `location` tokens. |
-| 34 | Formatting Tokens | `bold` | No | No | — | Bold text. |
-| 35 |  | `italic` | No | No | — | Italic text. |
-| 36 |  | `underline` | No | No | — | Underlined text. |
-| 37 |  | `strikethrough` | No | No | — | Strike-through text. |
-| 38 |  | `handwriting` | No | No | — | Handwritten text. |
-| 39 |  | `superscript` | No | No | — | Superscript text. |
-| 40 |  | `subscript` | No | No | — | Subscript text. |
-| 41 |  | `rtl` | No | No | — | Right-to-left text direction. |
-| 42 |  | `hyperlink` | No | No | — | Hyperlink; contains required `uri` child and optional formatted text content. |
-| 43 |  | `inline` | No | Yes | `class` in {`formula`,`code`,`picture`} | Inline content; if `class="picture"`, may include one of `base64` or `uri`. |
-| 44 |  | `br` | Yes | No | — | Line break. |
-| 45 | Structural Tokens (OTSL) | `otsl` | No | No | — | Table structure container. |
-| 46 |  | `fcel` | Yes | No | — | New cell with content. |
-| 47 |  | `ecel` | Yes | No | — | New cell without content. |
-| 48 |  | `ched` | Yes | No | — | Column header cell. |
-| 49 |  | `rhed` | Yes | No | — | Row header cell. |
-| 50 |  | `corn` | Yes | No | — | Corner header cell. |
-| 51 |  | `srow` | Yes | No | — | Section row separator cell. |
-| 52 |  | `lcel` | Yes | No | — | Merge with left neighbor (horizontal span). |
-| 53 |  | `ucel` | Yes | No | — | Merge with upper neighbor (vertical span). |
-| 54 |  | `xcel` | Yes | No | — | Merge with left and upper neighbors (2D span). |
-| 55 |  | `nl` | Yes | No | — | New line (row separator). |
-| 56 | Continuation Tokens | `thread` | Yes | Yes | `id` | Continuation marker for split content; reuse same `id` across parts. |
-| 57 |  | `h_thread` | Yes | Yes | `id` | Horizontal stitching marker for split tables; reuse same `id`. |
-| 58 | Binary Data Tokens | `base64` | No | No | — | Embedded binary data (base64). |
-| 59 |  | `uri` | No | No | — | External resource reference. |
-| 60 | Content Tokens | `marker` | No | No | — | List/field marker content. |
-| 61 |  | `checkbox` | Yes | Yes | `class` in {`unselected`, `selected`}; defaults to `unselected` | Checkbox status. |
-| 62 |  | `facets` | No | No | — | Container for application-specific derived properties. |
-| 63 |  | `hint` | No | No | — | Hint for fillable field; recommended within `field_item` context. |
-| 64 | Structural Tokens (Field) | `key` | No | No | — | Field item key. |
-| 65 |  | `value` | No | Yes | `class` in {`read_only`, `fillable`}; defaults to `read_only` | Field item value; `read_only` for pre-filled values, `fillable` for editable fields. |
+<details>
+  <summary>Table of Contents</summary>
 
-### Metadata Sub-elements
+- [Special Elements](#special-elements)
+  - [`<doclang>`](#doclang)
+  - [`<head>`](#head)
+  - [`<page_break>`](#page_break)
+- [Semantic Elements](#semantic-elements)
+  - [`<text>`](#text)
+  - [`<title>`](#title)
+  - [`<heading>`](#heading)
+  - [`<caption>`](#caption)
+  - [`<footnote>`](#footnote)
+  - [`<page_header>`](#page_header)
+  - [`<page_footer>`](#page_footer)
+  - [`<field_region>`](#field_region)
+  - [`<otsl>`](#otsl)
+  - [`<list>`](#list)
+  - [`<formula>`](#formula)
+  - [`<code>`](#code)
+  - [`<picture>`](#picture)
+  - [`<marker>`](#marker)
+  - [`<list_text>`](#list_text)
+  - [`<field_heading>`](#field_heading)
+  - [`<field_item>`](#field_item)
+  - [`<key>`](#key)
+  - [`<value>`](#value)
+  - [`<hint>`](#hint)
+- [Grouping Elements](#grouping-elements)
+  - [`<group>`](#group)
+  - [`<floating_group>`](#floating_group)
+- [Component Head Elements](#component-head-elements)
+  - [`<thread>`](#thread)
+  - [`<h_thread>`](#h_thread)
+  - [`<meta>`](#meta)
+  - [`<custom_meta>`](#custom_meta)
+  - [`<location>`](#location)
+  - [`<timestamp>`](#timestamp)
+  - [`<hour>`](#hour)
+  - [`<minute>`](#minute)
+  - [`<second>`](#second)
+  - [`<centisecond>`](#centisecond)
+  - [`<layer>`](#layer)
+  - [`<summary>`](#summary)
+  - [`<classification>`](#classification)
+- [Payload Elements](#payload-elements)
+  - [`<uri>`](#uri)
+  - [`<checkbox>`](#checkbox)
+  - [`<content>`](#content)
+- [Formatting Elements](#formatting-elements)
+  - [`<bold>`](#bold)
+  - [`<italic>`](#italic)
+  - [`<underline>`](#underline)
+  - [`<strikethrough>`](#strikethrough)
+  - [`<superscript>`](#superscript)
+  - [`<subscript>`](#subscript)
+  - [`<handwriting>`](#handwriting)
+  - [`<rtl>`](#rtl)
+  - [`<hyperlink>`](#hyperlink)
+- [Structural Elements](#structural-elements)
+  - [`<fcel>`](#fcel)
+  - [`<ecel>`](#ecel)
+  - [`<ched>`](#ched)
+  - [`<rhed>`](#rhed)
+  - [`<corn>`](#corn)
+  - [`<srow>`](#srow)
+  - [`<lcel>`](#lcel)
+  - [`<ucel>`](#ucel)
+  - [`<xcel>`](#xcel)
+  - [`<nl>`](#nl)
+- [Document Head Elements](#document-head-elements)
+  - [`<title>`](#title)
+  - [`<author>`](#author)
+  - [`<date>`](#date)
+  - [`<default_resolution>`](#default_resolution)
+  - [`<page_size>`](#page_size)
+  - [`<language>`](#language)
+  - [`<generated_by>`](#generated_by)
+  - [`<topic>`](#topic)
+  - [`<summary>`](#summary)
+  - [`<document_hash>`](#document_hash)
+  - [`<licenses>`](#licenses)
+  - [`<data_classification>`](#data_classification)
+  - [`<acceptable_use>`](#acceptable_use)
+  - [`<stewardship>`](#stewardship)
+  - [`<access_policy>`](#access_policy)
+  - [`<retention_policy>`](#retention_policy)
+  - [`<compliance_requirements>`](#compliance_requirements)
 
-| # | Token | Self-Closing [Yes/No] | Parametrized [Yes,No] | Description |
-|---|-------|-----------------------|-----------------------|-------------|
-| 1 | `title` | No | No | Document title (metadata context). |
-| 2 | `author` | No | No | Author entry; may contain `affiliation` children and text. |
-| 3 | `affiliation` | No | No | Author affiliation; child of `author`. |
-| 4 | `date` | No | No | Document date in ISO 8601 format (e.g., YYYY-MM-DD). |
-| 5 | `language` | No | Yes | Language code (ISO 639-3); attributes: `classifier`, `score`. |
-| 6 | `default_resolution` | Yes | Yes | Default coordinate resolution; attributes: `width`, `height`. |
-| 7 | `page_size` | Yes | Yes | Original page size; attributes: `width`, `height`; optional `page_no` starts at 1. |
-| 8 | `document_quality` | No | Yes | Quality score; attribute: `classifier`; content is a number [0,1]. |
-| 9 | `document_readability` | No | Yes | Readability score; attribute: `classifier`; content is a number [0,1]. |
-| 10 | `general_topic` | No | Yes | Topic label; attributes: `topic_taxonomy`, `classifier`, `score`. |
-| 11 | `document_hash` | No | Yes | Document hash value; attribute: `hash_function` (e.g., SHA-256). |
-| 12 | `custom_attribute` | No | Yes | Custom key/value; attributes: `key`, `name`; content is value. |
-| 13 | `processing_tool` | No | No | Name of the processing tool (e.g., docling). |
+</details>
 
-### Governance Metadata Sub-elements
+---
 
-| # | Token | Self-Closing [Yes/No] | Parametrized [Yes/No] | Description |
-|---|-------|-----------------------|-----------------------|-------------|
-| 1 | `licenses` | No | No | Container for one or more `license` entries. |
-| 2 | `license` | No | No | License URL, SPDX identifier, or text. |
-| 3 | `data_classification` | No | No | Container for one or more `data_class` entries. |
-| 4 | `data_class` | No | No | Organization-defined data sensitivity class. |
-| 5 | `acceptable_use` | No | No | Container for one or more `purpose` entries describing acceptable use. |
-| 6 | `purpose` | No | No | A specific acceptable use purpose description. |
-| 7 | `stewardship` | No | No | Container for one or more `steward` entries. |
-| 8 | `steward` | No | No | Governance contact entry; may include `name`, `contact`, and `org`. |
-| 9 | `name` | No | No | Steward’s person or team name. |
-| 10 | `contact` | No | No | Steward contact information (e.g., email or URI). |
-| 11 | `org` | No | No | Steward’s organization. |
-| 12 | `access_policy` | No | No | Container for one or more `policy` entries defining access rules. |
-| 13 | `policy` | No | No | Policy entry; may include `ref`, `roles`. Reused under multiple governance parents. |
-| 14 | `ref` | No | No | Reference to policy documentation (e.g., URL or identifier). |
-| 15 | `roles` | No | No | Container for one or more `role` entries. |
-| 16 | `role` | No | No | Role name allowed by policy (organization-defined semantics). |
-| 17 | `retention_policy` | No | No | Container for one or more `policy` entries defining retention. |
-| 18 | `retention_period` | No | Yes | Retention duration; attribute: `unit` (e.g., year, month, day); content is a number. |
-| 19 | `deletion_method` | No | No | Method for deletion (e.g., secure erasure approach). |
-| 20 | `documentation` | No | No | Free-text or URI documenting retention actions. |
-| 21 | `compliance_requirements` | No | No | Container for one or more `compliance_req` entries. |
-| 22 | `compliance_req` | No | No | Compliance framework requirement (e.g., GDPR, HIPAA, PCI DSS). |
+### Special Elements
 
-## Appendix B: Escape entities
+This category comprises elements with specialized document-level function.
 
-TBA
+#### `<doclang>`
+
+The document root element. Starts with an optional [`<head>`](#head) followed by a sequence of applicable elements.
+
+##### Allowed context
+
+Exists exactly once, as root element.
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `xmlns` | Optional; default: "https://www.doclang.ai/ns/v1" | {"https://www.doclang.ai/ns/v1"} | The DocLang specification version namespace. |
+| `version` | Optional; default: "1.0.0" | In format "x.y.z" as per Semantic Versioning | The DocLang specification version the document was produced against. |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Not allowed |
+
+##### Example
+
+```xml
+<doclang xmlns="https://www.doclang.ai/ns/v1">
+  <!-- content -->
+</doclang>
+```
+
+#### `<head>`
+
+Includes doc-level metadata.
+
+##### Allowed context
+
+Can only be first child of [`<doclang>`](#doclang).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<page_break>`
+
+Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang document if wrapped in a `doclang` root element.
+
+##### Allowed context
+
+Can only be child of [`<doclang>`](#doclang).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+##### Example
+
+```xml
+<doclang xmlns="https://www.doclang.ai/ns/v1">
+  <!-- first page content -->
+  <page_break/>
+  <!-- second page content -->
+</doclang>
+```
+
+### Semantic Elements
+
+Semantic elements capture core components with specific meaning and functional role in the document, for example, a paragraph, a table, a list, and more. Any semantic element may optionally begin with a [component head](#component-head-elements). Semantic elements are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting).
+
+#### `<text>`
+
+Represents a piece of cohesive text as that would appear in a paragraph.
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<title>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<heading>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<caption>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<footnote>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<page_header>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<page_footer>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<field_region>`
+
+Serves for scoping of field items, for example encapsulating a whole form.
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Not allowed | Allowed |
+
+#### `<otsl>`
+
+Captures a table using OTSL format. A table cell, as delimited  by the respective structural elements, can be defined either by normal semantic / grouping elements or by an optional component head followed by raw or formatted text, which is to be interpreted as an "implicit [`<text>`](#text)" (i.e. without the wrapping tags).
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<list>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `class` | Optional; default: "unordered" | {"unordered", "ordered"} |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Not allowed | Allowed |
+
+#### `<formula>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Not allowed |
+
+#### `<code>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Not allowed |
+
+#### `<picture>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Not allowed | Allowed |
+
+#### `<marker>`
+
+##### Allowed context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<list_text>`
+
+##### Allowed context
+
+Can only be child of [`<list>`](#list).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<field_heading>`
+
+##### Allowed context
+
+Can only be descendant of [`<field_region>`](#field_region).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<field_item>`
+
+Scoping of a field key (optional) & any corresponding values.
+
+##### Allowed context
+
+Can only be descendant of [`<field_region>`](#field_region).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Not allowed | Allowed |
+
+#### `<key>`
+
+The key of a field (may correspond to  0-N field values).
+
+##### Allowed context
+
+Can only be descendant of [`<field_item>`](#field_item).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<value>`
+
+A value of a field (may correspond to 0 or 1 field key).
+
+##### Allowed context
+
+Can only be descendant of [`<field_item>`](#field_item).
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `class` | Optional; default: "read_only" | {"read_only", "fillable"} |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+#### `<hint>`
+
+A hint regarding a field.
+
+##### Allowed context
+
+Can only be descendant of [`<field_region>`](#field_region).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Allowed | Allowed |
+
+### Grouping Elements
+
+Grouping elements enable the encapsulation of semantic elements or other grouping elements. Any grouping element may optionally begin with a [component head](#component-head-elements).
+
+#### `<group>`
+
+[TODO: revise] Generic container to be used for grouping mixed-type components.
+
+##### Allowed context
+
+Any context that allows grouping elements.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Not allowed | Allowed |
+
+#### `<floating_group>`
+
+[TODO: revise] Container that groups a floating component with its caption, footnotes etc.
+
+##### Allowed context
+
+Any context that allows grouping elements.
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `class` | Required | {"table", "picture", "code", "formula"} |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Allowed | Not allowed | Allowed |
+
+### Component Head Elements
+
+The component head is a sequence comprising the following elements in this order, whereby all elements are optional:<br /><ul><li>`<thread>`</li><li>`<h_thread>`</li><li>`<meta>`</li><li>sequence of 2*N `<location>`s (N>1)</li><li>sequence of `<timestamp>`s</li><li>`<layer>`</li></ul> A component head can only appear as the leading content of a semantic or grouping element, or also of `<otsl>` in the context of "implicit `<text>`s".<br/> The various component head elements are further specified in the following subsections.
+
+#### `<thread>`
+
+Optional part of the component head; serves for capturing a component spanning multiple bounding boxes (e.g. cross-column) or pages.<br/>  To capture such a component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them.
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `thread_id` | Required | Postive integer | A string that identifies a thread. |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+##### Example
+
+<details>
+  <summary>Show document picture</summary>
+
+  <img src="../input/examples/thread.png" width="700">
+
+</details>
+
+```xml
+<doclang xmlns="https://www.doclang.ai/ns/v1">
+  <!-- ... -->
+  <text>
+    <thread thread_id="1"/>
+    <location value="10"/><location value="20"/>
+    <location value="30"/><location value="40"/>
+    where τ<subscript>x,y,z</subscript> are the Pauli matrices acting
+    on Nambu space. We consider a circular-shaped boundary, the nor-
+  </text>
+
+  <caption>
+    <location value="20"/><location value="30"/>
+    <location value="40"/><location value="50"/>
+    FIG. 3. The modules of the inner product of two MES spinors
+    <formula><!-- ... --></formula>
+    <!-- ... -->
+  </caption>
+
+  <text>
+    <thread thread_id="1"/>
+    <location value="30"/><location value="40"/>
+    <location value="50"/><location value="60"/>
+    mal direction of the boundary tangent for arbitrary angle θ is
+    <formula><!-- ... --></formula>
+    <!-- ... -->
+  </text>
+</doclang>
+```
+
+#### `<h_thread>`
+
+Optional part of the component head; serves for capturing a component crossing horizontal boundaries (e.g. table verically split between multiple pages).
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `h_thread_id` | Required | Postive integer |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<meta>`
+
+Used to store additional or derived information regarding the respective component.
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<custom_meta>`
+
+Custom metadata, e.g. for application-specific purposes.
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<location>`
+
+Coordinate system is the bottom-left corner of the page.
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, resolution) |  |
+| `resolution` | Optional; defaults to head metadata [`<default_resolution>`](#default_resolution), otherwise "512" | Postive integer |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<timestamp>`
+
+needed? Yes, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<hour>`
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Non-negative integer |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<minute>`
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Non-negative integer |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<second>`
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Non-negative integer |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<centisecond>`
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Non-negative integer |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<layer>`
+
+##### Allowed context
+
+Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `class` | Optional; default: "body" | {"body", "furniture", "background", "invisible", "notes"} |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<summary>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<classification>`
+
+##### Allowed context
+
+Can only be child of [`<meta>`](#meta).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Not allowed |
+
+### Payload Elements
+
+Payload elements are low-level elements that help define the effective content of another element.
+
+#### `<uri>`
+
+Textual content must be a URI.
+
+##### Allowed context
+
+Can only be child of [`<picture>`](#picture) or first child of [`<hyperlink>`](#hyperlink).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Not allowed |
+
+#### `<checkbox>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `selected` | Optional;default: "false" | {"false", "true"} |  |
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<content>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Not allowed |
+
+### Formatting Elements
+
+Formatting elements modify the styling and presentation within semantic or other formatting elements.
+
+#### `<bold>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<italic>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<underline>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<strikethrough>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<superscript>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<subscript>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<handwriting>`
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<rtl>`
+
+Indicates right-to-left direction.
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+#### `<hyperlink>`
+
+Contains a [`<uri>`](#uri) and then optionally raw or formatted text data.
+
+##### Allowed context
+
+Any context that allows raw text content.
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Allowed | Allowed |
+
+### Structural Elements
+
+Structural elements define boundaries within tabular content (`<otsl>`).
+
+#### `<fcel>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<ecel>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<ched>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<rhed>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<corn>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<srow>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<lcel>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<ucel>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<xcel>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<nl>`
+
+##### Allowed context
+
+Can only be child of [`<otsl>`](#otsl).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| Not allowed | Not allowed | Not allowed | Not allowed |
+
+### Document Head Elements
+
+This category comprises the document-level metadata elements that are the building blocks of `<head>`.
+
+#### `<title>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<author>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<date>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<default_resolution>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<page_size>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<language>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<generated_by>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<topic>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<summary>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<document_hash>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<licenses>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<data_classification>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<acceptable_use>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<stewardship>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<access_policy>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<retention_policy>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
+
+#### `<compliance_requirements>`
+
+TBD
+
+##### Allowed context
+
+TBD
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic / grouping elements |
+| --- | --- | --- | --- |
+| TBD | TBD | TBD | TBD |
