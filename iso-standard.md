@@ -136,8 +136,8 @@ To separate between the component's properties and its actual content, respectiv
 The element's XML content begins with an optional *component head*, which is a sequence of dedicated elements that establish the element's properties.
 The component's effective content, e.g. paragraph text, is then captured by the remaining of the XML content, an area which is called the *component body*.
 
-The overall DocLang document follows a similar structure: Any global document properties are captured in the optional *global head* and the remaining content is called the *global body*.
-Unlike the component head, the global head is encapsulated in a dedicated `<head>` element — the body is still unwrapped.
+The overall DocLang document follows a similar structure: Any global document properties are captured in the optional *document head* and the remaining content is called the *document body*.
+Unlike the component head, the document head is encapsulated in a dedicated `<head>` element — the body is unwrapped in both cases.
 
 While the details are specified in the sections further below, this snippet shows an example of this scheme:
 
@@ -167,7 +167,6 @@ While the details are specified in the sections further below, this snippet show
 </doclang>
 ```
 
-
 ## DocLang Structure
 
 DocLang is a constrained subset of XML with the following characteristics:
@@ -178,8 +177,6 @@ DocLang is a constrained subset of XML with the following characteristics:
 - Standard XML parsing rules apply for markup vs content distinction
 
 The individual DocLang elements are specified in the [reference](#appendix-a-reference).
-
-<!-- NOTE: truncated content now provided by reference -->
 
 ### Metadata Elements
 
@@ -248,6 +245,7 @@ Here is an example:
   <!-- document content -->
 </doclang>
 ```
+
 ##### Governance and compliance metadata
 
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
@@ -704,34 +702,7 @@ Notes:
 - When `training_permitted` is `false`, implementations SHOULD treat training-related fields as either omitted or set to explicit "none" values.
 - Where retention elements include a `unit` attribute, producers MUST use consistent units and pre-normalized values.
 
-### The `meta` Element
-
-The `meta` element is used to contain metadata about a specific component of the document.
-
-Below we list the reserved metadata elements to be used within `<meta>`:
-
-- `summary`
-- `class`
-- `language`
-
-Here is an example usage, for instance considering a picture:
-
-```xml
-<doclang>
-  <picture>
-    <meta>
-      <summary>This image shows the distribution of the various data points in the dataset</summary>
-      <class>pie_chart</class>
-    </meta>
-    <location value="50"/><location value="60"/><location value="450"/><location value="360"/>
-    <base64>iVBORw0KGgoAAAANSUhEUgAA...truncated...5ErkJggg==</base64>
-  </picture>
-</doclang>
-```
-
-<!-- NOTE: truncated content now provided by reference -->
-
-## Grammar and Structure Rules
+## Examples
 
 ### Simple Document Structure
 
@@ -777,60 +748,32 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 ### Code snippets
 
-Code content can appear inline via `inline class="code"` or as block code via `code`. To classify the programming language of a block, include a `<class>...</class>` child inside `code`. When using groups, place coordinates only on semantic elements (e.g., `caption`, `code`), not on the `group` itself.
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. The `class` attribute can be optionally used for classifying the programming language.
 
-Basic inline code
+Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
+
+Inline code:
 
 ```xml
 <text>
-  Install with <inline class="code">pip install docling</inline> and run.
-  For environment checks, use <inline class="code">python --version</inline>.
-  Inline code preserves spacing and punctuation.
-  <br/>
-  Example path: <inline class="code">/usr/local/bin</inline>
-  <br/>
-  Variables like <inline class="code">API_KEY</inline> should not be committed.
-  <br/>
-  Use <inline class="code">Ctrl+C</inline> to stop the server.
-  <br/>
-  Command substitution: <inline class="code">$(echo hello)</inline>
-  <br/>
-  JSON snippet: <inline class="code">{"ok":true}</inline>
-  <br/>
-  Escaping: <inline class="code">&lt;tag&gt;value&lt;/tag&gt;</inline>
-  <br/>
-  Code fragments can mix with <bold>formatting</bold> seamlessly.
-  <br/>
-  Use backticks sparingly; DocLang uses explicit tokens instead.
-  <br/>
-  End of examples.
-
+  Check your version with <code>python --version</code>.
+  We can even have <code><bold>formatted code</bold></code>.
 </text>
 ```
 
-Basic block without language
+Code block with language classification and whitespace preservation:
 
 ```xml
-<code>
-  echo "Hello, world!"
-  echo "Logs go to stdout by default"
-</code>
-```
-
-Block with language classification via `<class>`
-
-```xml
-<code>
-  <class>python</class>
+<code class="python"><content>
   def add(a, b):
       return a + b
 
   if __name__ == "__main__":
-      print(add(2, 3))
+      print(add(2, 3))</content>
 </code>
 ```
 
-Grouped code with caption and coordinates
+Grouped code with caption and coordinates:
 
 ```xml
 <group>
@@ -838,62 +781,53 @@ Grouped code with caption and coordinates
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Listing 1: Minimal HTTP server
   </caption>
-  <code>
+  <code class="javascript">
     <location value="10"/><location value="80"/><location value="400"/><location value="300"/>
-    <class>javascript</class>
+    <content><![CDATA[
     // Minimal Node.js server
     import http from 'node:http';
     const server = http.createServer((req, res) => {
       res.end('OK');
     });
-    server.listen(3000);
+    server.listen(3000);]]></content>
   </code>
   <footnote>Source: examples/code/server.js</footnote>
 </group>
 ```
 
-Block with alternative language classification
-
-```xml
-<code>
-  <class>C++</class>
-  #include <iostream>
-  int main(){ std::cout << "hi"; }
-</code>
-```
-
 Long code blocks can be split across pages using continuation tokens; keep `<class>` in the first fragment.
 
 ```xml
-<code>
-  <class>bash</class>
+<code class="bash">
+  <thread thread_id="42"/>
+  <content>
   # Part 1
-  seq 1 5 | while read n; do echo $n; done
-  <thread id="code-42"/>
+  seq 1 5 | while read n; do echo $n; done</content>
 </code>
+<page_footer>Foo</page_footer>
 <page_break/>
 <code>
-  # Part 2 (continued)
-  <thread id="code-42"/>
-  echo "done"
+  <thread thread_id="42"/>
+  <content>
+  echo "done"</content>
 </code>
 ```
 
 ### Math and Equations
 
-All math is authored as LaTeX inside `inline class="formula"` (inline) or `formula` (block). Do not use `<class>` for math; language classification is not applicable here. The optional `<marker>` child inside `formula` carries the printed equation number or label (e.g., “(1)”, “Eq. 3”). If present, include it as plain text within `<marker>`.
+All math is authored as LaTeX inside <formula>, whether in standalone blocks or inlined within a semantic element (similar to code).
 
-Inline math examples
+Inline formula:
 
 ```xml
 <text>
-  The famous relation <inline class="formula">E = mc^2</inline> connects mass and energy.
-  For small x, <inline class="formula">\sin x \approx x - x^3/3!</inline> holds.
-  The binomial: <inline class="formula">(a+b)^n = \sum_{k=0}^n \binom{n}{k} a^{n-k} b^k</inline>.
+  The famous relation <formula>E = mc^2</formula> connects mass and energy.
+  For small x, <formula>\sin x \approx x - x^3/3!</formula> holds.
+  The binomial: <formula>(a+b)^n = \sum_{k=0}^n \binom{n}{k} a^{n-k} b^k</formula>.
 </text>
 ```
 
-Basic block formula (no numbering)
+Block Formula:
 
 ```xml
 <formula>
@@ -901,16 +835,7 @@ Basic block formula (no numbering)
 </formula>
 ```
 
-Block formula with optional marker (numbering/label)
-
-```xml
-<formula>
-  <marker>(1)</marker>
-  a^2 + b^2 = c^2
-</formula>
-```
-
-Grouped formula with caption and coordinates
+Grouped formula with caption and coordinates:
 
 ```xml
 <group>
@@ -918,58 +843,54 @@ Grouped formula with caption and coordinates
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Equation for the normal distribution
   </caption>
+  <marker>(2)</marker>
   <formula>
     <location value="10"/><location value="80"/><location value="400"/><location value="150"/>
-    <marker>(2)</marker>
     f(x) = \frac{1}{\sigma\sqrt{2\pi}}\,\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
   </formula>
-  <footnote>Parameters: mean \mu and standard deviation \sigma.</footnote>
-  <!-- Note: Coordinates apply to semantic elements like caption/formula, not the group. -->
-
+  <footnote>Parameters: mean <formula>\mu</formula> and standard deviation <formula>\sigma</formula>.</footnote>
 </group>
 ```
 
-Multi-line LaTeX (align) in a single formula
+Multi-line LaTeX in a single formula:
 
 ```xml
 <formula>
-  <marker>Eq. 3</marker>
+  <content><![CDATA[
   \begin{align}
     \nabla\cdot\mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
     \nabla\cdot\mathbf{B} &= 0
-  \end{align}
+  \end{align}]]></content>
 </formula>
 ```
 
-Cross-page block formula with continuation
+Cross-page block formula with continuation:
 
 ```xml
 <formula>
-  <marker>(4)</marker>
+  <content>
   \begin{equation}
     \mathbf{F}(t) = \int_0^t e^{A(t-\tau)}\,\mathbf{b}(\tau)\,d\tau
-  \end{equation}
-  <thread id="eq-100"/>
+  \end{equation}</content>
+  <thread thread_id="42"/>
 </formula>
+<page_footer>Foo</page_footer>
 <page_break/>
 <formula>
-  <thread id="eq-100"/>
-  % Optional tail content if the printed equation spans pages
+  <thread thread_id="42"/>
+  <content>
+  % Optional tail content if the printed equation spans pages</content>
 </formula>
 ```
 
-Notes
-
-- All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the tag conveys math context.
-- `<marker>` is optional. Include it only when the page shows an equation number/label.
-- Place coordinates on `formula` and `caption` as needed; never on the surrounding `group`.
+Note: All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the tag conveys math context.
 
 ### Tables
 
 DocLang separates the table’s structure from its surrounding semantics:
 
-- `group`: Semantic container that may include `caption`, multiple `footnote` elements, and exactly one `otsl` child for the structure. Do not put coordinates on the `group`.
-- `otsl`: The structural table token sequence. Put the table region’s coordinates on `otsl` for each page fragment. Cells are created by structural tokens (e.g., `<fcel/>`, `<ched/>`) and their content follows immediately after each cell token.
+- `group`: Semantic container that may include `caption`, multiple `footnote` elements, and exactly one `table` child for the structure. Do not put coordinates on the `group`.
+- `table`: The structural table token sequence. Put the table region’s coordinates on `table` for each page fragment. Cells are created by structural tokens (e.g., `<fcel/>`, `<ched/>`) and their content follows immediately after each cell token.
 
 Basic example
 
@@ -979,42 +900,44 @@ Basic example
     <location value="40"/><location value="80"/><location value="540"/><location value="110"/>
     Table 1: Experimental Results
   </caption>
-  <otsl>
+  <table>
     <location value="40"/><location value="130"/><location value="540"/><location value="320"/>
     <ched/>Method<ched/>Accuracy<nl/>
     <fcel/>Baseline<fcel/>0.85<nl/>
     <fcel/>Proposed<fcel/>0.92<nl/>
-  </otsl>
+  </table>
   <footnote>Accuracy reported on validation set.</footnote>
-
 </group>
 ```
 
+Examples:
+<!--
+(TODO: following to be reviewed)
 Peculiarities and continuation
 
 1) Broken over rows (vertical split across pages)
 
-Use `<continue_row id="..."/>` at the end of the first fragment and the start of the next fragment’s `otsl`.
+Use `<continue_row id="..."/>` at the end of the first fragment and the start of the next fragment’s `table`.
 
 ```xml
 <group>
   <caption>Table 2: Long Results</caption>
-  <otsl>
+  <table>
     <location value="40"/><location value="120"/><location value="540"/><location value="760"/>
     <ched/>ID<ched/>Name<ched/>Score<nl/>
     <fcel/>1<fcel/>Alice<fcel/>91<nl/>
     <fcel/>2<fcel/>Bob<fcel/>88<nl/>
     <continue_row id="T-rows"/>
-  </otsl>
+  </table>
 </group>
 <page_break/>
 <group>
-  <otsl>
+  <table>
     <location value="40"/><location value="80"/><location value="540"/><location value="300"/>
     <continue_row id="T-rows"/>
     <fcel/>3<fcel/>Cara<fcel/>95<nl/>
     <fcel/>4<fcel/>Dan<fcel/>89<nl/>
-  </otsl>
+  </table>
 </group>
 ```
 
@@ -1023,99 +946,108 @@ Use `<continue_row id="..."/>` at the end of the first fragment and the start of
 Use `<continue_col id="..."/>` to indicate that columns continue on an adjacent page. Place it at the right edge of the left fragment and the left edge of the right fragment.
 
 ```xml
-<!-- Left page -->
+<!-- Left page - ->
 <group>
-  <otsl>
+  <table>
     <location value="40"/><location value="120"/><location value="300"/><location value="760"/>
     <ched/>Metric<ched/>Model A<nl/>
     <fcel/>Accuracy<fcel/>0.92<nl/>
     <fcel/>F1<fcel/>0.90<nl/>
     <continue_col id="T-cols"/>
-  </otsl>
+  </table>
 </group>
 
-<!-- Right page -->
+<!-- Right page - ->
 <group>
-  <otsl>
+  <table>
     <location value="320"/><location value="120"/><location value="820"/><location value="760"/>
     <continue_col id="T-cols"/>
     <ched/>Model B<nl/>
     <fcel/>0.93<nl/>
     <fcel/>0.91<nl/>
-  </otsl>
+  </table>
 </group>
-```
-
-3) Rich cells (cells can contain arbitrary document content)
+``` -->
 
 Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
 
 ```xml
 <group>
   <caption>Table 3: Rich Cells</caption>
-  <otsl>
+  <table>
     <location value="40"/><location value="200"/><location value="560"/><location value="620"/>
     <ched/>Description<ched/>Details<nl/>
     <fcel/>
-      <text>Pipeline steps</text>
+    <text>Pipeline steps</text>
     <fcel/>
-      <list class="unordered">
-        <list_text><marker>•</marker>Ingest</list_text>
-        <list_text><marker>•</marker>Process</list_text>
-        <list_text><marker>•</marker>Export</list_text>
-      </list>
+    <list class="unordered">
+      <ld><marker>•</marker></ld>
+      <text>Ingest</text>
+      <ld><marker>•</marker></ld>
+      <text>Process</text>
+      <ld><marker>•</marker></ld>
+      <text>Export</text>
+    </list>
     <nl/>
     <fcel/>
-      <text>Nested table</text>
+    <text>Nested table</text>
     <fcel/>
-      <group>
-        <caption>Inner table</caption>
-        <otsl>
-          <ched/>Key<ched/>Value<nl/>
-          <fcel/>A<fcel/>1<nl/>
-          <fcel/>B<fcel/>2<nl/>
-        </otsl>
-      </group>
+    <group>
+      <caption>Inner table</caption>
+      <table>
+        <ched/>
+        <text>Key</text>
+        <ched/>
+        <text>Value</text>
+        <nl/>
+        <fcel/>
+        <text>A</text>
+        <fcel/>
+        <text>1</text>
+        <nl/>
+        <fcel/>
+        <text>B</text>
+        <fcel/>
+        <text>2</text>
+        <nl/>
+      </table>
+    </group>
     <nl/>
     <fcel/>
-      <text>Image</text>
+    <text>Image</text>
     <fcel/>
-      <picture>
-        <uri>assets/img/sample.png</uri>
-        <caption>Example image inside a cell</caption>
-      </picture>
+    <picture>
+      <uri>assets/img/sample.png</uri>
+    </picture>
+    <caption>Example image inside a cell</caption>
     <nl/>
-  </otsl>
+  </table>
 </group>
 ```
 
-Notes
+Notes:
 
-- Coordinates go on `otsl`, `caption`, and other semantic children; never on the `group`.
-- Row- and column-wise splits use `continue_row` and `continue_col` respectively; merge fragments by matching `id`s.
 - OTSL follows the rectangular rule; ensure each row has the same number of structural tokens up to `<nl/>`.
-- Rich cells can include any valid DocLang content; keep content immediately after the corresponding cell token.
+- A cell can include any valid DocLang semantic element sequence.
 
 ### Lists
 
-Lists can in principle contain any children, with every new list item being introduced by a `list_text` element, which also contains any marker and checkbox information.
+A list can in principle can contain as list items any semantic element sequence. Every list item is preceded by an `<ld>` element which may optionally contain a marker.
 
 Unordered list with optional markers
 
 ```xml
 <list class="unordered">
-  <list_text>
-    <marker>•</marker>
-    First item with <bold>bold</bold> text
-  </list_text>
-  <list_text>
+  <ld><marker>•</marker></ld>
+  <text>First item with <bold>bold</bold> text</text>
+  <ld>
     <!-- Marker with its own coordinates -->
     <marker>
       <location value="50"/><location value="110"/><location value="60"/><location value="120"/>
       •
     </marker>
-    Second item
-  </list_text>
+  </ld>
+  <text>Second item</text>
 </list>
 ```
 
@@ -1123,18 +1055,13 @@ Ordered list; markers are optional and can hold the printed numbering
 
 ```xml
 <list class="ordered">
-  <list_text>
-    <marker>1.</marker>
-    Install dependencies
-  </list_text>
-  <list_text>
-    <marker>2.</marker>
-    Run tests
-  </list_text>
-  <list_text>
-    <!-- No marker provided; numbering can be inferred from order -->
-    Ship release
-  </list_text>
+  <ld><marker>1.</marker></ld>
+  <text>Install dependencies</text>
+  <ld><marker>2.</marker></ld>
+  <text>Run tests</text>
+  <ld/>
+  <!-- No marker provided -->
+  <text>Ship release</text>
 </list>
 ```
 
@@ -1142,14 +1069,10 @@ Checkbox items with selection state; markers optional
 
 ```xml
 <list class="unordered">
-  <list_text>
-    <checkbox class="selected"/>
-    Completed task
-  </list_text>
-  <list_text>
-    <checkbox class="unselected"/>
-    Pending task
-  </list_text>
+  <ld><marker><checkbox class="selected"/></marker></ld>
+  <text>Completed task</text>
+  <ld><marker><checkbox class="unselected"/></marker></ld>
+  <text>Pending task</text>
 </list>
 ```
 
@@ -1157,43 +1080,38 @@ Nested lists (mixing ordered and unordered)
 
 ```xml
 <list class="ordered">
-  <list_text>
-    <marker>1.</marker>
-    Setup project
-  </list_text>
+  <ld><marker>1.</marker></ld>
+  <text>Setup project</text>
   <list class="unordered">
-    <list_text>
-      <marker>•</marker>
-      Create virtual environment
-    </list_text>
-    <list_text>
-      <marker>•</marker>
-      Configure linter
-    </list_text>
+    <ld><marker>•</marker></ld>
+    <text>Create virtual environment</text>
+    <ld><marker>•</marker></ld>
+    <text>Configure linter</text>
   </list>
-  <list_text>
-    <marker>2.</marker>
-    Implement features
-  </list_text>
+  <ld><marker>2.</marker></ld>
+  <text>Implement features</text>
 </list>
 ```
 
 Page breaks and continuation
 
-Lists can span multiple pages. Use `<thread id="..."/>` to indicate continuation. You may thread the whole list and, if a particular component, e.g. a `text` is broken, also thread the component itself.
+Lists can span multiple pages. Use `<thread thread_id="..."/>` to indicate continuation. You may thread the whole list and, if a particular component, e.g. a `text` is broken, also thread the component itself.
 
 List split across pages
 
 ```xml
 <list class="ordered">
-  <thread id="L1"/>
-  <list_text><marker>1.</marker>First item</list_text>
-  <list_text><marker>2.</marker>Second item</list_text>
+  <thread thread_id="L1"/>
+  <ld><marker>1.</marker></ld>
+  <text>First item</text>
+  <ld><marker>2.</marker></ld>
+  <text>Second item</text>
 </list>
 <page_break/>
 <list class="ordered">
-  <thread id="L1"/>
-  <list_text><marker>3.</marker>Third item</list_text>
+  <thread thread_id="L1"/>
+  <ld><marker>3.</marker></ld>
+  <text>Third item</text>
 </list>
 ```
 
@@ -1201,20 +1119,21 @@ Single list-item broken by a page break
 
 ```xml
 <list class="unordered">
-  <thread id="L2"/>
-  <list_text>
-    <thread id="I7"/>
-    <marker>•</marker>
+  <thread thread_id="L2"/>
+  <ld><marker>•</marker></ld>
+  <text>
+    <thread thread_id="I7"/>
     This item starts on page 1 and continues
-  </list_text>
+  </text>
 </list>
 <page_break/>
 <list class="unordered">
-  <thread id="L2"/>
-  <list_text>
-    <thread id="I7"/>
+  <thread thread_id="L2"/>
+  <ld/>
+  <text>
+    <thread thread_id="I7"/>
     on page 2 until it ends.
-  </list_text>
+  </text>
 </list>
 ```
 
@@ -1568,12 +1487,12 @@ Fields provide a flexible structure for representing key-value data and structur
       <field_heading>
         Affected Systems
       </field_heading>
-      <otsl>
+      <table>
       <ched/>IP Address<ched/>Port<ched/>Service<ched/>Version<nl/>
       <fcell/>10.0.0.101<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
       <fcell/>10.0.0.102<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
       <fcell/>10.0.0.103<fcell/>80/tcp, 8088/tcp<fcell/>Werkzeug<fcell/>3.0.1<nl/>
-      </otsl>
+      </table>
   </field_region>
   ```
 
@@ -1816,7 +1735,7 @@ Fields provide a flexible structure for representing key-value data and structur
   ![Form Example](examples/form/form_17_tabular_form_with_many_elements.png)
 
   ```xml
-  <otsl>
+  <table>
   <srow>Beiträge zur Altersvorsorge<srow>52</lcel></srow><nl>
   <fcel/><ched/>Steuerpflichtige Person / Ehemann / Person A<ched/>Ehefrau / Person B<fcel/> <nl>
   <fcel/>Arbeitnehmeranteil laut Nr. 23 a / b der Lohnsteuerbescheinigung<fcel/>*FORM1*,-<fcel/>*FORM2*,-<fcel/>@<nl>
@@ -1824,7 +1743,7 @@ Fields provide a flexible structure for representing key-value data and structur
   <fcel/>Beiträge zu gesetzlichen Rentenversicherungen...<fcel/>*FORM5*,-<fcel/>*FORM6*,-<fcel/> <nl>
   <fcel/>Erstattete Beiträge und / oder steuerfreie Zuschüsse zu den...<fcel/>*FORM7*,-<fcel/>*FORM8*,-<fcel/>@<nl>
   ...
-  </otsl>
+  </table>
   ...
   *FORMS referred above:
   *FORM1*: <field_item><key>300</key><value></value><hint>EUR</hint></field_item>
@@ -1851,18 +1770,21 @@ Fields provide a flexible structure for representing key-value data and structur
   <heading>Part III</heading>
   <text>Figure Your Credit</text>
   <text>10</text>
-  <otsl>
+  <table>
   <ched/>If you checked (in Part l):<ched/>Enter<nl>
   <fcel/>Box 1, 2, 4, or 7<fcel/>$5,000<nl>
   <fcel/>Box 3, 5, or 6<fcel/>$7,500<nl>
   <fcel/>Box 8 or 9<fcel/>$3,750<nl>
-  </otsl>
+  </table>
   <field_item><key>10</key><value></value></field_item>
   <text>11 If you checked (in Part I):</text>
   <list class="unordered">
-      <list_text>Box 6, add $5,000 to the taxable...</list_text>
-      <list_text>Box 2, 4, or 9, enter your taxable...</list_text>
-      <list_text>BBox 5, add your taxable disabilit...</list_text>
+      <ld/>
+      <text>Box 6, add $5,000 to the taxable...</text>
+      <ld/>
+      <text>Box 2, 4, or 9, enter your taxable...</text>
+      <ld/>
+      <text>BBox 5, add your taxable disabilit...</text>
   </list>
   <field_item><key>11</key><value>.</value></field_item>
   <picture><class>pictogram</class></picture>
@@ -2053,9 +1975,12 @@ Field region with mixed content:
   <field_item>
     <key>Materials:</key>
     <list class="unordered">
-      <list_text><marker>•</marker><value>Aluminum alloy frame</value></list_text>
-      <list_text><marker>•</marker><value>Tempered glass display</value></list_text>
-      <list_text><marker>•</marker><value>Silicone rubber grips</value></list_text>
+      <ld><marker>•</marker></ld>
+      <text><value>Aluminum alloy frame</value></text>
+      <ld><marker>•</marker></ld>
+      <text><value>Tempered glass display</value></text>
+      <ld><marker>•</marker></ld>
+      <text><value>Silicone rubber grips</value></text>
     </list>
   </field_item>
 </field_region>
@@ -2063,18 +1988,18 @@ Field region with mixed content:
 
 ### Split structure
 
-We can capture content that is split (e.g. across columns or across pages) using the `<thread id="N"/>` token, where `N` is a unique identifier.
+We can capture content that is split (e.g. across columns or across pages) using the `<thread thread_id="N"/>` token, where `N` is a unique identifier.
 
 The basic structure is shown below, e.g. for a `text` tag:
 
 ```xml
 <text>
-  <thread id="1"/>
+  <thread thread_id="1"/>
   This text item starts here
 </text>
 ...
 <text>
-  <thread id="1"/>
+  <thread thread_id="1"/>
   and continues here.
 </text>
 ```
@@ -2093,7 +2018,7 @@ Top-level tags which belong to the same item should have the same thread token.
 ```xml
 <text>
     <loc_10/><loc_20/><loc_30/><loc_40/>
-    <thread id="1"/>
+    <thread thread_id="1"/>
     where τ<subscript>x,y,z</subscript> are the Pauli matrices acting
     on Nambu space. We consider a circular-shaped boundary, the nor-
 </text>
@@ -2107,7 +2032,7 @@ Top-level tags which belong to the same item should have the same thread token.
 
 <text>
     <loc_20/><loc_30/><loc_40/><loc_50/>
-    <thread id="1"/>
+    <thread thread_id="1"/>
     mal direction of the boundary tangent for arbitrary angle θ is
     <formula>ˆx⊥ = (cos θ, sin θ)</formula>
     . Next, we assume an ansatz for the edge state wave function at θ as
@@ -2135,32 +2060,36 @@ The scenario in the above figure is represented as follows:
 ...
 <text>
     <loc_10/><loc_20/><loc_30/><loc_40/>
-    Our multi-faceted DE&I program includes the following initiatives:
+    <![CDATA[Our multi-faceted DE&I program includes the following initiatives:]]>
 </text>
 
 <list class="unordered">
-    <thread id="1"/>
-    <list_text>
+    <thread thread_id="1"/>
+    <ld/>
+    <text>
         <loc_15/><loc_25/><loc_35/><loc_45/>
         Mentorships and internship programs featuring diverse employees and students
-    </list_text>
+    </text>
     ...
-    <list_text>
+    <ld/>
+    <text>
         <loc_20/><loc_30/><loc_40/><loc_50/>
         Build Science, Technology, Engineering and Mathematics (STEM) employee candidate pipeline via involvement with:
         <list class="unordered">
-            <list_text>
+            <ld/>
+            <text>
                 <loc_25/><loc_35/><loc_45/><loc_55/>
                 Historically Black Colleges and Universities (HBCUs) site visits and career fairs
-            </list_text>
+            </text>
             ...
-            <list_text>
+            <ld/>
+            <text>
                 <loc_30/><loc_40/><loc_50/><loc_60/>
                 San Diego Squared (STEM-focused nonprofit organization connecting underrepresented student to the power
                 of STEM by providing access to education, mentorship and resources to develop STEM careers)
-            </list_text>
+            </text>
         <list>
-    </list_text>
+    </text>
 <list>
 
 <page_footer><loc_35/><loc_45/><loc_55/><loc_65/>16 Neurocrine Biosciences</page_footer>
@@ -2168,12 +2097,12 @@ The scenario in the above figure is represented as follows:
 <page_break/>
 
 <list class="unordered">
-    <thread id="1"/>
-    <list_text>
+    <thread thread_id="1"/>
+    <ld/>
+    <text>
         <loc_40/><loc_50/><loc_60/><loc_70/>
-        Build upon DE&I employee education initiatives including:
-        ...
-    </list_text>
+        <![CDATA[Build upon DE&I employee education initiatives including: ...]]>
+    </text>
     ...
 <list>
 ...
@@ -2221,88 +2150,88 @@ to be reached to add the thread for "Europe" in the example above.
 ...
 <!-- page 1: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <thread id="1"/>
-        <h_thread id="1"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <thread thread_id="1"/>
+        <h_thread h_thread_id="1"/>
 
         <ecel/>                             <ecel/>                      <ecel/><nl/>
         <ecel/>                             <ched/>Continent             <ched/>Country<nl/>
-        <rhed/><thread id="2"/>             <rhed/>Asia                  <rhed/>Japan<nl/>
-    </otsl>
+        <rhed/><thread thread_id="2"/>             <rhed/>Asia                  <rhed/>Japan<nl/>
+    </table>
 </table>
 <page_break/>
 
 <!-- page 2: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <thread id="1"/>
-        <h_thread id="2"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <thread thread_id="1"/>
+        <h_thread h_thread_id="2"/>
 
-        <rhed/><thread id="2"/>G7 member    <rhed/><thread id="3"/>Europe        <rhed/>France<nl/>
+        <rhed/><thread thread_id="2"/>G7 member    <rhed/><thread thread_id="3"/>Europe        <rhed/>France<nl/>
         <ucel/>                             <ucel/>                            <rhed/>Germany<nl/>
         <ucel/>                             <ucel/>                            <rhed/>Italy<nl/>
-    </otsl>
+    </table>
 </table>
 <page_break/>
 
 <!-- page 3: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <thread id="1"/>
-        <h_thread id="3"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <thread thread_id="1"/>
+        <h_thread h_thread_id="3"/>
 
-        <rhed/><thread id="2"/>             <rhed/><thread id="3"/>            <rhed/>United Kingdom<nl/>
+        <rhed/><thread thread_id="2"/>             <rhed/><thread thread_id="3"/>            <rhed/>United Kingdom<nl/>
         <ucel/>                             <rhed/>North America               <rhed/>Canada<nl/>
         <ucel/>                             <ucel/>                            <rhed/>United States<nl/>
-    </otsl>
+    </table>
 </table>
 <page_break/>
 
 <!-- page 4: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <h_thread id="1"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <h_thread h_thread_id="1"/>
 
-        <ched/><h_thread id="4"/>2025 d     <lcel/>                            <lcel/><nl/>
-        <ched/>GDP (PPP) per capita in USD  <ched/>Currency                    <ched/><h_thread id="5"/>Key l<nl/>
+        <ched/><h_thread h_thread_id="4"/>2025 d     <lcel/>                            <lcel/><nl/>
+        <ched/>GDP (PPP) per capita in USD  <ched/>Currency                    <ched/><h_thread h_thread_id="5"/>Key l<nl/>
         <fcel/>46,097                       <fcel/>Japanese yen (JPY)          <fcel/>Shigeru Ishiba<nl/>
-    </otsl>
+    </table>
 </table>
 <page_break/>
 
 <!-- page 5: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <h_thread id="2"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <h_thread h_thread_id="2"/>
 
         <fcel/>54,465                       <fcel/>Euro (EUR)                  <fcel/>Emmanuel Macron<nl/>
         <fcel/>62,830                       <fcel/>Euro (EUR)                  <fcel/>Friedrich Merz<nl/>
         <fcel/>53,115                       <fcel/>Euro (EUR)                  <fcel/>Giorgia Meloni<nl/>
-    </otsl>
+    </table>
 </table>
 <page_break/>
 
 <!-- page 6: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <h_thread id="3"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <h_thread h_thread_id="3"/>
 
         <fcel/>52,518                       <fcel/>Pound sterling (GBP)        <fcel/>Keir Starmer<nl/>
         <fcel/>62,830                       <fcel/>Canadian dollar             <fcel/>Mark Carney<nl/>
         <fcel/>53,115                       <fcel/>United States dollar (USD)  <fcel/>Donald Trump<nl/>
-    </otsl>
+    </table>
 </table>
 <page_break/>
 
 <!-- page 7: -->
 <table>
-    <otsl><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
-        <h_thread id="1"/>
+    <table><loc_x0/><loc_y0/><loc_x1/><loc_y1/>
+        <h_thread h_thread_id="1"/>
 
-        <ched/><h_thread id="4"/>etails     <lcel/>                            <lcel/><nl/>
-        <ched/><h_thread id="5"/>eader      <ched/>Population in millions      <ched/>Area in km2<nl/>
+        <ched/><h_thread h_thread_id="4"/>etails     <lcel/>                            <lcel/><nl/>
+        <ched/><h_thread h_thread_id="5"/>eader      <ched/>Population in millions      <ched/>Area in km2<nl/>
         <fcel/>Prime Minister               <fcel/>125.1                       <fcel/>377,975<nl/>
-    </otsl>
+    </table>
 </table>
 <page_break/>
 ...
@@ -2388,17 +2317,17 @@ Right-to-left text direction:
 
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
 
-1. If content spans across one (or more) page breaks, add `<thread id="N"/>` to the item and reuse the same `id` in the continuing item.
+1. If content spans across one (or more) page breaks, add `<thread thread_id="N"/>` to the item and reuse the same `id` in the continuing item.
 2. For the follow up content of the page, we follow a reading order and close all open tokens before the `<page_break/>` token is introduced.
 
 An easy example is below,
 
 ```xml
 <doclang>
-  <text><thread id="1"/>This paragraph spans across</text>
+  <text><thread thread_id="1"/>This paragraph spans across</text>
   <caption>Some caption</caption>
   <page_break/>
-  <text><thread id="1"/>multiple pages.</text>
+  <text><thread thread_id="1"/>multiple pages.</text>
 </doclang>
 ```
 
@@ -2409,25 +2338,28 @@ A more complicated example is shown below in which we break the content of a lis
 ```xml
 <doclang>
   <list class="ordered">
-    <thread id="1"/>
-    <list_text>First item</list_text>
-    <list_text><thread id="2"/>Second </list_text>
+    <thread thread_id="1"/>
+    <ld/>
+    <text>First item</text>
+    <ld/>
+    <text><thread thread_id="2"/>Second </text>
     ...
   </list>
   <page_footer>...</page_footer>
   <page_break/>
   <list class="ordered">
-    <thread id="1"/>
-    <list_text><thread id="2"/>item</list_text>
+    <thread thread_id="1"/>
+    <ld/>
+    <text><thread thread_id="2"/>item</text>
   </list>
   ...
 </doclang>
 ```
 
-Above, `<thread id="1"/>` captures that the list itself is split, while `<thread id="2"/>` captures that a particular
+Above, `<thread thread_id="1"/>` captures that the list itself is split, while `<thread thread_id="2"/>` captures that a particular
 list item is split.
 
-For tables that are broken across pages, we need to introduce two differnt tokens, namely the `<continue_col id=.../>` and `<continue_row id="..."/>`. Same principle applies, if the OTSL starts/ends with any of these tokens, we know the the tables needs to be merged.
+<!-- For tables that are broken across pages, we need to introduce two differnt tokens, namely the `<continue_col id=.../>` and `<continue_row id="..."/>`. Same principle applies, if the OTSL starts/ends with any of these tokens, we know the the tables needs to be merged. -->
 
 ## Implementation Requirements
 
@@ -2454,11 +2386,13 @@ A conforming DocLang serializer SHALL:
 
 ### Validation Rules
 
+<!-- TODO: move rules to reference? -->
+
 #### Required Structure Validation
 
 - Root element must be `<doclang>`
 - List items must appear only within list groupings
-- OTSL tokens must appear only within `<otsl>` elements
+- OTSL tokens must appear only within `<table>` elements
 - Continuation tokens must be properly paired
 
 #### Geometric Validation
@@ -2522,7 +2456,7 @@ The `<class>` token supports extensible vocabularies:
 
 ## Appendix A: Reference
 
-<!-- NOTE: for reference updates, generate using generate_reference.py -->
+<!-- NOTE: do not edit manually; updates to be made using generate_reference.py -->
 
 ### Special Elements
 
@@ -2545,7 +2479,7 @@ Exists exactly once, as root element.
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -2571,7 +2505,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -2589,7 +2523,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -2621,27 +2555,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
-
-#### `<title>`
-
-TBD
-
-##### Allowed context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Content Types
-
-| XML content | Component head | Raw text | Semantic / grouping elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
 
 #### `<heading>`
 
@@ -2655,7 +2571,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2671,7 +2587,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2687,7 +2603,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2703,7 +2619,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2719,7 +2635,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2737,13 +2653,13 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
-#### `<otsl>`
+#### `<table>`
 
-Captures a table using OTSL format. A table cell, as delimited  by the respective structural elements, can be defined either by normal semantic / grouping elements or by an optional component head followed by raw or formatted text, which is to be interpreted as an "implicit [`<text>`](#text)" (i.e. without the wrapping tags).
+Captures a table based on the OTSL format. Table cells are delimited by the respective structural elements.
 
 ##### Allowed context
 
@@ -2755,11 +2671,13 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Allowed | Allowed | Not allowed | Allowed |
 
 #### `<list>`
+
+Captures a list. List items are delimited by the respective structural elements.
 
 ##### Allowed context
 
@@ -2773,7 +2691,7 @@ Any context that allows semantic elements.
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
@@ -2789,7 +2707,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Not allowed |
 
@@ -2805,7 +2723,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Not allowed |
 
@@ -2821,7 +2739,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
@@ -2837,15 +2755,17 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
-#### `<list_text>`
+#### `<group>`
+
+Container for encapsulating multiple semantic elements.
 
 ##### Allowed context
 
-Can only be child of [`<list>`](#list).
+Any context that allows semantic elements.
 
 ##### Attributes
 
@@ -2853,9 +2773,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Allowed | Allowed | Not allowed | Allowed |
 
 #### `<field_heading>`
 
@@ -2869,13 +2789,13 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
 #### `<field_item>`
 
-Scoping of a field key (optional) & any corresponding values.
+Scoping of a field key (optional) and any corresponding values.
 
 ##### Allowed context
 
@@ -2887,7 +2807,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
@@ -2905,7 +2825,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2925,7 +2845,7 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -2943,51 +2863,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
-
-### Grouping Elements
-
-Grouping elements enable the encapsulation of semantic elements or other grouping elements. Any grouping element may optionally begin with a [component head](#component-head-elements).
-
-#### `<group>`
-
-[TODO: revise] Generic container to be used for grouping mixed-type components.
-
-##### Allowed context
-
-Any context that allows grouping elements.
-
-##### Attributes
-
-None
-
-##### Content Types
-
-| XML content | Component head | Raw text | Semantic / grouping elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
-
-#### `<floating_group>`
-
-[TODO: revise] Container that groups a floating component with its caption, footnotes etc.
-
-##### Allowed context
-
-Any context that allows grouping elements.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `class` | Required | {"table", "picture", "code", "formula"} |  |
-
-##### Content Types
-
-| XML content | Component head | Raw text | Semantic / grouping elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
 
 ### Component Head Elements
 
@@ -2999,7 +2877,7 @@ Optional part of the component head; serves for capturing a component spanning m
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3009,7 +2887,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3018,7 +2896,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 <details>
   <summary>Show document picture</summary>
 
-  <img src="../input/examples/thread.png" width="700">
+  <img src="reference/input/examples/thread.png" width="700">
 
 </details>
 
@@ -3058,7 +2936,7 @@ Optional part of the component head; serves for capturing a component crossing h
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3068,7 +2946,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3078,7 +2956,7 @@ Used to store additional or derived information regarding the respective compone
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3086,7 +2964,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3096,7 +2974,7 @@ Custom metadata, e.g. for application-specific purposes.
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3104,7 +2982,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3114,7 +2992,7 @@ Coordinate system is the bottom-left corner of the page.
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3125,17 +3003,17 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
 #### `<timestamp>`
 
-needed? Yes, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
+TBD. Needed, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3143,7 +3021,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3151,7 +3029,7 @@ None
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3161,7 +3039,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3169,7 +3047,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3179,7 +3057,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3187,7 +3065,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3197,7 +3075,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3205,7 +3083,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3215,7 +3093,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3223,7 +3101,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -3233,7 +3111,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3251,7 +3129,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3267,7 +3145,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Allowed | Not allowed |
 
@@ -3289,7 +3167,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Allowed | Not allowed |
 
@@ -3307,7 +3185,7 @@ Any context that allows raw text content.
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3323,7 +3201,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Allowed | Not allowed |
 
@@ -3343,9 +3221,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<italic>`
 
@@ -3359,9 +3237,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<underline>`
 
@@ -3375,9 +3253,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<strikethrough>`
 
@@ -3391,9 +3269,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<superscript>`
 
@@ -3407,9 +3285,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<subscript>`
 
@@ -3423,9 +3301,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<handwriting>`
 
@@ -3439,9 +3317,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<rtl>`
 
@@ -3457,9 +3335,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<hyperlink>`
 
@@ -3475,9 +3353,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 ### Structural Elements
 
@@ -3487,7 +3365,7 @@ Structural elements define boundaries within tabular content (`<otsl>`).
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3495,7 +3373,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3503,7 +3381,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3511,7 +3389,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3519,7 +3397,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3527,7 +3405,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3535,7 +3413,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3543,7 +3421,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3551,7 +3429,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3559,7 +3437,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3567,7 +3445,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3575,7 +3453,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3583,7 +3461,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3591,7 +3469,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3599,7 +3477,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3607,7 +3485,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3615,7 +3493,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3623,7 +3501,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -3631,7 +3509,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -3639,9 +3517,27 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<ld>`
+
+Delimiter defining the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
+
+##### Allowed context
+
+Can only be child of [`<list>`](#list).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Only [`<marker>`](#marker) |
 
 ### Document Head Elements
 
@@ -3661,7 +3557,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3679,7 +3575,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3697,7 +3593,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3715,7 +3611,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3733,7 +3629,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3751,7 +3647,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3769,7 +3665,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3787,7 +3683,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3805,7 +3701,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3823,7 +3719,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3841,7 +3737,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3859,7 +3755,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3877,7 +3773,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3895,7 +3791,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3913,7 +3809,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3931,7 +3827,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -3949,6 +3845,6 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |

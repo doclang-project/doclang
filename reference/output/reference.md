@@ -19,7 +19,7 @@ Exists exactly once, as root element.
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -45,7 +45,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -63,7 +63,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -95,27 +95,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
-
-#### `<title>`
-
-TBD
-
-##### Allowed context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Content Types
-
-| XML content | Component head | Raw text | Semantic / grouping elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
 
 #### `<heading>`
 
@@ -129,7 +111,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -145,7 +127,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -161,7 +143,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -177,7 +159,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -193,7 +175,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -211,13 +193,13 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
-#### `<otsl>`
+#### `<table>`
 
-Captures a table using OTSL format. A table cell, as delimited  by the respective structural elements, can be defined either by normal semantic / grouping elements or by an optional component head followed by raw or formatted text, which is to be interpreted as an "implicit [`<text>`](#text)" (i.e. without the wrapping tags).
+Captures a table based on the OTSL format. Table cells are delimited by the respective structural elements.
 
 ##### Allowed context
 
@@ -229,11 +211,13 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Allowed | Allowed | Not allowed | Allowed |
 
 #### `<list>`
+
+Captures a list. List items are delimited by the respective structural elements.
 
 ##### Allowed context
 
@@ -247,7 +231,7 @@ Any context that allows semantic elements.
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
@@ -263,7 +247,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Not allowed |
 
@@ -279,7 +263,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Not allowed |
 
@@ -295,7 +279,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
@@ -311,15 +295,17 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
-#### `<list_text>`
+#### `<group>`
+
+Container for encapsulating multiple semantic elements.
 
 ##### Allowed context
 
-Can only be child of [`<list>`](#list).
+Any context that allows semantic elements.
 
 ##### Attributes
 
@@ -327,9 +313,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Allowed | Allowed | Not allowed | Allowed |
 
 #### `<field_heading>`
 
@@ -343,13 +329,13 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
 #### `<field_item>`
 
-Scoping of a field key (optional) & any corresponding values.
+Scoping of a field key (optional) and any corresponding values.
 
 ##### Allowed context
 
@@ -361,7 +347,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Not allowed | Allowed |
 
@@ -379,7 +365,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -399,7 +385,7 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
 
@@ -417,51 +403,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Allowed | Allowed | Allowed |
-
-### Grouping Elements
-
-Grouping elements enable the encapsulation of semantic elements or other grouping elements. Any grouping element may optionally begin with a [component head](#component-head-elements).
-
-#### `<group>`
-
-[TODO: revise] Generic container to be used for grouping mixed-type components.
-
-##### Allowed context
-
-Any context that allows grouping elements.
-
-##### Attributes
-
-None
-
-##### Content Types
-
-| XML content | Component head | Raw text | Semantic / grouping elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
-
-#### `<floating_group>`
-
-[TODO: revise] Container that groups a floating component with its caption, footnotes etc.
-
-##### Allowed context
-
-Any context that allows grouping elements.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `class` | Required | {"table", "picture", "code", "formula"} |  |
-
-##### Content Types
-
-| XML content | Component head | Raw text | Semantic / grouping elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
 
 ### Component Head Elements
 
@@ -473,7 +417,7 @@ Optional part of the component head; serves for capturing a component spanning m
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -483,7 +427,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -492,7 +436,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 <details>
   <summary>Show document picture</summary>
 
-  <img src="../input/examples/thread.png" width="700">
+  <img src="reference/input/examples/thread.png" width="700">
 
 </details>
 
@@ -532,7 +476,7 @@ Optional part of the component head; serves for capturing a component crossing h
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -542,7 +486,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -552,7 +496,7 @@ Used to store additional or derived information regarding the respective compone
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -560,7 +504,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -570,7 +514,7 @@ Custom metadata, e.g. for application-specific purposes.
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -578,7 +522,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -588,7 +532,7 @@ Coordinate system is the bottom-left corner of the page.
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -599,17 +543,17 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
 #### `<timestamp>`
 
-needed? Yes, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
+TBD. Needed, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -617,7 +561,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Not allowed | Not allowed |
 
@@ -625,7 +569,7 @@ None
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -635,7 +579,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -643,7 +587,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -653,7 +597,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -661,7 +605,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -671,7 +615,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -679,7 +623,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -689,7 +633,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -697,7 +641,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Allowed context
 
-Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) in the context of "implicit [`<text>`](#text)s").
+Can only be child of a semantic element.
 
 ##### Attributes
 
@@ -707,7 +651,7 @@ Can only be child of a semantic or a grouping element (or of [`<otsl>`](#otsl) i
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -725,7 +669,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -741,7 +685,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Allowed | Not allowed |
 
@@ -763,7 +707,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Allowed | Not allowed |
 
@@ -781,7 +725,7 @@ Any context that allows raw text content.
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -797,7 +741,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Allowed | Not allowed | Allowed | Not allowed |
 
@@ -817,9 +761,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<italic>`
 
@@ -833,9 +777,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<underline>`
 
@@ -849,9 +793,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<strikethrough>`
 
@@ -865,9 +809,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<superscript>`
 
@@ -881,9 +825,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<subscript>`
 
@@ -897,9 +841,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<handwriting>`
 
@@ -913,9 +857,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<rtl>`
 
@@ -931,9 +875,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 #### `<hyperlink>`
 
@@ -949,9 +893,9 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Allowed |
+| Allowed | Not allowed | Allowed | Not allowed |
 
 ### Structural Elements
 
@@ -961,7 +905,7 @@ Structural elements define boundaries within tabular content (`<otsl>`).
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -969,7 +913,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -977,7 +921,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -985,7 +929,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -993,7 +937,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1001,7 +945,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1009,7 +953,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1017,7 +961,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1025,7 +969,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1033,7 +977,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1041,7 +985,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1049,7 +993,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1057,7 +1001,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1065,7 +1009,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1073,7 +1017,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1081,7 +1025,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1089,7 +1033,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1097,7 +1041,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
 
@@ -1105,7 +1049,7 @@ None
 
 ##### Allowed context
 
-Can only be child of [`<otsl>`](#otsl).
+Can only be child of [`<table>`](#table).
 
 ##### Attributes
 
@@ -1113,9 +1057,27 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | Not allowed | Not allowed | Not allowed | Not allowed |
+
+#### `<ld>`
+
+Delimiter defining the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
+
+##### Allowed context
+
+Can only be child of [`<list>`](#list).
+
+##### Attributes
+
+None
+
+##### Content Types
+
+| XML content | Component head | Raw text | Semantic elements |
+| --- | --- | --- | --- |
+| Allowed | Not allowed | Not allowed | Only [`<marker>`](#marker) |
 
 ### Document Head Elements
 
@@ -1135,7 +1097,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1153,7 +1115,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1171,7 +1133,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1189,7 +1151,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1207,7 +1169,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1225,7 +1187,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1243,7 +1205,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1261,7 +1223,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1279,7 +1241,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1297,7 +1259,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1315,7 +1277,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1333,7 +1295,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1351,7 +1313,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1369,7 +1331,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1387,7 +1349,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1405,7 +1367,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 
@@ -1423,7 +1385,7 @@ None
 
 ##### Content Types
 
-| XML content | Component head | Raw text | Semantic / grouping elements |
+| XML content | Component head | Raw text | Semantic elements |
 | --- | --- | --- | --- |
 | TBD | TBD | TBD | TBD |
 

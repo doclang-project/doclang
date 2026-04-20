@@ -212,12 +212,12 @@ def parse_intermediate_markdown(md_file):
     return elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header
 
 
-def load_example_for_element(element_name, input_dir, output_dir):
+def load_example_for_element(element_name, input_dir, iso_standard_path):
     """Load example from INPUT_DIR/examples/ if it exists
 
     Returns a tuple: (xml_content, image_path) or (None, None) if no example exists
 
-    The image_path will be relative from the output file location to the PNG file
+    The image_path will be relative from iso-standard.md location to the PNG file
     in INPUT_DIR/examples/.
     """
     # Remove backticks and angle brackets from element name to get filename
@@ -238,12 +238,12 @@ def load_example_for_element(element_name, input_dir, output_dir):
     # Look for PNG file in the examples directory
     png_file = examples_dir / f"{clean_name}.png"
     if png_file.exists():
-        # Calculate relative path from output directory to the PNG file
+        # Calculate relative path from iso-standard.md to the PNG file
         png_file_abs = png_file.resolve()
-        output_dir_abs = Path(output_dir).resolve()
+        iso_standard_dir = Path(iso_standard_path).resolve().parent
 
-        # Calculate relative path from output directory to PNG file
-        image_path = os.path.relpath(png_file_abs, output_dir_abs)
+        # Calculate relative path from iso-standard.md directory to PNG file
+        image_path = os.path.relpath(png_file_abs, iso_standard_dir)
 
     # Return tuple if we have XML content
     if xml_content:
@@ -278,7 +278,7 @@ def linkify_element_references(text, all_elements):
     return text
 
 
-def generate_output_markdown(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, output_dir, output_file):
+def generate_output_markdown(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, output_dir, output_file, iso_standard_path):
     """Generate the final doclang_out.md file"""
     print(f"Generating {output_file}...")
 
@@ -377,7 +377,7 @@ def generate_output_markdown(elements_by_category, attributes_by_element, conten
                     f.write("\n")
 
                 # Check for and include example if it exists
-                xml_content, image_path = load_example_for_element(element, input_dir, output_dir)
+                xml_content, image_path = load_example_for_element(element, input_dir, iso_standard_path)
                 if xml_content:
                     f.write("##### Example\n\n")
 
@@ -447,6 +447,9 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / 'reference.md'
 
+    # Path to iso-standard.md (at repo root)
+    iso_standard_path = repo_root / 'iso-standard.md'
+
     # Step 1: Convert xlsx to intermediate markdown using docling
     intermediate_file = run_docling_conversion(input_file, str(intermediate_dir))
     if not intermediate_file:
@@ -457,7 +460,7 @@ def main():
     elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header = parse_intermediate_markdown(intermediate_file)
 
     # Step 3: Generate the output markdown
-    generate_output_markdown(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, str(output_dir), str(output_file))
+    generate_output_markdown(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, str(output_dir), str(output_file), str(iso_standard_path))
 
     print("\nProcess completed successfully!")
     print(f"- Input: {input_file}")

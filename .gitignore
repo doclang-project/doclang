@@ -229,4 +229,7 @@ tags
 # Persistent undo
 [._]*.un~
 
+
+# Excel temporary files
+~$*.xlsx
 .DS_Store
