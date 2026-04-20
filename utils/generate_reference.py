@@ -138,7 +138,7 @@ def parse_intermediate_markdown(md_file):
                 elif idx == 4 and header:  # Element context is typically at index 4
                     # Store the context column header and normalize it
                     # Remove "Element " prefix if present and capitalize
-                    element_context_header = header.replace('Element ', '').strip().capitalize()
+                    element_context_header = header.replace('Element ', '').strip().title()
             continue
 
         # Check if we're in the attributes table (has Element and Attribute columns, but no Category)
@@ -351,30 +351,39 @@ def generate_output_markdown(elements_by_category, attributes_by_element, conten
                 # Write content types table if they exist
                 if element in content_types_by_element and content_types_by_element[element]:
                     content_types = content_types_by_element[element]
-                    f.write("##### Content Types\n\n")
+                    f.write("##### Allowed Content Types\n\n")
 
-                    # Create horizontal table with each content type as column header
-                    headers = list(content_types.keys())
-                    # Convert true/false to Allowed/Not allowed
-                    values = []
-                    for v in content_types.values():
-                        v_linked = linkify_element_references(v, all_elements)
-                        # Replace true/false with Allowed/Not allowed (case-insensitive)
-                        if v_linked.lower() == 'true':
-                            values.append('Allowed')
-                        elif v_linked.lower() == 'false':
-                            values.append('Not allowed')
-                        else:
-                            values.append(v_linked)
+                    # If XML content is not allowed, the element is empty:
+                    # omit the table and render a note. Otherwise, remove only
+                    # the XML content column and keep the remaining table.
+                    xml_content_value = content_types_by_element[element].get('XML content', '')
+                    xml_content_allowed = linkify_element_references(xml_content_value, all_elements).lower() == 'true'
 
-                    # Write table header
-                    f.write("| " + " | ".join(headers) + " |\n")
-                    f.write("| " + " | ".join(["---"] * len(headers)) + " |\n")
+                    if not xml_content_allowed:
+                        f.write("None (empty element).\n\n")
+                    else:
+                        headers = []
+                        values = []
 
-                    # Write single data row
-                    f.write("| " + " | ".join(values) + " |\n")
+                        for header, v in content_types.items():
+                            if header == 'XML content':
+                                continue
 
-                    f.write("\n")
+                            headers.append(header)
+                            v_linked = linkify_element_references(v, all_elements)
+                            if v_linked.lower() == 'true':
+                                values.append('Allowed')
+                            elif v_linked.lower() == 'false':
+                                values.append('Not allowed')
+                            else:
+                                values.append(v_linked)
+
+                        # Write table header
+                        f.write("| " + " | ".join(headers) + " |\n")
+                        f.write("| " + " | ".join(["---"] * len(headers)) + " |\n")
+
+                        # Write single data row
+                        f.write("| " + " | ".join(values) + " |\n\n")
 
                 # Check for and include example if it exists
                 xml_content, image_path = load_example_for_element(element, input_dir, iso_standard_path)

@@ -6,7 +6,7 @@ This category comprises elements with specialized document-level function.
 
 The document root element. Starts with an optional [`<head>`](#head) followed by a sequence of applicable elements.
 
-##### Allowed context
+##### Allowed Context
 
 Exists exactly once, as root element.
 
@@ -17,11 +17,11 @@ Exists exactly once, as root element.
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v1" | {"https://www.doclang.ai/ns/v1"} | The DocLang specification version namespace. |
 | `version` | Optional; default: "1.0.0" | In format "x.y.z" as per Semantic Versioning | The DocLang specification version the document was produced against. |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Not allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Not allowed | Not allowed |
 
 ##### Example
 
@@ -35,7 +35,7 @@ Exists exactly once, as root element.
 
 Includes doc-level metadata.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be first child of [`<doclang>`](#doclang).
 
@@ -43,17 +43,17 @@ Can only be first child of [`<doclang>`](#doclang).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Not allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Not allowed | Not allowed |
 
 #### `<page_break>`
 
 Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang document if wrapped in a `doclang` root element.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<doclang>`](#doclang).
 
@@ -61,11 +61,9 @@ Can only be child of [`<doclang>`](#doclang).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 ##### Example
 
@@ -85,7 +83,7 @@ Semantic elements capture core components with specific meaning and functional r
 
 Represents a piece of cohesive text as that would appear in a paragraph.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -93,15 +91,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<heading>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -109,15 +107,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<caption>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -125,15 +123,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<footnote>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -141,15 +139,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<page_header>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -157,15 +155,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<page_footer>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -173,17 +171,17 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<field_region>`
 
 Serves for scoping of field items, for example encapsulating a whole form.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -191,17 +189,17 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Not allowed | Allowed |
 
 #### `<table>`
 
 Captures a table based on the OTSL format. Table cells are delimited by the respective structural elements.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -209,17 +207,17 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Not allowed | Allowed |
 
 #### `<list>`
 
 Captures a list. List items are delimited by the respective structural elements.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -229,15 +227,15 @@ Any context that allows semantic elements.
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unordered" | {"unordered", "ordered"} |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Not allowed | Allowed |
 
 #### `<formula>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -245,15 +243,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Not allowed |
 
 #### `<code>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -261,15 +259,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Not allowed |
 
 #### `<picture>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -277,15 +275,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Not allowed | Allowed |
 
 #### `<marker>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -293,17 +291,17 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<group>`
 
 Container for encapsulating multiple semantic elements.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows semantic elements.
 
@@ -311,15 +309,15 @@ Any context that allows semantic elements.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Not allowed | Allowed |
 
 #### `<field_heading>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
@@ -327,17 +325,17 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<field_item>`
 
 Scoping of a field key (optional) and any corresponding values.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
@@ -345,17 +343,17 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Not allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Not allowed | Allowed |
 
 #### `<key>`
 
 The key of a field (may correspond to  0-N field values).
 
-##### Allowed context
+##### Allowed Context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
@@ -363,17 +361,17 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<value>`
 
 A value of a field (may correspond to 0 or 1 field key).
 
-##### Allowed context
+##### Allowed Context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
@@ -383,17 +381,17 @@ Can only be descendant of [`<field_item>`](#field_item).
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "read_only" | {"read_only", "fillable"} |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 #### `<hint>`
 
 A hint regarding a field.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
@@ -401,11 +399,11 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Allowed | Allowed | Allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Allowed | Allowed | Allowed |
 
 ### Component Head Elements
 
@@ -415,7 +413,7 @@ The component head is a sequence comprising the following elements in this order
 
 Optional part of the component head; serves for capturing a component spanning multiple bounding boxes (e.g. cross-column) or pages.<br/>  To capture such a component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -425,11 +423,9 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Postive integer | A string that identifies a thread. |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 ##### Example
 
@@ -474,7 +470,7 @@ Can only be child of a semantic element.
 
 Optional part of the component head; serves for capturing a component crossing horizontal boundaries (e.g. table verically split between multiple pages).
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -484,17 +480,15 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `h_thread_id` | Required | Postive integer |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<meta>`
 
 Used to store additional or derived information regarding the respective component.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -502,17 +496,17 @@ Can only be child of a semantic element.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Not allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Not allowed | Not allowed |
 
 #### `<custom_meta>`
 
 Custom metadata, e.g. for application-specific purposes.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -520,17 +514,17 @@ Can only be child of a semantic element.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Not allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Not allowed | Not allowed |
 
 #### `<location>`
 
 Coordinate system is the bottom-left corner of the page.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -541,17 +535,15 @@ Can only be child of a semantic element.
 | `value` | Required | Integer within [0, resolution) |  |
 | `resolution` | Optional; defaults to head metadata [`<default_resolution>`](#default_resolution), otherwise "512" | Postive integer |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<timestamp>`
 
 TBD. Needed, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -559,15 +551,15 @@ Can only be child of a semantic element.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Not allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Not allowed | Not allowed |
 
 #### `<hour>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -577,15 +569,13 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Non-negative integer |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<minute>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -595,15 +585,13 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Non-negative integer |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<second>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -613,15 +601,13 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Non-negative integer |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<centisecond>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -631,15 +617,13 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Non-negative integer |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<layer>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of a semantic element.
 
@@ -649,17 +633,15 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "body" | {"body", "furniture", "background", "invisible", "notes"} |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<summary>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -667,15 +649,13 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<classification>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<meta>`](#meta).
 
@@ -683,11 +663,11 @@ Can only be child of [`<meta>`](#meta).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 ### Payload Elements
 
@@ -697,7 +677,7 @@ Payload elements are low-level elements that help define the effective content o
 
 Textual content must be a URI.
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<picture>`](#picture) or first child of [`<hyperlink>`](#hyperlink).
 
@@ -705,15 +685,15 @@ Can only be child of [`<picture>`](#picture) or first child of [`<hyperlink>`](#
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<checkbox>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -723,15 +703,13 @@ Any context that allows raw text content.
 |-----------|----------|----------------|-------------|
 | `selected` | Optional;default: "false" | {"false", "true"} |  |
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<content>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -739,11 +717,11 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 ### Formatting Elements
 
@@ -751,7 +729,7 @@ Formatting elements modify the styling and presentation within semantic or other
 
 #### `<bold>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -759,15 +737,15 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<italic>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -775,15 +753,15 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<underline>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -791,15 +769,15 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<strikethrough>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -807,15 +785,15 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<superscript>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -823,15 +801,15 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<subscript>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -839,15 +817,15 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<handwriting>`
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -855,17 +833,17 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<rtl>`
 
 Indicates right-to-left direction.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -873,17 +851,17 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 #### `<hyperlink>`
 
 Contains a [`<uri>`](#uri) and then optionally raw or formatted text data.
 
-##### Allowed context
+##### Allowed Context
 
 Any context that allows raw text content.
 
@@ -891,11 +869,11 @@ Any context that allows raw text content.
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Allowed | Not allowed |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Allowed | Not allowed |
 
 ### Structural Elements
 
@@ -903,7 +881,7 @@ Structural elements define boundaries within tabular content (`<otsl>`).
 
 #### `<fcel>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -911,15 +889,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<ecel>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -927,15 +903,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<ched>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -943,15 +917,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<rhed>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -959,15 +931,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<corn>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -975,15 +945,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<srow>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -991,15 +959,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<lcel>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -1007,15 +973,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<ucel>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -1023,15 +987,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<xcel>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -1039,15 +1001,13 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
 #### `<nl>`
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<table>`](#table).
 
@@ -1055,17 +1015,15 @@ Can only be child of [`<table>`](#table).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Not allowed | Not allowed | Not allowed | Not allowed |
+None (empty element).
 
-#### `<ld>`
+#### `<ldiv>`
 
 Delimiter defining the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
 
-##### Allowed context
+##### Allowed Context
 
 Can only be child of [`<list>`](#list).
 
@@ -1073,11 +1031,11 @@ Can only be child of [`<list>`](#list).
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| Allowed | Not allowed | Not allowed | Only [`<marker>`](#marker) |
+| Component head | Raw text | Semantic elements |
+| --- | --- | --- |
+| Not allowed | Not allowed | Only [`<marker>`](#marker) |
 
 ### Document Head Elements
 
@@ -1087,7 +1045,7 @@ This category comprises the document-level metadata elements that are the buildi
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1095,17 +1053,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<author>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1113,17 +1069,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<date>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1131,17 +1085,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<default_resolution>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1149,17 +1101,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<page_size>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1167,17 +1117,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<language>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1185,17 +1133,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<generated_by>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1203,17 +1149,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<topic>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1221,17 +1165,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<summary>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1239,17 +1181,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<document_hash>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1257,17 +1197,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<licenses>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1275,17 +1213,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<data_classification>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1293,17 +1229,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<acceptable_use>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1311,17 +1245,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<stewardship>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1329,17 +1261,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<access_policy>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1347,17 +1277,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<retention_policy>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1365,17 +1293,15 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
 #### `<compliance_requirements>`
 
 TBD
 
-##### Allowed context
+##### Allowed Context
 
 TBD
 
@@ -1383,9 +1309,7 @@ TBD
 
 None
 
-##### Content Types
+##### Allowed Content Types
 
-| XML content | Component head | Raw text | Semantic elements |
-| --- | --- | --- | --- |
-| TBD | TBD | TBD | TBD |
+None (empty element).
 
