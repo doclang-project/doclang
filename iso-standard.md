@@ -178,6 +178,36 @@ DocLang is a constrained subset of XML with the following characteristics:
 
 The individual DocLang elements are specified in the [reference](#appendix-a-reference).
 
+### Versioning
+
+DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
+
+The version of the present specification is **0.1**.
+
+#### Semantic Versioning Principles
+
+The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. for X >= 1:
+
+- A document with version `X.Y` may be compatible with an XSD schema supporting version `X.Z` where `Z >= Y` (forward compatibility within the same major version)
+- A document with version `X.Y` is considered incompatible with an XSD schema supporting only version `X.Z` where `Z < Y` (no backward compatibility for minor version increases)
+
+**Example:**
+- A `1.0` document may be compatible with a `1.1` schema
+- A `1.1` document is considered incompatible with a `1.0` schema
+
+#### Version 0.x Behavior
+
+As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate initial development and always break backward compatibility. Therefore:
+
+- A document of version `0.1` is considered incompatible with a `0.2` schema
+- A document of version `0.2` is considered incompatible with a `0.1` schema
+
+Each minor version increment in the 0.x series represents a breaking change.
+
+#### XSD Schema Versioning
+
+The XSD schema itself may additionally capture a patch version and internally define a full Semantic Versioning (SemVer) version string (e.g., `1.0.0`, `1.0.1`) to track schema-level changes that do not affect document compatibility.
+
 ### Metadata Elements
 
 Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
@@ -2474,8 +2504,8 @@ Exists exactly once, as root element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `xmlns` | Optional; default: "https://www.doclang.ai/ns/v1" | {"https://www.doclang.ai/ns/v1"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "1.0.0" | In format "x.y.z" as per Semantic Versioning | The DocLang specification version the document was produced against. |
+| `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
+| `version` | Optional; default: "0.1" | {"0.1"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
 ##### Allowed Content Types
 

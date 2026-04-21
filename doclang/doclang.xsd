@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <xs:schema
-  targetNamespace="https://www.doclang.ai/ns/v1"
-  xmlns:dl="https://www.doclang.ai/ns/v1"
+  targetNamespace="https://www.doclang.ai/ns/v0"
+  xmlns:dl="https://www.doclang.ai/ns/v0"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
-  version="1.0.0"
+  version="0.1.0"
 >
 
   <!-- ============================================ -->
@@ -577,7 +577,16 @@
           <xs:group ref="dl:top_level_cat"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="version" type="xs:string" use="optional" fixed="1.0.0" />  <!-- TODO switch this one to MAJOR.MINOR -->
+      <xs:attribute name="version" use="optional" default="0.1">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <!-- enumeration set up for 1.x where all individual minor versions
+             within major (up to and including current, i.e. `default` above)
+             will have to be listed for backwards compatibility. -->
+            <xs:enumeration value="0.1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
     </xs:complexType>
   </xs:element>
 

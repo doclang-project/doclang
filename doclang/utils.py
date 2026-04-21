@@ -4,7 +4,7 @@ Shared utility functions for DocLang validation.
 
 from lxml import etree
 
-_DOCLANG_NAMESPACE = "https://www.doclang.ai/ns/v1"
+_DOCLANG_NAMESPACE = "https://www.doclang.ai/ns/v0"
 _VERSION = "1.0.0"
 
 
@@ -22,7 +22,8 @@ def _ensure_namespace(xml_doc: etree._ElementTree) -> etree._ElementTree:
     root = xml_doc.getroot()
 
     # Check if root element has a namespace
-    if root.tag.startswith("{"):
+    root_tag = str(root.tag)
+    if root_tag.startswith("{"):
         # Already has a namespace
         return xml_doc
 
@@ -39,12 +40,17 @@ def _ensure_namespace(xml_doc: etree._ElementTree) -> etree._ElementTree:
         target.text = source.text
         target.tail = source.tail
         for child in source:
-            if child.tag.startswith("{"):
+            # Skip comments and processing instructions
+            if not isinstance(child.tag, str):
+                continue
+
+            child_tag = str(child.tag)
+            if child_tag.startswith("{"):
                 # Child already has namespace
-                new_child = etree.SubElement(target, child.tag)
+                new_child = etree.SubElement(target, child_tag)
             else:
                 # Add namespace to child
-                new_child = etree.SubElement(target, f"{{{_DOCLANG_NAMESPACE}}}{child.tag}")
+                new_child = etree.SubElement(target, f"{{{_DOCLANG_NAMESPACE}}}{child_tag}")
 
             for key, value in child.attrib.items():
                 new_child.set(key, value)

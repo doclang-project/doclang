@@ -14,8 +14,8 @@ Exists exactly once, as root element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `xmlns` | Optional; default: "https://www.doclang.ai/ns/v1" | {"https://www.doclang.ai/ns/v1"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "1.0.0" | In format "x.y.z" as per Semantic Versioning | The DocLang specification version the document was produced against. |
+| `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
+| `version` | Optional; default: "0.1" | {"0.1"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
 ##### Allowed Content Types
 
