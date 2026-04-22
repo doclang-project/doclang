@@ -5,7 +5,7 @@ Shared utility functions for DocLang validation.
 from lxml import etree
 
 _DOCLANG_NAMESPACE = "https://www.doclang.ai/ns/v0"
-_VERSION = "1.0.0"
+_VERSION = "0.1.0"  # TODO: should possibly be sourced from package version
 
 
 def _ensure_namespace(xml_doc: etree._ElementTree) -> etree._ElementTree:
