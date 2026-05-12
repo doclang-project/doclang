@@ -17,12 +17,14 @@ XSD_FILE = SCHEMA_DIR / "doclang.xsd"
 SCH_FILE = SCHEMA_DIR / "doclang.sch"
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
-INVALID_DIR = TEST_DATA_DIR / "invalid"
+INVALID_XSD_DIR = TEST_DATA_DIR / "invalid_xsd"
+INVALID_SCHEMATRON_DIR = TEST_DATA_DIR / "invalid_schematron"
 
 
 # Collect test files
 valid_files = list(VALID_DIR.glob("*.dclg.xml")) if VALID_DIR.exists() else []
-invalid_files = list(INVALID_DIR.glob("*.dclg.xml")) if INVALID_DIR.exists() else []
+invalid_files = list(INVALID_SCHEMATRON_DIR.glob("*.dclg.xml")) if INVALID_SCHEMATRON_DIR.exists() else []
+invalid_xsd_files = list(INVALID_XSD_DIR.glob("*.dclg.xml")) if INVALID_XSD_DIR.exists() else []
 
 
 @pytest.mark.parametrize("xml_file", valid_files, ids=lambda f: f.stem)
@@ -74,6 +76,14 @@ def test_invalid_schematron(xml_file):
     assert len(failed_asserts) > 0, f"Expected validation errors for {xml_file.name}"
 
 
+@pytest.mark.parametrize("xml_file", invalid_xsd_files, ids=lambda f: f.stem)
+def test_invalid_xsd(xml_file):
+    """Test that invalid XML files fail XSD validation."""
+    is_valid, errors = _validate_xsd(xml_file, XSD_FILE, allow_empty_namespace=False)
+    assert not is_valid, f"Expected XSD validation to fail for {xml_file.name}, but it passed"
+    assert len(errors) > 0, f"Expected validation errors for {xml_file.name}"
+
+
 def test_schema_files_exist():
     """Test that required schema files exist."""
     assert XSD_FILE.exists(), f"XSD file not found: {XSD_FILE}"
@@ -83,6 +93,8 @@ def test_schema_files_exist():
 def test_test_directories_exist():
     """Test that test directories exist and contain files."""
     assert VALID_DIR.exists(), f"Valid test directory not found: {VALID_DIR}"
-    assert INVALID_DIR.exists(), f"Invalid test directory not found: {INVALID_DIR}"
+    assert INVALID_SCHEMATRON_DIR.exists(), f"Invalid test directory not found: {INVALID_SCHEMATRON_DIR}"
+    assert INVALID_XSD_DIR.exists(), f"Invalid XSD test directory not found: {INVALID_XSD_DIR}"
     assert len(valid_files) > 0, "No valid test files found"
     assert len(invalid_files) > 0, "No invalid test files found"
+    assert len(invalid_xsd_files) > 0, "No invalid XSD test files found"

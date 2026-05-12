@@ -175,14 +175,14 @@ While the details are specified in the sections further below, this snippet show
 
 DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
 
-The version of the present specification is **0.1**.
+The version of the present specification is **0.2**.
 
 #### Semantic Versioning Principles
 
 The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. considering X >= 1, and Y < Z:
 
-- A document with version `X.Z` is compatible with an XSD schema with version `X.Y`, i.e. a document that is valid against schema `X.Y` must also successfully validate against schema `X.Z`
-- A document with version `X.Y` is considered incompatible with an XSD schema with version `X.Z`, i.e. a document that is valid against schema `X.Z` need not be successfully validate against `X.Y`
+- A document with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a document that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
+- A document with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a document that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
 
 **Example:**
 - A `1.0` document is compatible with a `1.1` schema
@@ -2630,7 +2630,7 @@ Any context that allows raw text content.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `selected` | Optional;default: "false" | {"false", "true"} |  |
+| `class` | Optional; default: "unselected" | {"unselected", "selected"} |  |
 
 ##### Allowed Content Types
 

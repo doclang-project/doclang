@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.1">
+<doclang xmlns="https://www.doclang.ai/ns/v0">
 
   <!-- Example 0: Head element with arbitrary metadata -->
   <head>
@@ -17,12 +17,12 @@
   <heading level="1">Introduction</heading>
 
   <!-- Example 1b: Title element -->
-  <title>Document Title: A Comprehensive Guide</title>
+  <heading>Document Title: A Comprehensive Guide</heading>
 
   <!-- Example 1c: Title with formatting -->
-  <title>
+  <heading>
     <bold>Advanced Topics</bold> in <italic>Machine Learning</italic>
-  </title>
+  </heading>
 
   <!-- Example 1d: Code element with class attribute -->
   <code class="python">
@@ -243,24 +243,40 @@
     Task list: <checkbox/> Item 1, <checkbox class="selected"/> Item 2, <checkbox class="unselected"/> Item 3
   </text>
 
-  <!-- Example 14: Simple list with list_text -->
+  <!-- Example 14: Simple list -->
   <list>
-    <list_text>Shopping list:</list_text>
-    <list_text>Apples</list_text>
-    <list_text>Bananas</list_text>
-    <list_text>Oranges</list_text>
+    <ldiv/>
+    <text>First item without marker</text>
+    <ldiv/>
+    <text>Second item without marker</text>
+    <ldiv/>
+    <text>Third item without marker</text>
   </list>
 
-  <!-- Example 15: List with formatted list_text and checkboxes -->
-  <list>
-    <list_text><bold>To-Do List</bold></list_text>
-    <list_text><checkbox/> Complete task 1 <hint>due today</hint></list_text>
-    <list_text><checkbox/> Complete task 2</list_text>
-    <list_text><marker>!</marker> <italic>Important</italic> task 3</list_text>
+  <!-- Example 14b: List with markers -->
+  <list class="unordered">
+    <ldiv><marker>•</marker></ldiv>
+    <text>Apples</text>
+    <ldiv><marker>•</marker></ldiv>
+    <text>Bananas</text>
+    <ldiv><marker>•</marker></ldiv>
+    <text>Oranges</text>
   </list>
+
+  <!-- Example 15: List with formatted content and checkboxes -->
+  <list class="unordered">
+    <ldiv><marker><checkbox/></marker></ldiv>
+    <text>Complete task 1 <hint>due today</hint></text>
+    <ldiv><marker><checkbox/></marker></ldiv>
+    <text>Complete task 2</text>
+    <ldiv><marker>!</marker></ldiv>
+    <text><italic>Important</italic> task 3</text>
+  </list>
+
 
   <!-- Example 16: Simple OTSL table -->
-  <otsl>
+  <!-- TODO: improve validation to enforce starting with fcel/ecel/ched/etc & ideally grid validity -->
+  <table>
     <text>Cell 1</text>
     <fcel/>
     <text>Cell 2</text>
@@ -268,10 +284,10 @@
     <text>Cell 3</text>
     <fcel/>
     <text>Cell 4</text>
-  </otsl>
+  </table>
 
   <!-- Example 17: OTSL table with headers -->
-  <otsl>
+  <table>
     <text>Header 1</text>
     <ched/>
     <text>Header 2</text>
@@ -279,10 +295,10 @@
     <text>Data 1</text>
     <fcel/>
     <text>Data 2</text>
-  </otsl>
+  </table>
 
   <!-- Example 18: Complex OTSL table with various separators -->
-  <otsl>
+  <table>
     <text>Corner</text>
     <corn/>
     <text>Col Header</text>
@@ -294,61 +310,9 @@
     <text>Spanning</text>
     <srow/>
     <text>Row</text>
-  </otsl>
+  </table>
 
-  <!-- Example 19: Floating group with table -->
-  <floating_group class="table">
-    <caption>Table 1: Sample Data</caption>
-    <otsl>
-      <text>Name</text>
-      <fcel/>
-      <text>Age</text>
-      <nl/>
-      <text>Alice</text>
-      <fcel/>
-      <text>30</text>
-      <nl/>
-      <text>Bob</text>
-      <fcel/>
-      <text>25</text>
-    </otsl>
-  </floating_group>
-
-  <!-- Example 20: Floating group with picture -->
-  <floating_group class="picture">
-    <picture>
-      <meta>main-figure</meta>
-      <uri>diagram.svg</uri>
-    </picture>
-    <caption>Figure 2: System architecture diagram</caption>
-    <text>This diagram illustrates the overall system design.</text>
-  </floating_group>
-
-  <!-- Example 21: Floating group with multiple pictures -->
-  <floating_group class="picture">
-    <heading level="3">Photo Gallery</heading>
-    <picture>
-      <uri>photo1.jpg</uri>
-    </picture>
-    <caption>Photo 1</caption>
-    <picture>
-      <uri>photo2.jpg</uri>
-    </picture>
-    <caption>Photo 2</caption>
-  </floating_group>
-
-  <!-- Example 22: Text with complete component header (new layer syntax) -->
-  <text>
-    <meta>metadata-info</meta>
-    <location value="10"/>
-    <location value="20"/>
-    <location value="100"/>
-    <location value="50"/>
-    <layer class="furniture"/>
-    Regular text with <handwriting>handwritten notes</handwriting> and <marker>important</marker> markers.
-  </text>
-
-  <!-- Example 23: Caption with component header -->
+  <!-- Example 19: Caption with component header -->
   <caption>
     <meta>caption-meta</meta>
     <location value="0"/>
@@ -359,13 +323,24 @@
     <bold>Figure 3:</bold> Complex visualization with <hint>interactive elements</hint>
   </caption>
 
-  <!-- Example 24: Complex nested formatting -->
+  <!-- Example 20: Text with complete component header (new layer syntax) -->
+  <text>
+    <meta>metadata-info</meta>
+    <location value="10"/>
+    <location value="20"/>
+    <location value="100"/>
+    <location value="50"/>
+    <layer class="furniture"/>
+    Regular text with <handwriting>handwritten notes</handwriting> and <marker>important</marker> markers.
+  </text>
+
+  <!-- Example 21: Complex nested formatting -->
   <text>
     <hint><bold>This is bold with <italic>nested italic</italic> and tooltip</bold></hint>, plus <marker>mark</marker> and <checkbox/>.
   </text>
 
-  <!-- Example 25: OTSL with component header and all separator types -->
-  <otsl>
+  <!-- Example 22: OTSL with component header and all separator types -->
+  <table>
     <meta>table-meta-1</meta>
     <location value="100"/>
     <location value="100"/>
@@ -384,68 +359,48 @@
     <text>F</text>
     <xcel/>
     <text>G</text>
-  </otsl>
+  </table>
 
-  <!-- Example 26: Floating group with table and multiple elements -->
-  <floating_group class="table">
-    <heading level="2">Sales Report</heading>
-    <text>Q1 2024 results:</text>
-    <otsl>
-      <meta>sales-table</meta>
-      <text>Product</text>
-      <ched/>
-      <text>Sales</text>
-      <nl/>
-      <text>Widget A</text>
-      <fcel/>
-      <text>$1000</text>
-      <nl/>
-      <text>Widget B</text>
-      <fcel/>
-      <text>$1500</text>
-    </otsl>
-    <caption>Table 2: Q1 Sales Data</caption>
-  </floating_group>
-
-  <!-- Example 27: All new formatting elements together -->
+  <!-- Example 23: All new formatting elements together -->
   <text>
     Normal text, <bold>bold</bold>, <italic>italic</italic>, <strikethrough>deleted</strikethrough>,
     <superscript>superscript</superscript>, <subscript>subscript</subscript>,
     <rtl>right-to-left</rtl>, and <handwriting>handwritten</handwriting>.
   </text>
 
-  <!-- Example 28: Nested new formatting -->
+  <!-- Example 24: Nested new formatting -->
   <text>
     <bold><strikethrough>Bold strikethrough</strikethrough></bold> and
     <italic><superscript>Italic superscript</superscript></italic>
   </text>
 
-  <!-- Example 29: Text with multiple line breaks -->
+  <!-- Example 25: Text with multiple line breaks -->
   <text>
     Paragraph 1<br/>
     <br/>
     Paragraph 2 after double break
   </text>
 
-  <!-- Example 30: RTL text with formatting -->
+  <!-- Example 26: RTL text with formatting -->
   <text>
     <rtl>E<bold>D</bold>C<italic>B</italic>A</rtl>
   </text>
 
-  <!-- Example 31: Scientific notation with super/subscript -->
+  <!-- Example 27: Scientific notation with super/subscript -->
   <text>
     E = mc<superscript>2</superscript> and H<subscript>2</subscript>O
   </text>
 
-  <!-- Example 32: List with nested elements -->
-  <list>
-    <list_text>Data items:</list_text>
+  <!-- Example 28: List with nested elements -->
+  <list class="unordered">
+    <ldiv><marker>•</marker></ldiv>
     <text>First item</text>
+    <ldiv><marker>•</marker></ldiv>
     <text>Second item</text>
     <caption>List caption</caption>
   </list>
 
-  <!-- Example 33: Layer with class attribute -->
+  <!-- Example 29: Layer with class attribute -->
   <text>
     <layer class="body"/>
     Text with layer (body class)
@@ -454,21 +409,211 @@
     <code><![CDATA[<bold>print("hi")</bold>]]></code>
   </text>
 
-  <!-- Example 34: List with inline stuff -->
-  <list>
-    <list_text>
+  <!-- Example 30: List with inline stuff -->
+  <list class="unordered">
+    <ldiv><marker>•</marker></ldiv>
+    <text>
       Text with inline stuff
       <formula>
         E = mc<superscript>2</superscript>
       </formula>
-    </list_text>
-    <list_text>
+    </text>
+  </list>
+
+  <!-- Example 31: Ordered list -->
+  <list class="ordered">
+    <ldiv><marker>1.</marker></ldiv>
+    <text>Install dependencies</text>
+    <ldiv><marker>2.</marker></ldiv>
+    <text>Run tests</text>
+    <ldiv><marker>3.</marker></ldiv>
+    <text>Deploy application</text>
+  </list>
+
+  <!-- Example 32: List with empty ldiv (no marker) -->
+  <list class="unordered">
+    <ldiv/>
+    <text>Item without visible marker</text>
+    <ldiv/>
+    <text>Another item without marker</text>
+  </list>
+
+  <!-- Example 33: Nested lists (ordered and unordered) -->
+  <list class="ordered">
+    <ldiv><marker>1.</marker></ldiv>
+    <text>Setup project</text>
+    <list class="unordered">
+      <ldiv><marker>•</marker></ldiv>
+      <text>Create virtual environment</text>
+      <ldiv><marker>•</marker></ldiv>
+      <text>Configure linter</text>
+    </list>
+    <ldiv><marker>2.</marker></ldiv>
+    <text>Implement features</text>
+  </list>
+
+  <!-- Example 34: List with checkbox markers -->
+  <list class="unordered">
+    <ldiv><marker><checkbox class="selected"/></marker></ldiv>
+    <text>Completed task</text>
+    <ldiv><marker><checkbox class="unselected"/></marker></ldiv>
+    <text>Pending task</text>
+    <ldiv><marker><checkbox/></marker></ldiv>
+    <text>Another pending task (default unselected)</text>
+  </list>
+
+  <!-- Example 35: List with formatted markers -->
+  <list class="unordered">
+    <ldiv><marker><bold>→</bold></marker></ldiv>
+    <text>Item with bold arrow marker</text>
+    <ldiv><marker><italic>*</italic></marker></ldiv>
+    <text>Item with italic asterisk marker</text>
+  </list>
+
+  <!-- Example 36: List with location information for items -->
+  <list class="unordered">
+    <ldiv/>
+    <text>
+      <location value="10"/>
+      <location value="100"/>
+      <location value="200"/>
+      <location value="120"/>
+      First item
+    </text>
+    <ldiv/>
+    <text>
+      <location value="10"/>
+      <location value="130"/>
+      <location value="200"/>
+      <location value="150"/>
+      Second item
+    </text>
+  </list>
+
+  <!-- Example 37: List with mixed content types -->
+  <list class="unordered">
+    <ldiv/>
+    <text>Text item</text>
+    <ldiv/>
+    <code>pass()</code>
+  </list>
+
+  <!-- Example 38: List with inline code and picture -->
+  <list>
+    <ldiv><marker>•</marker></ldiv>
+    <text>
       <code><bold><content>print("hi")</content></bold></code>
       <code><![CDATA[<bold>print("hi")</bold>]]></code>
       <picture>
         <uri>https://example.com/image.jpg</uri>
       </picture>
-    </list_text>
+    </text>
   </list>
+
+  <!-- Example 39: Empty group -->
+  <group>
+  </group>
+
+  <!-- Example 40: Simple group with multiple elements -->
+  <group>
+    <text>First element in group</text>
+    <text>Second element in group</text>
+  </group>
+
+  <!-- Example 41: Group with component header -->
+  <group>
+    <meta>group-metadata</meta>
+    <location value="10"/>
+    <location value="20"/>
+    <location value="100"/>
+    <location value="50"/>
+    <layer class="body"/>
+    <text>Element with coordinates</text>
+    <text>Another element</text>
+  </group>
+
+  <!-- Example 42: Group with picture -->
+  <group>
+    <picture>
+      <meta>main-figure</meta>
+      <uri>diagram.svg</uri>
+    </picture>
+    <caption>Figure 2: System architecture diagram</caption>
+    <text>This diagram illustrates the overall system design.</text>
+  </group>
+
+  <!-- Example 43: Group with table -->
+  <group>
+    <caption>Table 1: Sample Data</caption>
+    <table>
+      <text>Name</text>
+      <fcel/>
+      <text>Age</text>
+      <nl/>
+      <text>Alice</text>
+      <fcel/>
+      <text>30</text>
+      <nl/>
+      <text>Bob</text>
+      <fcel/>
+      <text>25</text>
+    </table>
+  </group>
+
+  <!-- Example 44: Group with multiple pictures -->
+  <group>
+    <heading level="3">Photo Gallery</heading>
+    <picture>
+      <uri>photo1.jpg</uri>
+    </picture>
+    <caption>Photo 1</caption>
+    <picture>
+      <uri>photo2.jpg</uri>
+    </picture>
+    <caption>Photo 2</caption>
+  </group>
+
+  <!-- Example 45: Group with table and multiple elements -->
+  <group>
+    <heading level="2">Sales Report</heading>
+    <text>Q1 2024 results:</text>
+    <table>
+      <meta>sales-table</meta>
+      <text>Product</text>
+      <ched/>
+      <text>Sales</text>
+      <nl/>
+      <text>Alice</text>
+      <fcel/>
+      <text>$1000</text>
+      <nl/>
+      <text>Bob</text>
+      <fcel/>
+      <text>$1500</text>
+    </table>
+    <caption>Table 2: Q1 Sales Data</caption>
+  </group>
+
+  <!-- Example 46: Group with mixed semantic elements -->
+  <group>
+    <text>Some text</text>
+    <list class="unordered">
+      <ldiv><marker>•</marker></ldiv>
+      <text>List item 1</text>
+      <ldiv><marker>•</marker></ldiv>
+      <text>List item 2</text>
+    </list>
+    <code>print("code example")</code>
+  </group>
+
+  <!-- Example 47: Nested groups -->
+  <group>
+    <heading level="2">Section Title</heading>
+    <text>Introduction text</text>
+    <group>
+      <heading level="3">Subsection</heading>
+      <text>Subsection content</text>
+    </group>
+  </group>
 
 </doclang>

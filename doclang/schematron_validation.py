@@ -19,10 +19,10 @@ _ISO_SCHEMATRON_TRANSPILER = """<?xml version="1.0" encoding="UTF-8"?>
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:sch="http://purl.oclc.org/dsdl/schematron"
     xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
-    xmlns:dl="https://www.doclang.ai/ns/v1"
+    xmlns:dl="https://www.doclang.ai/ns/v0"
     xmlns:xsl2="http://www.w3.org/1999/XSL/Transform/alias"
     xmlns:svrl2="http://purl.oclc.org/dsdl/svrl/alias"
-    xmlns:dl2="https://www.doclang.ai/ns/v1/alias">
+    xmlns:dl2="https://www.doclang.ai/ns/v0/alias">
 
   <xsl:namespace-alias stylesheet-prefix="xsl2" result-prefix="xsl"/>
   <xsl:namespace-alias stylesheet-prefix="svrl2" result-prefix="svrl"/>
@@ -32,7 +32,7 @@ _ISO_SCHEMATRON_TRANSPILER = """<?xml version="1.0" encoding="UTF-8"?>
   <xsl:template match="/">
     <xsl2:stylesheet version="3.0"
         xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
-        xmlns:dl="https://www.doclang.ai/ns/v1">
+        xmlns:dl="https://www.doclang.ai/ns/v0">
 
       <xsl2:output method="xml" indent="yes"/>
 

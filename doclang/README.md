@@ -41,14 +41,6 @@ uv run pytest
 
 ## Document Requirements
 
-The DocLang XML document should include the namespace:
-
-```xml
-<doclang xmlns="https://www.doclang.ai/ns/v1" version="1.0.0">
-    <!-- ... -->
-</doclang>
-```
-
 If your document doesn't declare a namespace, you can use the CLI agument `--allow-empty-namespace` (or shorthand `-n`) to automatically inject the DocLang namespace during validation:
 
 ```bash
@@ -90,6 +82,14 @@ In VS Code you can use [Red Hat's XML extension](https://open-vsx.org/vscode/ite
             "systemId": "file:///absolute/path/to/doclang.xsd",
         }
     ],
+```
+
+For this to work, the DocLang XML document must include the relevant namespace:
+
+```xml
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+    <!-- ... -->
+</doclang>
 ```
 
 ## References

@@ -5,7 +5,7 @@
   xmlns:dl="https://www.doclang.ai/ns/v0"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
-  version="0.1.0"
+  version="0.2.0"
 >
 
   <!-- ============================================ -->
@@ -54,10 +54,22 @@
   </xs:complexType>
 
   <!-- ============================================ -->
-  <!-- MARKER ELEMENT: contains an instance of formatting -->
+  <!-- MARKER_CAT: formatting elements plus checkbox -->
   <!-- ============================================ -->
 
-  <xs:element name="marker" type="dl:formatting_cat"/>
+  <xs:complexType name="marker_cat" mixed="true">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element ref="dl:content"/>
+      <xs:group ref="dl:formatting_group"/>
+      <xs:element ref="dl:checkbox"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <!-- ============================================ -->
+  <!-- MARKER ELEMENT: contains formatting or checkbox -->
+  <!-- ============================================ -->
+
+  <xs:element name="marker" type="dl:marker_cat"/>
 
   <!-- ============================================ -->
   <!-- HINT ELEMENT: contains an instance of formatting -->
@@ -181,13 +193,13 @@
       <xs:sequence>
         <xs:group ref="dl:component_header"/>
         <xs:element ref="dl:uri" minOccurs="0"/>
-        <xs:element ref="dl:otsl" minOccurs="0"/>
+        <xs:element ref="dl:table" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- OTSL_SEP: empty elements for table separators -->
+  <!-- TABLE_SEP: empty elements for table separators -->
   <!-- ============================================ -->
 
   <xs:element name="fcel"><xs:complexType/></xs:element>
@@ -201,7 +213,7 @@
   <xs:element name="xcel"><xs:complexType/></xs:element>
   <xs:element name="nl"><xs:complexType/></xs:element>
 
-  <xs:group name="otsl_sep">
+  <xs:group name="table_sep">
     <xs:choice>
       <xs:element ref="dl:fcel"/>
       <xs:element ref="dl:ecel"/>
@@ -284,12 +296,6 @@
   <xs:element name="text" type="dl:component_with_headless_seq"/>
 
   <!-- ============================================ -->
-  <!-- TITLE ELEMENT: uses component_with_headless_seq -->
-  <!-- ============================================ -->
-
-  <xs:element name="title" type="dl:component_with_headless_seq"/>
-
-  <!-- ============================================ -->
   <!-- HEADING ELEMENT: extends component_with_headless_seq with level attribute -->
   <!-- ============================================ -->
 
@@ -348,27 +354,38 @@
   <xs:element name="footnote" type="dl:component_with_headless_seq"/>
 
   <!-- ============================================ -->
-  <!-- LIST_TEXT ELEMENT: uses component_with_headless_seq -->
+  <!-- LDIV ELEMENT: List divider, optionally contains a marker -->
   <!-- ============================================ -->
 
-  <xs:element name="list_text" type="dl:component_with_headless_seq"/>
-  <!-- <xs:element name="list_text">
+  <xs:element name="ldiv">
     <xs:complexType>
       <xs:sequence>
+        <xs:element ref="dl:marker" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- GROUP ELEMENT: Container for encapsulating multiple semantic elements -->
+  <!-- ============================================ -->
+
+  <xs:element name="group">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:group ref="dl:component_header"/>
         <xs:group ref="dl:top_level_cat" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
-  </xs:element> -->
+  </xs:element>
 
   <!-- ============================================ -->
   <!-- TOP_LEVEL_CAT: reusable group for top-level document elements -->
-  <!-- Includes: text, title, heading, code, formula, caption, page_header, page_footer, footnote, list, floating_group, field_region, field_heading, field_item, key, value, picture, otsl -->
+  <!-- Includes: text, heading, code, formula, caption, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, group -->
   <!-- ============================================ -->
 
   <xs:group name="top_level_cat">
     <xs:choice>
       <xs:element ref="dl:text"/>
-      <xs:element ref="dl:title"/>
       <xs:element ref="dl:heading"/>
       <xs:element ref="dl:code"/>
       <xs:element ref="dl:formula"/>
@@ -377,83 +394,71 @@
       <xs:element ref="dl:page_footer"/>
       <xs:element ref="dl:footnote"/>
       <xs:element ref="dl:list"/>
-      <xs:element ref="dl:floating_group"/>
+      <xs:element ref="dl:group"/>
       <xs:element ref="dl:field_region"/>
       <xs:element ref="dl:field_heading"/>
       <xs:element ref="dl:field_item"/>
       <xs:element ref="dl:key"/>
       <xs:element ref="dl:value"/>
       <xs:element ref="dl:picture"/>
-      <xs:element ref="dl:otsl"/>
+      <xs:element ref="dl:table"/>
     </xs:choice>
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LIST_MEMBER: list_text or top_level_cat -->
+  <!-- LIST_MEMBER: ldiv or top_level_cat -->
   <!-- ============================================ -->
 
   <xs:group name="list_member">
     <xs:choice>
-      <xs:element ref="dl:list_text"/>
+      <xs:element ref="dl:ldiv"/>
       <xs:group ref="dl:top_level_cat"/>
     </xs:choice>
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LIST ELEMENT: list_text + optional sequence of list_member + optional ordered attribute -->
+  <!-- LIST ELEMENT: sequence of list_member + optional ordered/unordered class attribute -->
+  <!-- If not empty, must start with ldiv -->
   <!-- ============================================ -->
 
   <xs:element name="list">
     <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="dl:list_text"/>
-        <xs:group ref="dl:list_member" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-      <xs:attribute name="ordered" type="xs:boolean" use="optional" default="false"/>
+      <xs:choice>
+        <!-- Empty list -->
+        <xs:sequence/>
+        <!-- Non-empty list: must start with ldiv, followed by any list_member -->
+        <xs:sequence>
+          <xs:element ref="dl:ldiv"/>
+          <xs:group ref="dl:list_member" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:choice>
+      <xs:attribute name="class" use="optional" default="unordered">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="ordered"/>
+            <xs:enumeration value="unordered"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
     </xs:complexType>
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- OTSL ELEMENT: component_header + sequence of [otsl_sep, headless_txt, top_level_cat] -->
-  <!-- Reuses otsl_sep, headless_txt, and top_level_cat groups -->
+  <!-- TABLE ELEMENT: component_header + sequence of [table_sep, headless_txt, top_level_cat] -->
+  <!-- Reuses table_sep, headless_txt, and top_level_cat groups -->
   <!-- ============================================ -->
 
-  <xs:element name="otsl">
+  <xs:element name="table">
     <xs:complexType mixed="true">
       <xs:sequence>
         <xs:group ref="dl:component_header"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:element ref="dl:content"/>
-          <xs:group ref="dl:otsl_sep"/>
+          <xs:group ref="dl:table_sep"/>
           <xs:group ref="dl:headless_txt"/>
           <xs:group ref="dl:top_level_cat"/>
         </xs:choice>
       </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-
-  <!-- ============================================ -->
-  <!-- FLOATING_GROUP ELEMENT: sequence of top_level_cat -->
-  <!-- CONSTRAINT for class="picture": Must contain at least one <picture> element -->
-  <!-- CONSTRAINT for class="table": Must contain at least one <otsl> element -->
-  <!-- NOTE: These constraints cannot be enforced in XSD 1.0 and must be -->
-  <!--       validated by application logic or Schematron rules -->
-  <!-- ============================================ -->
-
-  <xs:element name="floating_group">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:group ref="dl:top_level_cat" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
-      <xs:attribute name="class" use="required">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="picture"/>
-            <xs:enumeration value="table"/>
-            <xs:enumeration value="code"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
     </xs:complexType>
   </xs:element>
 
@@ -577,13 +582,13 @@
           <xs:group ref="dl:top_level_cat"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="version" use="optional" default="0.1">
+      <xs:attribute name="version" use="optional" default="0.2">
         <xs:simpleType>
           <xs:restriction base="xs:string">
-            <!-- enumeration set up for 1.x where all individual minor versions
+            <!-- enumeration set up for v1 and above, where all individual minor versions
              within major (up to and including current, i.e. `default` above)
              will have to be listed for backwards compatibility. -->
-            <xs:enumeration value="0.1"/>
+            <xs:enumeration value="0.2"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
