@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 4: List + Wrapped text + No location -->
+  <list class="unordered">
+    <ldiv/>
+    <text>Wrapped text without location</text>
+  </list>
+</doclang>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 8: Table + Raw text + Location before -->
+  <table>
+    <ched/>
+    <location value="20"/><location value="10"/><location value="120"/><location value="30"/>
+    Header with location before<nl/>
+    <fcel/>
+    <location value="20"/><location value="40"/><location value="120"/><location value="60"/>
+    Cell with location before<nl/>
+  </table>
+</doclang>

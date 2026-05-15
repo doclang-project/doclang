@@ -155,6 +155,7 @@
 
   <!-- ============================================ -->
   <!-- COMPONENT_HEADER: meta, optional location_block, layer -->
+  <!-- TODO: to be aligned with spec (iso-standard.md) which includes: thread, h_thread, meta, locations, timestamps, layer -->
   <!-- ============================================ -->
 
   <xs:group name="component_header">
@@ -406,32 +407,46 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LIST_MEMBER: ldiv or top_level_cat -->
+  <!-- VIRTUAL_TEXT_CONTENT: Content that can appear after ldiv in a list item -->
+  <!-- Includes headless_txt (formatting, etc.) and top_level_cat (semantic elements) -->
   <!-- ============================================ -->
 
-  <xs:group name="list_member">
+  <xs:group name="virtual_text_content">
     <xs:choice>
-      <xs:element ref="dl:ldiv"/>
+      <xs:group ref="dl:headless_txt"/>
       <xs:group ref="dl:top_level_cat"/>
     </xs:choice>
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LIST ELEMENT: sequence of list_member + optional ordered/unordered class attribute -->
-  <!-- If not empty, must start with ldiv -->
+  <!-- LIST_ITEM: ldiv + optional component_header + virtual_text_content* -->
+  <!-- Represents a single list item which can be:
+       - Virtual text: ldiv + optional component_header + raw text/formatting/semantic elements
+       - Wrapped semantic: ldiv + semantic element(s) -->
+  <!-- ============================================ -->
+
+  <xs:group name="list_item">
+    <xs:sequence>
+      <xs:element ref="dl:ldiv"/>
+      <xs:group ref="dl:component_header" minOccurs="0"/>
+      <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- ============================================ -->
+  <!-- LIST ELEMENT: optional component_header + list_item* -->
+  <!-- Semantic element: may optionally begin with component_header (per iso-standard.md) -->
+  <!-- Component header order enforced by XSD component_header group (sequence) -->
+  <!-- Each list item starts with ldiv, followed by optional component_header for virtual text -->
+  <!-- Schematron enforces: must start with ldiv (after optional list-level component_header) -->
   <!-- ============================================ -->
 
   <xs:element name="list">
-    <xs:complexType>
-      <xs:choice>
-        <!-- Empty list -->
-        <xs:sequence/>
-        <!-- Non-empty list: must start with ldiv, followed by any list_member -->
-        <xs:sequence>
-          <xs:element ref="dl:ldiv"/>
-          <xs:group ref="dl:list_member" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-      </xs:choice>
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:list_item" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
       <xs:attribute name="class" use="optional" default="unordered">
         <xs:simpleType>
           <xs:restriction base="xs:string">
@@ -444,20 +459,33 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- TABLE ELEMENT: component_header + sequence of [table_sep, headless_txt, top_level_cat] -->
-  <!-- Reuses table_sep, headless_txt, and top_level_cat groups -->
+  <!-- TABLE_CELL: cell token + optional component_header + virtual_text_content* -->
+  <!-- Represents a single table cell which can be:
+       - Virtual text: cell token + optional component_header + raw text/formatting/semantic elements
+       - Wrapped semantic: cell token + semantic element(s) -->
+  <!-- ============================================ -->
+
+  <xs:group name="table_cell">
+    <xs:sequence>
+      <xs:group ref="dl:table_sep"/>
+      <xs:group ref="dl:component_header" minOccurs="0"/>
+      <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- ============================================ -->
+  <!-- TABLE ELEMENT: optional component_header + table_cell* -->
+  <!-- Semantic element: may optionally begin with component_header (per iso-standard.md) -->
+  <!-- Component header order enforced by XSD component_header group (sequence) -->
+  <!-- Each table cell starts with cell token, followed by optional component_header for virtual text -->
+  <!-- Schematron enforces: must start with cell token (after optional table-level component_header) -->
   <!-- ============================================ -->
 
   <xs:element name="table">
     <xs:complexType mixed="true">
       <xs:sequence>
         <xs:group ref="dl:component_header"/>
-        <xs:choice minOccurs="0" maxOccurs="unbounded">
-          <xs:element ref="dl:content"/>
-          <xs:group ref="dl:table_sep"/>
-          <xs:group ref="dl:headless_txt"/>
-          <xs:group ref="dl:top_level_cat"/>
-        </xs:choice>
+        <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

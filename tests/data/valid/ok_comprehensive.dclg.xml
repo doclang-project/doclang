@@ -273,40 +273,45 @@
     <text><italic>Important</italic> task 3</text>
   </list>
 
-
-  <!-- Example 16: Simple OTSL table -->
-  <!-- TODO: improve validation to enforce starting with fcel/ecel/ched/etc & ideally grid validity -->
+  <!-- Example 16: Simple OTSL table (must start with cell token) -->
   <table>
+    <fcel/>
     <text>Cell 1</text>
     <fcel/>
     <text>Cell 2</text>
     <nl/>
+    <fcel/>
     <text>Cell 3</text>
     <fcel/>
     <text>Cell 4</text>
   </table>
 
-  <!-- Example 17: OTSL table with headers -->
+  <!-- Example 17: OTSL table with headers (must start with cell token) -->
   <table>
+    <ched/>
     <text>Header 1</text>
     <ched/>
     <text>Header 2</text>
     <nl/>
+    <fcel/>
     <text>Data 1</text>
     <fcel/>
     <text>Data 2</text>
   </table>
 
-  <!-- Example 18: Complex OTSL table with various separators -->
+  <!-- Example 18: Complex OTSL table with various separators (must start with cell token) -->
   <table>
+    <corn/>
     <text>Corner</text>
     <corn/>
     <text>Col Header</text>
     <nl/>
+    <rhed/>
     <text>Row Header</text>
     <rhed/>
     <text>Data</text>
     <nl/>
+    <srow/>
     <text>Spanning</text>
     <srow/>
     <text>Row</text>
@@ -346,12 +351,14 @@
     <location value="100"/>
     <location value="500"/>
     <location value="300"/>
+    <fcel/>
     <text>A</text>
     <fcel/>
     <text>B</text>
     <ecel/>
     <text>C</text>
     <nl/>
+    <lcel/>
     <text>D</text>
     <lcel/>
     <text>E</text>
@@ -436,6 +443,19 @@
     <text>Item without visible marker</text>
     <ldiv/>
     <text>Another item without marker</text>
+  </list>
+
+  <!-- Example 32b: List with component header (aligns with table validation) -->
+  <list class="unordered">
+    <meta>list-meta-1</meta>
+    <location value="10"/>
+    <location value="100"/>
+    <location value="200"/>
+    <location value="150"/>
+    <ldiv><marker>•</marker></ldiv>
+    <text>First item with metadata</text>
+    <ldiv><marker>•</marker></ldiv>
+    <text>Second item with metadata</text>
   </list>
 
   <!-- Example 33: Nested lists (ordered and unordered) -->
@@ -542,18 +562,21 @@
     <text>This diagram illustrates the overall system design.</text>
   </group>
 
-  <!-- Example 43: Group with table -->
+  <!-- Example 43: Group with table (must start with cell token) -->
   <group>
     <caption>Table 1: Sample Data</caption>
     <table>
+      <fcel/>
       <text>Name</text>
       <fcel/>
       <text>Age</text>
       <nl/>
+      <fcel/>
       <text>Alice</text>
       <fcel/>
       <text>30</text>
       <nl/>
+      <fcel/>
       <text>Bob</text>
       <fcel/>
       <text>25</text>
@@ -573,20 +596,27 @@
     <caption>Photo 2</caption>
   </group>
 
-  <!-- Example 45: Group with table and multiple elements -->
+  <!-- Example 45: Group with table and multiple elements (table with component header) -->
   <group>
     <heading level="2">Sales Report</heading>
     <text>Q1 2024 results:</text>
     <table>
       <meta>sales-table</meta>
+      <location value="100"/>
+      <location value="200"/>
+      <location value="500"/>
+      <location value="300"/>
+      <ched/>
       <text>Product</text>
       <ched/>
       <text>Sales</text>
       <nl/>
+      <fcel/>
       <text>Alice</text>
       <fcel/>
       <text>$1000</text>
       <nl/>
+      <fcel/>
       <text>Bob</text>
       <fcel/>
       <text>$1500</text>

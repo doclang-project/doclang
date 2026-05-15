@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- This should FAIL Schematron validation: rows have different number of columns -->
+  <table>
+    <ched/><text>Column 1</text><ched/><text>Column 2</text><nl/>
+    <fcel/><text>Row 1, Cell 1</text><fcel/><text>Row 1, Cell 2</text><fcel/><text>Row 1, Cell 3</text><nl/>
+    <fcel/><text>Row 2, Cell 1</text><fcel/><text>Row 2, Cell 2</text><nl/>
+  </table>
+
+</doclang>

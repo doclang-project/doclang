@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- Valid table: all rows have the same number of columns (2 columns) -->
+  <table>
+    <ched/><text>Method</text><ched/><text>Accuracy</text><nl/>
+    <fcel/><text>Baseline</text><fcel/><text>0.85</text><nl/>
+    <fcel/><text>Proposed</text><fcel/><text>0.92</text><nl/>
+  </table>
+
+  <!-- Valid table with empty cells -->
+  <table>
+    <ched/><text>Name</text><ched/><text>Age</text><ched/><text>City</text><nl/>
+    <fcel/><text>Alice</text><fcel/><text>30</text><ecel/><nl/>
+    <fcel/><text>Bob</text><ecel/><fcel/><text>NYC</text><nl/>
+  </table>
+
+  <!-- Valid table with mixed cell types -->
+  <table>
+    <corn/><ched/><text>Q1</text><ched/><text>Q2</text><nl/>
+    <rhed/><text>Sales</text><fcel/><text>100</text><fcel/><text>120</text><nl/>
+    <rhed/><text>Costs</text><fcel/><text>80</text><fcel/><text>90</text><nl/>
+  </table>
+
+</doclang>

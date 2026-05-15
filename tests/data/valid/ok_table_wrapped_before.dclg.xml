@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 11: Table + Wrapped text + Location before -->
+  <table>
+    <ched/>
+    <text>
+      <location value="30"/><location value="10"/><location value="130"/><location value="30"/>
+      Wrapped header with location before
+    </text>
+    <nl/>
+    <fcel/>
+    <text>
+      <location value="30"/><location value="40"/><location value="130"/><location value="60"/>
+      Wrapped cell with location before
+    </text>
+    <nl/>
+  </table>
+</doclang>

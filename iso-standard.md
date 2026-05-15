@@ -1892,7 +1892,7 @@ Exists exactly once, as root element.
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "0.1" | {"0.1"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
+| `version` | Optional; default: "0.2" | {"0.2"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
 ##### Allowed Content Types
 
@@ -1962,7 +1962,7 @@ Semantic elements capture core components with specific meaning and functional r
 
 #### `<text>`
 
-Represents a piece of cohesive text as that would appear in a paragraph.
+Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
 
 ##### Allowed Context
 
@@ -1988,7 +1988,9 @@ Any context that allows semantic elements.
 
 ##### Attributes
 
-None
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `level` | Optional; default "1" | Non-negative integer |  |
 
 ##### Allowed Content Types
 
@@ -2090,29 +2092,9 @@ None
 | Raw text | Not allowed |
 | Semantic elements | Allowed |
 
-#### `<table>`
-
-Captures a table based on the OTSL format. Table cells are delimited by the respective structural elements.
-
-##### Allowed Context
-
-Any context that allows semantic elements.
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Component head | Allowed |
-| Raw text | Not allowed |
-| Semantic elements | Allowed |
-
 #### `<list>`
 
-Captures a list. List items are delimited by the respective structural elements.
+Captures a list. List items are delimited by the respective structural elements. A list item can be defined without a wrapping tag, i.e. as pure (optional) component head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2128,8 +2110,28 @@ Any context that allows semantic elements.
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
-| Raw text | Not allowed |
+| Component head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
+| Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
+| Semantic elements | Allowed |
+
+#### `<table>`
+
+Captures a table, in a format inspired by OTSL. Table cells are delimited by the respective structural elements. A table cell can be defined without a wrapping tag, i.e. as pure (optional) component head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+
+##### Allowed Context
+
+Any context that allows semantic elements.
+
+##### Attributes
+
+None
+
+##### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Component head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
+| Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Semantic elements | Allowed |
 
 #### `<formula>`
@@ -2830,6 +2832,8 @@ Structural elements define boundaries within explicitly structured components li
 
 #### `<fcel>`
 
+Indicates the beginning of a full / regular cell.
+
 ##### Allowed Context
 
 Can only be child of [`<table>`](#table).
@@ -2843,6 +2847,8 @@ None
 None (empty element).
 
 #### `<ecel>`
+
+Indicates the beginning of an empty cell.
 
 ##### Allowed Context
 
@@ -2858,6 +2864,8 @@ None (empty element).
 
 #### `<ched>`
 
+Indicates the beginning of a column header cell.
+
 ##### Allowed Context
 
 Can only be child of [`<table>`](#table).
@@ -2871,6 +2879,8 @@ None
 None (empty element).
 
 #### `<rhed>`
+
+Indicates the beginning of a row header cell.
 
 ##### Allowed Context
 
@@ -2886,6 +2896,8 @@ None (empty element).
 
 #### `<corn>`
 
+Indicates the beginning of a corner cell, typically the top-left header intersection.
+
 ##### Allowed Context
 
 Can only be child of [`<table>`](#table).
@@ -2899,6 +2911,8 @@ None
 None (empty element).
 
 #### `<srow>`
+
+Indicates the beginning of a section row header.
 
 ##### Allowed Context
 
@@ -2914,6 +2928,8 @@ None (empty element).
 
 #### `<lcel>`
 
+Left-merge extension token; extends the previous cell horizontally (colspan continuation).
+
 ##### Allowed Context
 
 Can only be child of [`<table>`](#table).
@@ -2927,6 +2943,8 @@ None
 None (empty element).
 
 #### `<ucel>`
+
+Upward-merge extension token; extends the cell above vertically (rowspan continuation)
 
 ##### Allowed Context
 
@@ -2942,6 +2960,8 @@ None (empty element).
 
 #### `<xcel>`
 
+Cross/combined span extension token; used where both horizontal and vertical spanning intersect.
+
 ##### Allowed Context
 
 Can only be child of [`<table>`](#table).
@@ -2955,6 +2975,8 @@ None
 None (empty element).
 
 #### `<nl>`
+
+New line / new table row
 
 ##### Allowed Context
 
@@ -2970,7 +2992,7 @@ None (empty element).
 
 #### `<ldiv>`
 
-Delimiter defining the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
+Indicates the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
 
 ##### Allowed Context
 

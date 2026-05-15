@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 10: Table + Wrapped text + No location -->
+  <table>
+    <ched/><text>Wrapped header text</text><nl/>
+    <fcel/><text>Wrapped cell text</text><nl/>
+  </table>
+</doclang>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 3: List + Raw text + Location after -->
+  <list class="unordered">
+    <ldiv/>
+    Raw text with location after
+    <location value="10"/><location value="50"/><location value="100"/><location value="70"/>
+  </list>
+</doclang>

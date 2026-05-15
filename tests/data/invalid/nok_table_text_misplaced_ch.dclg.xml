@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 12: Table + Wrapped text + Location after -->
+  <table>
+    <fcel/>
+    <text>
+      Wrapped cell with location after
+      <location value="30"/><location value="100"/><location value="130"/><location value="120"/>
+    </text>
+    <nl/>
+  </table>
+</doclang>

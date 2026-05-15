@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- Test 1: Simple list with unwrapped text after ldiv -->
+  <list class="unordered">
+    <ldiv/>
+    First item with unwrapped text
+    <ldiv/>
+    Second item with unwrapped text
+    <ldiv/>
+    Third item with unwrapped text
+  </list>
+
+  <!-- Test 2: Mixed unwrapped text and wrapped text -->
+  <list class="ordered">
+    <ldiv/>
+    Unwrapped text item
+    <ldiv/>
+    <text>Wrapped text item</text>
+    <ldiv/>
+    Mixed unwrapped and wrapped
+  </list>
+
+  <!-- Test 3: Unwrapped text with other elements -->
+  <list class="unordered">
+    <ldiv/>
+    Item with unwrapped text
+    <text>and wrapped text</text>
+    <ldiv/>
+    Another item
+    <list class="unordered">
+      <ldiv/>
+      Nested item with unwrapped text
+    </list>
+  </list>
+
+  <!-- Test 4: Empty ldiv with unwrapped text -->
+  <list class="ordered">
+    <ldiv/>
+    Item without marker but with unwrapped text
+    <ldiv/>
+    Another item with unwrapped text
+  </list>
+
+  <!-- Test 5: Mixed - some items with locations (wrapped in text), some without (unwrapped) -->
+  <list class="ordered">
+    <ldiv/>
+    Simple unwrapped item without location
+    <ldiv/>
+    <text>
+      <location value="50"/><location value="120"/><location value="400"/><location value="140"/>
+      Item with location information
+    </text>
+    <ldiv/>
+    Another unwrapped item
+    <ldiv/>
+    <text>
+      <location value="50"/><location value="150"/><location value="400"/><location value="170"/>
+      Another item with location
+    </text>
+  </list>
+
+  <!-- Test 6: Unwrapped text with location (component head) -->
+  <list class="unordered">
+    <ldiv/>
+    <location value="50"/><location value="120"/><location value="400"/><location value="140"/>
+    Unwrapped text with location information
+
+    <ldiv/>
+    <location value="50"/><location value="120"/><location value="400"/><location value="140"/>
+    <text>foo</text>
+    Unwrapped text with location information
+
+    <ldiv/>
+    <location value="50"/><location value="120"/><location value="400"/><location value="140"/>
+    <text>bar</text>
+  </list>
+
+</doclang>

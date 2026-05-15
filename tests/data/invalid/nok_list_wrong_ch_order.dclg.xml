@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <list>
+    <location value="10"/>
+    <location value="100"/>
+    <location value="200"/>
+    <location value="150"/>
+    <meta>list-meta-1</meta>
+  </list>
+
+</doclang>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+    <text> 
+        stuff
+        <location value="50"/><location value="120"/><location value="400"/><location value="140"/>
+    </text>
+
+</doclang>

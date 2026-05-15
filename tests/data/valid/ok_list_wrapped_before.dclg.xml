@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 5: List + Wrapped text + Location before -->
+  <list class="unordered">
+    <ldiv/>
+    <text>
+      <location value="10"/><location value="80"/><location value="100"/><location value="100"/>
+      Wrapped text with location before
+    </text>
+  </list>
+</doclang>

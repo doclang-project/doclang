@@ -15,13 +15,13 @@ runner = CliRunner()
 
 def test_validate_valid_document():
     """Test validating a valid document."""
-    xml_file = Path("tests/data/valid/comprehensive.dclg.xml")
+    xml_file = Path("tests/data/valid/ok_comprehensive.dclg.xml")
     result = runner.invoke(app, ["validate", str(xml_file)])
     assert result.exit_code == 0
 
 
 def test_validate_invalid_document():
     """Test validating an invalid document."""
-    xml_file = Path("tests/data/invalid_schematron/hyperlink_invalid_content.dclg.xml")
+    xml_file = Path("tests/data/invalid/nok_hyperlink_invalid_content.dclg.xml")
     result = runner.invoke(app, ["validate", str(xml_file)])
     assert result.exit_code == 1

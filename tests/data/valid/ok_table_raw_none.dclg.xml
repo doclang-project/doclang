@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Combination 7: Table + Raw text + No location -->
+  <table>
+    <ched/>Raw header text<nl/>
+    <fcel/>Raw cell text<nl/>
+  </table>
+</doclang>
