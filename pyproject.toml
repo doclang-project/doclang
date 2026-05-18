@@ -1,16 +1,14 @@
 [project]
 name = "doclang"
-version = "0.1.0"
+version = "0.3.0"
 description = "DocLang XML validation tool with XSD and Schematron support"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "lxml>=6.0.2",
-    "python-docx>=1.2.0",
     "saxonche>=12.9.0",
     "typer>=0.15.1",
     "rich>=13.9.4",
-    "docling>=2.0.0",
 ]
 
 [project.scripts]
@@ -25,6 +23,9 @@ dev = [
     "pydantic>=2.11.10",
     "pyyaml>=6.0.3",
     "pytest~=8.3",
+    "openpyxl>=3.1.0",
+    "python-docx>=1.2.0",
+    "docling>=2.0.0",
 ]
 
 [tool.uv]

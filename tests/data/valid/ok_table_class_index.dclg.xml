@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Valid table with class="index" for table of contents -->
+  <table class="index">
+    <ched/>Section<ched/>Page<nl/>
+    <fcel/>1. Introduction<fcel/>1<nl/>
+    <fcel/>2. Methodology<fcel/>5<nl/>
+    <fcel/>3. Results<fcel/>12<nl/>
+    <fcel/>4. Discussion<fcel/>18<nl/>
+    <fcel/>5. Conclusion<fcel/>25<nl/>
+    <fcel/>References<fcel/>28<nl/>
+  </table>
+
+  <!-- Another index table example with subsections -->
+  <table class="index">
+    <ched/>Chapter<ched/>Title<ched/>Page<nl/>
+    <fcel/>1<fcel/>Getting Started<fcel/>3<nl/>
+    <fcel/>1.1<fcel/>Installation<fcel/>4<nl/>
+    <fcel/>1.2<fcel/>Configuration<fcel/>7<nl/>
+    <fcel/>2<fcel/>Advanced Topics<fcel/>10<nl/>
+    <fcel/>2.1<fcel/>Performance<fcel/>11<nl/>
+    <fcel/>2.2<fcel/>Security<fcel/>15<nl/>
+  </table>
+</doclang>

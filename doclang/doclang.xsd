@@ -5,7 +5,7 @@
   xmlns:dl="https://www.doclang.ai/ns/v0"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
-  version="0.2.0"
+  version="0.3.0"
 >
 
   <!-- ============================================ -->
@@ -487,6 +487,14 @@
         <xs:group ref="dl:component_header"/>
         <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
+      <xs:attribute name="class" use="optional" default="data">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="data"/>
+            <xs:enumeration value="index"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
     </xs:complexType>
   </xs:element>
 
@@ -610,13 +618,13 @@
           <xs:group ref="dl:top_level_cat"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="version" use="optional" default="0.2">
+      <xs:attribute name="version" use="optional" default="0.3">
         <xs:simpleType>
           <xs:restriction base="xs:string">
             <!-- enumeration set up for v1 and above, where all individual minor versions
              within major (up to and including current, i.e. `default` above)
              will have to be listed for backwards compatibility. -->
-            <xs:enumeration value="0.2"/>
+            <xs:enumeration value="0.3"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

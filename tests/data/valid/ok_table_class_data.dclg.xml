@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Valid table with explicit class="data" (default value) -->
+  <table class="data">
+    <ched/>Product<ched/>Price<nl/>
+    <fcel/>Widget A<fcel/>$10.00<nl/>
+    <fcel/>Widget B<fcel/>$15.00<nl/>
+  </table>
+
+  <!-- Valid table without class attribute (defaults to "data") -->
+  <table>
+    <ched/>Name<ched/>Score<nl/>
+    <fcel/>Alice<fcel/>95<nl/>
+    <fcel/>Bob<fcel/>87<nl/>
+  </table>
+</doclang>

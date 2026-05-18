@@ -175,7 +175,7 @@ While the details are specified in the sections further below, this snippet show
 
 DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
 
-The version of the present specification is **0.2**.
+The version of the present specification is **0.3**.
 
 #### Semantic Versioning Principles
 
@@ -392,11 +392,151 @@ Cross-page block formula with continuation:
 
 Note: All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the tag conveys math context.
 
+### Lists
+
+A list can in principle can contain as list items any semantic element sequence. 
+List items are namely introduced by <ldiv> elements, whereby an <ldiv> may optionally contain a marker.
+
+To promote token efficiency within the repetitive context of a list, a list item may also comprise unwrapped text content. 
+That case is called a *virtual `<text>`* and is to be handled exactly as if the whole list item (content between two sibling `<ldiv>`s or until `</list>`) were wrapped by `<text>` tags.
+
+Basic list with virtual `<text>`
+
+```xml
+<list>
+  <ldiv/>First item
+  <ldiv/>Second item 
+  <ldiv/>Third item
+</list>
+```
+
+Unordered list with optional markers
+
+```xml
+<list class="unordered">
+  <ldiv><marker>•</marker></ldiv>
+  <text>First item with <bold>bold</bold> text</text>
+  <ldiv>
+    <!-- Marker with its own coordinates -->
+    <marker>
+      <location value="50"/><location value="110"/><location value="60"/><location value="120"/>
+      •
+    </marker>
+  </ldiv>
+  <text>Second item</text>
+</list>
+```
+
+Ordered list; markers are optional and can hold the printed numbering
+
+```xml
+<list class="ordered">
+  <ldiv><marker>1.</marker></ldiv>
+  <text>Install dependencies</text>
+  <ldiv><marker>2.</marker></ldiv>
+  <text>Run tests</text>
+  <ldiv/>
+  <!-- No marker provided -->
+  <text>Ship release</text>
+</list>
+```
+
+Checkbox items with selection state; markers optional
+
+```xml
+<list class="unordered">
+  <ldiv><marker><checkbox class="selected"/></marker></ldiv>
+  <text>Completed task</text>
+  <ldiv><marker><checkbox class="unselected"/></marker></ldiv>
+  <text>Pending task</text>
+</list>
+```
+
+Nested lists (mixing ordered and unordered)
+
+```xml
+<list class="ordered">
+  <ldiv><marker>1.</marker></ldiv>
+  <text>Setup project</text>
+  <list class="unordered">
+    <ldiv><marker>•</marker></ldiv>
+    <text>Create virtual environment</text>
+    <ldiv><marker>•</marker></ldiv>
+    <text>Configure linter</text>
+  </list>
+  <ldiv><marker>2.</marker></ldiv>
+  <text>Implement features</text>
+</list>
+```
+
+Page breaks and continuation
+
+Lists can span multiple pages. Use `<thread thread_id="..."/>` to indicate continuation. You may thread the whole list and, if a particular component, e.g. a `text` is broken, also thread the component itself.
+
+List split across pages
+
+```xml
+<list class="ordered">
+  <thread thread_id="L1"/>
+  <ldiv><marker>1.</marker></ldiv>
+  <text>First item</text>
+  <ldiv><marker>2.</marker></ldiv>
+  <text>Second item</text>
+</list>
+<page_break/>
+<list class="ordered">
+  <thread thread_id="L1"/>
+  <ldiv><marker>3.</marker></ldiv>
+  <text>Third item</text>
+</list>
+```
+
+Single list-item broken by a page break
+
+```xml
+<list class="unordered">
+  <thread thread_id="L2"/>
+  <ldiv><marker>•</marker></ldiv>
+  <text>
+    <thread thread_id="I7"/>
+    This item starts on page 1 and continues
+  </text>
+</list>
+<page_break/>
+<list class="unordered">
+  <thread thread_id="L2"/>
+  <ldiv/>
+  <text>
+    <thread thread_id="I7"/>
+    on page 2 until it ends.
+  </text>
+</list>
+```
+
+Notes
+
+- `<marker>` is optional. Include it when the printed glyph/number is visible.
+- `<marker>` can include its own `location` coordinates to pinpoint bullet/number placement.
+- Lists can nest as shown above.
+- When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
+
 ### Tables
 
 A table is defined by a `table` element, that contains cells, as delimited by the respective structural tokens (e.g., `<fcel/>`, `<ched/>`).
 
-Basic example:
+Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
+
+Basic table with virtual `<text>`:
+
+```xml
+<table>
+  <ched/>Method<ched/>Accuracy<nl/>
+  <fcel/>Baseline<fcel/>0.8<nl/>
+  <fcel/>Proposed<fcel/>0.92<nl/>
+</table>
+```
+
+Example with table location and semantic elements:
 
 ```xml
 <table>
@@ -425,6 +565,16 @@ A `group` element can be employed for associating a table with other semantic el
   </table>
   <footnote>Accuracy reported on validation set.</footnote>
 </group>
+```
+
+Document index example for table of contents:
+
+```xml
+<table class="index">
+  <ched/>Section<ched/>Page<nl/>
+  <fcel/>1. Introduction<fcel/>1<nl/>
+  <fcel/>2. Methodology<fcel/>5<nl/>
+</table>
 ```
 
 <!--
@@ -546,119 +696,6 @@ Notes:
 - OTSL follows the rectangular rule; ensure each row has the same number of structural tokens up to `<nl/>`.
 - A cell can include any valid DocLang semantic element sequence.
 
-### Lists
-
-A list can in principle can contain as list items any semantic element sequence. Every list item is preceded by an `<ldiv>` element which may optionally contain a marker.
-
-Unordered list with optional markers
-
-```xml
-<list class="unordered">
-  <ldiv><marker>•</marker></ldiv>
-  <text>First item with <bold>bold</bold> text</text>
-  <ldiv>
-    <!-- Marker with its own coordinates -->
-    <marker>
-      <location value="50"/><location value="110"/><location value="60"/><location value="120"/>
-      •
-    </marker>
-  </ldiv>
-  <text>Second item</text>
-</list>
-```
-
-Ordered list; markers are optional and can hold the printed numbering
-
-```xml
-<list class="ordered">
-  <ldiv><marker>1.</marker></ldiv>
-  <text>Install dependencies</text>
-  <ldiv><marker>2.</marker></ldiv>
-  <text>Run tests</text>
-  <ldiv/>
-  <!-- No marker provided -->
-  <text>Ship release</text>
-</list>
-```
-
-Checkbox items with selection state; markers optional
-
-```xml
-<list class="unordered">
-  <ldiv><marker><checkbox class="selected"/></marker></ldiv>
-  <text>Completed task</text>
-  <ldiv><marker><checkbox class="unselected"/></marker></ldiv>
-  <text>Pending task</text>
-</list>
-```
-
-Nested lists (mixing ordered and unordered)
-
-```xml
-<list class="ordered">
-  <ldiv><marker>1.</marker></ldiv>
-  <text>Setup project</text>
-  <list class="unordered">
-    <ldiv><marker>•</marker></ldiv>
-    <text>Create virtual environment</text>
-    <ldiv><marker>•</marker></ldiv>
-    <text>Configure linter</text>
-  </list>
-  <ldiv><marker>2.</marker></ldiv>
-  <text>Implement features</text>
-</list>
-```
-
-Page breaks and continuation
-
-Lists can span multiple pages. Use `<thread thread_id="..."/>` to indicate continuation. You may thread the whole list and, if a particular component, e.g. a `text` is broken, also thread the component itself.
-
-List split across pages
-
-```xml
-<list class="ordered">
-  <thread thread_id="L1"/>
-  <ldiv><marker>1.</marker></ldiv>
-  <text>First item</text>
-  <ldiv><marker>2.</marker></ldiv>
-  <text>Second item</text>
-</list>
-<page_break/>
-<list class="ordered">
-  <thread thread_id="L1"/>
-  <ldiv><marker>3.</marker></ldiv>
-  <text>Third item</text>
-</list>
-```
-
-Single list-item broken by a page break
-
-```xml
-<list class="unordered">
-  <thread thread_id="L2"/>
-  <ldiv><marker>•</marker></ldiv>
-  <text>
-    <thread thread_id="I7"/>
-    This item starts on page 1 and continues
-  </text>
-</list>
-<page_break/>
-<list class="unordered">
-  <thread thread_id="L2"/>
-  <ldiv/>
-  <text>
-    <thread thread_id="I7"/>
-    on page 2 until it ends.
-  </text>
-</list>
-```
-
-Notes
-
-- `<marker>` is optional. Include it when the printed glyph/number is visible.
-- `<marker>` can include its own `location` coordinates to pinpoint bullet/number placement.
-- Lists can nest as shown above.
-- When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
 
 ### Fields
 
@@ -1892,7 +1929,7 @@ Exists exactly once, as root element.
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "0.2" | {"0.2"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
+| `version` | Optional; default: "0.3" | {"0.3"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
 ##### Allowed Content Types
 
@@ -2124,7 +2161,9 @@ Any context that allows semantic elements.
 
 ##### Attributes
 
-None
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `class` | Optional; default: "data" | {"data", "index"} | A value of "index" denotes a document index as it would be used e.g. for a table of contents. |
 
 ##### Allowed Content Types
 
