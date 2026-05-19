@@ -2,7 +2,7 @@
 """
 Version Sync Script for DocLang Standard
 
-This script reads the version from pyproject.toml and syncs it to:
+This script reads the version from the installed package and syncs it to:
 - iso-standard.md
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
@@ -15,34 +15,22 @@ Usage:
 
 import re
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 from openpyxl import load_workbook
 
 
-def read_version_from_pyproject(file_path: Path) -> str:
-    """Read version from pyproject.toml"""
-    if not file_path.exists():
-        print(f"Error: {file_path} not found")
-        sys.exit(1)
+def read_version_from_package() -> str:
+    """Read version from installed package metadata"""
+    pkg_version = version("doclang")
     
-    content = file_path.read_text(encoding='utf-8')
-    
-    # Extract version from pyproject.toml
-    match = re.search(r'^version\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
-    if not match:
-        print("Error: Could not find version in pyproject.toml")
-        print("Expected format: version = \"MAJOR.MINOR.PATCH\"")
-        sys.exit(1)
-    
-    version = match.group(1)
-    
-    if not validate_version(version):
-        print(f"Error: Invalid version format in pyproject.toml: '{version}'")
+    if not validate_version(pkg_version):
+        print(f"Error: Invalid version format: '{pkg_version}'")
         print("Version must be in format: MAJOR.MINOR.PATCH (e.g., 0.3.0)")
         sys.exit(1)
     
-    return version
+    return pkg_version
 
 
 def sync_version_in_iso_standard(file_path: Path, version: str) -> None:
@@ -179,13 +167,12 @@ def main():
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
     
-    pyproject_path = project_root / 'pyproject.toml'
     iso_standard_path = project_root / 'iso-standard.md'
     xsd_path = project_root / 'doclang' / 'doclang.xsd'
     excel_path = project_root / 'reference' / 'input' / 'reference.xlsx'
     
-    # Read version from pyproject.toml
-    version = read_version_from_pyproject(pyproject_path)
+    # Read version from installed package
+    version = read_version_from_package()
 
     # Check files exist
     if not iso_standard_path.exists():
