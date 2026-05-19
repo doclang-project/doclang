@@ -1,0 +1,16 @@
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <list class="unordered">
+    <ldiv/>
+    First
+    <ldiv/>
+    <content>Second</content>
+  </list>
+
+  <table>
+    <fcel/>
+    One
+    <fcel/>
+    <content>Two</content>
+    <nl/>
+  </table>
+</doclang>
