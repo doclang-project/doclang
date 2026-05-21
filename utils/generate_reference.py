@@ -446,75 +446,84 @@ def update_iso_standard_appendix(reference_content, iso_standard_file):
         return False
 
 
-def main():
-    # Check if input directory is provided
-    if len(sys.argv) < 2:
-        print("Error: Input directory path is required.")
-        print("Usage: python generate_reference.py <input_directory>")
-        sys.exit(1)
+def generate_reference(input_dir: str | Path) -> None:
+    """Generate reference content from Excel input and update iso-standard.md Appendix A."""
+    input_dir = Path(input_dir)
 
-    input_dir = sys.argv[1]
+    if not input_dir.exists():
+        raise FileNotFoundError(f"Input directory '{input_dir}' not found.")
+    if not input_dir.is_dir():
+        raise NotADirectoryError(f"'{input_dir}' is not a directory.")
 
-    # Validate input directory exists
-    if not os.path.exists(input_dir):
-        print(f"Error: Input directory '{input_dir}' not found.")
-        sys.exit(1)
-
-    if not os.path.isdir(input_dir):
-        print(f"Error: '{input_dir}' is not a directory.")
-        sys.exit(1)
-
-    # Find Excel file in the directory (exclude temporary files starting with ~$)
-    excel_files = [f for f in os.listdir(input_dir)
-                   if f.lower().endswith(('.xlsx', '.xls')) and not f.startswith('~$')]
+    excel_files = [
+        f for f in input_dir.iterdir()
+        if f.suffix.lower() in (".xlsx", ".xls") and not f.name.startswith("~$")
+    ]
 
     if not excel_files:
-        print(f"Error: No Excel file (.xlsx or .xls) found in '{input_dir}'")
-        sys.exit(1)
-
+        raise FileNotFoundError(f"No Excel file (.xlsx or .xls) found in '{input_dir}'")
     if len(excel_files) > 1:
-        print(f"Error: Multiple Excel files found in '{input_dir}': {', '.join(excel_files)}")
-        print("Please ensure only one Excel file is present in the directory.")
-        sys.exit(1)
+        names = ", ".join(f.name for f in excel_files)
+        raise ValueError(
+            f"Multiple Excel files found in '{input_dir}': {names}. "
+            "Please ensure only one Excel file is present in the directory."
+        )
 
-    # Use the found Excel file
-    input_file = os.path.join(input_dir, excel_files[0])
-    base_name = os.path.splitext(excel_files[0])[0]
+    input_file = excel_files[0]
 
-    # Get the repository root (parent of utils directory where this script is located)
-    script_dir = Path(__file__).resolve().parent
-    repo_root = script_dir.parent
-
-    # Save intermediate markdown in build/ subdirectory at repo root
-    intermediate_dir = repo_root / 'build'
+    repo_root = Path(__file__).resolve().parent.parent
+    intermediate_dir = repo_root / "build"
     intermediate_dir.mkdir(exist_ok=True)
+    iso_standard_path = repo_root / "iso-standard.md"
 
-    # Path to iso-standard.md (at repo root)
-    iso_standard_path = repo_root / 'iso-standard.md'
-
-    # Step 1: Convert xlsx to intermediate markdown using docling
-    intermediate_file = run_docling_conversion(input_file, str(intermediate_dir))
+    intermediate_file = run_docling_conversion(str(input_file), str(intermediate_dir))
     if not intermediate_file:
-        print("Failed to convert xlsx to markdown. Exiting.")
-        return
+        raise RuntimeError("Failed to convert xlsx to markdown.")
 
-    # Step 2: Parse the intermediate markdown
-    elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header = parse_intermediate_markdown(intermediate_file)
+    (
+        elements_by_category,
+        attributes_by_element,
+        content_types_by_element,
+        category_order,
+        category_descriptions,
+        element_descriptions,
+        element_contexts,
+        element_context_header,
+    ) = parse_intermediate_markdown(intermediate_file)
 
-    # Step 3: Generate the reference content
     reference_content = generate_reference_content(
-        elements_by_category, attributes_by_element, content_types_by_element,
-        category_order, category_descriptions, element_descriptions,
-        element_contexts, element_context_header, input_dir, str(iso_standard_path)
+        elements_by_category,
+        attributes_by_element,
+        content_types_by_element,
+        category_order,
+        category_descriptions,
+        element_descriptions,
+        element_contexts,
+        element_context_header,
+        str(input_dir),
+        str(iso_standard_path),
     )
 
-    # Step 4: Update Appendix A in iso-standard.md with the generated reference
-    update_iso_standard_appendix(reference_content, str(iso_standard_path))
+    if not update_iso_standard_appendix(reference_content, str(iso_standard_path)):
+        raise RuntimeError("Failed to update Appendix A in iso-standard.md")
 
     print("\nAll tasks completed successfully!")
     print(f"- Input: {input_file}")
     print(f"- Intermediate: {intermediate_file}")
     print(f"- Updated: {iso_standard_path}")
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Error: Input directory path is required.")
+        print("Usage: python generate_reference.py <input_directory>")
+        sys.exit(1)
+
+    try:
+        generate_reference(sys.argv[1])
+    except (FileNotFoundError, NotADirectoryError, ValueError, RuntimeError) as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
 
 
 if __name__ == '__main__':

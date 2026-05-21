@@ -51,10 +51,7 @@ uv run python utils/write_iso_draft.py
 
 ## Release workflow
 
-Version tags are applied **after** the standard is updated on the release commit (git describes the
-validator; the spec/XSD track the upcoming release number explicitly):
-
-1. **Sync version** — `uv run python utils/sync_version.py 0.4.0` (updates `doclang.xsd`, `iso-standard.md`, `reference/input/reference.xlsx`)
-2. **Propagate** — `uv run python utils/generate_reference.py reference/input` and `uv run python utils/write_iso_draft.py`
-3. **Commit & merge** the release changes
-4. **Tag** that commit — `git tag v0.4.0`
+1. **Test** — `uv run pytest`
+2. **Prepare release** — `uv run python utils/prepare_release.py TARGET_VERSION`
+   (syncs version across artifacts, regenerates Appendix A, writes the ISO draft DOCX, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
+3. **Commit & tag** — once commited to `main`, create and push the tag.

@@ -817,6 +817,22 @@ def build_document(md_path: Path, out_path: Path, copy_iso_style: bool = True) -
         ]
         replace_docx_parts_from_template(ISO_TEMPLATE, iso_styled_path, to_copy)
 
+def write_iso_draft(input_md: Path | None = None, out_path: Path | None = None) -> None:
+    """Generate the ISO draft DOCX from iso-standard.md."""
+    md_path = DEFAULT_MD if input_md is None else input_md
+    output_path = OUTPUT_DOCX if out_path is None else out_path
+
+    if not md_path.exists():
+        raise FileNotFoundError(f"Input markdown not found: {md_path}")
+
+    print(f"Generating: {output_path}")
+    build_document(md_path, output_path)
+    if ISO_TEMPLATE.exists():
+        iso_styled_path = output_path.with_name(output_path.stem + ".iso-styling.docx")
+        print(f"Generating: {iso_styled_path}")
+    print("Done.")
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Write DocLang ISO draft DOCX from markdown")
     parser.add_argument(
@@ -827,24 +843,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     args = parser.parse_args(argv)
-    out_path = OUTPUT_DOCX
 
-    md_path = Path(args.input)
-    if not md_path.exists():
-        print(f"Input markdown not found: {md_path}", file=sys.stderr)
-        return 2
-
-    print(f"Generating: {out_path}")
     try:
-        build_document(md_path, out_path)
+        write_iso_draft(Path(args.input))
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     except Exception as e:
         print(f"Failed to write document: {e}", file=sys.stderr)
         return 1
-    # Inform about the ISO-styled file when template is available
-    if ISO_TEMPLATE.exists():
-        iso_styled_path = out_path.with_name(out_path.stem + ".iso-styling.docx")
-        print(f"Generating: {iso_styled_path}")
-    print("Done.")
     return 0
 
 

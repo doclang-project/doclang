@@ -172,6 +172,30 @@ def sync_version_in_excel(file_path: Path, version: str) -> None:
         print(f"⚠ Error updating {file_path}: {e}")
 
 
+def sync_version(version_arg: str | None = None, project_root: Path | None = None) -> str:
+    """Sync version across iso-standard.md, doclang.xsd, and reference.xlsx."""
+    if project_root is None:
+        project_root = Path(__file__).resolve().parent.parent
+
+    iso_standard_path = project_root / "iso-standard.md"
+    xsd_path = project_root / "doclang" / "doclang.xsd"
+    excel_path = project_root / "reference" / "input" / "reference.xlsx"
+
+    version = resolve_sync_version(version_arg)
+
+    if not iso_standard_path.exists():
+        raise FileNotFoundError(f"{iso_standard_path} not found")
+    if not xsd_path.exists():
+        raise FileNotFoundError(f"{xsd_path} not found")
+
+    sync_version_in_iso_standard(iso_standard_path, version)
+    sync_version_in_xsd(xsd_path, version)
+    sync_version_in_excel(excel_path, version)
+
+    print(f"Version synced to: {version}")
+    return version
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Sync DocLang version across iso-standard.md, doclang.xsd, and reference.xlsx",
@@ -183,30 +207,11 @@ def main():
     )
     args = parser.parse_args()
 
-    # Get project root (parent of utils directory)
-    script_dir = Path(__file__).parent
-    project_root = script_dir.parent
-
-    iso_standard_path = project_root / 'iso-standard.md'
-    xsd_path = project_root / 'doclang' / 'doclang.xsd'
-    excel_path = project_root / 'reference' / 'input' / 'reference.xlsx'
-
-    version = resolve_sync_version(args.version)
-
-    # Check files exist
-    if not iso_standard_path.exists():
-        print(f"Error: {iso_standard_path} not found")
+    try:
+        sync_version(args.version)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}")
         sys.exit(1)
-    if not xsd_path.exists():
-        print(f"Error: {xsd_path} not found")
-        sys.exit(1)
-    
-    # Perform version sync
-    sync_version_in_iso_standard(iso_standard_path, version)
-    sync_version_in_xsd(xsd_path, version)
-    sync_version_in_excel(excel_path, version)
-
-    print(f"Version synced to: {version}")
 
 
 if __name__ == '__main__':
