@@ -2,35 +2,53 @@
 """
 Version Sync Script for DocLang Standard
 
-This script reads the version from the installed package and syncs it to:
+This script reads the current doclang version (same resolution as `doclang --version`)
+and syncs it to:
 - iso-standard.md
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
 
-The version in pyproject.toml should be in MAJOR.MINOR.PATCH format.
+The package version is derived from git tags via setuptools-scm (see pyproject.toml).
+Tags should follow vMAJOR.MINOR.PATCH (e.g. v0.3.0). Commits after a tag get a
++g<sha> local suffix (e.g. 0.3.0+g93c2a53).
 
 Usage:
-    python utils/sync_version.py
+    python utils/sync_version.py              # version from git / installed package
+    python utils/sync_version.py 0.4.0        # explicit target release version
+    python utils/sync_version.py v0.4.0       # v-prefix accepted
 """
 
+import argparse
 import re
 import sys
-from importlib.metadata import version
 from pathlib import Path
 
 from openpyxl import load_workbook
 
+from doclang.version import (
+    normalize_version,
+    release_version_triple,
+    resolve_version,
+    validate_version,
+)
 
-def read_version_from_package() -> str:
-    """Read version from installed package metadata"""
-    pkg_version = version("doclang")
-    
-    if not validate_version(pkg_version):
-        print(f"Error: Invalid version format: '{pkg_version}'")
-        print("Version must be in format: MAJOR.MINOR.PATCH (e.g., 0.3.0)")
+
+def resolve_sync_version(version_arg: str | None) -> str:
+    """Explicit CLI version, or release triple from the same source as doclang --version."""
+    if version_arg is not None:
+        try:
+            return normalize_version(version_arg)
+        except ValueError as exc:
+            print(f"Error: {exc}")
+            sys.exit(1)
+
+    current = resolve_version()
+    if current == "unknown" or not validate_version(current):
+        print(f"Error: Could not resolve version (got '{current}')")
+        print("Run from a git checkout, `uv sync`, or pass an explicit version (e.g. 0.4.0)")
         sys.exit(1)
-    
-    return pkg_version
+
+    return release_version_triple(current)
 
 
 def sync_version_in_iso_standard(file_path: Path, version: str) -> None:
@@ -154,25 +172,26 @@ def sync_version_in_excel(file_path: Path, version: str) -> None:
         print(f"⚠ Error updating {file_path}: {e}")
 
 
-def validate_version(version: str) -> bool:
-    """Validate version format (major.minor.patch)"""
-    parts = version.split('.')
-    if len(parts) != 3:
-        return False
-    return all(part.isdigit() for part in parts)
-
-
 def main():
+    parser = argparse.ArgumentParser(
+        description="Sync DocLang version across iso-standard.md, doclang.xsd, and reference.xlsx",
+    )
+    parser.add_argument(
+        "version",
+        nargs="?",
+        help="Target release version (e.g. 0.4.0). Defaults to the current doclang version.",
+    )
+    args = parser.parse_args()
+
     # Get project root (parent of utils directory)
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    
+
     iso_standard_path = project_root / 'iso-standard.md'
     xsd_path = project_root / 'doclang' / 'doclang.xsd'
     excel_path = project_root / 'reference' / 'input' / 'reference.xlsx'
-    
-    # Read version from installed package
-    version = read_version_from_package()
+
+    version = resolve_sync_version(args.version)
 
     # Check files exist
     if not iso_standard_path.exists():

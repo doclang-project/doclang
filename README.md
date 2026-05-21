@@ -2,13 +2,33 @@
 
 This repo keeps all the documentation for the ISO standardization of DocLang.
 
-## Version syncing
+## Validation
 
-The DocLang validator version is governed in `pyproject.toml`.
-To propagate the version across the standard, run:
+The `doclang` package provides XSD schema and Schematron validation tools via CLI.
+
+Quick usage example:
 
 ```bash
-uv run python utils/sync_version.py
+uv run doclang validate path/to/file.dclg.xml
+```
+
+For details, check out [doclang/README.md](./doclang/README.md).
+
+## Version syncing
+
+The DocLang validator version is derived from git tags (via [setuptools-scm](https://github.com/pypa/setuptools-scm)).
+Tag releases as `vMAJOR.MINOR.PATCH` (e.g. `git tag v0.2.0`). On the tag itself the version is `0.2.0`;
+the next commit becomes `0.2.0+g<short_sha>` (a `.dYYYYMMDD` suffix is added when the working tree is dirty).
+
+`doclang --version` resolves from **`git describe`** when run inside a git checkout (same
+`only-version` rules as setuptools-scm). Otherwise it falls back to installed package metadata
+(e.g. wheels without `.git`).
+
+To propagate a version across the standard artifacts, run:
+
+```bash
+uv run python utils/sync_version.py 0.4.0   # target release (typical before tagging)
+uv run python utils/sync_version.py         # same version as doclang --version (release triple)
 ```
 
 ## Reference generation
@@ -29,14 +49,12 @@ To create the Word document, simply run:
 uv run python utils/write_iso_draft.py
 ```
 
-## Validation
+## Release workflow
 
-The `doclang` package provides XSD schema and Schematron validation tools via CLI.
+Version tags are applied **after** the standard is updated on the release commit (git describes the
+validator; the spec/XSD track the upcoming release number explicitly):
 
-Quick usage example:
-
-```bash
-uv run doclang validate path/to/file.dclg.xml
-```
-
-For details, check out [doclang/README.md](./doclang/README.md).
+1. **Sync version** — `uv run python utils/sync_version.py 0.4.0` (updates `doclang.xsd`, `iso-standard.md`, `reference/input/reference.xlsx`)
+2. **Propagate** — `uv run python utils/generate_reference.py reference/input` and `uv run python utils/write_iso_draft.py`
+3. **Commit & merge** the release changes
+4. **Tag** that commit — `git tag v0.4.0`

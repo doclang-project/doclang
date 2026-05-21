@@ -9,8 +9,23 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from doclang.cli import app
+from doclang.utils import _VERSION
+from doclang.version import version_from_describe
 
 runner = CliRunner()
+
+
+def test_version_from_describe():
+    assert version_from_describe("v0.3.0") == "0.3.0"
+    assert version_from_describe("v0.3.0-3-g93c2a53") == "0.3.0+g93c2a53"
+    assert version_from_describe("v0.3.0-3-g93c2a53-dirty").startswith("0.3.0+g93c2a53.d")
+
+
+def test_cli_version_matches_latest_tag():
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert _VERSION.startswith("0.3.")
+    assert "+g" in _VERSION
 
 
 def test_validate_valid_document():
