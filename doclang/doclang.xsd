@@ -294,7 +294,7 @@
   <!-- TEXT ELEMENT: uses component_with_headless_seq -->
   <!-- ============================================ -->
 
-  <xs:element name="text" type="dl:component_with_headless_seq"/>
+  <xs:element name="text" type="dl:component_with_semantic_seq"/>
 
   <!-- ============================================ -->
   <!-- HEADING ELEMENT: extends component_with_headless_seq with level attribute -->
@@ -302,7 +302,7 @@
 
   <xs:complexType name="heading_type">
     <xs:complexContent>
-      <xs:extension base="dl:component_with_headless_seq">
+      <xs:extension base="dl:component_with_semantic_seq">
         <xs:attribute name="level" type="xs:string" default="1"/>
       </xs:extension>
     </xs:complexContent>
@@ -331,28 +331,28 @@
   <xs:element name="formula" type="dl:component_with_headless_seq"/>
 
   <!-- ============================================ -->
-  <!-- CAPTION ELEMENT: uses component_with_headless_seq -->
+  <!-- CAPTION ELEMENT: uses component_with_semantic_seq -->
   <!-- ============================================ -->
 
-  <xs:element name="caption" type="dl:component_with_headless_seq"/>
+  <xs:element name="caption" type="dl:component_with_semantic_seq"/>
 
   <!-- ============================================ -->
-  <!-- PAGE_HEADER ELEMENT: uses component_with_headless_seq -->
+  <!-- PAGE_HEADER ELEMENT: uses component_with_semantic_seq -->
   <!-- ============================================ -->
 
-  <xs:element name="page_header" type="dl:component_with_headless_seq"/>
+  <xs:element name="page_header" type="dl:component_with_semantic_seq"/>
 
   <!-- ============================================ -->
-  <!-- PAGE_FOOTER ELEMENT: uses component_with_headless_seq -->
+  <!-- PAGE_FOOTER ELEMENT: uses component_with_semantic_seq -->
   <!-- ============================================ -->
 
-  <xs:element name="page_footer" type="dl:component_with_headless_seq"/>
+  <xs:element name="page_footer" type="dl:component_with_semantic_seq"/>
 
   <!-- ============================================ -->
-  <!-- FOOTNOTE ELEMENT: uses component_with_headless_seq -->
+  <!-- FOOTNOTE ELEMENT: uses component_with_semantic_seq -->
   <!-- ============================================ -->
 
-  <xs:element name="footnote" type="dl:component_with_headless_seq"/>
+  <xs:element name="footnote" type="dl:component_with_semantic_seq"/>
 
   <!-- ============================================ -->
   <!-- LDIV ELEMENT: List divider, optionally contains a marker -->
@@ -410,6 +410,17 @@
   <!-- VIRTUAL_TEXT_CONTENT: Content that can appear after ldiv in a list item -->
   <!-- Includes headless_txt (formatting, etc.) and top_level_cat (semantic elements) -->
   <!-- ============================================ -->
+
+  <xs:complexType name="component_with_semantic_seq" mixed="true">
+    <xs:sequence>
+      <xs:group ref="dl:component_header"/>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="dl:content"/>
+        <xs:group ref="dl:headless_txt"/>
+        <xs:group ref="dl:top_level_cat"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
 
   <xs:group name="virtual_text_content">
     <xs:choice>

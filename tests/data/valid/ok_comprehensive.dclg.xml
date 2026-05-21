@@ -646,4 +646,14 @@
     </group>
   </group>
 
+  <!-- Example 48: Text with complex nesting -->
+  <text>
+    <content>Lorem </content>
+    ipsum
+    <text>
+      dolor sit amet
+    </text>
+    consectetur adipiscing elit.
+  </text>
+
 </doclang>
