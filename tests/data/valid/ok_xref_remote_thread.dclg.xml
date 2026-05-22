@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
 
+  <!-- xref may reference a thread defined on another element -->
   <caption>
     <thread thread_id="1"/>
-    <location value="20"/><location value="30"/>
-    <location value="40"/><location value="50"/>
     FIG. 3. Example figure caption
   </caption>
 

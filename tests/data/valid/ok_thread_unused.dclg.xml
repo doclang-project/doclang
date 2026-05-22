@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- thread may be defined without any xref referencing it -->
+  <text>
+    <thread thread_id="42"/>
+    Standalone threaded component.
+  </text>
+
+</doclang>

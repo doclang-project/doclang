@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- thread must be in the component head, not inline in body content -->
+  <text>
+    Paragraph start
+    <thread thread_id="1"/>
+    and more text.
+  </text>
+
+</doclang>

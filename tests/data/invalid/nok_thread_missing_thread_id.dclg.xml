@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- thread requires a thread_id attribute -->
+  <text>
+    <thread/>
+    Split paragraph part one.
+  </text>
+
+</doclang>

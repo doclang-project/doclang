@@ -154,6 +154,16 @@
   </xs:element>
 
   <!-- ============================================ -->
+  <!-- THREAD ELEMENT: empty element with required thread_id (component head) -->
+  <!-- ============================================ -->
+
+  <xs:element name="thread">
+    <xs:complexType>
+      <xs:attribute name="thread_id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
   <!-- XREF ELEMENT: empty element with required thread_id (component head) -->
   <!-- Mutually exclusive with href (enforced by component_header choice) -->
   <!-- ============================================ -->
@@ -176,12 +186,13 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- COMPONENT_HEADER: optional xref or href, meta, optional location_block, layer -->
-  <!-- TODO: to be aligned with spec (iso-standard.md) which includes: thread, h_thread, timestamps -->
+  <!-- COMPONENT_HEADER: optional thread, xref or href, meta, optional location_block, layer -->
+  <!-- TODO: to be aligned with spec (iso-standard.md) which includes: h_thread, timestamps -->
   <!-- ============================================ -->
 
   <xs:group name="component_header">
     <xs:sequence>
+      <xs:element ref="dl:thread" minOccurs="0"/>
       <xs:choice minOccurs="0">
         <xs:element ref="dl:xref"/>
         <xs:element ref="dl:href"/>

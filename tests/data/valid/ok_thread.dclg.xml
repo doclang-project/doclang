@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- Split component across instances (per iso-standard.md thread example) -->
+  <text>
+    <thread thread_id="1"/>
+    <location value="10"/><location value="20"/>
+    <location value="30"/><location value="40"/>
+    First part of the paragraph spanning pages.
+  </text>
+
+  <text>
+    <thread thread_id="1"/>
+    <location value="30"/><location value="40"/>
+    <location value="50"/><location value="60"/>
+    Continuation of the same paragraph.
+  </text>
+
+</doclang>

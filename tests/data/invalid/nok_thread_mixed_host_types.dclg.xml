@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- Same thread_id must not thread different host element types -->
+  <text>
+    <thread thread_id="1"/>
+    First part of split text.
+  </text>
+
+  <picture>
+    <thread thread_id="1"/>
+    <src uri="diagram.png"/>
+  </picture>
+
+</doclang>

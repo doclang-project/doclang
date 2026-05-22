@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- xref thread_id must be defined by at least one thread element in the document -->
+  <text>
+    <xref thread_id="99"/>Figure 99
+  </text>
+
+</doclang>
