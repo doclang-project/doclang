@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
 
-  <caption>
+  <picture>
     <thread thread_id="1"/>
     <location value="20"/><location value="30"/>
     <location value="40"/><location value="50"/>
-    FIG. 3. Example figure caption
-  </caption>
+    <src uri="https://example.com/image.jpg"/>
+  </picture>
 
   <text>
     <xref thread_id="1"/>Figure 3
