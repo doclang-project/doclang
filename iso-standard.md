@@ -59,7 +59,7 @@ This standard specifies:
 The motivation for this new markup language is twofold,
 
 1. It is created from the ground up to be able to represent complex, multimodal content with visual grounding in plain text with markup
-2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally (== a 1-to-1 mapping between DocLang tokens and LLM tokens) and efficiently (== minimal token count).
+2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally and efficiently between DocLang elements and LLM tokens.
 
 As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
 
@@ -70,7 +70,7 @@ Such requirements preclude us from using existing markup languages such as Markd
 <figure style="text-align: left">
     <img src="resources/html_v_otsl.png"
          alt="HTML vs OTSL" style="width:700px">
-    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to DocLang (OTSL tags). HTML sequence is both longer and uses more tokens than DocLang/OTSL</figcaption>
+    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to DocLang (OTSL tags). HTML sequence is both longer and uses more tokens than DocLang</figcaption>
 </figure>
 
 <!-- TODO: update image text for DocLang: replace <section> with <heading>, add CDATA in <code> -->
@@ -302,7 +302,7 @@ Grouped code with caption and coordinates:
 </group>
 ```
 
-Long code blocks can be split across pages using continuation tokens; keep `<class>` in the first fragment.
+Long code blocks can be split across pages using continuation elements; keep `<class>` in the first fragment.
 
 ```xml
 <code class="bash">
@@ -394,10 +394,10 @@ Note: All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the 
 
 ### Lists
 
-A list can in principle can contain as list items any semantic element sequence. 
+A list can in principle can contain as list items any semantic element sequence.
 List items are namely introduced by <ldiv> elements, whereby an <ldiv> may optionally contain a marker.
 
-To promote token efficiency within the repetitive context of a list, a list item may also comprise unwrapped text content. 
+To promote token efficiency within the repetitive context of a list, a list item may also comprise unwrapped text content.
 That case is called a *virtual `<text>`* and is to be handled exactly as if the whole list item (content between two sibling `<ldiv>`s or until `</list>`) were wrapped by `<text>` tags.
 
 Basic list with virtual `<text>`
@@ -405,7 +405,7 @@ Basic list with virtual `<text>`
 ```xml
 <list>
   <ldiv/>First item
-  <ldiv/>Second item 
+  <ldiv/>Second item
   <ldiv/>Third item
 </list>
 ```
@@ -522,7 +522,7 @@ Notes
 
 ### Tables
 
-A table is defined by a `table` element, that contains cells, as delimited by the respective structural tokens (e.g., `<fcel/>`, `<ched/>`).
+A table is defined by a `table` element, that contains cells, as delimited by the respective structural elements (e.g., `<fcel/>`, `<ched/>`).
 
 Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
 
@@ -635,7 +635,7 @@ Use `<continue_col id="..."/>` to indicate that columns continue on an adjacent 
 </group>
 ``` -->
 
-Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
+Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
 
 ```xml
 <group>
@@ -693,7 +693,7 @@ Immediately after a cell-creating token (e.g., `<fcel/>`, `<ched/>`), place the 
 
 Notes:
 
-- OTSL follows the rectangular rule; ensure each row has the same number of structural tokens up to `<nl/>`.
+- OTSL follows the rectangular rule; ensure each row has the same number of structural elements up to `<nl/>`.
 - A cell can include any valid DocLang semantic element sequence.
 
 
@@ -701,7 +701,7 @@ Notes:
 
 Fields provide a flexible structure for representing key-value data and structured content. The field elements allow for more flexible document structures where keys and values may be separated by other content or organized in complex layouts.
 
-| Token | Description |
+| element | Description |
 |-------|-------------|
 | `<field_region>` | Field region container; contains at least one `field_item` as descendant |
 | `<field_item>` | Field item container; may contain 0-1 `key` and 0-many `value` elements as descendants |
@@ -1520,7 +1520,7 @@ Detailed examples can be seen here: [Form Examples](/examples/form/form-examples
 
 ### Split structure
 
-We can capture content that is split (e.g. across columns or across pages) using the `<thread thread_id="N"/>` token, where `N` is a unique identifier.
+We can capture content that is split (e.g. across columns or across pages) using the `<thread thread_id="N"/>` element, where `N` is a unique identifier.
 
 The basic structure is shown below, e.g. for a `text` tag:
 
@@ -1545,7 +1545,7 @@ The basic structure is shown below, e.g. for a `text` tag:
 
 Each block that has location information is a top-level tag of the corresponding label, e.g. "text".
 
-Top-level tags which belong to the same item should have the same thread token.
+Elements which belong to the same document component should have the same thread ID.
 
 ```xml
 <text>
@@ -1687,10 +1687,10 @@ the thread elements (more details further below):
 
 The scenario in the above figure is represented below.
 
-- We introduce a new horizontal thread token, `h_thread`, which is used to capture table content that spans pages sidewise,
-similarly to the usual thread tokens `thread`.
-- Only the content that is visible within the page is included in the OTSL token (e.g. see "2025 d").
-- When thread linking is resolvable through `ucel`/`lcel` or `h_thread`, the `thread` token is not used, as it would be redundant.
+- We introduce a new horizontal thread element, `h_thread`, which is used to capture table content that spans pages sidewise,
+similarly to the usual thread elements `thread`.
+- Only the content that is visible within the page is included in the table element (e.g. see "2025 d").
+- When thread linking is resolvable through `ucel`/`lcel` or `h_thread`, the `thread` element is not used, as it would be redundant.
 - When thread linking must be captured, we capture it the earliest possible, i.e. we don't wait for the bottom-most cell
 to be reached to add the thread for "Europe" in the example above.
 
@@ -1855,7 +1855,7 @@ Right-to-left text direction:
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
 
 1. If content spans across one (or more) page breaks, add `<thread thread_id="N"/>` to the item and reuse the same `id` in the continuing item.
-2. For the follow up content of the page, we follow a reading order and close all open tokens before the `<page_break/>` token is introduced.
+2. For the follow up content of the page, we follow a reading order and close all open elements before the `<page_break/>` element is introduced.
 
 An easy example is below,
 
@@ -1895,8 +1895,6 @@ A more complicated example is shown below in which we break the content of a lis
 
 Above, `<thread thread_id="1"/>` captures that the list itself is split, while `<thread thread_id="2"/>` captures that a particular
 list item is split.
-
-<!-- For tables that are broken across pages, we need to introduce two differnt tokens, namely the `<continue_col id=.../>` and `<continue_row id="..."/>`. Same principle applies, if the OTSL starts/ends with any of these tokens, we know the the tables needs to be merged. -->
 
 ## Bibliography
 
