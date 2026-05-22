@@ -154,12 +154,38 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- COMPONENT_HEADER: meta, optional location_block, layer -->
-  <!-- TODO: to be aligned with spec (iso-standard.md) which includes: thread, h_thread, meta, locations, timestamps, layer -->
+  <!-- XREF ELEMENT: empty element with required thread_id (component head) -->
+  <!-- Mutually exclusive with href (enforced by component_header choice) -->
+  <!-- ============================================ -->
+
+  <xs:element name="xref">
+    <xs:complexType>
+      <xs:attribute name="thread_id" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- HREF ELEMENT: empty element with required uri (component head) -->
+  <!-- Mutually exclusive with xref (enforced by component_header choice) -->
+  <!-- ============================================ -->
+
+  <xs:element name="href">
+    <xs:complexType>
+      <xs:attribute name="uri" type="xs:anyURI" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- COMPONENT_HEADER: optional xref or href, meta, optional location_block, layer -->
+  <!-- TODO: to be aligned with spec (iso-standard.md) which includes: thread, h_thread, timestamps -->
   <!-- ============================================ -->
 
   <xs:group name="component_header">
     <xs:sequence>
+      <xs:choice minOccurs="0">
+        <xs:element ref="dl:xref"/>
+        <xs:element ref="dl:href"/>
+      </xs:choice>
       <xs:element ref="dl:meta" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
       <xs:element ref="dl:layer" minOccurs="0"/>
@@ -167,33 +193,24 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- URI ELEMENT: contains a URI -->
+  <!-- SRC ELEMENT: image source (child of picture) -->
   <!-- ============================================ -->
 
-  <xs:element name="uri" type="xs:anyURI"/>
-
-  <!-- ============================================ -->
-  <!-- HYPERLINK ELEMENT: uri + optional formatting_cat (with mixed content) -->
-  <!-- ============================================ -->
-
-  <xs:element name="hyperlink">
-    <xs:complexType mixed="true">
-      <xs:sequence>
-        <xs:element ref="dl:uri"/>
-        <xs:group ref="dl:formatting_group" minOccurs="0" maxOccurs="unbounded"/>
-      </xs:sequence>
+  <xs:element name="src">
+    <xs:complexType>
+      <xs:attribute name="uri" type="xs:anyURI" use="required"/>
     </xs:complexType>
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- PICTURE ELEMENT: component_header + optional uri -->
+  <!-- PICTURE ELEMENT: component_header + optional src -->
   <!-- ============================================ -->
 
   <xs:element name="picture">
     <xs:complexType>
       <xs:sequence>
         <xs:group ref="dl:component_header"/>
-        <xs:element ref="dl:uri" minOccurs="0"/>
+        <xs:element ref="dl:src" minOccurs="0"/>
         <xs:element ref="dl:table" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
@@ -230,7 +247,7 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- HEADLESS_TXT: formatting, marker, hint, hyperlink, checkbox, br (no picture) -->
+  <!-- HEADLESS_TXT: formatting, marker, hint, checkbox, br (no picture) -->
   <!-- Reuses formatting_group -->
   <!-- ============================================ -->
 
@@ -239,7 +256,6 @@
       <xs:group ref="dl:formatting_group"/>
       <xs:element ref="dl:marker"/>
       <xs:element ref="dl:hint"/>
-      <xs:element ref="dl:hyperlink"/>
       <xs:element ref="dl:checkbox"/>
       <xs:element ref="dl:br"/>
     </xs:choice>

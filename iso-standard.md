@@ -683,7 +683,7 @@ Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place th
     <text>Image</text>
     <fcel/>
     <picture>
-      <uri>assets/img/sample.png</uri>
+      <src uri="assets/img/sample.png"/>
     </picture>
     <caption>Example image inside a cell</caption>
     <nl/>
@@ -853,7 +853,7 @@ Field region with mixed content:
   </field_item>
 
   <picture>
-    <uri>assets/product-diagram.png</uri>
+    <src uri="assets/product-diagram.png"/>
     <caption>Product diagram showing key components</caption>
   </picture>
 
@@ -1775,13 +1775,61 @@ to be reached to add the thread for "Europe" in the example above.
 ```
 </details>
 
+### References
+
+#### Cross-references
+
+Cross-references can be captured using the `<xref>` element as part of the component head, for pointing to a thread based on the `thread_id`.
+
+<details>
+  <summary>Cross-referencee example</summary>
+
+  ![Cross-Reference Example](examples/refs/xref.png)
+
+  ```xml
+  <picture>
+    <thread thread_id="1"/>
+    <!--...-->
+  </picture>
+  <!--...-->
+  <text>
+    <content>... is shown in <content/>
+    <text><xref thread_id="1"/>Figure 3</text>
+    . The desired balance...
+  </text>
+  ```
+
+</details>
+
+#### Hyperlinks
+
+Hyperlinks can be captured using the `<href>` element as part of the component head, for pointing to a URI.
+
+Basic example:
+
+```xml
+<text>
+  <content>Visit our </content>
+  <text><href uri="https://www.example.com"/>website</text>
+  <content> for more information.</content>
+</text>
+```
+
+Hyperink from a non-text element:
+```xml
+<text>Click on the image below:</text>
+<picture>
+  <href uri="https://www.example.com"/>  <!-- the target URI -->
+  <src uri="https://www.example.com/image.jpg"/>  <!-- the image source URI -->
+</picture>
+```
+
 ### Formatting
 
 Formatting may be preserved through nested tags or escape sequences:
 
 - Bold, italic, underline, strikethrough, handwriting
 - Superscript, subscript
-- Hyperlinks
 - Text direction markers
 
 Examples of basic formatting:
@@ -1817,36 +1865,6 @@ Superscript and subscript:
 <text>
   The formula for water is H<subscript>2</subscript>O, and
   Einstein's equation is E=mc<superscript>2</superscript>.
-</text>
-```
-
-Hyperlinks with URI and optional formatted content:
-
-```xml
-<text>
-  Visit our <hyperlink><uri>https://www.example.com</uri>website</hyperlink> for more information.
-</text>
-
-<text>
-  For details, see the <hyperlink><uri>https://docs.example.com/api</uri><bold>API documentation</bold></hyperlink>.
-</text>
-
-<text>
-  Email us at <hyperlink><uri>mailto:info@example.com</uri>info@example.com</hyperlink>.
-</text>
-```
-
-The `hyperlink` element contains:
-1. A required `uri` child element with the link target
-2. Optional text content and/or formatting elements that represent the visible link text
-
-If no text content is provided after the `uri`, implementations should display the URI itself as the link text.
-
-Right-to-left text direction:
-
-```xml
-<text>
-  This sentence contains <rtl>نص عربي</rtl> (Arabic text) within it.
 </text>
 ```
 
@@ -2365,7 +2383,7 @@ None
 
 ### Component Head Elements
 
-The component head is a sequence comprising the following elements in this order, whereby all elements are optional:<br /><ul><li>`<thread>`</li><li>`<h_thread>`</li><li>`<meta>`</li><li>sequence of 2*N `<location>`s (N>1)</li><li>sequence of `<timestamp>`s</li><li>`<layer>`</li></ul> A component head can only appear as the leading content of a semantic element. The various component head elements are further specified in the following subsections.
+The component head is a sequence comprising the following elements in this order, whereby all elements are optional:<br /><ul><li>`<thread>`</li><li>`<h_thread>`</li><li>`<xref>` or `<href>` (mutually exclusive)</li><li>`<meta>`</li><li>sequence of 2*N `<location>`s (N>1)</li><li>sequence of `<timestamp>`s</li><li>`<layer>`</li></ul> A component head can only appear as the leading content of a semantic element. The various component head elements are further specified in the following subsections.
 
 #### `<thread>`
 
@@ -2379,7 +2397,7 @@ Can only be child of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Postive integer | A string that identifies a thread. |
+| `thread_id` | Required | Positive integer | A string that identifies a thread. |
 
 ##### Allowed Content Types
 
@@ -2436,11 +2454,51 @@ Can only be child of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `h_thread_id` | Required | Postive integer |  |
+| `h_thread_id` | Required | Positive integer |  |
 
 ##### Allowed Content Types
 
 None (empty element).
+
+#### `<xref>`
+
+Optional part of the component head; serves for capturing an outgoing cross-reference from this component.
+
+##### Allowed Context
+
+Can only be child of a semantic element. Mutually exclusive with [`<href>`](#href).
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `thread_id` | Required | Positive integer | The ID of the referenced thread. |
+
+##### Allowed Content Types
+
+None (empty element).
+
+#### `<href>`
+
+Optional part of the component head; serves for capturing a URI referenced by this component.
+
+##### Allowed Context
+
+Can only be child of a semantic element. Mutually exclusive with [`<xref>`](#xref).
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `uri` | Required | URI | The URI of the referenced resource. |
+
+##### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Component head | Not allowed |
+| Raw text | Allowed |
+| Semantic elements | Not allowed |
 
 #### `<meta>`
 
@@ -2495,7 +2553,7 @@ Can only be child of a semantic element.
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, resolution) |  |
-| `resolution` | Optional; defaults to head metadata [`<default_resolution>`](#default_resolution), otherwise "512" | Postive integer |  |
+| `resolution` | Optional; defaults to head metadata [`<default_resolution>`](#default_resolution), otherwise "512" | Positive integer |  |
 
 ##### Allowed Content Types
 
@@ -2639,25 +2697,23 @@ None
 
 Payload elements are low-level elements that help define the effective content of another element.
 
-#### `<uri>`
+#### `<src>`
 
-Textual content must be a URI.
+The image's source.
 
 ##### Allowed Context
 
-Can only be child of [`<picture>`](#picture) or first child of [`<hyperlink>`](#hyperlink).
+Can only be child of [`<picture>`](#picture).
 
 ##### Attributes
 
-None
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `uri` | Required | URI | The source URI. |
 
 ##### Allowed Content Types
 
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Component head | Not allowed |
-| Raw text | Allowed |
-| Semantic elements | Not allowed |
+None (empty element).
 
 #### `<checkbox>`
 
@@ -2826,26 +2882,6 @@ None
 #### `<rtl>`
 
 Indicates right-to-left direction.
-
-##### Allowed Context
-
-Any context that allows raw text content.
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Component head | Not allowed |
-| Raw text | Allowed |
-| Semantic elements | Not allowed |
-
-#### `<hyperlink>`
-
-Contains a [`<uri>`](#uri) and then optionally raw or formatted text data.
 
 ##### Allowed Context
 

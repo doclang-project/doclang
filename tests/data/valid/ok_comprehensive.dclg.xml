@@ -141,24 +141,28 @@
     This is <bold>bold text</bold> and this is <italic>italic text</italic>.
   </text>
 
-  <!-- Example 2a: Text with hyperlink (uri only) -->
+  <!-- Example 2a: Text with href in component head -->
   <text>
-    Visit our website at <hyperlink><uri>https://example.com</uri></hyperlink> for more information.
+    <href uri="https://example.com"/>
+    Visit our website for more information.
   </text>
 
-  <!-- Example 2a1: Text with hyperlink (uri + text) -->
+  <!-- Example 2a1: Text with href and link label in body -->
   <text>
-    Click <hyperlink><uri>https://example.com/docs</uri>here</hyperlink> to read the documentation.
+    <href uri="https://example.com/docs"/>
+    Click here to read the documentation.
   </text>
 
-  <!-- Example 2a2: Text with hyperlink (uri + formatted text) -->
+  <!-- Example 2a2: Text with href and formatted link label in body -->
   <text>
-    Download the <hyperlink><uri>https://example.com/file.pdf</uri><italic>PDF file</italic></hyperlink> now.
+    <href uri="https://example.com/file.pdf"/>
+    Download the <italic>PDF file</italic> now.
   </text>
 
-  <!-- Example 2a3: Text with hyperlink (uri + nested formatting) -->
+  <!-- Example 2a3: Text with href and nested formatting in body -->
   <text>
-    See <hyperlink><uri>https://example.com/article</uri><bold>this <italic>important</italic> article</bold></hyperlink> for details.
+    <href uri="https://example.com/article"/>
+    See <bold>this <italic>important</italic> article</bold> for details.
   </text>
 
   <!-- Example 2b: Text with content element (whitespace preserved by schema default) -->
@@ -173,7 +177,7 @@
 
   <!-- Example 4: Picture with URI -->
   <picture>
-    <uri>https://example.com/image.jpg</uri>
+    <src uri="https://example.com/image.jpg"/>
   </picture>
 
   <!-- Example 5: Picture with component header and URI (new location and layer syntax) -->
@@ -184,7 +188,7 @@
     <location value="200"/>
     <location value="150"/>
     <layer class="body"/>
-    <uri>https://example.com/photo.png</uri>
+    <src uri="https://example.com/photo.png"/>
   </picture>
 
   <!-- Example 6: Picture without URI -->
@@ -218,7 +222,7 @@
 
   <!-- Example 9: Text with inline picture -->
   <text>
-    This paragraph contains an inline <picture><uri>icon.svg</uri></picture> image.
+    This paragraph contains an inline <picture><src uri="icon.svg"/></picture> image.
   </text>
 
   <!-- Example 10: Text with hint element -->
@@ -525,7 +529,7 @@
       <code><bold><content>print("hi")</content></bold></code>
       <code><![CDATA[<bold>print("hi")</bold>]]></code>
       <picture>
-        <uri>https://example.com/image.jpg</uri>
+        <src uri="https://example.com/image.jpg"/>
       </picture>
     </text>
   </list>
@@ -556,7 +560,7 @@
   <group>
     <picture>
       <meta>main-figure</meta>
-      <uri>diagram.svg</uri>
+      <src uri="diagram.svg"/>
     </picture>
     <caption>Figure 2: System architecture diagram</caption>
     <text>This diagram illustrates the overall system design.</text>
@@ -587,11 +591,11 @@
   <group>
     <heading level="3">Photo Gallery</heading>
     <picture>
-      <uri>photo1.jpg</uri>
+      <src uri="photo1.jpg"/>
     </picture>
     <caption>Photo 1</caption>
     <picture>
-      <uri>photo2.jpg</uri>
+      <src uri="photo2.jpg"/>
     </picture>
     <caption>Photo 2</caption>
   </group>

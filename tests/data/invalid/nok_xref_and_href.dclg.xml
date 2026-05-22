@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- xref and href are mutually exclusive in the component head -->
+  <text>
+    <xref thread_id="1"/>
+    <href uri="https://example.com"/>
+    Figure 3
+  </text>
+
+</doclang>

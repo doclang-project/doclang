@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- href must be in the component head, not inline in body content -->
+  <text>
+    Visit our <href uri="https://example.com"/> website.
+  </text>
+
+</doclang>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- Hyperlink in text component head -->
+  <text>
+    <href uri="https://www.example.com"/>website
+  </text>
+
+  <!-- Hyperlink target on picture -->
+  <picture>
+    <href uri="https://www.example.com"/>
+    <src uri="https://www.example.com/image.jpg"/>
+  </picture>
+
+</doclang>

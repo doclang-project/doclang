@@ -37,6 +37,6 @@ def test_validate_valid_document():
 
 def test_validate_invalid_document():
     """Test validating an invalid document."""
-    xml_file = Path("tests/data/invalid/nok_hyperlink_invalid_content.dclg.xml")
+    xml_file = Path("tests/data/invalid/nok_href_in_body.dclg.xml")
     result = runner.invoke(app, ["validate", str(xml_file)])
     assert result.exit_code == 1

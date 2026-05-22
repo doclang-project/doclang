@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <caption>
+    <location value="20"/><location value="30"/>
+    <location value="40"/><location value="50"/>
+    FIG. 3. Example figure caption
+  </caption>
+
+  <text>
+    <xref thread_id="1"/>Figure 3
+  </text>
+
+</doclang>

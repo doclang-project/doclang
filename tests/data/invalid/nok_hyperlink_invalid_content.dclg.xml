@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<doclang xmlns="https://www.doclang.ai/ns/v0">
-
-  <!-- This should FAIL Schematron validation: non-whitespace text before uri -->
-  <text>
-    Click <hyperlink>   foo  <uri>https://example.com</uri>here</hyperlink> to visit.
-  </text>
-
-</doclang>
