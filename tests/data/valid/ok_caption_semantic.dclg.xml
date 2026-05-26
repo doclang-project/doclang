@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- Caption in table element head; caption is semantic element itself -->
+  <table>
+    <location value="40"/><location value="130"/>
+    <location value="540"/><location value="320"/>
+    <caption>
+      <location value="40"/><location value="80"/>
+      <location value="540"/><location value="110"/>
+      <marker>(a)</marker> Table 1: Experimental results
+    </caption>
+    <ched/>Method<ched/>Accuracy<nl/>
+    <fcel/>Baseline<fcel/>0.85<nl/>
+    <fcel/>Proposed<fcel/>0.92<nl/>
+  </table>
+
+</doclang>
