@@ -257,22 +257,34 @@ def create_element_anchor(element_name):
     return element_name.replace('`', '').replace('<', '').replace('>', '').lower().replace(' ', '-')
 
 
+def element_tag_name(element):
+    """Extract tag name from a spreadsheet element label such as `<doclang>`."""
+    return element.replace('`', '').strip('<>')
+
+
 def linkify_element_references(text, all_elements):
-    """Replace element references like `<element>` with markdown links"""
+    """Replace element references like `<element>` with markdown links."""
     if not text:
         return text
 
-    # Create a pattern that matches `<element_name>` format
-    for element in all_elements:
-        # Extract the element name without backticks for the pattern
-        element_clean = element.replace('`', '')
-        # Create the anchor
+    # Longest tag names first so e.g. `<page_break>` is not partially matched as `<page>`
+    unique_elements = list(dict.fromkeys(all_elements))
+    sorted_elements = sorted(unique_elements, key=lambda e: len(element_tag_name(e)), reverse=True)
+
+    for element in sorted_elements:
         anchor = create_element_anchor(element)
-        # Replace occurrences of the element reference with a link
-        # Use word boundaries to avoid partial matches
-        pattern = re.escape(element)
-        replacement = f"[{element}](#{anchor})"
-        text = re.sub(pattern, replacement, text)
+        link = f"[{element}](#{anchor})"
+        bare_form = f"<{element_tag_name(element)}>"
+
+        # Backtick-wrapped form from the spreadsheet (e.g. `<doclang>`)
+        text = re.sub(re.escape(element), link, text)
+
+        # Bare angle-bracket form; skip when already inside a markdown link or backticks
+        text = re.sub(
+            r'(?<!\[)(?<!`)' + re.escape(bare_form) + r'(?!\]\(#)',
+            link,
+            text,
+        )
 
     return text
 
@@ -301,9 +313,10 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
         display_category = format_category_for_display(category)
         output_lines.append(f"### {display_category}\n\n")
 
-        # Write category description if available
+        # Write category description if available (with linkified element references)
         if category in category_descriptions and category_descriptions[category]:
-            output_lines.append(f"{category_descriptions[category]}\n\n")
+            description = linkify_element_references(category_descriptions[category], all_elements)
+            output_lines.append(f"{description}\n\n")
 
         # Get elements for this category
         elements = elements_by_category[category]

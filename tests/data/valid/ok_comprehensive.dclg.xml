@@ -141,7 +141,7 @@
     This is <bold>bold text</bold> and this is <italic>italic text</italic>.
   </text>
 
-  <!-- Example 2a: Text with href in component head -->
+  <!-- Example 2a: Text with href in element head -->
   <text>
     <href uri="https://example.com"/>
     Visit our website for more information.
@@ -180,7 +180,7 @@
     <src uri="https://example.com/image.jpg"/>
   </picture>
 
-  <!-- Example 5: Picture with component header and URI (new location and layer syntax) -->
+  <!-- Example 5: Picture with element head and URI (new location and layer syntax) -->
   <picture>
     <meta>image-metadata</meta>
     <location value="10" resolution="72"/>
@@ -196,13 +196,17 @@
     <meta>embedded-image</meta>
   </picture>
 
-  <!-- Example 7: Caption element -->
-  <caption>Figure 1: Sample diagram showing the process flow</caption>
+  <!-- Example 7: Caption element (in element head of group) -->
+  <group>
+    <caption>Figure 1: Sample diagram showing the process flow</caption>
+  </group>
 
-  <!-- Example 8: Caption with formatting -->
-  <caption>
-    <bold>Table 1:</bold> <italic>Results of the experiment</italic>
-  </caption>
+  <!-- Example 8: Caption with formatting (in element head of group) -->
+  <group>
+    <caption>
+      <bold>Table 1:</bold> <italic>Results of the experiment</italic>
+    </caption>
+  </group>
 
   <!-- Example 8b: Page header element -->
   <page_header>Document Title - Page 1</page_header>
@@ -321,18 +325,20 @@
     <text>Row</text>
   </table>
 
-  <!-- Example 19: Caption with component header -->
-  <caption>
-    <meta>caption-meta</meta>
-    <location value="0"/>
-    <location value="200"/>
-    <location value="400"/>
-    <location value="220"/>
-    <layer class="background"/>
-    <bold>Figure 3:</bold> Complex visualization with <hint>interactive elements</hint>
-  </caption>
+  <!-- Example 19: Caption in element head with its own element head metadata -->
+  <group>
+    <caption>
+      <meta>caption-meta</meta>
+      <location value="0"/>
+      <location value="200"/>
+      <location value="400"/>
+      <location value="220"/>
+      <layer class="background"/>
+      <bold>Figure 3:</bold> Complex visualization with <hint>interactive elements</hint>
+    </caption>
+  </group>
 
-  <!-- Example 20: Text with complete component header (new layer syntax) -->
+  <!-- Example 20: Text with complete element head (new layer syntax) -->
   <text>
     <meta>metadata-info</meta>
     <location value="10"/>
@@ -348,7 +354,7 @@
     <hint><bold>This is bold with <italic>nested italic</italic> and tooltip</bold></hint>, plus <marker>mark</marker> and <checkbox/>.
   </text>
 
-  <!-- Example 22: OTSL with component header and all separator types -->
+  <!-- Example 22: OTSL with element head and all separator types -->
   <table>
     <meta>table-meta-1</meta>
     <location value="100"/>
@@ -402,13 +408,13 @@
     E = mc<superscript>2</superscript> and H<subscript>2</subscript>O
   </text>
 
-  <!-- Example 28: List with nested elements -->
+  <!-- Example 28: List with caption in element head -->
   <list class="unordered">
+    <caption>List caption</caption>
     <ldiv><marker>•</marker></ldiv>
     <text>First item</text>
     <ldiv><marker>•</marker></ldiv>
     <text>Second item</text>
-    <caption>List caption</caption>
   </list>
 
   <!-- Example 29: Layer with class attribute -->
@@ -449,7 +455,7 @@
     <text>Another item without marker</text>
   </list>
 
-  <!-- Example 32b: List with component header (aligns with table validation) -->
+  <!-- Example 32b: List with element head (aligns with table validation) -->
   <list class="unordered">
     <meta>list-meta-1</meta>
     <location value="10"/>
@@ -544,7 +550,7 @@
     <text>Second element in group</text>
   </group>
 
-  <!-- Example 41: Group with component header -->
+  <!-- Example 41: Group with element head -->
   <group>
     <meta>group-metadata</meta>
     <location value="10"/>
@@ -560,9 +566,9 @@
   <group>
     <picture>
       <meta>main-figure</meta>
+      <caption>Figure 2: System architecture diagram</caption>
       <src uri="diagram.svg"/>
     </picture>
-    <caption>Figure 2: System architecture diagram</caption>
     <text>This diagram illustrates the overall system design.</text>
   </group>
 
@@ -591,17 +597,18 @@
   <group>
     <heading level="3">Photo Gallery</heading>
     <picture>
+      <caption>Photo 1</caption>
       <src uri="photo1.jpg"/>
     </picture>
-    <caption>Photo 1</caption>
     <picture>
+      <caption>Photo 2</caption>
       <src uri="photo2.jpg"/>
     </picture>
-    <caption>Photo 2</caption>
   </group>
 
-  <!-- Example 45: Group with table and multiple elements (table with component header) -->
+  <!-- Example 45: Group with table and multiple elements (table with element head) -->
   <group>
+    <caption>Table 2: Q1 Sales Data</caption>
     <heading level="2">Sales Report</heading>
     <text>Q1 2024 results:</text>
     <table>
@@ -625,7 +632,6 @@
       <fcel/>
       <text>$1500</text>
     </table>
-    <caption>Table 2: Q1 Sales Data</caption>
   </group>
 
   <!-- Example 46: Group with mixed semantic elements -->

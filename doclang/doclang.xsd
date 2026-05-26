@@ -154,7 +154,7 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- THREAD ELEMENT: empty element with required thread_id (component head) -->
+  <!-- THREAD ELEMENT: empty element with required thread_id (property element / element head) -->
   <!-- ============================================ -->
 
   <xs:element name="thread">
@@ -164,8 +164,8 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- XREF ELEMENT: empty element with required thread_id (component head) -->
-  <!-- Mutually exclusive with href (enforced by component_header choice) -->
+  <!-- XREF ELEMENT: empty element with required thread_id (property element / element head) -->
+  <!-- Mutually exclusive with href (enforced by element_head choice) -->
   <!-- ============================================ -->
 
   <xs:element name="xref">
@@ -175,8 +175,8 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- HREF ELEMENT: empty element with required uri (component head) -->
-  <!-- Mutually exclusive with xref (enforced by component_header choice) -->
+  <!-- HREF ELEMENT: empty element with required uri (property element / element head) -->
+  <!-- Mutually exclusive with xref (enforced by element_head choice) -->
   <!-- ============================================ -->
 
   <xs:element name="href">
@@ -186,11 +186,11 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- COMPONENT_HEADER: optional thread, xref or href, meta, optional location_block, layer -->
+  <!-- ELEMENT HEAD (element_head): optional thread, xref or href, meta, location_block, layer, caption -->
   <!-- TODO: to be aligned with spec (iso-standard.md) which includes: h_thread, timestamps -->
   <!-- ============================================ -->
 
-  <xs:group name="component_header">
+  <xs:group name="element_head">
     <xs:sequence>
       <xs:element ref="dl:thread" minOccurs="0"/>
       <xs:choice minOccurs="0">
@@ -200,6 +200,7 @@
       <xs:element ref="dl:meta" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
       <xs:element ref="dl:layer" minOccurs="0"/>
+      <xs:element ref="dl:caption" minOccurs="0"/>
     </xs:sequence>
   </xs:group>
 
@@ -214,13 +215,13 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- PICTURE ELEMENT: component_header + optional src -->
+  <!-- PICTURE ELEMENT: element_head + optional src -->
   <!-- ============================================ -->
 
   <xs:element name="picture">
     <xs:complexType>
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:element ref="dl:src" minOccurs="0"/>
         <xs:element ref="dl:table" minOccurs="0"/>
       </xs:sequence>
@@ -303,13 +304,13 @@
   </xs:complexType>
 
   <!-- ============================================ -->
-  <!-- COMPONENT_WITH_HEADLESS_SEQ: Reusable base type for elements with component_header + headless_seq -->
+  <!-- COMPONENT_WITH_HEADLESS_SEQ: Reusable base type for elements with element_head + headless_seq -->
   <!-- Reuses headless group -->
   <!-- ============================================ -->
 
   <xs:complexType name="component_with_headless_seq" mixed="true">
     <xs:sequence>
-      <xs:group ref="dl:component_header"/>
+      <xs:group ref="dl:element_head"/>
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="dl:content"/>
         <xs:group ref="dl:headless"/>
@@ -400,7 +401,7 @@
   <xs:element name="group">
     <xs:complexType>
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:group ref="dl:top_level_cat" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
@@ -408,7 +409,8 @@
 
   <!-- ============================================ -->
   <!-- TOP_LEVEL_CAT: reusable group for top-level document elements -->
-  <!-- Includes: text, heading, code, formula, caption, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, group -->
+  <!-- Includes: text, heading, code, formula, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, group -->
+  <!-- Note: caption appears only in the element head (element_head), not in body content -->
   <!-- ============================================ -->
 
   <xs:group name="top_level_cat">
@@ -417,7 +419,6 @@
       <xs:element ref="dl:heading"/>
       <xs:element ref="dl:code"/>
       <xs:element ref="dl:formula"/>
-      <xs:element ref="dl:caption"/>
       <xs:element ref="dl:page_header"/>
       <xs:element ref="dl:page_footer"/>
       <xs:element ref="dl:footnote"/>
@@ -440,7 +441,7 @@
 
   <xs:complexType name="component_with_semantic_seq" mixed="true">
     <xs:sequence>
-      <xs:group ref="dl:component_header"/>
+      <xs:group ref="dl:element_head"/>
       <xs:choice minOccurs="0" maxOccurs="unbounded">
         <xs:element ref="dl:content"/>
         <xs:group ref="dl:headless_txt"/>
@@ -458,32 +459,32 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LIST_ITEM: ldiv + optional component_header + virtual_text_content* -->
+  <!-- LIST_ITEM: ldiv + optional element_head + virtual_text_content* -->
   <!-- Represents a single list item which can be:
-       - Virtual text: ldiv + optional component_header + raw text/formatting/semantic elements
+       - Virtual text: ldiv + optional element_head + raw text/formatting/semantic elements
        - Wrapped semantic: ldiv + semantic element(s) -->
   <!-- ============================================ -->
 
   <xs:group name="list_item">
     <xs:sequence>
       <xs:element ref="dl:ldiv"/>
-      <xs:group ref="dl:component_header" minOccurs="0"/>
+      <xs:group ref="dl:element_head" minOccurs="0"/>
       <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LIST ELEMENT: optional component_header + list_item* -->
-  <!-- Semantic element: may optionally begin with component_header (per iso-standard.md) -->
-  <!-- Component header order enforced by XSD component_header group (sequence) -->
-  <!-- Each list item starts with ldiv, followed by optional component_header for virtual text -->
-  <!-- Schematron enforces: must start with ldiv (after optional list-level component_header) -->
+  <!-- LIST ELEMENT: optional element_head + list_item* -->
+  <!-- Semantic element: may optionally begin with element_head (per iso-standard.md) -->
+  <!-- Element head order enforced by XSD element_head group (sequence) -->
+  <!-- Each list item starts with ldiv, followed by optional element_head for virtual text -->
+  <!-- Schematron enforces: must start with ldiv (after optional list-level element head) -->
   <!-- ============================================ -->
 
   <xs:element name="list">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:group ref="dl:list_item" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="class" use="optional" default="unordered">
@@ -498,32 +499,32 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- TABLE_CELL: cell token + optional component_header + virtual_text_content* -->
+  <!-- TABLE_CELL: cell token + optional element_head + virtual_text_content* -->
   <!-- Represents a single table cell which can be:
-       - Virtual text: cell token + optional component_header + raw text/formatting/semantic elements
+       - Virtual text: cell token + optional element_head + raw text/formatting/semantic elements
        - Wrapped semantic: cell token + semantic element(s) -->
   <!-- ============================================ -->
 
   <xs:group name="table_cell">
     <xs:sequence>
       <xs:group ref="dl:table_sep"/>
-      <xs:group ref="dl:component_header" minOccurs="0"/>
+      <xs:group ref="dl:element_head" minOccurs="0"/>
       <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- TABLE ELEMENT: optional component_header + table_cell* -->
-  <!-- Semantic element: may optionally begin with component_header (per iso-standard.md) -->
-  <!-- Component header order enforced by XSD component_header group (sequence) -->
-  <!-- Each table cell starts with cell token, followed by optional component_header for virtual text -->
-  <!-- Schematron enforces: must start with cell token (after optional table-level component_header) -->
+  <!-- TABLE ELEMENT: optional element_head + table_cell* -->
+  <!-- Semantic element: may optionally begin with element_head (per iso-standard.md) -->
+  <!-- Element head order enforced by XSD element_head group (sequence) -->
+  <!-- Each table cell starts with cell token, followed by optional element_head for virtual text -->
+  <!-- Schematron enforces: must start with cell token (after optional table-level element head) -->
   <!-- ============================================ -->
 
   <xs:element name="table">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
       <xs:attribute name="class" use="optional" default="data">
@@ -545,7 +546,7 @@
   <xs:element name="field_region">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:group ref="dl:headless_txt"/>
           <xs:group ref="dl:top_level_cat"/>
@@ -561,7 +562,7 @@
   <xs:element name="field_heading">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:group ref="dl:headless_txt"/>
           <xs:group ref="dl:top_level_cat"/>
@@ -578,7 +579,7 @@
   <xs:element name="field_item">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:group ref="dl:headless_txt"/>
           <xs:group ref="dl:top_level_cat"/>
@@ -594,7 +595,7 @@
   <xs:element name="key">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:element ref="dl:content"/>
           <xs:group ref="dl:headless_txt"/>
@@ -611,7 +612,7 @@
   <xs:element name="value">
     <xs:complexType mixed="true">
       <xs:sequence>
-        <xs:group ref="dl:component_header"/>
+        <xs:group ref="dl:element_head"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:element ref="dl:content"/>
           <xs:group ref="dl:headless_txt"/>

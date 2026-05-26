@@ -134,14 +134,34 @@ DocLang generally allows applications to decide how to handle XML whitespace (i.
 
 ### Head and Body Areas
 
-Core document components such as paragraphs, tables, images etc., can have various properties associated with them.
-To separate between the component's properties and its actual content, respective DocLang elements follow a two-part scheme.
+Documents and their core components (as implemented via [semantic elements](#semantic-elements)) can have various properties associated with them.
+To separate between properties and actual content, DocLang follows a two-part scheme, both on the the component / element level and on the global document level.
 
-The element's XML content begins with an optional *component head*, which is a sequence of dedicated elements that establish the element's properties.
-The component's effective content, e.g. paragraph text, is then captured by the remaining of the XML content, an area which is called the *component body*.
+#### Element Head
 
-The overall DocLang document follows a similar structure: Any global document properties are captured in the optional *document head* and the remaining content is called the *document body*.
-Unlike the component head, the document head is encapsulated in a dedicated `<head>` element — the body is unwrapped in both cases.
+The XML content of a semantic element begins with an *element head*, which is a sequence of dedicated elements that establish the element's properties, namely in this order:
+- [`<thread>`](#thread) (optional)
+- [`<h_thread>`](#h_thread) (optional)
+- [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
+- [`<meta>`](#meta) (optional)
+- sequence of 2*N [`<location>`](#location)s (N>1) (optional)
+- sequence of [`<timestamp>`](#timestamp)s (optional)
+- [`<layer>`](#layer) (optional)
+- [`<caption>`](#caption) (optional)
+
+#### Element Body
+
+The XML content after the element head is called the *element body* and contains the effective payload of the semantic element.
+
+#### Document Head
+
+Root element [`<doclang>`](#doclang) begins with an optional *document head*, which encapsulates any global document properties in a dedicated [`<head>`](#head) element.
+
+#### Document Body
+
+The remaining XML content after the optional document head is called the *document body* and contains the effective payload of the document.
+
+#### Head and Body Example
 
 While the details are specified in the sections further below, this snippet shows an example of this scheme:
 
@@ -155,18 +175,20 @@ While the details are specified in the sections further below, this snippet show
 
   <!-- document body: -->
   <text>
-    <!-- component body: -->
-    Headless paragraph
-  </text>
-  <text>
-    <!-- component head: -->
+
+    <!-- element head: -->
     <meta><summary>A salutation.</summary></meta>
     <location value="60"/><location value="260"/>
     <location value="440"/><location value="270"/>
 
-    <!-- component body: -->
+    <!-- element body: -->
     <italic>Hello</italic>
     <content> world!</content>
+
+  </text>
+  <text>
+    <!-- element body: -->
+    Headless paragraph
   </text>
 </doclang>
 ```
@@ -683,9 +705,9 @@ Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place th
     <text>Image</text>
     <fcel/>
     <picture>
+      <caption>Example image inside a cell</caption>
       <src uri="assets/img/sample.png"/>
     </picture>
-    <caption>Example image inside a cell</caption>
     <nl/>
   </table>
 </group>
@@ -1539,48 +1561,40 @@ The basic structure is shown below, e.g. for a `text` tag:
 <details>
   <summary>Cross-column structure example</summary>
 
-  <!-- blank line after <summary> is important -->
-
-![inline-00](./examples/inline/inline_00.png)
+  <img src="reference/input/examples/thread.png" width="700">
 
 Each block that has location information is a top-level tag of the corresponding label, e.g. "text".
 
 Elements which belong to the same document component should have the same thread ID.
 
 ```xml
+<!-- ... -->
 <text>
+  <thread thread_id="1"/>
   <location value="10"/><location value="20"/>
   <location value="30"/><location value="40"/>
-  <thread thread_id="1"/>
-
   where τ<subscript>x,y,z</subscript> are the Pauli matrices acting
   on Nambu space. We consider a circular-shaped boundary, the nor-
 </text>
 
-<caption>
-  <location value="50"/><location value="60"/>
-  <location value="70"/><location value="80"/>
-
-  FIG. 3. The modules of the inner product of two MES spinors
-  <formula>...<formula/>
-  ...
-</caption>
+<picture>
+  <caption>
+    <location value="20"/><location value="30"/>
+    <location value="40"/><location value="50"/>
+    FIG. 3. The modules of the inner product of two MES spinors
+    <formula><!-- ... --></formula>
+    <!-- ... -->
+  </caption>
+  <!-- ... -->
+</picture>
 
 <text>
-  <location value="90"/><location value="100"/>
-  <location value="110"/><location value="120"/>
   <thread thread_id="1"/>
-
+  <location value="30"/><location value="40"/>
+  <location value="50"/><location value="60"/>
   mal direction of the boundary tangent for arbitrary angle θ is
-  <formula>ˆx⊥ = (cos θ, sin θ)</formula>
-  . Next, we assume an ansatz for the edge state wave function at θ as
-	<formula>Ψu/l(x⊥) =eλx⊥ eik∥ x∥ ξu/l </formula>
-	with
-	<formula>k∥ = sin θkx − cos θky</formula>
-	Here, |ξu⟩ and |ξl⟩ represent the spinors ...  of the chiral MESs with
-	<formula>φu = 0</formula>
-    and
-	<formula>φl = φ:</formula>
+  <formula><!-- ... --></formula>
+  <!-- ... -->
 </text>
 ```
 </details>
@@ -1779,7 +1793,7 @@ to be reached to add the thread for "Europe" in the example above.
 
 #### Cross-references
 
-Cross-references can be captured using the `<xref>` element as part of the component head, for pointing to a thread based on the `thread_id`.
+Cross-references can be captured using the `<xref>` element as part of the element head, for pointing to a thread based on the `thread_id`.
 
 <details>
   <summary>Cross-referencee example</summary>
@@ -1803,7 +1817,7 @@ Cross-references can be captured using the `<xref>` element as part of the compo
 
 #### Hyperlinks
 
-Hyperlinks can be captured using the `<href>` element as part of the component head, for pointing to a URI.
+Hyperlinks can be captured using the `<href>` element as part of the element head, for pointing to a URI.
 
 Basic example:
 
@@ -1951,9 +1965,9 @@ Exists exactly once, as root element.
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Not allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 ##### Example
 
@@ -1979,9 +1993,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Not allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<page_break>`
 
@@ -2011,7 +2025,7 @@ None (empty element).
 
 ### Semantic Elements
 
-Semantic elements capture core components with specific meaning and functional role in the document, for example, a paragraph, a table, a list, and more. Any semantic element may optionally begin with a [component head](#component-head-elements). Semantic elements are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting).
+*Semantic elements* capture core components with specific meaning and functional role in the document (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
 #### `<text>`
 
@@ -2029,9 +2043,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<heading>`
 
@@ -2049,27 +2063,9 @@ Any context that allows semantic elements.
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
-
-#### `<caption>`
-
-##### Allowed Context
-
-Any context that allows semantic elements.
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Component head | Allowed |
-| Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<footnote>`
 
@@ -2085,9 +2081,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<page_header>`
 
@@ -2103,9 +2099,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<page_footer>`
 
@@ -2121,9 +2117,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<field_region>`
 
@@ -2141,13 +2137,13 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Not allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<list>`
 
-Captures a list. List items are delimited by the respective structural elements. A list item can be defined without a wrapping tag, i.e. as pure (optional) component head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a list. List items are delimited by the respective structural elements. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2163,13 +2159,13 @@ Any context that allows semantic elements.
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
+| Element head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<table>`
 
-Captures a table, in a format inspired by OTSL. Table cells are delimited by the respective structural elements. A table cell can be defined without a wrapping tag, i.e. as pure (optional) component head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a table, in a format inspired by OTSL. Table cells are delimited by the respective structural elements. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2185,9 +2181,9 @@ Any context that allows semantic elements.
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
+| Element head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<formula>`
 
@@ -2203,9 +2199,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<code>`
 
@@ -2221,11 +2217,13 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<picture>`
+
+Can contain specific semantic elements: [`<src>`](#src), [`<table>`](#table).
 
 ##### Allowed Context
 
@@ -2239,9 +2237,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Not allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<marker>`
 
@@ -2257,9 +2255,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<group>`
 
@@ -2277,9 +2275,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Not allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<field_heading>`
 
@@ -2295,9 +2293,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<field_item>`
 
@@ -2315,9 +2313,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Not allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<key>`
 
@@ -2335,9 +2333,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<value>`
 
@@ -2357,9 +2355,9 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
 #### `<hint>`
 
@@ -2377,17 +2375,37 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Allowed |
+| Element head | Allowed |
 | Raw text | Allowed |
-| Semantic elements | Allowed |
+| Primary semantic elements | Allowed |
 
-### Component Head Elements
+#### `<caption>`
 
-The component head is a sequence comprising the following elements in this order, whereby all elements are optional:<br /><ul><li>`<thread>`</li><li>`<h_thread>`</li><li>`<xref>` or `<href>` (mutually exclusive)</li><li>`<meta>`</li><li>sequence of 2*N `<location>`s (N>1)</li><li>sequence of `<timestamp>`s</li><li>`<layer>`</li></ul> A component head can only appear as the leading content of a semantic element. The various component head elements are further specified in the following subsections.
+Optional part of the element head for capturing an associated caption.
+
+##### Allowed Context
+
+Can only be part of the element head of a semantic element.
+
+##### Attributes
+
+None
+
+##### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Allowed |
+
+### Property Elements
+
+*Property elements* are non-semantic elements that help define useful traits of a semantic element, forming the main building blocks of the [element head](#element-head). Property elements that can appear on the top level of the element head are called *primary*, while those that can only appear within other property elements are called *secondary*. The various property elements are further specified in the following subsections.
 
 #### `<thread>`
 
-Optional part of the component head; serves for capturing a component spanning multiple bounding boxes (e.g. cross-column) or pages.<br/>  To capture such a component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them.
+Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references.<br/>  To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
 
 ##### Allowed Context
 
@@ -2403,48 +2421,9 @@ Can only be child of a semantic element.
 
 None (empty element).
 
-##### Example
-
-<details>
-  <summary>Show document picture</summary>
-
-  <img src="reference/input/examples/thread.png" width="700">
-
-</details>
-
-```xml
-<doclang>
-  <!-- ... -->
-  <text>
-    <thread thread_id="1"/>
-    <location value="10"/><location value="20"/>
-    <location value="30"/><location value="40"/>
-    where τ<subscript>x,y,z</subscript> are the Pauli matrices acting
-    on Nambu space. We consider a circular-shaped boundary, the nor-
-  </text>
-
-  <caption>
-    <location value="20"/><location value="30"/>
-    <location value="40"/><location value="50"/>
-    FIG. 3. The modules of the inner product of two MES spinors
-    <formula><!-- ... --></formula>
-    <!-- ... -->
-  </caption>
-
-  <text>
-    <thread thread_id="1"/>
-    <location value="30"/><location value="40"/>
-    <location value="50"/><location value="60"/>
-    mal direction of the boundary tangent for arbitrary angle θ is
-    <formula><!-- ... --></formula>
-    <!-- ... -->
-  </text>
-</doclang>
-```
-
 #### `<h_thread>`
 
-Optional part of the component head; serves for capturing a component crossing horizontal boundaries (e.g. table verically split between multiple pages).
+Optional part of the element head; serves for capturing a component crossing horizontal boundaries (e.g. table verically split between multiple pages).
 
 ##### Allowed Context
 
@@ -2462,7 +2441,7 @@ None (empty element).
 
 #### `<xref>`
 
-Optional part of the component head; serves for capturing an outgoing cross-reference from this component.
+Optional part of the element head; serves for capturing an outgoing cross-reference from this component.
 
 ##### Allowed Context
 
@@ -2480,7 +2459,7 @@ None (empty element).
 
 #### `<href>`
 
-Optional part of the component head; serves for capturing a URI referenced by this component.
+Optional part of the element head; serves for capturing a URI referenced by this component.
 
 ##### Allowed Context
 
@@ -2496,9 +2475,9 @@ Can only be child of a semantic element. Mutually exclusive with [`<xref>`](#xre
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<meta>`
 
@@ -2516,9 +2495,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Not allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<custom_meta>`
 
@@ -2536,9 +2515,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Not allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<location>`
 
@@ -2561,7 +2540,7 @@ None (empty element).
 
 #### `<timestamp>`
 
-TBD. Needed, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour><minute>2</minute><second>3</second>`)
+TBD. Needed, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour>[`<minute>`](#minute)2</minute>[`<second>`](#second)3</second>`)
 
 ##### Allowed Context
 
@@ -2575,9 +2554,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Not allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<hour>`
 
@@ -2689,9 +2668,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 ### Payload Elements
 
@@ -2745,9 +2724,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 ### Formatting Elements
 
@@ -2767,9 +2746,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<italic>`
 
@@ -2785,9 +2764,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<underline>`
 
@@ -2803,9 +2782,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<strikethrough>`
 
@@ -2821,9 +2800,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<superscript>`
 
@@ -2839,9 +2818,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<subscript>`
 
@@ -2857,9 +2836,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<handwriting>`
 
@@ -2875,9 +2854,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 #### `<rtl>`
 
@@ -2895,9 +2874,9 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Allowed |
-| Semantic elements | Not allowed |
+| Primary semantic elements | Not allowed |
 
 ### Structural Elements
 
@@ -3079,13 +3058,13 @@ None
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
-| Component head | Not allowed |
+| Element head | Not allowed |
 | Raw text | Not allowed |
-| Semantic elements | Only [`<marker>`](#marker) |
+| Primary semantic elements | Only [`<marker>`](#marker) |
 
 ### Document Head Elements
 
-This category comprises the document-level metadata elements that are the building blocks of `<head>`.
+This category comprises the document-level metadata elements that are the building blocks of [`<head>`](#head).
 
 #### `<title>`
 

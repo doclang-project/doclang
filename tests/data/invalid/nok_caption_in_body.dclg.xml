@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- caption must be in the element head, not after body content -->
+  <group>
+    <table>
+      <fcel/>
+      <text>Data</text>
+      <nl/>
+    </table>
+    <caption>Late caption</caption>
+  </group>
+
+</doclang>

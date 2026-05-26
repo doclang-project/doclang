@@ -60,7 +60,7 @@
     </text>
   </list>
 
-  <!-- Test 6: Unwrapped text with location (component head) -->
+  <!-- Test 6: Unwrapped text with location (element head) -->
   <list class="unordered">
     <ldiv/>
     <location value="50"/><location value="120"/><location value="400"/><location value="140"/>

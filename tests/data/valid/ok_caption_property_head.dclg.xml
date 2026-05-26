@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- caption in table element head (before cell tokens) -->
+  <table>
+    <caption>Table 1: Results</caption>
+    <fcel/>
+    <text>Value</text>
+    <nl/>
+  </table>
+
+  <!-- caption in group element head before associated table -->
+  <group>
+    <caption>Figure A</caption>
+    <text>See the table below.</text>
+    <table>
+      <fcel/>
+      <text>Cell</text>
+      <nl/>
+    </table>
+  </group>
+
+</doclang>

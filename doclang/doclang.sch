@@ -36,38 +36,38 @@
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- NOTE: Component header order (meta, location, layer) is enforced by XSD component_header group -->
+  <!-- NOTE: Element head order is enforced by XSD element_head group -->
   <!-- Schematron only validates structural tokens (ldiv for lists, cell tokens for tables) -->
   <!-- ============================================ -->
 
   <!-- ============================================ -->
-  <!-- LIST: Must start with ldiv (after optional component_header) -->
+  <!-- LIST: Must start with ldiv (after optional element head) -->
   <!-- ============================================ -->
 
   <sch:pattern id="list-structure">
     <sch:rule context="dl:list[*]">
-      <sch:let name="first-non-header" value="*[not(self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer)][1]"/>
-      
+      <sch:let name="first-non-header" value="*[not(self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer or self::dl:caption)][1]"/>
+
       <sch:assert test="not($first-non-header) or $first-non-header[self::dl:ldiv]">
-        List must have ldiv as first element after optional component header (thread, xref, href, meta, location, layer).
+        List must have ldiv as first element after optional element head (property elements: thread, xref, href, meta, location, layer, caption).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
       </sch:assert>
     </sch:rule>
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- TABLE: Must start with cell token (after optional component_header) -->
+  <!-- TABLE: Must start with cell token (after optional element head) -->
   <!-- ============================================ -->
 
   <sch:pattern id="table-structure">
     <sch:rule context="dl:table[*]">
-      <sch:let name="first-non-header" value="*[not(self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer)][1]"/>
-      
+      <sch:let name="first-non-header" value="*[not(self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer or self::dl:caption)][1]"/>
+
       <sch:assert test="not($first-non-header) or
                         $first-non-header[self::dl:fcel or self::dl:ecel or self::dl:ched or
                                          self::dl:rhed or self::dl:corn or self::dl:srow or
                                          self::dl:lcel or self::dl:ucel or self::dl:xcel]">
-        Table must have cell-starting token as first element after optional component header (thread, xref, href, meta, location, layer).
+        Table must have cell-starting token as first element after optional element head (property elements: thread, xref, href, meta, location, layer, caption).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
       </sch:assert>
     </sch:rule>
@@ -82,10 +82,10 @@
     <sch:rule context="dl:table[dl:nl]">
       <!-- Define cell-starting tokens (tokens that begin a new cell) -->
       <sch:let name="cell-tokens" value="dl:fcel | dl:ecel | dl:ched | dl:rhed | dl:corn | dl:srow | dl:lcel | dl:ucel | dl:xcel"/>
-      
+
       <!-- Count cells in first row (before first nl) -->
       <sch:let name="first-row-cells" value="count($cell-tokens[following-sibling::dl:nl[1] is current()/dl:nl[1]])"/>
-      
+
       <!-- Check that all subsequent rows have the same number of cells -->
       <sch:assert test="every $nl in dl:nl[position() > 1] satisfies
                         count($cell-tokens[preceding-sibling::dl:nl[1] is $nl/preceding-sibling::dl:nl[1] and
@@ -98,37 +98,35 @@
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- COMPONENT HEADER: Text must not precede component header elements -->
-  <!-- Component header elements: thread, xref, href, meta, location, layer (per XSD component_header group) -->
+  <!-- ELEMENT HEAD: Text must not precede property elements -->
+  <!-- Property elements: thread, xref, href, meta, location, layer, caption (per XSD element_head group) -->
   <!-- This rule applies to regular semantic elements AND virtual <text> in lists/tables -->
   <!-- ============================================ -->
 
-  <sch:pattern id="component-header-placement">
+  <sch:pattern id="element-head-placement">
     <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption |
                        dl:page_header | dl:page_footer | dl:footnote | dl:picture |
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
                        dl:list | dl:table | dl:group">
-      <!-- Get all component header elements -->
-      <sch:let name="header-elements" value="dl:thread | dl:xref | dl:href | dl:meta | dl:location | dl:layer"/>
-      
-      <!-- Get text nodes that appear before any component header element -->
-      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer]]"/>
-      
+      <sch:let name="header-elements" value="dl:thread | dl:xref | dl:href | dl:meta | dl:location | dl:layer | dl:caption"/>
+
+      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer or self::dl:caption]]"/>
+
       <sch:assert test="every $t in $text-before-header satisfies normalize-space($t) = ''">
-        Component header elements (thread, xref, href, meta, location, layer) must appear before any non-whitespace text content.
-        Found non-whitespace text before component header: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
+        Property elements in the element head (thread, xref, href, meta, location, layer, caption) must appear before any non-whitespace text content.
+        Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- COMPONENT HEADER: xref and href are mutually exclusive -->
+  <!-- ELEMENT HEAD: xref and href are mutually exclusive -->
   <!-- ============================================ -->
 
   <sch:pattern id="xref-href-mutual-exclusivity">
     <sch:rule context="*[dl:xref and dl:href]">
       <sch:assert test="false()">
-        Component head must not contain both xref and href elements; they are mutually exclusive.
+        Element head must not contain both xref and href elements; they are mutually exclusive.
       </sch:assert>
     </sch:rule>
   </sch:pattern>
@@ -160,7 +158,7 @@
                           for $t in $threads[@thread_id = $tid]
                           return
                             if ($t/parent::dl:list) then
-                              (if ($t/preceding-sibling::dl:lddiv) then 'list-item' else 'list')
+                              (if ($t/preceding-sibling::dl:ldiv) then 'list-item' else 'list')
                             else if ($t/parent::dl:table) then
                               (if ($t/preceding-sibling::*[local-name() = $cell-token-names]) then 'table-cell' else 'table')
                             else local-name($t/parent::*)
@@ -172,80 +170,70 @@
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- VIRTUAL TEXT IN LISTS: Component header must precede content -->
+  <!-- VIRTUAL TEXT IN LISTS: Element head must precede content -->
   <!-- A list item (content between <ldiv> siblings) acts as a virtual <text> -->
-  <!-- and must follow the same component header rules -->
+  <!-- and must follow the same element head rules -->
   <!-- ============================================ -->
 
-  <sch:pattern id="list-virtual-text-component-header">
+  <sch:pattern id="list-virtual-text-element-head">
     <sch:rule context="dl:list/dl:ldiv">
-      <!-- Get the next ldiv sibling or end of list -->
       <sch:let name="next-ldiv" value="following-sibling::dl:ldiv[1]"/>
-      
-      <!-- Get all content nodes between this ldiv and the next (or end of list) -->
+
       <sch:let name="item-content" value="if ($next-ldiv)
                                           then following-sibling::node()[following-sibling::dl:ldiv[1] is $next-ldiv]
                                           else following-sibling::node()"/>
-      
-      <!-- Get component header elements in this item -->
-      <sch:let name="header-elements" value="$item-content[self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer]"/>
-      
-      <!-- Get index of first header element (1-based) -->
+
+      <sch:let name="header-elements" value="$item-content[self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer or self::dl:caption]"/>
+
       <sch:let name="first-header-index" value="if ($header-elements)
                                                  then index-of($item-content, $header-elements[1])[1]
                                                  else 0"/>
-      
-      <!-- Get text nodes that appear before the first header -->
+
       <sch:let name="text-before-header" value="if ($first-header-index > 0)
                                                  then for $i in 1 to ($first-header-index - 1)
                                                       return $item-content[$i][self::text()][normalize-space(.) != '']
                                                  else ()"/>
-      
+
       <sch:assert test="empty($text-before-header)">
-        In list items (virtual text), component header elements (thread, xref, href, meta, location, layer) must appear before any non-whitespace text content.
-        Found non-whitespace text before component header: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
+        In list items (virtual text), property elements in the element head (thread, xref, href, meta, location, layer, caption) must appear before any non-whitespace text content.
+        Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- VIRTUAL TEXT IN TABLES: Component header must precede content -->
+  <!-- VIRTUAL TEXT IN TABLES: Element head must precede content -->
   <!-- A table cell (content after cell-starting tokens) acts as a virtual <text> -->
-  <!-- and must follow the same component header rules -->
+  <!-- and must follow the same element head rules -->
   <!-- ============================================ -->
 
-  <sch:pattern id="table-virtual-text-component-header">
+  <sch:pattern id="table-virtual-text-element-head">
     <sch:rule context="dl:table/dl:fcel | dl:table/dl:ecel | dl:table/dl:ched |
                        dl:table/dl:rhed | dl:table/dl:corn | dl:table/dl:srow |
                        dl:table/dl:lcel | dl:table/dl:ucel | dl:table/dl:xcel">
-      <!-- Get the next cell-starting token or table-ending token -->
       <sch:let name="next-token" value="following-sibling::*[self::dl:fcel or self::dl:ecel or self::dl:ched or
                                                               self::dl:rhed or self::dl:corn or self::dl:srow or
                                                               self::dl:lcel or self::dl:ucel or self::dl:xcel or
                                                               self::dl:nl][1]"/>
-      
-      <!-- Get all content nodes between this cell token and the next (or end of row/table) -->
+
       <sch:let name="cell-content" value="if ($next-token)
                                           then following-sibling::node()[following-sibling::*[. is $next-token]]
                                           else following-sibling::node()[not(following-sibling::dl:nl)]"/>
-      
-      <!-- Get component header elements in this cell -->
-      <sch:let name="header-elements" value="$cell-content[self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer]"/>
-      
-      <!-- Get index of first header element (1-based) -->
+
+      <sch:let name="header-elements" value="$cell-content[self::dl:thread or self::dl:xref or self::dl:href or self::dl:meta or self::dl:location or self::dl:layer or self::dl:caption]"/>
+
       <sch:let name="first-header-index" value="if ($header-elements)
                                                  then index-of($cell-content, $header-elements[1])[1]
                                                  else 0"/>
-      
-      <!-- Get text nodes that appear before the first header -->
+
       <sch:let name="text-before-header" value="if ($first-header-index > 0)
                                                  then for $i in 1 to ($first-header-index - 1)
                                                       return $cell-content[$i][self::text()][normalize-space(.) != '']
                                                  else ()"/>
-      
+
       <sch:assert test="empty($text-before-header)">
-        In table cells (virtual text), component header elements (thread, xref, href, meta, location, layer) must appear before any non-whitespace text content.
-        Found non-whitespace text before component header: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
+        In table cells (virtual text), property elements in the element head (thread, xref, href, meta, location, layer, caption) must appear before any non-whitespace text content.
+        Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
   </sch:pattern>

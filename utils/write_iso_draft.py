@@ -108,7 +108,7 @@ def process_html_paragraph(document: Document, text: str) -> None:
             # HTML unescape but preserve markdown formatting (backticks, etc.)
             li_text = _html_unescape(li_text)
             p = document.add_paragraph(style="List Bullet")
-            # Process markdown formatting (inline code, links, bold)
+            # Process markdown formatting (inline code, links, bold, italic)
             _add_inline_formatted_runs(p, li_text)
 
         cursor = ul_match.end()
@@ -205,19 +205,21 @@ _LINK_OR_URL_RE = re.compile(
 
 
 def _strip_markdown_formatting(text: str) -> str:
-    """Strip markdown formatting from text (inline code, links, bold).
+    """Strip markdown formatting from text (inline code, links, bold, italic).
 
     Converts:
     - `code` -> code
     - [text](url) -> text
     - **bold** -> bold
+    - *italic* -> italic
     """
     # Remove inline code backticks
     text = re.sub(r"`([^`]+)`", r"\1", text)
     # Convert markdown links to just the link text
     text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-    # Remove bold markers
+    # Remove bold markers, then italic (order matters)
     text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"(?<!\*)\*([^*\n]+?)\*(?!\*)", r"\1", text)
     return text
 
 
@@ -289,7 +291,8 @@ def add_code_block(document: Document, code_lines: List[str], language: Optional
 
 
 INLINE_CODE_TAG_RE = re.compile(r"<inline-code>(.*?)</inline-code>")
-BOLD_RE = re.compile(r"\*\*(.*?)\*\*")
+BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+ITALIC_RE = re.compile(r"(?<!\*)\*([^*\n]+?)\*(?!\*)")
 CODE_SPAN_RE = re.compile(r"(<inline-code>(.*?)</inline-code>|`([^`]+)`)")
 
 
@@ -312,29 +315,41 @@ def _set_run_shading(run, fill: str = "F2F2F2") -> None:
     rPr.append(shd)
 
 
-def _add_bold_and_text_runs(paragraph, text: str) -> None:
-    # Split by bold markers and add runs accordingly
+def _add_italic_runs(paragraph, text: str) -> None:
+    """Add runs for *italic* segments (single asterisks, not **bold**)."""
     pos = 0
-    for m in BOLD_RE.finditer(text):
+    for m in ITALIC_RE.finditer(text):
         if m.start() > pos:
             t = text[pos : m.start()]
             if t:
                 paragraph.add_run(t)
-        bold_txt = m.group(1)
-        br = paragraph.add_run(bold_txt)
-        br.bold = True
+        ir = paragraph.add_run(m.group(1))
+        ir.italic = True
         pos = m.end()
     if pos < len(text):
         paragraph.add_run(text[pos:])
 
 
+def _add_bold_and_text_runs(paragraph, text: str) -> None:
+    """Add runs for plain text, *italic*, and **bold** (bold processed before italic)."""
+    pos = 0
+    for m in BOLD_RE.finditer(text):
+        if m.start() > pos:
+            _add_italic_runs(paragraph, text[pos : m.start()])
+        br = paragraph.add_run(m.group(1))
+        br.bold = True
+        pos = m.end()
+    if pos < len(text):
+        _add_italic_runs(paragraph, text[pos:])
+
+
 def _add_links_and_text_runs(paragraph, text: str) -> None:
-    """Add runs handling Markdown links [text](url) and bare URLs, plus bold.
+    """Add runs handling Markdown links [text](url) and bare URLs, plus bold/italic.
 
     This does not handle inline code; the caller should have already split
     code spans and pass only normal text here.
 
-    For anchor links like [text](#anchor), only the text is shown (no hyperlink).
+    Anchor links like [text](#anchor) become in-document hyperlinks to bookmarks.
     """
     pos = 0
     for m in _LINK_OR_URL_RE.finditer(text):
@@ -345,9 +360,8 @@ def _add_links_and_text_runs(paragraph, text: str) -> None:
         if m.group("link_url") is not None:
             link_text = m.group("link_text")
             link_url = m.group("link_url")
-            # For anchor links (starting with #), just show the text without hyperlink
             if link_url.startswith("#"):
-                _add_bold_and_text_runs(paragraph, link_text)
+                add_internal_hyperlink(paragraph, link_url, link_text)
             else:
                 add_hyperlink(paragraph, link_url, link_text)
         else:
@@ -359,61 +373,54 @@ def _add_links_and_text_runs(paragraph, text: str) -> None:
 
 
 def _add_inline_formatted_runs(paragraph, text: str) -> None:
-    """Process inline formatting: links (with embedded code), code spans, bold.
+    """Process inline formatting: links (with embedded code), code spans, bold, italic.
 
     Links are processed first to handle cases like [`<element>`](#anchor) where
     the link text contains inline code.
     """
     # First pass: extract and process markdown links, preserving their structure
     cursor = 0
-    segments = []  # List of (is_link, content) tuples
+    # Segments: ("plain", text) | ("url", url, text) | ("anchor", anchor, text)
+    segments: List[Tuple[str, ...]] = []
 
     for m in _LINK_OR_URL_RE.finditer(text):
-        # Add text before the link
         if m.start() > cursor:
-            segments.append((False, text[cursor:m.start()]))
+            segments.append(("plain", text[cursor:m.start()]))
 
-        # Handle the link
         if m.group("link_url") is not None:
             link_text = m.group("link_text")
             link_url = m.group("link_url")
-            # For anchor links, just add the text (with potential code formatting)
             if link_url.startswith("#"):
-                segments.append((False, link_text))
+                segments.append(("anchor", link_url, link_text))
             else:
-                # For real URLs, we'll add as hyperlink later
-                segments.append((True, (link_url, link_text)))
+                segments.append(("url", link_url, link_text))
         else:
-            # Bare URL
             url = m.group("bare")
-            segments.append((True, (url, url)))
+            segments.append(("url", url, url))
 
         cursor = m.end()
 
-    # Add remaining text
     if cursor < len(text):
-        segments.append((False, text[cursor:]))
+        segments.append(("plain", text[cursor:]))
 
-    # Second pass: process each segment for code spans and bold
-    for is_link, content in segments:
-        if is_link:
-            # Add hyperlink (content is tuple of (url, text))
-            url, link_text = content
-            # Process link text for code/bold before adding
+    for segment in segments:
+        kind = segment[0]
+        if kind == "plain":
+            _process_code_and_bold(paragraph, segment[1])
+        elif kind == "anchor":
+            add_internal_hyperlink(paragraph, segment[1], segment[2])
+        else:
+            url, link_text = segment[1], segment[2]
             temp_p = paragraph._element.getparent().makeelement(paragraph._element.tag)
             temp_para = paragraph.__class__(temp_p, paragraph._parent)
             _process_code_and_bold(temp_para, link_text)
-            # If temp paragraph has runs, use their text; otherwise use original
             if temp_para.runs:
                 link_text = "".join(r.text or "" for r in temp_para.runs)
             add_hyperlink(paragraph, url, link_text)
-        else:
-            # Regular text: process for code spans and bold
-            _process_code_and_bold(paragraph, content)
 
 
 def _process_code_and_bold(paragraph, text: str) -> None:
-    """Process text for inline code spans and bold, adding runs to paragraph."""
+    """Process text for inline code spans, bold, and italic, adding runs to paragraph."""
     cursor = 0
     for m in CODE_SPAN_RE.finditer(text):
         if m.start() > cursor:
@@ -474,6 +481,49 @@ HTML_A_TAG_RE = re.compile(r"<a[^>]*\bhref\s*=\s*['\"]([^'\"]+)['\"][^>]*>(.*?)<
 HTML_TAG_RE = re.compile(r"<[^>]+>")
 from html import unescape as _html_unescape
 
+def markdown_anchor(text: str) -> str:
+    """Slug for in-document cross-references (aligned with generate_reference.py)."""
+    return text.replace("`", "").replace("<", "").replace(">", "").lower().replace(" ", "-")
+
+
+def add_bookmark(paragraph, name: str, bookmark_id: int) -> None:
+    """Insert a Word bookmark on a paragraph for internal hyperlink targets."""
+    p = paragraph._p
+    start = OxmlElement("w:bookmarkStart")
+    start.set(qn("w:id"), str(bookmark_id))
+    start.set(qn("w:name"), name)
+    p.insert(0, start)
+    end = OxmlElement("w:bookmarkEnd")
+    end.set(qn("w:id"), str(bookmark_id))
+    p.append(end)
+
+
+def _style_hyperlink_runs(hyperlink) -> None:
+    for run in hyperlink.findall(qn("w:r")):
+        r_pr = run.find(qn("w:rPr"))
+        if r_pr is None:
+            r_pr = OxmlElement("w:rPr")
+            run.insert(0, r_pr)
+        r_style = OxmlElement("w:rStyle")
+        r_style.set(qn("w:val"), "Hyperlink")
+        r_pr.append(r_style)
+
+
+def add_internal_hyperlink(paragraph, anchor: str, text: str) -> None:
+    """Add a clickable in-document hyperlink to a bookmark (e.g. [text](#anchor))."""
+    anchor_name = anchor.lstrip("#")
+    mark = len(paragraph._p)
+    _process_code_and_bold(paragraph, text)
+    moved = paragraph._p[mark:]
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("w:anchor"), anchor_name)
+    for child in list(moved):
+        paragraph._p.remove(child)
+        hyperlink.append(child)
+    _style_hyperlink_runs(hyperlink)
+    paragraph._p.append(hyperlink)
+
+
 def add_hyperlink(paragraph, url: str, text: str):
     """Add a clickable hyperlink run to a paragraph.
 
@@ -502,6 +552,13 @@ def add_hyperlink(paragraph, url: str, text: str):
     hyperlink.append(new_run)
     paragraph._p.append(hyperlink)
     return paragraph
+
+
+def add_heading_with_bookmark(document: Document, raw_title: str, level: int, bookmark_id: int) -> None:
+    """Add a heading paragraph and a bookmark for cross-reference targets."""
+    display = _strip_markdown_formatting(raw_title)
+    paragraph = document.add_heading(display, level=level)
+    add_bookmark(paragraph, markdown_anchor(raw_title), bookmark_id)
 
 
 def _strip_html_comments_outside_code(md_text: str) -> str:
@@ -574,6 +631,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
     para_buf: List[str] = []
     # Track the last seen Markdown heading level to place sub-headers
     current_heading_level: int = 1
+    next_bookmark_id = 0
 
     # For list indentation, 2 spaces per level is common in this repo.
     def list_level_for_indent(s: str) -> int:
@@ -593,7 +651,10 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
                 if msum:
                     summary_text = msum.group(1).strip()
                     sub_level = min(current_heading_level + 1, 6)
-                    document.add_heading(summary_text, level=sub_level)
+                    add_heading_with_bookmark(
+                        document, summary_text, sub_level, next_bookmark_id
+                    )
+                    next_bookmark_id += 1
                     # Do not update current_heading_level so siblings remain at same level
                     i += 1
             # Skip optional blank/comment lines after <summary>
@@ -715,11 +776,9 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
         if mhead:
             finalize_paragraph_buf(document, para_buf)
             level = len(mhead.group(1))
-            text = mhead.group(2).strip()
-            # python-docx supports heading levels 0..9; use 1..6 for Markdown.
-            # Strip markdown formatting from heading text before adding
-            text = _strip_markdown_formatting(text)
-            document.add_heading(text, level=level)
+            raw_title = mhead.group(2).strip()
+            add_heading_with_bookmark(document, raw_title, level, next_bookmark_id)
+            next_bookmark_id += 1
             current_heading_level = level
             i += 1
             continue
