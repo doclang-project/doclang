@@ -1561,7 +1561,7 @@ The basic structure is shown below, e.g. for a `text` tag:
 <details>
   <summary>Cross-column structure example</summary>
 
-  <img src="reference/input/examples/thread.png" width="700">
+  <img src="examples/cross_column/thread.png" width="700">
 
 Each block that has location information is a top-level tag of the corresponding label, e.g. "text".
 
