@@ -1796,7 +1796,7 @@ to be reached to add the thread for "Europe" in the example above.
 Cross-references can be captured using the `<xref>` element as part of the element head, for pointing to a thread based on the `thread_id`.
 
 <details>
-  <summary>Cross-referencee example</summary>
+  <summary>Cross-reference example</summary>
 
   ![Cross-Reference Example](examples/refs/xref.png)
 
