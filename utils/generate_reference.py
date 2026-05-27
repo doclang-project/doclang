@@ -94,6 +94,7 @@ def parse_intermediate_markdown(md_file):
     element_descriptions = {}  # Store element descriptions
     element_contexts = {}  # Store element contexts
     element_context_header = None  # Store the context column header name
+    tbd_column_idx = None  # Index of the TBD column in the elements table (if present)
 
     # Parse the markdown table format
     lines = content.split('\n')
@@ -130,7 +131,9 @@ def parse_intermediate_markdown(md_file):
             header_parts = [p.strip() for p in line.split('|')]
             content_type_columns = {}
             for idx, header in enumerate(header_parts):
-                if header.startswith('[Content] '):
+                if header == 'TBD':
+                    tbd_column_idx = idx
+                elif header.startswith('[Content] '):
                     # Extract the content type name (just remove the prefix)
                     content_type = header.replace('[Content] ', '').strip()
                     content_type_columns[idx] = content_type
@@ -177,6 +180,12 @@ def parse_intermediate_markdown(md_file):
                 element = parts[2]
                 element_description = parts[3] if len(parts) > 3 else ''
                 element_context = parts[4] if len(parts) > 4 else ''
+                if (
+                    tbd_column_idx is not None
+                    and tbd_column_idx < len(parts)
+                    and parts[tbd_column_idx].strip().upper() == 'TRUE'
+                ):
+                    continue
                 if prefixed_category and element and prefixed_category != 'Category':
                     # Normalize the category to get canonical name
                     canonical_category = normalize_category_name(prefixed_category)

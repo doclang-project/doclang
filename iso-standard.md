@@ -169,8 +169,8 @@ While the details are specified in the sections further below, this snippet show
 <doclang>
   <!-- document head: -->
   <head>
-    <date>2020-01-01</date>
-    <topic>General</topic>
+    <default_resolution width="1024" height="1024"/>
+    <!-- ... -->
   </head>
 
   <!-- document body: -->
@@ -227,7 +227,7 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Appendix A: Reference](#appendix-a-reference).
 
-Metadata elements and attributes are further discussed in [Appendix B: Metadata](#appendix-b-metadata).
+Metadata elements and attributes are further discussed in [Metadata](#metadata).
 
 Special validation rules are covered in [Appendix C: Validation Rules](#appendix-c-validation-rules).
 
@@ -1979,7 +1979,7 @@ Exists exactly once, as root element.
 
 #### `<head>`
 
-Includes doc-level metadata. Also discussed in Appendix B.
+Includes doc-level metadata.
 
 ##### Allowed Context
 
@@ -2421,24 +2421,6 @@ Can only be child of a semantic element.
 
 None (empty element).
 
-#### `<h_thread>`
-
-Optional part of the element head; serves for capturing a component crossing horizontal boundaries (e.g. table verically split between multiple pages).
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `h_thread_id` | Required | Positive integer |  |
-
-##### Allowed Content Types
-
-None (empty element).
-
 #### `<xref>`
 
 Optional part of the element head; serves for capturing an outgoing cross-reference from this component.
@@ -2538,90 +2520,6 @@ Can only be child of a semantic element.
 
 None (empty element).
 
-#### `<timestamp>`
-
-TBD. Needed, if the individual hour/minute/etc are not all required (else cannot unambiguously interpret `<hour>0</hour>[`<minute>`](#minute)2</minute>[`<second>`](#second)3</second>`)
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Element head | Not allowed |
-| Raw text | Not allowed |
-| Primary semantic elements | Not allowed |
-
-#### `<hour>`
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `value` | Required | Non-negative integer |  |
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<minute>`
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `value` | Required | Non-negative integer |  |
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<second>`
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `value` | Required | Non-negative integer |  |
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<centisecond>`
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `value` | Required | Non-negative integer |  |
-
-##### Allowed Content Types
-
-None (empty element).
-
 #### `<layer>`
 
 ##### Allowed Context
@@ -2637,40 +2535,6 @@ Can only be child of a semantic element.
 ##### Allowed Content Types
 
 None (empty element).
-
-#### `<summary>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<classification>`
-
-##### Allowed Context
-
-Can only be child of [`<meta>`](#meta).
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Element head | Not allowed |
-| Raw text | Allowed |
-| Primary semantic elements | Not allowed |
 
 ### Payload Elements
 
@@ -3028,7 +2892,7 @@ None (empty element).
 
 #### `<nl>`
 
-New line / new table row
+New line / new table row.
 
 ##### Allowed Context
 
@@ -3066,279 +2930,30 @@ None
 
 This category comprises the document-level metadata elements that are the building blocks of [`<head>`](#head).
 
-#### `<title>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<author>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<date>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
 #### `<default_resolution>`
 
-TBD
+Defines the default resolution for the document.
 
 ##### Allowed Context
 
-TBD
+Can only be child of [`<head>`](#head).
 
 ##### Attributes
 
-None
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `width` | Optional; default "512" | Non-negative integer | Default document width in pixels. |
+| `height` | Optional; default "512" | Non-negative integer | Default document height in pixels. |
 
 ##### Allowed Content Types
 
 None (empty element).
 
-#### `<page_size>`
+## Appendix B: Planned Features
 
-TBD
+These features are considered for future versions of the standard.
 
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<language>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<generated_by>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<topic>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<summary>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<document_hash>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<licenses>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<data_classification>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<acceptable_use>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<stewardship>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<access_policy>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<retention_policy>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-#### `<compliance_requirements>`
-
-TBD
-
-##### Allowed Context
-
-TBD
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-None (empty element).
-
-## Appendix B: Metadata
+### Metadata
 
 Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
 
@@ -3354,7 +2969,7 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 Document-level metadata is contained in the `<head>` element, while component-level metadata is contained in an `<meta>`
 element within the respective component element. We discuss the details in the subsections below.
 
-### The `head` Element
+### `head`
 
 After the optional `version` element, the `doclang` element can continue with an optional `<head>` element.
 Below we list the reserved core metadata elements to be used within `<head>`:
@@ -3406,7 +3021,7 @@ Here is an example:
 </doclang>
 ```
 
-#### Governance and compliance metadata
+##### Governance and compliance metadata
 
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
 These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
@@ -3414,7 +3029,7 @@ These elements allow the communication of acceptable use, policy, licensing, con
 Governance and compliance metadata MUST be expressed at the document level inside `<head>`.
 Component-level governance (e.g., component-specific redaction or extraction restrictions) MAY be expressed inside a component’s `<meta>` when appropriate.
 
-##### Standards reference and interpretation
+###### Standards reference and interpretation
 
 The standards referenced throughout this Governance and Compliance section are provided to support alignment, interpretation, and interoperability.
 They are **informative**, not normative, unless explicitly stated otherwise.
@@ -3443,7 +3058,7 @@ The following standards and regulations are commonly referenced:
 Where multiple standards are referenced for a single metadata element, the intent is to indicate conceptual alignment rather than impose cumulative obligations.
 Implementers SHOULD consult authoritative sources and legal counsel to determine applicability within their specific legal and regulatory context.
 
-##### Governance narrative and flow
+###### Governance narrative and flow
 
 Governance metadata is intended to travel with the document and provide downstream systems with machine-readable constraints.
 The diagram below illustrates how the four governance areas map to common document-to-AI workflows.
@@ -3481,7 +3096,7 @@ flowchart LR
   T --> TM["Trained model"]
 ```
 
-##### Naming and terminology conventions
+###### Naming and terminology conventions
 
 This section uses the following terminology consistently:
 
@@ -3493,43 +3108,43 @@ This section uses the following terminology consistently:
 Where an element carries an enumerated value (e.g., `pii_status`, `rag_embedding_scope`), implementations SHOULD use a controlled vocabulary.
 Where an element carries a boolean, implementations SHOULD use explicit `true` / `false` values.
 
-##### Governance overview
+###### Governance overview
 
 Governance metadata is intended to be machine-actionable: it should enable downstream systems (including AI systems) to determine what is permitted, under what constraints, and with what obligations.
 
-##### Licensing and rights
+###### Licensing and rights
 
 - `licenses` Indicate one or more licenses covering use of the document.
 
-##### Data classification and privacy posture
+###### Data classification and privacy posture
 
 - `data_classification` One or more data classifications can be given for the document content.
   In general, data classification is not globally standardized. Organizations usually define a classification system suitable for their respective mission.
   These elements allow an organization to classify document sensitivity in their own terms.
 
-##### Acceptable use and purpose limitation
+###### Acceptable use and purpose limitation
 
 - `acceptable_use` Organizations may express acceptable use cases for the provided document data.
 
-##### Stewardship and contact
+###### Stewardship and contact
 
 - `stewardship` Provides the name of a person and/or organization with governance responsibility at the document owning organization.
 
-##### Access control policy
+###### Access control policy
 
 - `access_policy` Provides the ability to express access policy as well as enumerate roles allowed to access the data.
   Similar to data classification, there are no standards specifying role semantics.
   This element allows organizations to describe access policy and roles in their own terms.
 
-##### Retention and deletion
+###### Retention and deletion
 
 - `retention_policy` Allows organizations to state retention objectives for the document data.
 
-##### Compliance frameworks
+###### Compliance frameworks
 
 - `compliance_requirements` States the compliance frameworks (regulatory or industrial) governing the lifecycle and use of the documents.
 
-##### Privacy and PII controls
+###### Privacy and PII controls
 
 This subsection defines governance signals related to personal data detection, sensitivity, and permitted handling.
 Implementations SHOULD use these elements to drive privacy-aware processing (e.g., redaction, restricted access, minimization).
@@ -3563,7 +3178,7 @@ Unless otherwise required by an implementation, these elements are intended to b
 Implementations SHOULD define controlled vocabularies (and, where applicable, boolean conventions) for these elements.
 If an organization already has established internal taxonomies for classification, purpose, lawful basis, access tiers, or transfer mechanisms, those SHOULD be used consistently.
 
-##### Data extraction controls
+###### Data extraction controls
 
 This subsection defines governance signals that constrain automated extraction, transformation, and downstream use of extracted fields.
 Implementations SHOULD use these elements to ensure purpose limitation and auditability of extraction.
@@ -3592,7 +3207,7 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 Implementations SHOULD define controlled vocabularies for scope, purpose, granularity, transformations, and output constraints.
 Where extraction interacts with PII, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
 
-##### RAG and retrieval controls
+###### RAG and retrieval controls
 
 This subsection defines governance signals that constrain whether and how document content may be embedded, indexed, chunked, retrieved, and presented to models during retrieval-augmented generation.
 Implementations SHOULD use these elements to control exposure, leakage risk, and attribution requirements.
@@ -3622,7 +3237,7 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 Implementations SHOULD define controlled vocabularies for embedding scope, chunking constraints, query restrictions, and model scope.
 Where RAG interacts with PII or sensitive data, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
 
-##### Document training controls
+###### Document training controls
 
 This subsection defines governance signals that constrain whether and how document content may be used for training, fine-tuning, or evaluation of models.
 Implementations SHOULD use these elements to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
@@ -3652,7 +3267,7 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 Implementations SHOULD define controlled vocabularies for training scope, purpose, model type, and transformation requirements.
 Where training involves personal or sensitive data, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
 
-##### Minimal and full governance profiles
+###### Minimal and full governance profiles
 
 Implementations may adopt either a minimal governance profile (recommended baseline) or a full governance profile (richer control surface).
 These profiles are informative and provided to encourage consistent adoption.
@@ -3679,7 +3294,7 @@ The full profile includes the minimal profile plus additional elements from the 
 
 Producers SHOULD avoid emitting elements with ambiguous free-text values when a controlled vocabulary is available.
 
-##### Example
+###### Example
 
 Example use of the governance and compliance elements is shown below:
 
@@ -3752,7 +3367,7 @@ Example use of the governance and compliance elements is shown below:
 </doclang>
 ```
 
-##### Consolidated example (PII + extraction + RAG + training)
+###### Consolidated example (PII + extraction + RAG + training)
 
 The following example illustrates a single `<head>` that combines Privacy and PII controls, Data extraction controls, RAG and retrieval controls, and Document training controls.
 Implementations MAY choose to interpret these as organization-wide defaults for the document, and MAY override at component level using `<meta>` for finer-grained control.
