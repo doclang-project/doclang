@@ -111,6 +111,17 @@
   </xs:element>
 
   <!-- ============================================ -->
+  <!-- DEFAULT_RESOLUTION ELEMENT: document-level default width/height -->
+  <!-- ============================================ -->
+
+  <xs:element name="default_resolution">
+    <xs:complexType>
+      <xs:attribute name="width" type="xs:nonNegativeInteger" default="512"/>
+      <xs:attribute name="height" type="xs:nonNegativeInteger" default="512"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
   <!-- LOCATION ELEMENT: empty element with value and optional resolution attributes -->
   <!-- ============================================ -->
 

@@ -1,0 +1,8 @@
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="1024"/>
+  </head>
+  <text>
+    Width-only default resolution
+  </text>
+</doclang>

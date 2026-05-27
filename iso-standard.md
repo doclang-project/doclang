@@ -141,12 +141,10 @@ To separate between properties and actual content, DocLang follows a two-part sc
 
 The XML content of a semantic element begins with an *element head*, which is a sequence of dedicated elements that establish the element's properties, namely in this order:
 - [`<thread>`](#thread) (optional)
-- [`<h_thread>`](#h_thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
 - [`<meta>`](#meta) (optional)
 - sequence of 2*N [`<location>`](#location)s (N>1) (optional)
 - sequence of [`<timestamp>`](#timestamp)s (optional)
-- [`<layer>`](#layer) (optional)
 - [`<caption>`](#caption) (optional)
 
 #### Element Body
@@ -1561,7 +1559,7 @@ The basic structure is shown below, e.g. for a `text` tag:
 <details>
   <summary>Cross-column structure example</summary>
 
-  <img src="examples/cross_column/thread.png" width="700">
+  <img src="examples/cross_column/cross_column.png" width="700">
 
 Each block that has location information is a top-level tag of the corresponding label, e.g. "text".
 
@@ -2520,22 +2518,6 @@ Can only be child of a semantic element.
 
 None (empty element).
 
-#### `<layer>`
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `class` | Optional; default: "body" | {"body", "furniture", "background", "invisible", "notes"} |  |
-
-##### Allowed Content Types
-
-None (empty element).
-
 ### Payload Elements
 
 Payload elements are low-level elements that help define the effective content of another element.
@@ -2953,6 +2935,14 @@ None (empty element).
 
 These features are considered for future versions of the standard.
 
+### Horizontal Threading
+
+Horizontal threading enables linking related content across the horizontal axis in page or table layouts. The `h_thread` element supports this by explicitly connecting content (like table rows or columns) that spans multiple pages, ensuring these threads remain structured and traceable.
+
+### Layers
+
+Layers enable separating the document's main content (such as text and images) from supplementary information (such as guides or decorations).
+
 ### Metadata
 
 Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
@@ -2977,7 +2967,6 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - `title`
 - each `author` element can optionally begin with one or more `affiliation` elements
 - `date`
-- `default_resolution`, containing attributes for the document-level default `width` and `heigth` resolution in pixels; if element is missing, 512x512 is considered the default resolution.
 - `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
 - `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
 - `generated_by`, upstream pipeline information, e.g. VLM ID

@@ -1,0 +1,8 @@
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="-1" height="512"/>
+  </head>
+  <text>
+    Invalid default resolution width
+  </text>
+</doclang>
