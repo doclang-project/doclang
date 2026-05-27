@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <text>Page one content.</text>
+  <page_break/>
+  <text>Page two content.</text>
+</doclang>

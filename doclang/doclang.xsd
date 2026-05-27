@@ -103,6 +103,14 @@
   </xs:element>
 
   <!-- ============================================ -->
+  <!-- PAGE_BREAK ELEMENT: empty element (page break marker) -->
+  <!-- ============================================ -->
+
+  <xs:element name="page_break">
+    <xs:complexType/>
+  </xs:element>
+
+  <!-- ============================================ -->
   <!-- LOCATION ELEMENT: empty element with value and optional resolution attributes -->
   <!-- ============================================ -->
 
@@ -656,6 +664,7 @@
         <xs:element ref="dl:head" minOccurs="0"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
           <xs:group ref="dl:top_level_cat"/>
+          <xs:element ref="dl:page_break"/>
         </xs:choice>
       </xs:sequence>
       <xs:attribute name="version" use="optional" default="0.3">
