@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="100" height="200"/>
+  </head>
+  <text>
+    <location value="99"/>
+    <location value="199"/>
+    <location value="9" resolution="10"/>
+    <location value="0" resolution="10"/>
+    Valid location values are strictly below their axis limits.
+  </text>
+</doclang>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="100" height="200"/>
+  </head>
+  <text>
+    <location value="100"/>
+    <location value="50"/>
+    <location value="99"/>
+    <location value="199"/>
+    Invalid x location equals default width.
+  </text>
+</doclang>

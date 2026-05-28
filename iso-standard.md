@@ -142,7 +142,7 @@ To separate between properties and actual content, DocLang follows a two-part sc
 The XML content of a semantic element begins with an *element head*, which is a sequence of dedicated elements that establish the element's properties, namely in this order:
 - [`<thread>`](#thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
-- sequence of 2*N [`<location>`](#location)s (N>1) (optional)
+- sequence of 2*N [`<location>`](#location)s, whereby values are interpreted in alternating axis order (`x0, y0, ...`) (optional)
 - sequence of [`<timestamp>`](#timestamp)s (optional)
 - [`<caption>`](#caption) (optional)
 - [`<custom>`](#custom) (optional)
@@ -2492,8 +2492,8 @@ Can only be child of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `value` | Required | Integer within [0, resolution) |  |
-| `resolution` | Optional; defaults to head metadata [`<default_resolution>`](#default_resolution), otherwise "512" | Positive integer |  |
+| `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
+| `value` | Required | Integer within [0, `location.resolution`) |  |
 
 ##### Allowed Content Types
 
@@ -3461,7 +3461,7 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 ### Geometric Validation
 
 - Origin: The coordinate origin is the bottom-left corner of the page.
-- Normalization: Each `location` value is an integer within [0, resolution]; per-token `resolution` overrides `metadata.default_resolution`, else use 512×512.
+- Normalization: Each `location` value is an integer within [0, resolution); `location@resolution` overrides respective axis limit of `<default_resolution>`, else use 512×512.
 - Point: Exactly 2 consecutive `location` tokens are required (x, then y).
 - Bounding box: Exactly 4 consecutive `location` tokens are required in order x0, y0, x1, y1, with x0 ≤ x1 and y0 ≤ y1.
 - Rotated rectangle: Exactly 8 consecutive `location` tokens are required in order x0, y0, x1, y1, x2, y2, x3, y3; the segment (x0, y0)→(x1, y1) lies along the bottom edge in reading order.

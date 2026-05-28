@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
 
+  <head>
+    <default_resolution width="1024" height="1024"/>
+  </head>
+
   <!-- Caption in table element head; caption is semantic element itself -->
   <table>
     <location value="40"/><location value="130"/>

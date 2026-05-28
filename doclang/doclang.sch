@@ -116,6 +116,36 @@
   </sch:pattern>
 
   <!-- ============================================ -->
+  <!-- LOCATION: value must be within [0, axis_limit) -->
+  <!-- axis_limit precedence: location@resolution, head/default_resolution axis, fallback 512 -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="location-value-range">
+    <sch:rule context="dl:location">
+      <sch:let name="location-index" value="count(preceding-sibling::dl:location) + 1"/>
+      <sch:let name="is-x-axis" value="$location-index mod 2 = 1"/>
+      <sch:let name="doc-default-width" value="if (/dl:doclang/dl:head[1]/dl:default_resolution[1]/@width)
+                                               then number(/dl:doclang/dl:head[1]/dl:default_resolution[1]/@width)
+                                               else 512"/>
+      <sch:let name="doc-default-height" value="if (/dl:doclang/dl:head[1]/dl:default_resolution[1]/@height)
+                                                then number(/dl:doclang/dl:head[1]/dl:default_resolution[1]/@height)
+                                                else 512"/>
+      <sch:let name="axis-limit" value="if (@resolution)
+                                       then number(@resolution)
+                                       else if ($is-x-axis)
+                                       then $doc-default-width
+                                       else $doc-default-height"/>
+
+      <sch:assert test="number(@value) ge 0 and number(@value) lt $axis-limit">
+        Location value must satisfy 0 &lt;= value &lt; axis_limit.
+        Found value=<sch:value-of select="@value"/>, axis_limit=<sch:value-of select="$axis-limit"/>,
+        axis=<sch:value-of select="if ($is-x-axis) then 'x' else 'y'"/>,
+        location-index=<sch:value-of select="$location-index"/>.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
   <!-- THREAD: same thread_id must not span different host element types -->
   <!-- Host type is the parent semantic element (list, list-item, table, table-cell, text, picture, etc.) -->
   <!-- ============================================ -->

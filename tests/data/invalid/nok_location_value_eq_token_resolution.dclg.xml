@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <text>
+    <location value="3"/>
+    <location value="10" resolution="10"/>
+    <location value="9" resolution="10"/>
+    <location value="1"/>
+    Invalid y location equals token resolution.
+  </text>
+</doclang>
