@@ -142,10 +142,10 @@ To separate between properties and actual content, DocLang follows a two-part sc
 The XML content of a semantic element begins with an *element head*, which is a sequence of dedicated elements that establish the element's properties, namely in this order:
 - [`<thread>`](#thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
-- [`<meta>`](#meta) (optional)
 - sequence of 2*N [`<location>`](#location)s (N>1) (optional)
 - sequence of [`<timestamp>`](#timestamp)s (optional)
 - [`<caption>`](#caption) (optional)
+- [`<custom>`](#custom) (optional)
 
 #### Element Body
 
@@ -175,7 +175,6 @@ While the details are specified in the sections further below, this snippet show
   <text>
 
     <!-- element head: -->
-    <meta><summary>A salutation.</summary></meta>
     <location value="60"/><location value="260"/>
     <location value="440"/><location value="270"/>
 
@@ -225,7 +224,7 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Appendix A: Reference](#appendix-a-reference).
 
-Metadata elements and attributes are further discussed in [Metadata](#metadata).
+Planned extensions are discussed in [Appendix B: Planned Features](#appendix-b-planned-features).
 
 Special validation rules are covered in [Appendix C: Validation Rules](#appendix-c-validation-rules).
 
@@ -2459,27 +2458,7 @@ Can only be child of a semantic element. Mutually exclusive with [`<xref>`](#xre
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<meta>`
-
-Used to store additional or derived information regarding the respective component.
-
-##### Allowed Context
-
-Can only be child of a semantic element.
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Element head | Not allowed |
-| Raw text | Not allowed |
-| Primary semantic elements | Not allowed |
-
-#### `<custom_meta>`
+#### `<custom>`
 
 Custom metadata, e.g. for application-specific purposes.
 
@@ -2945,23 +2924,10 @@ Layers enable separating the document's main content (such as text and images) f
 
 ### Metadata
 
-Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
+#### `<head>`
 
-- deriveable from the document
-  - either directly, e.g. a summary of a certain component
-  - or in combination with other context, e.g. from external knowledge sources
-- or reflects properties of the upstream pipeline, e.g. the VLM that generated the document.
+Document-level metadata is contained in the optional `<head>` element.
 
-As applications can have varying requirements, this standard defines a set of reserved metadata elements for common use
-cases, but also allows for custom metadata elements to be added.
-To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
-
-Document-level metadata is contained in the `<head>` element, while component-level metadata is contained in an `<meta>`
-element within the respective component element. We discuss the details in the subsections below.
-
-### `head`
-
-After the optional `version` element, the `doclang` element can continue with an optional `<head>` element.
 Below we list the reserved core metadata elements to be used within `<head>`:
 
 - `title`
@@ -3015,8 +2981,7 @@ Here is an example:
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
 These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
 
-Governance and compliance metadata MUST be expressed at the document level inside `<head>`.
-Component-level governance (e.g., component-specific redaction or extraction restrictions) MAY be expressed inside a component’s `<meta>` when appropriate.
+Governance and compliance metadata MUST be expressed at the document level inside `<head>` and MAY be overridden at component level for finer-grained control.
 
 ###### Standards reference and interpretation
 
@@ -3174,7 +3139,7 @@ Implementations SHOULD use these elements to ensure purpose limitation and audit
 
 The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the document.
 These elements are intended to guide downstream systems that perform field extraction, transformation, enrichment, or export.
-Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level using `<meta>` where finer-grained control is required.
+Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
@@ -3203,7 +3168,7 @@ Implementations SHOULD use these elements to control exposure, leakage risk, and
 
 The following optional elements MAY be provided to govern whether and how document content may be embedded, indexed, retrieved, and surfaced to models or users as part of retrieval-augmented generation (RAG) workflows.
 These elements are intended to control exposure risk, attribution, and downstream use of retrieved content.
-Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level using `<meta>` where finer-grained control is required.
+Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
@@ -3233,7 +3198,7 @@ Implementations SHOULD use these elements to ensure licensing compliance, privac
 
 The following optional elements MAY be provided to govern whether and how document content may be used for model training, fine-tuning, evaluation, or benchmarking.
 These elements are intended to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
-Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level using `<meta>` where finer-grained control is required.
+Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
@@ -3359,7 +3324,7 @@ Example use of the governance and compliance elements is shown below:
 ###### Consolidated example (PII + extraction + RAG + training)
 
 The following example illustrates a single `<head>` that combines Privacy and PII controls, Data extraction controls, RAG and retrieval controls, and Document training controls.
-Implementations MAY choose to interpret these as organization-wide defaults for the document, and MAY override at component level using `<meta>` for finer-grained control.
+Implementations MAY choose to interpret these as organization-wide defaults for the document, and MAY override at component level for finer-grained control.
 
 ```xml
 <doclang>
@@ -3465,6 +3430,22 @@ Notes:
 - The example uses illustrative values. Implementations SHOULD define controlled vocabularies for enums such as `pii_status`, `pii_sensitivity_level`, `extraction_scope`, `rag_embedding_scope`, and `training_model_type`.
 - When `training_permitted` is `false`, implementations SHOULD treat training-related fields as either omitted or set to explicit "none" values.
 - Where retention elements include a `unit` attribute, producers MUST use consistent units and pre-normalized values.
+
+#### Component-level metadata
+
+<!--
+
+Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
+
+- deriveable from the document
+  - either directly, e.g. a summary of a certain component
+  - or in combination with other context, e.g. from external knowledge sources
+- or reflects properties of the upstream pipeline, e.g. the VLM that generated the document.
+
+As applications can have varying requirements, this standard defines a set of reserved metadata elements for common use
+cases, but also allows for custom metadata elements to be added.
+To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
+-->
 
 ## Appendix C: Validation Rules
 

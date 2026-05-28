@@ -182,7 +182,6 @@
 
   <!-- Example 5: Picture with element head and URI -->
   <picture>
-    <meta>image-metadata</meta>
     <location value="10" resolution="72"/>
     <location value="20" resolution="72"/>
     <location value="200"/>
@@ -191,9 +190,7 @@
   </picture>
 
   <!-- Example 6: Picture without URI -->
-  <picture>
-    <meta>embedded-image</meta>
-  </picture>
+  <picture/>
 
   <!-- Example 7: Caption element (in element head of group) -->
   <group>
@@ -324,10 +321,9 @@
     <text>Row</text>
   </table>
 
-  <!-- Example 19: Caption in element head with its own element head metadata -->
+  <!-- Example 19: Caption in element head with its own element head -->
   <group>
     <caption>
-      <meta>caption-meta</meta>
       <location value="0"/>
       <location value="200"/>
       <location value="400"/>
@@ -338,11 +334,14 @@
 
   <!-- Example 20: Text with complete element head -->
   <text>
-    <meta>metadata-info</meta>
     <location value="10"/>
     <location value="20"/>
     <location value="100"/>
     <location value="50"/>
+    <custom>
+      <source system="ocr">scanner-a</source>
+      <confidence_score value="0.98"/>
+    </custom>
     Regular text with <handwriting>handwritten notes</handwriting> and <marker>important</marker> markers.
   </text>
 
@@ -353,11 +352,14 @@
 
   <!-- Example 22: OTSL with element head and all separator types -->
   <table>
-    <meta>table-meta-1</meta>
     <location value="100"/>
     <location value="100"/>
     <location value="500"/>
     <location value="300"/>
+    <custom>
+      <assessment>positive</assessment>
+      <confidence_score value="0.98"/>
+    </custom>
     <fcel/>
     <text>A</text>
     <fcel/>
@@ -416,7 +418,6 @@
 
   <!-- Example 29: Text with element head -->
   <text>
-    <meta>text-meta</meta>
     Text with metadata
     <code>inline code and formula NOK</code>
     <code><![CDATA[<bold>print("hi")</bold>]]></code>
@@ -454,7 +455,6 @@
 
   <!-- Example 32b: List with element head (aligns with table validation) -->
   <list class="unordered">
-    <meta>list-meta-1</meta>
     <location value="10"/>
     <location value="100"/>
     <location value="200"/>
@@ -549,7 +549,6 @@
 
   <!-- Example 41: Group with element head -->
   <group>
-    <meta>group-metadata</meta>
     <location value="10"/>
     <location value="20"/>
     <location value="100"/>
@@ -561,7 +560,6 @@
   <!-- Example 42: Group with picture -->
   <group>
     <picture>
-      <meta>main-figure</meta>
       <caption>Figure 2: System architecture diagram</caption>
       <src uri="diagram.svg"/>
     </picture>
@@ -608,7 +606,6 @@
     <heading level="2">Sales Report</heading>
     <text>Q1 2024 results:</text>
     <table>
-      <meta>sales-table</meta>
       <location value="100"/>
       <location value="200"/>
       <location value="500"/>

@@ -155,6 +155,18 @@
   </xs:element>
 
   <!-- ============================================ -->
+  <!-- CUSTOM ELEMENT: arbitrary metadata as elements only (no raw text) -->
+  <!-- ============================================ -->
+
+  <xs:element name="custom">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
   <!-- THREAD ELEMENT: empty element with required thread_id (property element / element head) -->
   <!-- ============================================ -->
 
@@ -187,7 +199,7 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional thread, xref or href, meta, location_block, caption -->
+  <!-- ELEMENT HEAD (element_head): optional thread, xref or href, location_block, caption, custom -->
   <!-- TODO: to be aligned with spec (iso-standard.md) which includes: h_thread, timestamps -->
   <!-- ============================================ -->
 
@@ -198,9 +210,9 @@
         <xs:element ref="dl:xref"/>
         <xs:element ref="dl:href"/>
       </xs:choice>
-      <xs:element ref="dl:meta" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
       <xs:element ref="dl:caption" minOccurs="0"/>
+      <xs:element ref="dl:custom" minOccurs="0"/>
     </xs:sequence>
   </xs:group>
 
