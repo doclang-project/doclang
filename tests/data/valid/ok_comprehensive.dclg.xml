@@ -180,14 +180,13 @@
     <src uri="https://example.com/image.jpg"/>
   </picture>
 
-  <!-- Example 5: Picture with element head and URI (new location and layer syntax) -->
+  <!-- Example 5: Picture with element head and URI -->
   <picture>
     <meta>image-metadata</meta>
     <location value="10" resolution="72"/>
     <location value="20" resolution="72"/>
     <location value="200"/>
     <location value="150"/>
-    <layer class="body"/>
     <src uri="https://example.com/photo.png"/>
   </picture>
 
@@ -333,19 +332,17 @@
       <location value="200"/>
       <location value="400"/>
       <location value="220"/>
-      <layer class="background"/>
       <bold>Figure 3:</bold> Complex visualization with <hint>interactive elements</hint>
     </caption>
   </group>
 
-  <!-- Example 20: Text with complete element head (new layer syntax) -->
+  <!-- Example 20: Text with complete element head -->
   <text>
     <meta>metadata-info</meta>
     <location value="10"/>
     <location value="20"/>
     <location value="100"/>
     <location value="50"/>
-    <layer class="furniture"/>
     Regular text with <handwriting>handwritten notes</handwriting> and <marker>important</marker> markers.
   </text>
 
@@ -417,10 +414,10 @@
     <text>Second item</text>
   </list>
 
-  <!-- Example 29: Layer with class attribute -->
+  <!-- Example 29: Text with element head -->
   <text>
-    <layer class="body"/>
-    Text with layer (body class)
+    <meta>text-meta</meta>
+    Text with metadata
     <code>inline code and formula NOK</code>
     <code><![CDATA[<bold>print("hi")</bold>]]></code>
     <code><![CDATA[<bold>print("hi")</bold>]]></code>
@@ -557,7 +554,6 @@
     <location value="20"/>
     <location value="100"/>
     <location value="50"/>
-    <layer class="body"/>
     <text>Element with coordinates</text>
     <text>Another element</text>
   </group>

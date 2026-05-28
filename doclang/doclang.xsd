@@ -143,24 +143,6 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- LAYER ELEMENT: empty element with mandatory class attribute (default: body) -->
-  <!-- ============================================ -->
-
-  <xs:element name="layer">
-    <xs:complexType>
-      <xs:attribute name="class" use="required">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="body"/>
-            <xs:enumeration value="furniture"/>
-            <xs:enumeration value="background"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
-
-  <!-- ============================================ -->
   <!-- META ELEMENT: TODO: specify content (currently arbitrary) -->
   <!-- ============================================ -->
 
@@ -205,7 +187,7 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional thread, xref or href, meta, location_block, layer, caption -->
+  <!-- ELEMENT HEAD (element_head): optional thread, xref or href, meta, location_block, caption -->
   <!-- TODO: to be aligned with spec (iso-standard.md) which includes: h_thread, timestamps -->
   <!-- ============================================ -->
 
@@ -218,7 +200,6 @@
       </xs:choice>
       <xs:element ref="dl:meta" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
-      <xs:element ref="dl:layer" minOccurs="0"/>
       <xs:element ref="dl:caption" minOccurs="0"/>
     </xs:sequence>
   </xs:group>
