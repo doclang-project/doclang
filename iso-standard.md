@@ -2284,7 +2284,9 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 ##### Attributes
 
-None
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `level` | Optional; default "1" | Positive integer |  |
 
 ##### Allowed Content Types
 
