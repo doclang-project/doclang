@@ -552,7 +552,6 @@
 
   <!-- ============================================ -->
   <!-- FIELD_REGION ELEMENT: sequence of top_level_cat (no class attribute) -->
-  <!-- Similar to floating_group but without class attribute -->
   <!-- ============================================ -->
 
   <xs:element name="field_region">

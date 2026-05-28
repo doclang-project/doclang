@@ -8,34 +8,6 @@
   <sch:ns prefix="dl" uri="https://www.doclang.ai/ns/v0"/>
 
   <!-- ============================================ -->
-  <!-- FLOATING_GROUP: Validate class-specific content -->
-  <!-- ============================================ -->
-
-  <sch:pattern id="floating-group-picture">
-    <sch:rule context="dl:floating_group[@class='picture']">
-      <sch:assert test="count(.//dl:picture) >= 1">
-        A floating_group with class="picture" must contain at least one picture element.
-      </sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern id="floating-group-table">
-    <sch:rule context="dl:floating_group[@class='table']">
-      <sch:assert test="count(.//dl:table) >= 1">
-        A floating_group with class="table" must contain at least one table element.
-      </sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern id="floating-group-code">
-    <sch:rule context="dl:floating_group[@class='code']">
-      <sch:assert test="count(.//dl:code) >= 1">
-        A floating_group with class="code" must contain at least one code element.
-      </sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <!-- ============================================ -->
   <!-- NOTE: Element head order is enforced by XSD element_head group -->
   <!-- Schematron only validates structural tokens (ldiv for lists, cell tokens for tables) -->
   <!-- ============================================ -->
