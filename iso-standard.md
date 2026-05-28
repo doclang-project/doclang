@@ -2054,7 +2054,7 @@ Any context that allows semantic elements.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `level` | Optional; default "1" | Non-negative integer |  |
+| `level` | Optional; default "1" | Positive integer |  |
 
 ##### Allowed Content Types
 

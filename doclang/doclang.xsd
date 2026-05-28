@@ -343,7 +343,7 @@
   <xs:complexType name="heading_type">
     <xs:complexContent>
       <xs:extension base="dl:component_with_semantic_seq">
-        <xs:attribute name="level" type="xs:string" default="1"/>
+        <xs:attribute name="level" type="xs:positiveInteger" default="1"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
