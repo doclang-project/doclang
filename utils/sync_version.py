@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Version Sync Script for DocLang Standard
+Version Sync Script for DocLang
 
 This script reads the current doclang version (same resolution as `doclang --version`)
 and syncs it to:
-- iso-standard.md
+- spec.md
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
 
@@ -51,11 +51,11 @@ def resolve_sync_version(version_arg: str | None) -> str:
     return release_version_triple(current)
 
 
-def sync_version_in_iso_standard(file_path: Path, version: str) -> None:
-    """Update version references in iso-standard.md"""
+def sync_version_in_spec(file_path: Path, version: str) -> None:
+    """Update version references in spec.md"""
     content = file_path.read_text(encoding='utf-8')
     
-    # Extract MAJOR.MINOR for iso-standard.md
+    # Extract MAJOR.MINOR for spec.md
     major_minor = '.'.join(version.split('.')[:2])
     
     # Pattern: "The version of the present specification is **0.2**."
@@ -66,7 +66,7 @@ def sync_version_in_iso_standard(file_path: Path, version: str) -> None:
     )
     
     # Note: Attribute definitions are now managed via Excel automation
-    # and exported to iso-standard.md, so we don't update them here
+    # and exported to spec.md, so we don't update them here
     
     file_path.write_text(content, encoding='utf-8')
 
@@ -173,22 +173,22 @@ def sync_version_in_excel(file_path: Path, version: str) -> None:
 
 
 def sync_version(version_arg: str | None = None, project_root: Path | None = None) -> str:
-    """Sync version across iso-standard.md, doclang.xsd, and reference.xlsx."""
+    """Sync version across spec.md, doclang.xsd, and reference.xlsx."""
     if project_root is None:
         project_root = Path(__file__).resolve().parent.parent
 
-    iso_standard_path = project_root / "iso-standard.md"
+    spec_path = project_root / "spec.md"
     xsd_path = project_root / "doclang" / "doclang.xsd"
     excel_path = project_root / "reference" / "input" / "reference.xlsx"
 
     version = resolve_sync_version(version_arg)
 
-    if not iso_standard_path.exists():
-        raise FileNotFoundError(f"{iso_standard_path} not found")
+    if not spec_path.exists():
+        raise FileNotFoundError(f"{spec_path} not found")
     if not xsd_path.exists():
         raise FileNotFoundError(f"{xsd_path} not found")
 
-    sync_version_in_iso_standard(iso_standard_path, version)
+    sync_version_in_spec(spec_path, version)
     sync_version_in_xsd(xsd_path, version)
     sync_version_in_excel(excel_path, version)
 
@@ -198,7 +198,7 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sync DocLang version across iso-standard.md, doclang.xsd, and reference.xlsx",
+        description="Sync DocLang version across spec.md, doclang.xsd, and reference.xlsx",
     )
     parser.add_argument(
         "version",

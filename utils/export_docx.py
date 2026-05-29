@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
 """
-Generate an ISO draft DOCX from iso-standard.md.
+Export spec.md to Word (DOCX).
 
 Features:
 - Parses markdown headings, paragraphs, lists, code blocks, tables, images.
 - Embeds images referenced in the markdown into the DOCX.
 - Inserts a Word Table of Contents field (updates on open in Word).
-- Optionally uses iso-standards/ISO_standard_template.dotx if present.
+- Optionally uses exports/templates/word.dotx if present.
 
 Dependencies:
 - python-docx (pip install python-docx)
 
 Note: This is a lightweight Markdown parser tailored for this repository's
-iso-standard.md. It aims for faithful structure rather than exhaustive
-Markdown feature coverage. If you need more fidelity, consider running
-Pandoc externally and post-processing to add a TOC field.
+spec.md. It aims for faithful structure rather than exhaustive Markdown
+feature coverage. If you need more fidelity, consider running Pandoc externally
+and post-processing to add a TOC field.
 """
 
 from __future__ import annotations
@@ -44,10 +44,10 @@ except ImportError as exc:
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ISO_STANDARDS_DIR = ROOT / "iso-standards"
-ISO_TEMPLATE = ISO_STANDARDS_DIR / "ISO_standard_template.dotx"
-DEFAULT_MD = ROOT / "iso-standard.md"
-OUTPUT_DOCX = ISO_STANDARDS_DIR / "doclang_draft.docx"
+EXPORTS_DIR = ROOT / "exports"
+WORD_TEMPLATE = EXPORTS_DIR / "templates" / "word.dotx"
+DEFAULT_MD = ROOT / "spec.md"
+OUTPUT_DOCX = EXPORTS_DIR / "doclang.docx"
 
 
 def add_toc(document: Document) -> None:
@@ -843,7 +843,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
     finalize_paragraph_buf(document, para_buf)
 
 
-def build_document(md_path: Path, out_path: Path, copy_iso_style: bool = True) -> None:
+def build_document(md_path: Path, out_path: Path, apply_template_style: bool = True) -> None:
 
     document = Document()
 
@@ -861,23 +861,18 @@ def build_document(md_path: Path, out_path: Path, copy_iso_style: bool = True) -
     # Save the original, unmodified styling version
     document.save(str(out_path))
 
-    # Additionally save a copy with ISO styling applied, if requested and available
-    if ISO_TEMPLATE.exists() and copy_iso_style:
-        iso_styled_path = out_path.with_name(out_path.stem + ".iso-styling.docx")
-        # Start from the original file contents
-        shutil.copyfile(out_path, iso_styled_path)
-        # Lift styles (and related assets) from the template into the copied docx,
-        # replacing existing entries to avoid duplicate ZIP names warnings.
+    # Additionally save a styled copy when a Word template is available
+    if WORD_TEMPLATE.exists() and apply_template_style:
+        styled_path = out_path.with_name(out_path.stem + "-styled.docx")
+        shutil.copyfile(out_path, styled_path)
         to_copy = [
-            "word/styles.xml",           # styles (required)
-            # "word/numbering.xml",        # lists/bullets (if present)
-            # "word/theme/theme1.xml",     # theme (if present)
-            # "word/fontTable.xml",        # font table (optional)
+            "word/styles.xml",
         ]
-        replace_docx_parts_from_template(ISO_TEMPLATE, iso_styled_path, to_copy)
+        replace_docx_parts_from_template(WORD_TEMPLATE, styled_path, to_copy)
 
-def write_iso_draft(input_md: Path | None = None, out_path: Path | None = None) -> None:
-    """Generate the ISO draft DOCX from iso-standard.md."""
+
+def export_docx(input_md: Path | None = None, out_path: Path | None = None) -> None:
+    """Export spec.md (or input_md) to DOCX under exports/."""
     md_path = DEFAULT_MD if input_md is None else input_md
     output_path = OUTPUT_DOCX if out_path is None else out_path
 
@@ -886,25 +881,25 @@ def write_iso_draft(input_md: Path | None = None, out_path: Path | None = None) 
 
     print(f"Generating: {output_path}")
     build_document(md_path, output_path)
-    if ISO_TEMPLATE.exists():
-        iso_styled_path = output_path.with_name(output_path.stem + ".iso-styling.docx")
-        print(f"Generating: {iso_styled_path}")
+    if WORD_TEMPLATE.exists():
+        styled_path = output_path.with_name(output_path.stem + "-styled.docx")
+        print(f"Generating: {styled_path}")
     print("Done.")
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Write DocLang ISO draft DOCX from markdown")
+    parser = argparse.ArgumentParser(description="Export DocLang spec markdown to DOCX")
     parser.add_argument(
         "--input",
         type=str,
         default=str(DEFAULT_MD),
-        help="Path to input markdown (default: iso-standard.md)",
+        help="Path to input markdown (default: spec.md)",
     )
 
     args = parser.parse_args(argv)
 
     try:
-        write_iso_draft(Path(args.input))
+        export_docx(Path(args.input))
     except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)
         return 2

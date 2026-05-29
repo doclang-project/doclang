@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "doclang"
 dynamic = ["version"]
-description = "DocLang XML validation tool with XSD and Schematron support"
+description = "DocLang specification and reference validator (XSD, Schematron, CLI)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Prepare a DocLang Standard release.
+Prepare a DocLang release.
 
-Runs version sync, reference generation, ISO draft export, and CHANGELOG update.
+Runs version sync, reference generation, DOCX export, and CHANGELOG update.
 
 Usage:
     uv run python utils/prepare_release.py 0.4.0
@@ -25,11 +25,11 @@ if str(UTILS_DIR) not in sys.path:
 
 from generate_reference import generate_reference
 from sync_version import sync_version
-from write_iso_draft import write_iso_draft
+from export_docx import export_docx
 
 DEFAULT_CHANGELOG = ROOT / "CHANGELOG.md"
 DEFAULT_REFERENCE_INPUT = "reference/input"
-GITHUB_REPO = "https://github.com/doclang-project/doclang-standard"
+GITHUB_REPO = "https://github.com/doclang-project/doclang"
 
 
 def get_latest_tag(project_root: Path) -> str | None:
@@ -132,7 +132,7 @@ def prepare_release(
         reference_dir = project_root / reference_dir
     generate_reference(reference_dir)
 
-    write_iso_draft(project_root / "iso-standard.md")
+    export_docx(project_root / "spec.md")
     update_changelog(normalized, project_root=project_root)
 
     print(f"\nRelease {normalized} prepared.")
@@ -143,7 +143,7 @@ def prepare_release(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Prepare a DocLang Standard release (sync, reference, ISO draft, changelog)",
+        description="Prepare a DocLang release (sync, reference, DOCX export, changelog)",
     )
     parser.add_argument(
         "version",

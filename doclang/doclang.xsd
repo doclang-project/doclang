@@ -200,7 +200,7 @@
 
   <!-- ============================================ -->
   <!-- ELEMENT HEAD (element_head): optional thread, xref or href, location_block, caption, custom -->
-  <!-- TODO: to be aligned with spec (iso-standard.md) which includes: h_thread, timestamps -->
+  <!-- TODO: to be aligned with spec.md which includes: h_thread, timestamps -->
   <!-- ============================================ -->
 
   <xs:group name="element_head">
@@ -487,7 +487,7 @@
 
   <!-- ============================================ -->
   <!-- LIST ELEMENT: optional element_head + list_item* -->
-  <!-- Semantic element: may optionally begin with element_head (per iso-standard.md) -->
+  <!-- Semantic element: may optionally begin with element_head (per spec.md) -->
   <!-- Element head order enforced by XSD element_head group (sequence) -->
   <!-- Each list item starts with ldiv, followed by optional element_head for virtual text -->
   <!-- Schematron enforces: must start with ldiv (after optional list-level element head) -->
@@ -527,7 +527,7 @@
 
   <!-- ============================================ -->
   <!-- TABLE ELEMENT: optional element_head + table_cell* -->
-  <!-- Semantic element: may optionally begin with element_head (per iso-standard.md) -->
+  <!-- Semantic element: may optionally begin with element_head (per spec.md) -->
   <!-- Element head order enforced by XSD element_head group (sequence) -->
   <!-- Each table cell starts with cell token, followed by optional element_head for virtual text -->
   <!-- Schematron enforces: must start with cell token (after optional table-level element head) -->

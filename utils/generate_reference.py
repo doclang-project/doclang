@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Script to generate markdown documentation from an Excel file and update iso-standard.md
+Script to generate markdown documentation from an Excel file and update spec.md
 
 Process:
 1. Use docling to convert xlsx to intermediate markdown
 2. Parse the intermediate markdown to extract elements and attributes
 3. Generate structured output with H3 for categories, H4 for elements, and attributes arrays
-4. Update Appendix A in iso-standard.md with the generated content
+4. Update Appendix A in spec.md with the generated content
 
 Usage:
     python generate_reference.py <input_directory>
@@ -220,12 +220,12 @@ def parse_intermediate_markdown(md_file):
     return elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header
 
 
-def load_example_for_element(element_name, input_dir, iso_standard_path):
+def load_example_for_element(element_name, input_dir, spec_path):
     """Load example from INPUT_DIR/examples/ if it exists
 
     Returns a tuple: (xml_content, image_path) or (None, None) if no example exists
 
-    The image_path will be relative from iso-standard.md location to the PNG file
+    The image_path will be relative from spec.md location to the PNG file
     in INPUT_DIR/examples/.
     """
     # Remove backticks and angle brackets from element name to get filename
@@ -246,12 +246,12 @@ def load_example_for_element(element_name, input_dir, iso_standard_path):
     # Look for PNG file in the examples directory
     png_file = examples_dir / f"{clean_name}.png"
     if png_file.exists():
-        # Calculate relative path from iso-standard.md to the PNG file
+        # Calculate relative path from spec.md to the PNG file
         png_file_abs = png_file.resolve()
-        iso_standard_dir = Path(iso_standard_path).resolve().parent
+        spec_dir = Path(spec_path).resolve().parent
 
-        # Calculate relative path from iso-standard.md directory to PNG file
-        image_path = os.path.relpath(png_file_abs, iso_standard_dir)
+        # Calculate relative path from spec.md directory to PNG file
+        image_path = os.path.relpath(png_file_abs, spec_dir)
 
     # Return tuple if we have XML content
     if xml_content:
@@ -298,7 +298,7 @@ def linkify_element_references(text, all_elements):
     return text
 
 
-def generate_reference_content(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, iso_standard_path):
+def generate_reference_content(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, spec_path):
     """Generate the reference markdown content as a string"""
     print("Generating reference content...")
 
@@ -406,7 +406,7 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
                     output_lines.append("\n")
 
             # Check for and include example if it exists
-            xml_content, image_path = load_example_for_element(element, input_dir, iso_standard_path)
+            xml_content, image_path = load_example_for_element(element, input_dir, spec_path)
             if xml_content:
                 output_lines.append("##### Example\n\n")
 
@@ -428,48 +428,48 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
     return "".join(output_lines)
 
 
-def update_iso_standard_appendix(reference_content, iso_standard_file):
-    """Update Appendix A in iso-standard.md with generated reference content"""
+def update_spec_appendix(reference_content, spec_file):
+    """Update Appendix A in spec.md with generated reference content"""
     import re
 
-    print(f"\nUpdating Appendix A in {iso_standard_file}...")
+    print(f"\nUpdating Appendix A in {spec_file}...")
 
     try:
-        iso_content = Path(iso_standard_file).read_text(encoding='utf-8')
+        spec_content = Path(spec_file).read_text(encoding='utf-8')
 
         # Find Appendix A and B section markers
         appendix_a_pattern = r'(## Appendix A: Reference\n\n)'
         appendix_b_pattern = r'(## Appendix B:)'
 
-        match_a = re.search(appendix_a_pattern, iso_content)
-        match_b = re.search(appendix_b_pattern, iso_content)
+        match_a = re.search(appendix_a_pattern, spec_content)
+        match_b = re.search(appendix_b_pattern, spec_content)
 
         if not match_a:
-            print("Error: Could not find '## Appendix A: Reference' marker in iso-standard.md")
+            print("Error: Could not find '## Appendix A: Reference' marker in spec.md")
             return False
 
         if not match_b:
-            print("Error: Could not find '## Appendix B:' marker in iso-standard.md")
+            print("Error: Could not find '## Appendix B:' marker in spec.md")
             return False
 
         # Reconstruct the file: before Appendix A + reference content + from Appendix B onwards
-        before_appendix_a = iso_content[:match_a.end()]
-        from_appendix_b = iso_content[match_b.start():]
+        before_appendix_a = spec_content[:match_a.end()]
+        from_appendix_b = spec_content[match_b.start():]
         # Strip trailing whitespace from reference content to avoid extra blank lines
         new_content = before_appendix_a + reference_content.rstrip() + "\n\n" + from_appendix_b
 
-        # Write back to iso-standard.md
-        Path(iso_standard_file).write_text(new_content, encoding='utf-8')
-        print(f"✓ Successfully updated Appendix A in {iso_standard_file}")
+        # Write back to spec.md
+        Path(spec_file).write_text(new_content, encoding='utf-8')
+        print(f"✓ Successfully updated Appendix A in {spec_file}")
         return True
 
     except Exception as e:
-        print(f"Error updating iso-standard.md: {e}")
+        print(f"Error updating spec.md: {e}")
         return False
 
 
 def generate_reference(input_dir: str | Path) -> None:
-    """Generate reference content from Excel input and update iso-standard.md Appendix A."""
+    """Generate reference content from Excel input and update spec.md Appendix A."""
     input_dir = Path(input_dir)
 
     if not input_dir.exists():
@@ -496,7 +496,7 @@ def generate_reference(input_dir: str | Path) -> None:
     repo_root = Path(__file__).resolve().parent.parent
     intermediate_dir = repo_root / "build"
     intermediate_dir.mkdir(exist_ok=True)
-    iso_standard_path = repo_root / "iso-standard.md"
+    spec_path = repo_root / "spec.md"
 
     intermediate_file = run_docling_conversion(str(input_file), str(intermediate_dir))
     if not intermediate_file:
@@ -523,16 +523,16 @@ def generate_reference(input_dir: str | Path) -> None:
         element_contexts,
         element_context_header,
         str(input_dir),
-        str(iso_standard_path),
+        str(spec_path),
     )
 
-    if not update_iso_standard_appendix(reference_content, str(iso_standard_path)):
-        raise RuntimeError("Failed to update Appendix A in iso-standard.md")
+    if not update_spec_appendix(reference_content, str(spec_path)):
+        raise RuntimeError("Failed to update Appendix A in spec.md")
 
     print("\nAll tasks completed successfully!")
     print(f"- Input: {input_file}")
     print(f"- Intermediate: {intermediate_file}")
-    print(f"- Updated: {iso_standard_path}")
+    print(f"- Updated: {spec_path}")
 
 
 def main():
