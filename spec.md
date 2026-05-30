@@ -596,64 +596,6 @@ Document index example for table of contents:
 </table>
 ```
 
-<!--
-(TODO: following to be reviewed)
-Peculiarities and continuation
-
-1) Broken over rows (vertical split across pages)
-
-Use `<continue_row id="..."/>` at the end of the first fragment and the start of the next fragment’s `table`.
-
-```xml
-<group>
-  <caption>Table 2: Long Results</caption>
-  <table>
-    <location value="40"/><location value="120"/><location value="540"/><location value="760"/>
-    <ched/><text>ID</text><ched/><text>Name</text><ched/><text>Score</text><nl/>
-    <fcel/><text>1</text><fcel/><text>Alice</text><fcel/><text>91</text><nl/>
-    <fcel/><text>2</text><fcel/><text>Bob</text><fcel/><text>88</text><nl/>
-    <continue_row id="T-rows"/>
-  </table>
-</group>
-<page_break/>
-<group>
-  <table>
-    <location value="40"/><location value="80"/><location value="540"/><location value="300"/>
-    <continue_row id="T-rows"/>
-    <fcel/><text>3</text><fcel/><text>Cara</text><fcel/><text>95</text><nl/>
-    <fcel/><text>4</text><fcel/><text>Dan</text><fcel/><text>89</text><nl/>
-  </table>
-</group>
-```
-
-2) Broken over columns (horizontal split across facing pages)
-
-Use `<continue_col id="..."/>` to indicate that columns continue on an adjacent page. Place it at the right edge of the left fragment and the left edge of the right fragment.
-
-```xml
-<!-- Left page - ->
-<group>
-  <table>
-    <location value="40"/><location value="120"/><location value="300"/><location value="760"/>
-    <ched/><text>Metric</text><ched/><text>Model A</text><nl/>
-    <fcel/><text>Accuracy</text><fcel/><text>0.92</text><nl/>
-    <fcel/><text>F1</text><fcel/><text>0.90</text><nl/>
-    <continue_col id="T-cols"/>
-  </table>
-</group>
-
-<!-- Right page - ->
-<group>
-  <table>
-    <location value="320"/><location value="120"/><location value="820"/><location value="760"/>
-    <continue_col id="T-cols"/>
-    <ched/><text>Model B</text><nl/>
-    <fcel/><text>0.93</text><nl/>
-    <fcel/><text>0.91</text><nl/>
-  </table>
-</group>
-``` -->
-
 Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
 
 ```xml
@@ -1793,7 +1735,7 @@ to be reached to add the thread for "Europe" in the example above.
 Cross-references can be captured using the `<xref>` element as part of the element head, for pointing to a thread based on the `thread_id`.
 
 <details>
-  <summary>Cross-reference example</summary>
+  <summary>Inline cross-reference example</summary>
 
   ![Cross-Reference Example](examples/refs/xref.png)
 
@@ -1804,7 +1746,7 @@ Cross-references can be captured using the `<xref>` element as part of the eleme
   </picture>
   <!--...-->
   <text>
-    <content>... is shown in <content/>
+    <content>... is shown in </content>
     <text><xref thread_id="1"/>Figure 3</text>
     . The desired balance...
   </text>
@@ -1883,7 +1825,7 @@ Superscript and subscript:
 
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
 
-1. If content spans across one (or more) page breaks, add `<thread thread_id="N"/>` to the item and reuse the same `id` in the continuing item.
+1. If content spans across one (or more) page breaks, add `<thread thread_id="N"/>` to each fragment, reusing the same `thread_id`.
 2. For the follow up content of the page, we follow a reading order and close all open elements before the `<page_break/>` element is introduced.
 
 An easy example is below,
@@ -1964,7 +1906,7 @@ Exists exactly once, as root element.
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
-| Primary semantic elements | Not allowed |
+| Primary semantic elements | Allowed |
 
 ##### Example
 
@@ -2855,7 +2797,7 @@ None (empty element).
 
 #### `<nl>`
 
-New line / new table row.
+Denotes the end of a table row.
 
 ##### Allowed Context
 
@@ -3456,7 +3398,8 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 - Root element must be `<doclang>`
 - List items must appear only within list groupings
 - OTSL tokens must appear only within `<table>` elements
-- Continuation tokens must be properly paired
+- Every `thread_id` used by an `<xref>` must be defined by at least one `<thread>` in the same document
+- All `<thread>` elements that share a given `thread_id` must be under the same host element type (e.g. all under `<text>`, not mixed `<text>` and `<picture>`)
 
 ### Geometric Validation
 
