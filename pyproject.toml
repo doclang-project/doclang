@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=80", "setuptools-scm>=8"]
+requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "doclang"
-dynamic = ["version"]
+version = "0.3.0"  # DO NOT EDIT MANUALLY, updated automatically
 description = "DocLang specification and reference validator (XSD, Schematron, CLI)"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,7 +12,6 @@ dependencies = [
     "lxml>=6.0.2",
     "saxonche>=12.9.0",
     "typer>=0.15.1",
-    "rich>=13.9.4",
 ]
 
 [project.scripts]
@@ -37,7 +36,3 @@ package = true
 
 [tool.setuptools.packages.find]
 include = ["doclang*"]
-
-[tool.setuptools_scm]
-# On tag vX.Y.Z → X.Y.Z; commits after tag → X.Y.Z+g<short_sha>
-version_scheme = "only-version"

@@ -1,11 +1,14 @@
 """
 Version resolution for the doclang package.
 
-Matches setuptools-scm only-version: tag → X.Y.Z; commits after → X.Y.Z+g<sha>[.d<date> if dirty].
+Release scripts resolve from git tags (only-version: tag → X.Y.Z; commits after →
+X.Y.Z+g<sha>[.d<date> if dirty]). The CLI reads the release triple from
+pyproject.toml (or installed package metadata on PyPI).
 """
 
 import re
 import subprocess
+import tomllib
 from datetime import date
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -49,11 +52,24 @@ def version_from_git() -> str | None:
     return version_from_describe(describe)
 
 
+def version_from_pyproject() -> str | None:
+    """Read the release version from pyproject.toml."""
+    pyproject = _REPO_ROOT / "pyproject.toml"
+    if not pyproject.is_file():
+        return None
+    with pyproject.open("rb") as handle:
+        data = tomllib.load(handle)
+    project_version = data.get("project", {}).get("version")
+    if isinstance(project_version, str) and project_version.strip():
+        return project_version.strip()
+    return None
+
+
 def resolve_version() -> str:
-    """Prefer live git tags in a checkout; fall back to installed package metadata."""
-    git_version = version_from_git()
-    if git_version is not None:
-        return git_version
+    """Read version from pyproject.toml in a checkout; fall back to installed metadata."""
+    pyproject_version = version_from_pyproject()
+    if pyproject_version is not None:
+        return pyproject_version
     try:
         return version("doclang")
     except PackageNotFoundError:

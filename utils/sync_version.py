@@ -2,18 +2,16 @@
 """
 Version Sync Script for DocLang
 
-This script reads the current doclang version (same resolution as `doclang --version`)
-and syncs it to:
-- spec.md
+When no target version is given, the release triple is derived from git tags
+(vMAJOR.MINOR.PATCH). That version is synced to:
+- pyproject.toml
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
 
-The package version is derived from git tags via setuptools-scm (see pyproject.toml).
-Tags should follow vMAJOR.MINOR.PATCH (e.g. v0.3.0). Commits after a tag get a
-+g<sha> local suffix (e.g. 0.3.0+g93c2a53).
+`doclang --version` reads from pyproject.toml (or installed package metadata).
 
 Usage:
-    python utils/sync_version.py              # version from git / installed package
+    python utils/sync_version.py              # release triple from latest git tag
     python utils/sync_version.py 0.4.0        # explicit target release version
     python utils/sync_version.py v0.4.0       # v-prefix accepted
 """
@@ -28,13 +26,13 @@ from openpyxl import load_workbook
 from doclang.version import (
     normalize_version,
     release_version_triple,
-    resolve_version,
     validate_version,
+    version_from_git,
 )
 
 
 def resolve_sync_version(version_arg: str | None) -> str:
-    """Explicit CLI version, or release triple from the same source as doclang --version."""
+    """Explicit CLI version, or release triple from the latest git tag."""
     if version_arg is not None:
         try:
             return normalize_version(version_arg)
@@ -42,33 +40,13 @@ def resolve_sync_version(version_arg: str | None) -> str:
             print(f"Error: {exc}")
             sys.exit(1)
 
-    current = resolve_version()
-    if current == "unknown" or not validate_version(current):
-        print(f"Error: Could not resolve version (got '{current}')")
-        print("Run from a git checkout, `uv sync`, or pass an explicit version (e.g. 0.4.0)")
+    current = version_from_git()
+    if current is None or not validate_version(current):
+        print(f"Error: Could not resolve version from git (got '{current}')")
+        print("Run from a git checkout or pass an explicit version (e.g. 0.4.0)")
         sys.exit(1)
 
     return release_version_triple(current)
-
-
-def sync_version_in_spec(file_path: Path, version: str) -> None:
-    """Update version references in spec.md"""
-    content = file_path.read_text(encoding='utf-8')
-    
-    # Extract MAJOR.MINOR for spec.md
-    major_minor = '.'.join(version.split('.')[:2])
-    
-    # Pattern: "The version of the present specification is **0.2**."
-    content = re.sub(
-        r'(The version of the present specification is \*\*)\d+\.\d+(\*\*\.)',
-        rf'\g<1>{major_minor}\g<2>',
-        content
-    )
-    
-    # Note: Attribute definitions are now managed via Excel automation
-    # and exported to spec.md, so we don't update them here
-    
-    file_path.write_text(content, encoding='utf-8')
 
 
 def sync_version_in_xsd(file_path: Path, version: str) -> None:
@@ -172,23 +150,54 @@ def sync_version_in_excel(file_path: Path, version: str) -> None:
         print(f"⚠ Error updating {file_path}: {e}")
 
 
+def sync_version_in_pyproject(file_path: Path, version: str) -> None:
+    """Update the release version in pyproject.toml."""
+    content = file_path.read_text(encoding="utf-8")
+
+    content = re.sub(
+        r'^dynamic\s*=\s*\["version"\]\s*\n',
+        "",
+        content,
+        flags=re.MULTILINE,
+    )
+
+    if re.search(r'^version\s*=', content, re.MULTILINE):
+        content = re.sub(
+            r'^(version\s*=\s*")[^"]+("(?:\s+#.*)?)$',
+            rf'\g<1>{version}\g<2>',
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+    else:
+        content = re.sub(
+            r'^(name\s*=\s*"doclang"\s*\n)',
+            rf'\g<1>version = "{version}"\n',
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+
+    file_path.write_text(content, encoding="utf-8")
+
+
 def sync_version(version_arg: str | None = None, project_root: Path | None = None) -> str:
-    """Sync version across spec.md, doclang.xsd, and reference.xlsx."""
+    """Sync version across pyproject.toml, doclang.xsd, and reference.xlsx."""
     if project_root is None:
         project_root = Path(__file__).resolve().parent.parent
 
-    spec_path = project_root / "spec.md"
+    pyproject_path = project_root / "pyproject.toml"
     xsd_path = project_root / "doclang" / "doclang.xsd"
     excel_path = project_root / "reference" / "input" / "reference.xlsx"
 
     version = resolve_sync_version(version_arg)
 
-    if not spec_path.exists():
-        raise FileNotFoundError(f"{spec_path} not found")
+    if not pyproject_path.exists():
+        raise FileNotFoundError(f"{pyproject_path} not found")
     if not xsd_path.exists():
         raise FileNotFoundError(f"{xsd_path} not found")
 
-    sync_version_in_spec(spec_path, version)
+    sync_version_in_pyproject(pyproject_path, version)
     sync_version_in_xsd(xsd_path, version)
     sync_version_in_excel(excel_path, version)
 
@@ -198,7 +207,7 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sync DocLang version across spec.md, doclang.xsd, and reference.xlsx",
+        description="Sync DocLang version across pyproject.toml, doclang.xsd, and reference.xlsx",
     )
     parser.add_argument(
         "version",

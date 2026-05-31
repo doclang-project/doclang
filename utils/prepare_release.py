@@ -2,7 +2,7 @@
 """
 Prepare a DocLang release.
 
-Runs version sync, reference generation, DOCX export, and CHANGELOG update.
+Runs version sync (including pyproject.toml), reference generation, DOCX export, and CHANGELOG update.
 
 Usage:
     uv run python utils/prepare_release.py 0.4.0

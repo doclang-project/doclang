@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 
 from doclang.cli import app
 from doclang.utils import _VERSION
-from doclang.version import version_from_describe
+from doclang.version import version_from_describe, version_from_pyproject
 
 runner = CliRunner()
 
@@ -21,11 +21,13 @@ def test_version_from_describe():
     assert version_from_describe("v0.3.0-3-g93c2a53-dirty").startswith("0.3.0+g93c2a53.d")
 
 
-def test_cli_version_matches_latest_tag():
+def test_cli_version_matches_pyproject():
+    expected = version_from_pyproject()
+    assert expected is not None
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert _VERSION.startswith("0.3.")
-    assert "+g" in _VERSION
+    assert _VERSION == expected
+    assert expected in result.stdout
 
 
 def test_validate_valid_document():

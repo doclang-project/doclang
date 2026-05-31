@@ -23,19 +23,17 @@ For details, check out [doclang/README.md](./doclang/README.md).
 
 ## Version syncing
 
-The DocLang validator version is derived from git tags (via [setuptools-scm](https://github.com/pypa/setuptools-scm)).
-Tag releases as `vMAJOR.MINOR.PATCH` (e.g. `git tag v0.2.0`). On the tag itself the version is `0.2.0`;
-the next commit becomes `0.2.0+g<short_sha>` (a `.dYYYYMMDD` suffix is added when the working tree is dirty).
+Release preparation derives the target version from git tags (`vMAJOR.MINOR.PATCH`, e.g. `v0.3.0`)
+and writes the release triple to `pyproject.toml`, the XSD, and the reference Excel.
 
-`doclang --version` resolves from **`git describe`** when run inside a git checkout (same
-`only-version` rules as setuptools-scm). Otherwise it falls back to installed package metadata
-(e.g. wheels without `.git`).
+`doclang --version` reads from **`pyproject.toml`** in a checkout, or from installed package
+metadata on PyPI (where git tags are not available).
 
-To propagate a version across the spec artifacts, run:
+To propagate a version across artifacts, run:
 
 ```bash
-uv run python utils/sync_version.py 0.4.0   # target release (typical before tagging)
-uv run python utils/sync_version.py         # same version as doclang --version (release triple)
+uv run python utils/sync_version.py 0.4.0   # explicit target release (typical before tagging)
+uv run python utils/sync_version.py         # release triple from latest git tag
 ```
 
 ## Reference generation

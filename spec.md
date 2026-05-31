@@ -213,8 +213,6 @@ In the example further below:
 
 DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
 
-The version of the present specification is **0.3**.
-
 #### Semantic Versioning Principles
 
 The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. considering X >= 1, and Y < Z:
