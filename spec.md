@@ -140,10 +140,10 @@ To separate between properties and actual content, DocLang follows a two-part sc
 #### Element Head
 
 The XML content of a semantic element begins with an *element head*, which is a sequence of dedicated elements that establish the element's properties, namely in this order:
+- [`<label>`](#label) (optional)
 - [`<thread>`](#thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
 - sequence of 2*N [`<location>`](#location)s, whereby values are interpreted in alternating axis order (`x0, y0, ...`) (optional)
-- sequence of [`<timestamp>`](#timestamp)s (optional)
 - [`<caption>`](#caption) (optional)
 - [`<custom>`](#custom) (optional)
 
@@ -190,6 +190,25 @@ While the details are specified in the sections further below, this snippet show
 </doclang>
 ```
 
+### Subclasses
+
+Core document components like `<picture>` or `<code>` may be subclassed via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix D: Recommended Labels](#appendix-d-recommended-labels)), but for extensibility purposes, the label value is not to be validated.
+Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
+
+In the example further below:
+- `class="chart"` means the picture is semantically considered a chart and is therefore allowed to contain structured chart data in OTSL format
+- the label value is conveying the specific chart subclass for further classification purposes
+
+```xml
+<doclang>
+  <picture class="chart">
+    <label value="bar_chart"/>
+    <table>
+    <!-- structured chart data in OTSL ... -->
+    </table>
+  </picture>
+</doclang>
+
 ### Version Management and Compatibility
 
 DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
@@ -227,6 +246,8 @@ The individual DocLang elements and attributes, as well as DocLang's contextual 
 Planned extensions are discussed in [Appendix B: Planned Features](#appendix-b-planned-features).
 
 Special validation rules are covered in [Appendix C: Validation Rules](#appendix-c-validation-rules).
+
+Label recommendations are covered in [Appendix D: Recommended Labels](#appendix-d-recommended-labels).
 
 ## Usage Examples
 
@@ -274,7 +295,7 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 ### Code snippets
 
-Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. The `class` attribute can be optionally used for classifying the programming language.
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix D: Recommended Labels](#appendix-d-recommended-labels)).
 
 Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
 
@@ -290,7 +311,9 @@ Inline code:
 Code block with language classification and whitespace preservation:
 
 ```xml
-<code class="python"><content>
+<code>
+  <label value="Python"/>
+  <content>
   def add(a, b):
       return a + b
 
@@ -307,7 +330,8 @@ Grouped code with caption and coordinates:
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Listing 1: Minimal HTTP server
   </caption>
-  <code class="javascript">
+  <code>
+    <label value="JavaScript"/>
     <location value="10"/><location value="80"/><location value="400"/><location value="300"/>
     <content><![CDATA[
     // Minimal Node.js server
@@ -321,10 +345,11 @@ Grouped code with caption and coordinates:
 </group>
 ```
 
-Long code blocks can be split across pages using continuation elements; keep `<class>` in the first fragment.
+Long code blocks can be split across pages using continuation elements; keep `<label>` in the first fragment.
 
 ```xml
-<code class="bash">
+<code>
+  <label value="Shell"/>
   <thread thread_id="42"/>
   <content>
   # Part 1
@@ -584,16 +609,6 @@ A `group` element can be employed for associating a table with other semantic el
   </table>
   <footnote>Accuracy reported on validation set.</footnote>
 </group>
-```
-
-Document index example for table of contents:
-
-```xml
-<table class="index">
-  <ched/>Section<ched/>Page<nl/>
-  <fcel/>1. Introduction<fcel/>1<nl/>
-  <fcel/>2. Methodology<fcel/>5<nl/>
-</table>
 ```
 
 Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
@@ -1448,7 +1463,7 @@ Field region with mixed content:
       <text>BBox 5, add your taxable disabilit...</text>
   </list>
   <field_region><field_item><key>11</key><value>.</value></field_item></field_region>
-  <picture><class>pictogram</class></picture>
+  <picture><label value="logo"/></picture>
   <text>For more details on what to include on line 11...</text>
   <text>12 If you completed line 11, enter the smaller...</text>
   <field_region><field_item><key>12</key><value>74,992</value></field_item></field_region>
@@ -2104,7 +2119,27 @@ Any context that allows semantic elements.
 
 #### `<table>`
 
-Captures a table, in a format inspired by OTSL. Table cells are delimited by the respective structural elements. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a table in an OTSL-based format. Table cells are delimited by the respective structural elements. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+
+##### Allowed Context
+
+Any context that allows semantic elements. And additionally as the first element of the element body of `<picture class="chart">`.
+
+##### Attributes
+
+None
+
+##### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
+| Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
+| Primary semantic elements | Allowed |
+
+#### `<index>`
+
+Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Cells are delimited by the respective structural elements. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2112,9 +2147,7 @@ Any context that allows semantic elements.
 
 ##### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
-|-----------|----------|----------------|-------------|
-| `class` | Optional; default: "data" | {"data", "index"} | A value of "index" denotes a document index as it would be used e.g. for a table of contents. |
+None
 
 ##### Allowed Content Types
 
@@ -2162,7 +2195,7 @@ None
 
 #### `<picture>`
 
-Can contain specific semantic elements: [`<src>`](#src), [`<table>`](#table).
+Can contain a [`<src>`](#src). Additionally, the element body may begin with a [`<table>`](#table) in case of `<picture class="chart">` or with a [`<smiles>`](#smiles) in case of `<picture class="chemistry">`.
 
 ##### Allowed Context
 
@@ -2170,7 +2203,9 @@ Any context that allows semantic elements.
 
 ##### Attributes
 
-None
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `class` | Optional; default: "unspecified" | {"unspecified", "chart", "chemistry"} | The picture type. |
 
 ##### Allowed Content Types
 
@@ -2344,6 +2379,24 @@ None
 
 *Property elements* are non-semantic elements that help define useful traits of a semantic element, forming the main building blocks of the [element head](#element-head). Property elements that can appear on the top level of the element head are called *primary*, while those that can only appear within other property elements are called *secondary*. The various property elements are further specified in the following subsections.
 
+#### `<label>`
+
+Optional part of the element head; serves for providing a detailed label for the respective element.
+
+##### Allowed Context
+
+Can only be child of a semantic element.
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Optional; default: "unspecified" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
+
+##### Allowed Content Types
+
+None (empty element).
+
 #### `<thread>`
 
 Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references.<br/>  To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
@@ -2496,6 +2549,22 @@ None
 | Element head | Not allowed |
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
+
+#### `<smiles>`
+
+The SMILES representation of a molecule.
+
+##### Allowed Context
+
+Can only be the first element of the element body of `<picture class="chemistry">`.
+
+##### Attributes
+
+None
+
+##### Allowed Content Types
+
+None (empty element).
 
 ### Formatting Elements
 
@@ -2657,7 +2726,7 @@ Indicates the beginning of a full / regular cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2673,7 +2742,7 @@ Indicates the beginning of an empty cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2689,7 +2758,7 @@ Indicates the beginning of a column header cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2705,7 +2774,7 @@ Indicates the beginning of a row header cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2721,7 +2790,7 @@ Indicates the beginning of a corner cell, typically the top-left header intersec
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2737,7 +2806,7 @@ Indicates the beginning of a section row header.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2753,7 +2822,7 @@ Left-merge extension token; extends the previous cell horizontally (colspan cont
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2769,7 +2838,7 @@ Upward-merge extension token; extends the cell above vertically (rowspan continu
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2785,7 +2854,7 @@ Cross/combined span extension token; used where both horizontal and vertical spa
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -2801,7 +2870,7 @@ Denotes the end of a table row.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table).
+Can only be child of [`<table>`](#table) or [`<index>`](#index)
 
 ##### Attributes
 
@@ -3409,7 +3478,7 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 - Bounding box: Exactly 4 consecutive `location` tokens are required in order x0, y0, x1, y1, with x0 ≤ x1 and y0 ≤ y1.
 - Rotated rectangle: Exactly 8 consecutive `location` tokens are required in order x0, y0, x1, y1, x2, y2, x3, y3; the segment (x0, y0)→(x1, y1) lies along the bottom edge in reading order.
 - Geometric elements should appear in reading order when possible.
-
+<!--
 ### Temporal Validation
 
 - Components: Timestamps with second-level precision are encoded with `hour`, `minute`, and `second` tokens in strict order. Timestamps with sub-second precision are encoded with `hour`, `minute`, `second` and `centisecond` tokens in strict order.
@@ -3422,10 +3491,34 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 - Monotonicity (intervals): End time MUST be greater than or equal to start time when converted to total seconds.
 - Placement: Timestamp tokens MAY only appear on block-level elements and MUST precede textual content and inline formatting when present.
 - Coexistence: When both geometric and temporal tokens are present, both appear before content; relative order has no semantic effect.
-- Interpretation: Values are relative to a media timeline (not wall-clock), so dates/time zones do not apply.
+- Interpretation: Values are relative to a media timeline (not wall-clock), so dates/time zones do not apply. -->
 
 ### Content Validation
 
 - Text content must be valid Unicode (excluding null character)
 - Version strings must follow semantic versioning format
 - Classification values should use standard vocabularies where applicable
+
+## Appendix D: Recommended Labels
+
+### Pictures
+
+For picture labels, we recommend using the values defined below (as the `value` of `<label>`, without extra quoting):
+
+ <!-- TODO: review `table` label below -->
+
+| Context | Recommended values |
+| --- | --- |
+| `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot`, `table` |
+| `<picture class="chemistry">` | `chemistry_structure` |
+| `<picture>` (default, `class="unspecified"`) | `full_page_image`, `page_thumbnail`, `photograph`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
+
+If undefined, the label value `unspecified` can be used (default).
+
+### Code
+
+| Context | Recommended values |
+| --- | --- |
+| `<code>` | [Linguist](https://github.com/github-linguist/linguist/blob/v9.5.0/lib/linguist/languages.yml) v9.5.0 language keys (e.g. `Python`) |
+
+If undefined, the label value `unspecified` can be used (default).

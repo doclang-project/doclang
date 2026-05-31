@@ -95,14 +95,6 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- BR ELEMENT: empty element (line break) -->
-  <!-- ============================================ -->
-
-  <xs:element name="br">
-    <xs:complexType/>
-  </xs:element>
-
-  <!-- ============================================ -->
   <!-- PAGE_BREAK ELEMENT: empty element (page break marker) -->
   <!-- ============================================ -->
 
@@ -167,6 +159,16 @@
   </xs:element>
 
   <!-- ============================================ -->
+  <!-- LABEL ELEMENT: empty element with optional value (property element / element head) -->
+  <!-- ============================================ -->
+
+  <xs:element name="label">
+    <xs:complexType>
+      <xs:attribute name="value" type="xs:string" default="unspecified"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
   <!-- THREAD ELEMENT: empty element with required thread_id (property element / element head) -->
   <!-- ============================================ -->
 
@@ -199,12 +201,12 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional thread, xref or href, location_block, caption, custom -->
-  <!-- TODO: to be aligned with spec.md which includes: h_thread, timestamps -->
+  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, location_block, caption, custom -->
   <!-- ============================================ -->
 
   <xs:group name="element_head">
     <xs:sequence>
+      <xs:element ref="dl:label" minOccurs="0"/>
       <xs:element ref="dl:thread" minOccurs="0"/>
       <xs:choice minOccurs="0">
         <xs:element ref="dl:xref"/>
@@ -227,16 +229,34 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- PICTURE ELEMENT: element_head + optional src -->
+  <!-- SMILES ELEMENT: molecule representation (child of picture class="chemistry") -->
+  <!-- ============================================ -->
+
+  <xs:element name="smiles">
+    <xs:complexType/>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- PICTURE ELEMENT: element_head + body (table or smiles may begin body, then src) -->
   <!-- ============================================ -->
 
   <xs:element name="picture">
     <xs:complexType>
       <xs:sequence>
         <xs:group ref="dl:element_head"/>
-        <xs:element ref="dl:src" minOccurs="0"/>
         <xs:element ref="dl:table" minOccurs="0"/>
+        <xs:element ref="dl:smiles" minOccurs="0"/>
+        <xs:element ref="dl:src" minOccurs="0"/>
       </xs:sequence>
+      <xs:attribute name="class" use="optional" default="unspecified">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="unspecified"/>
+            <xs:enumeration value="chart"/>
+            <xs:enumeration value="chemistry"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
     </xs:complexType>
   </xs:element>
 
@@ -271,7 +291,7 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- HEADLESS_TXT: formatting, marker, hint, checkbox, br (no picture) -->
+  <!-- HEADLESS_TXT: formatting, marker, hint, checkbox (no picture) -->
   <!-- Reuses formatting_group -->
   <!-- ============================================ -->
 
@@ -281,7 +301,6 @@
       <xs:element ref="dl:marker"/>
       <xs:element ref="dl:hint"/>
       <xs:element ref="dl:checkbox"/>
-      <xs:element ref="dl:br"/>
     </xs:choice>
   </xs:group>
 
@@ -351,18 +370,10 @@
   <xs:element name="heading" type="dl:heading_type"/>
 
   <!-- ============================================ -->
-  <!-- CODE ELEMENT: extends component_with_headless_seq with class attribute -->
+  <!-- CODE ELEMENT: uses component_with_headless_seq (language via label in element head) -->
   <!-- ============================================ -->
 
-  <xs:complexType name="code_type">
-    <xs:complexContent>
-      <xs:extension base="dl:component_with_headless_seq">
-        <xs:attribute name="class" type="xs:string"/>  <!-- NOTE: currently not governed -->
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-
-  <xs:element name="code" type="dl:code_type"/>
+  <xs:element name="code" type="dl:component_with_headless_seq"/>
 
   <!-- ============================================ -->
   <!-- FORMULA ELEMENT: uses component_with_headless_seq -->
@@ -421,7 +432,7 @@
 
   <!-- ============================================ -->
   <!-- TOP_LEVEL_CAT: reusable group for top-level document elements -->
-  <!-- Includes: text, heading, code, formula, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, group -->
+  <!-- Includes: text, heading, code, formula, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, index, group -->
   <!-- Note: caption appears only in the element head (element_head), not in body content -->
   <!-- ============================================ -->
 
@@ -443,6 +454,7 @@
       <xs:element ref="dl:value"/>
       <xs:element ref="dl:picture"/>
       <xs:element ref="dl:table"/>
+      <xs:element ref="dl:index"/>
     </xs:choice>
   </xs:group>
 
@@ -539,14 +551,19 @@
         <xs:group ref="dl:element_head"/>
         <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute name="class" use="optional" default="data">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="data"/>
-            <xs:enumeration value="index"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- INDEX ELEMENT: OTSL-based index (same cell model as table, no class attribute) -->
+  <!-- ============================================ -->
+
+  <xs:element name="index">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:group ref="dl:element_head"/>
+        <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
 

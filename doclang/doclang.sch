@@ -18,10 +18,10 @@
 
   <sch:pattern id="list-structure">
     <sch:rule context="dl:list[*]">
-      <sch:let name="first-non-header" value="*[not(self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
+      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
       <sch:assert test="not($first-non-header) or $first-non-header[self::dl:ldiv]">
-        List must have ldiv as first element after optional element head (property elements: thread, xref, href, location, caption, custom).
+        List must have ldiv as first element after optional element head (property elements: label, thread, xref, href, location, caption, custom).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
       </sch:assert>
     </sch:rule>
@@ -32,14 +32,14 @@
   <!-- ============================================ -->
 
   <sch:pattern id="table-structure">
-    <sch:rule context="dl:table[*]">
-      <sch:let name="first-non-header" value="*[not(self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
+    <sch:rule context="dl:table[*] | dl:index[*]">
+      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
       <sch:assert test="not($first-non-header) or
                         $first-non-header[self::dl:fcel or self::dl:ecel or self::dl:ched or
                                          self::dl:rhed or self::dl:corn or self::dl:srow or
                                          self::dl:lcel or self::dl:ucel or self::dl:xcel]">
-        Table must have cell-starting token as first element after optional element head (property elements: thread, xref, href, location, caption, custom).
+        Table and index must have cell-starting token as first element after optional element head (property elements: label, thread, xref, href, location, caption, custom).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
       </sch:assert>
     </sch:rule>
@@ -51,7 +51,7 @@
   <!-- ============================================ -->
 
   <sch:pattern id="table-rectangular-grid">
-    <sch:rule context="dl:table[dl:nl]">
+    <sch:rule context="dl:table[dl:nl] | dl:index[dl:nl]">
       <!-- Define cell-starting tokens (tokens that begin a new cell) -->
       <sch:let name="cell-tokens" value="dl:fcel | dl:ecel | dl:ched | dl:rhed | dl:corn | dl:srow | dl:lcel | dl:ucel | dl:xcel"/>
 
@@ -62,7 +62,7 @@
       <sch:assert test="every $nl in dl:nl[position() > 1] satisfies
                         count($cell-tokens[preceding-sibling::dl:nl[1] is $nl/preceding-sibling::dl:nl[1] and
                                           following-sibling::dl:nl[1] is $nl]) = $first-row-cells">
-        Table must follow the rectangular rule: all rows must have the same number of cells.
+        Table and index must follow the rectangular rule: all rows must have the same number of cells.
         First row has <sch:value-of select="$first-row-cells"/> cells, but at least one other row has a different count.
         Each row should have the same count of cell-starting tokens (fcel, ecel, ched, rhed, corn, srow, lcel, ucel, xcel) before each nl element.
       </sch:assert>
@@ -71,7 +71,7 @@
 
   <!-- ============================================ -->
   <!-- ELEMENT HEAD: Text must not precede property elements -->
-  <!-- Property elements: thread, xref, href, location, caption, custom (per XSD element_head group) -->
+  <!-- Property elements: label, thread, xref, href, location, caption, custom (per XSD element_head group) -->
   <!-- This rule applies to regular semantic elements AND virtual <text> in lists/tables -->
   <!-- ============================================ -->
 
@@ -79,13 +79,13 @@
     <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption |
                        dl:page_header | dl:page_footer | dl:footnote | dl:picture |
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
-                       dl:list | dl:table | dl:group">
-      <sch:let name="header-elements" value="dl:thread | dl:xref | dl:href | dl:location | dl:caption | dl:custom"/>
+                       dl:list | dl:table | dl:index | dl:group">
+      <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:location | dl:caption | dl:custom"/>
 
-      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom]]"/>
+      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom]]"/>
 
       <sch:assert test="every $t in $text-before-header satisfies normalize-space($t) = ''">
-        Property elements in the element head (thread, xref, href, location, caption, custom) must appear before any non-whitespace text content.
+        Property elements in the element head (label, thread, xref, href, location, caption, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
@@ -161,8 +161,8 @@
                           return
                             if ($t/parent::dl:list) then
                               (if ($t/preceding-sibling::dl:ldiv) then 'list-item' else 'list')
-                            else if ($t/parent::dl:table) then
-                              (if ($t/preceding-sibling::*[local-name() = $cell-token-names]) then 'table-cell' else 'table')
+                            else if ($t/parent::dl:table or $t/parent::dl:index) then
+                              (if ($t/preceding-sibling::*[local-name() = $cell-token-names]) then 'table-cell' else local-name($t/parent::*))
                             else local-name($t/parent::*)
                         )) = 1">
         All thread elements with the same thread_id must use the same host element type
@@ -185,7 +185,7 @@
                                           then following-sibling::node()[following-sibling::dl:ldiv[1] is $next-ldiv]
                                           else following-sibling::node()"/>
 
-      <sch:let name="header-elements" value="$item-content[self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom]"/>
+      <sch:let name="header-elements" value="$item-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom]"/>
 
       <sch:let name="first-header-index" value="if ($header-elements)
                                                  then index-of($item-content, $header-elements[1])[1]
@@ -197,7 +197,7 @@
                                                  else ()"/>
 
       <sch:assert test="empty($text-before-header)">
-        In list items (virtual text), property elements in the element head (thread, xref, href, location, caption, custom) must appear before any non-whitespace text content.
+        In list items (virtual text), property elements in the element head (label, thread, xref, href, location, caption, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
@@ -212,7 +212,10 @@
   <sch:pattern id="table-virtual-text-element-head">
     <sch:rule context="dl:table/dl:fcel | dl:table/dl:ecel | dl:table/dl:ched |
                        dl:table/dl:rhed | dl:table/dl:corn | dl:table/dl:srow |
-                       dl:table/dl:lcel | dl:table/dl:ucel | dl:table/dl:xcel">
+                       dl:table/dl:lcel | dl:table/dl:ucel | dl:table/dl:xcel |
+                       dl:index/dl:fcel | dl:index/dl:ecel | dl:index/dl:ched |
+                       dl:index/dl:rhed | dl:index/dl:corn | dl:index/dl:srow |
+                       dl:index/dl:lcel | dl:index/dl:ucel | dl:index/dl:xcel">
       <sch:let name="next-token" value="following-sibling::*[self::dl:fcel or self::dl:ecel or self::dl:ched or
                                                               self::dl:rhed or self::dl:corn or self::dl:srow or
                                                               self::dl:lcel or self::dl:ucel or self::dl:xcel or
@@ -222,7 +225,7 @@
                                           then following-sibling::node()[following-sibling::*[. is $next-token]]
                                           else following-sibling::node()[not(following-sibling::dl:nl)]"/>
 
-      <sch:let name="header-elements" value="$cell-content[self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom]"/>
+      <sch:let name="header-elements" value="$cell-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom]"/>
 
       <sch:let name="first-header-index" value="if ($header-elements)
                                                  then index-of($cell-content, $header-elements[1])[1]
@@ -234,8 +237,38 @@
                                                  else ()"/>
 
       <sch:assert test="empty($text-before-header)">
-        In table cells (virtual text), property elements in the element head (thread, xref, href, location, caption, custom) must appear before any non-whitespace text content.
+        In table and index cells (virtual text), property elements in the element head (label, thread, xref, href, location, caption, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- PICTURE BODY: class-specific first body element (table for chart, smiles for chemistry) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="picture-body">
+    <sch:rule context="dl:picture">
+      <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
+
+      <sch:assert test="not(not(@class) or @class = 'unspecified') or (empty(dl:table) and empty(dl:smiles))">
+        Picture with class="unspecified" (or no class) must not contain table or smiles in the element body.
+      </sch:assert>
+
+      <sch:assert test="not(@class = 'chart') or empty(dl:smiles)">
+        Picture with class="chart" must not contain smiles.
+      </sch:assert>
+
+      <sch:assert test="not(@class = 'chemistry') or empty(dl:table)">
+        Picture with class="chemistry" must not contain table.
+      </sch:assert>
+
+      <sch:assert test="empty(dl:table) or (@class = 'chart' and dl:table[1] is $first-body)">
+        Element table is only allowed as the first element of the body of picture with class="chart".
+      </sch:assert>
+
+      <sch:assert test="empty(dl:smiles) or (@class = 'chemistry' and dl:smiles[1] is $first-body)">
+        Element smiles is only allowed as the first element of the body of picture with class="chemistry".
       </sch:assert>
     </sch:rule>
   </sch:pattern>

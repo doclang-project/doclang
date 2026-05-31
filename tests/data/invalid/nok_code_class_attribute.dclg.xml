@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Invalid: code has no attributes; use label in element head -->
+  <code class="Python">
+    <content>print("hello")</content>
+  </code>
+</doclang>

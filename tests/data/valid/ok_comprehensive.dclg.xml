@@ -24,21 +24,24 @@
     <bold>Advanced Topics</bold> in <italic>Machine Learning</italic>
   </heading>
 
-  <!-- Example 1d: Code element with class attribute -->
-  <code class="python">
-    def hello_world():<br/>
-    <content>    print("Hello, World!")</content>
+  <!-- Example 1d: Code element with language label (Linguist) -->
+  <code>
+    <label value="Python"/>
+    <content>if x == y:
+  print("Hello, World!")</content>
   </code>
 
-  <!-- Example 1e: Code element without class attribute -->
+  <!-- Example 1e: Code element without language label -->
   <code>
     SELECT * FROM users WHERE id = 1;
   </code>
 
   <!-- Example 1f: Code with formatting -->
-  <code class="java">
-    <bold>public</bold> class Main {<br/>
-    <content>    // Main method</content>
+  <code>
+    <label value="Java"/>
+    <bold>public</bold>
+    <content> class Main {
+    // Main method</content>
   </code>
 
   <!-- Example 1g: Formula element -->
@@ -235,11 +238,11 @@
     See the <hint><bold>tooltip</bold></hint> for more information.
   </text>
 
-  <!-- Example 12: Text with line breaks -->
+  <!-- Example 12: Text with line breaks (whitespace in content) -->
   <text>
-    First line<br/>
-    Second line<br/>
-    Third line
+    <content>First line
+Second line
+Third line</content>
   </text>
 
   <!-- Example 13: Text with checkbox (default unselected, explicit selected, explicit unselected) -->
@@ -390,11 +393,11 @@
     <italic><superscript>Italic superscript</superscript></italic>
   </text>
 
-  <!-- Example 25: Text with multiple line breaks -->
+  <!-- Example 25: Text with multiple line breaks (blank line in content) -->
   <text>
-    Paragraph 1<br/>
-    <br/>
-    Paragraph 2 after double break
+    <content>Paragraph 1
+
+Paragraph 2 after double break</content>
   </text>
 
   <!-- Example 26: RTL text with formatting -->

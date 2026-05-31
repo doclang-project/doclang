@@ -53,7 +53,7 @@
     </form>
     ...
     <text>The transport ... considered.</text>
-    <text>THESE TRANSPORT ... PACK!</text>    
+    <text>THESE TRANSPORT ... PACK!</text>
 </form>
 ```
 
@@ -173,7 +173,7 @@
         <checkbox selected="false"></checkbox>
     </form_item>
     ...
-    
+
 </form>
 ```
 
@@ -243,7 +243,7 @@
         <value></value>
     </form_item>
     ...
-    
+
 </form>
 ```
 
@@ -366,7 +366,7 @@
         <key>ALTRI DATI</key>
         <checkbox selected="false"></checkbox>
     </form_item>
-   
+
 
     <form_heading level="2">C4</form_heading>
     <form_heading level="3">SOMME PER PREMI DI RISULTATO E WELFARE AZIENDALE</form_heading>
@@ -514,31 +514,10 @@ FORMS:
 
 <form_item><key>11</key><value>.</value></form_item>
 
-<picture><class>pictogram</class></picture>
+<picture><label value="logo"/></picture>
 <text>For more details on what to include on line 11, see Figure Your Credit in the instructions.</text>
 
 <text>12 If you completed line 11, enter the smaller of line 10 or line 11. All others, enter the amount from line 10</text>
 <form_item><key>12</key><value>74,992</value></form_item>
 ...
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

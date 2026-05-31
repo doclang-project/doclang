@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- Invalid: chart body must begin with table when both table and src are present -->
+  <picture class="chart">
+    <src uri="chart.svg"/>
+    <table>
+      <ched/>A<ched/>B<nl/>
+      <fcel/>1<fcel/>2<nl/>
+    </table>
+  </picture>
+</doclang>
