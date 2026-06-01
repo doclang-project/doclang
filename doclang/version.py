@@ -2,13 +2,12 @@
 Version resolution for the doclang package.
 
 Release scripts resolve from git tags (only-version: tag → X.Y.Z; commits after →
-X.Y.Z+g<sha>[.d<date> if dirty]). The CLI reads the release triple from
-pyproject.toml (or installed package metadata on PyPI).
+X.Y.Z+g<sha>[.d<date> if dirty]). The CLI reads the installed package version via
+importlib.metadata.
 """
 
 import re
 import subprocess
-import tomllib
 from datetime import date
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -52,24 +51,8 @@ def version_from_git() -> str | None:
     return version_from_describe(describe)
 
 
-def version_from_pyproject() -> str | None:
-    """Read the release version from pyproject.toml."""
-    pyproject = _REPO_ROOT / "pyproject.toml"
-    if not pyproject.is_file():
-        return None
-    with pyproject.open("rb") as handle:
-        data = tomllib.load(handle)
-    project_version = data.get("project", {}).get("version")
-    if isinstance(project_version, str) and project_version.strip():
-        return project_version.strip()
-    return None
-
-
 def resolve_version() -> str:
-    """Read version from pyproject.toml in a checkout; fall back to installed metadata."""
-    pyproject_version = version_from_pyproject()
-    if pyproject_version is not None:
-        return pyproject_version
+    """Return the installed doclang distribution version."""
     try:
         return version("doclang")
     except PackageNotFoundError:
@@ -105,7 +88,6 @@ def normalize_version(version_str: str) -> str:
     normalized = release_version_triple(version_str.lstrip("v"))
     if not validate_version(normalized):
         raise ValueError(
-            f"Invalid version format: '{version_str}' "
-            "(expected MAJOR.MINOR or MAJOR.MINOR.PATCH, e.g. 0.4.0)"
+            f"Invalid version format: '{version_str}' (expected MAJOR.MINOR or MAJOR.MINOR.PATCH, e.g. 0.4.0)"
         )
     return normalized

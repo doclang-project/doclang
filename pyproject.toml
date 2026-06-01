@@ -7,7 +7,7 @@ name = "doclang"
 version = "0.3.0"  # DO NOT EDIT MANUALLY, updated automatically
 description = "DocLang specification and reference validator (XSD, Schematron, CLI)"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "lxml>=6.0.2",
     "saxonche>=12.9.0",
@@ -21,11 +21,16 @@ doclang = "doclang.cli:app"
 doclang = ["*.xsd", "*.sch"]
 
 [dependency-groups]
-dev = [
+ci = [
     "pre-commit~=3.7",
+    "mypy~=1.6",
+    "ruff>=0.14.11",
+    "pytest~=8.3",
+]
+dev = [
+    { include-group = "ci" },
     "pydantic>=2.11.10",
     "pyyaml>=6.0.3",
-    "pytest~=8.3",
     "openpyxl>=3.1.0",
     "python-docx>=1.2.0",
     "docling>=2.0.0",
@@ -33,6 +38,83 @@ dev = [
 
 [tool.uv]
 package = true
+default-groups = ["dev"]
 
 [tool.setuptools]
 packages = ["doclang"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+respect-gitignore = true
+exclude = [
+    "tests/data/**",
+]
+
+[tool.ruff.format]
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+select = [
+    "C",
+    "C9",
+    "E",
+    "F",
+    "I",
+    "PIE",
+    "Q",
+    "RUF",
+    "S307",
+    "W",
+    "ASYNC",
+    "UP",
+]
+ignore = [
+    "C408",
+    "E501",
+    "E741",
+    "PL",
+    "RUF005",
+    "RUF012",
+    "UP007",
+    "UP042",
+    "UP045",
+]
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    "classmethod",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
+"tests/*.py" = ["ASYNC"]
+"utils/prepare_release.py" = ["E402"]
+"utils/export_docx.py" = ["C901"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 30
+
+[tool.ruff.lint.isort]
+combine-as-imports = false
+
+[tool.mypy]
+pretty = true
+no_implicit_optional = true
+namespace_packages = true
+show_error_codes = true
+python_version = "3.10"
+exclude = "(^|/)tests/data/.*"
+
+[[tool.mypy.overrides]]
+module = [
+    "lxml.*",
+    "saxonche.*",
+    "typer.*",
+    "yaml.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false

@@ -4,13 +4,14 @@ Tests for the DocLang CLI.
 Tests the command-line interface using Typer's CliRunner.
 """
 
-import json
+from importlib.metadata import version
 from pathlib import Path
+
 from typer.testing import CliRunner
 
 from doclang.cli import app
 from doclang.utils import _VERSION
-from doclang.version import version_from_describe, version_from_pyproject
+from doclang.version import version_from_describe
 
 runner = CliRunner()
 
@@ -21,9 +22,8 @@ def test_version_from_describe():
     assert version_from_describe("v0.3.0-3-g93c2a53-dirty").startswith("0.3.0+g93c2a53.d")
 
 
-def test_cli_version_matches_pyproject():
-    expected = version_from_pyproject()
-    assert expected is not None
+def test_cli_version_matches_installed_metadata():
+    expected = version("doclang")
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert _VERSION == expected

@@ -16,11 +16,12 @@ Usage:
       (also may contain .dclg.xml and .png files for examples)
 """
 
-import re
 import os
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+
 from docling.document_converter import DocumentConverter
 
 
@@ -33,15 +34,16 @@ def normalize_element_name(element):
 def normalize_category_name(category):
     """Normalize category names by removing square and round brackets and their contents, then format for display"""
     import re
+
     # Remove content in square brackets including the brackets: [00], [01a], etc.
-    normalized = re.sub(r'\[[\w]+\]\s*', '', category)
+    normalized = re.sub(r"\[[\w]+\]\s*", "", category)
     # Remove content in round brackets including the brackets: (top), (inner), (outer)
-    normalized = re.sub(r'\s*\([^)]*\)', '', normalized)
+    normalized = re.sub(r"\s*\([^)]*\)", "", normalized)
     # Clean up extra whitespace
-    normalized = ' '.join(normalized.split())
+    normalized = " ".join(normalized.split())
     # Capitalize each word
     if normalized:
-        normalized = ' '.join(word.capitalize() for word in normalized.split())
+        normalized = " ".join(word.capitalize() for word in normalized.split())
     return normalized
 
 
@@ -69,7 +71,7 @@ def run_docling_conversion(input_file, output_dir):
 
         # Write to intermediate.md
         intermediate_md_file = os.path.join(output_dir, "intermediate.md")
-        with open(intermediate_md_file, 'w', encoding='utf-8') as f:
+        with open(intermediate_md_file, "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
         print(f"Conversion successful. Output: {intermediate_md_file}")
@@ -82,7 +84,7 @@ def run_docling_conversion(input_file, output_dir):
 
 def parse_intermediate_markdown(md_file):
     """Parse the intermediate markdown file to extract elements and attributes"""
-    with open(md_file, 'r', encoding='utf-8') as f:
+    with open(md_file, encoding="utf-8") as f:
         content = f.read()
 
     # Data structures to hold parsed information
@@ -97,7 +99,7 @@ def parse_intermediate_markdown(md_file):
     tbd_column_idx = None  # Index of the TBD column in the elements table (if present)
 
     # Parse the markdown table format
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     # Find where the categories, elements, and attributes tables are
     in_categories_table = False
@@ -105,7 +107,6 @@ def parse_intermediate_markdown(md_file):
     in_attributes_table = False
     categories_header_seen = False
     elements_header_seen = False
-    attributes_header_seen = False
     content_type_columns = {}  # Initialize to avoid unbound variable
 
     for i, line in enumerate(lines):
@@ -114,7 +115,7 @@ def parse_intermediate_markdown(md_file):
             continue
 
         # Check if we're in the categories table (has category and description columns)
-        if '| category' in line and '| description' in line and not categories_header_seen:
+        if "| category" in line and "| description" in line and not categories_header_seen:
             in_categories_table = True
             in_elements_table = False
             in_attributes_table = False
@@ -122,49 +123,48 @@ def parse_intermediate_markdown(md_file):
             continue
 
         # Check if we're in the elements table (has Category column first)
-        if '| Category' in line and '| Element' in line and not elements_header_seen:
+        if "| Category" in line and "| Element" in line and not elements_header_seen:
             in_elements_table = True
             in_categories_table = False
             in_attributes_table = False
             elements_header_seen = True
             # Parse the header to find content type columns and context column
-            header_parts = [p.strip() for p in line.split('|')]
+            header_parts = [p.strip() for p in line.split("|")]
             content_type_columns = {}
             for idx, header in enumerate(header_parts):
-                if header == 'TBD':
+                if header == "TBD":
                     tbd_column_idx = idx
-                elif header.startswith('[Content] '):
+                elif header.startswith("[Content] "):
                     # Extract the content type name (just remove the prefix)
-                    content_type = header.replace('[Content] ', '').strip()
+                    content_type = header.replace("[Content] ", "").strip()
                     content_type_columns[idx] = content_type
                 elif idx == 4 and header:  # Element context is typically at index 4
                     # Store the context column header and normalize it
                     # Remove "Element " prefix if present and capitalize
-                    element_context_header = header.replace('Element ', '').strip().title()
+                    element_context_header = header.replace("Element ", "").strip().title()
             continue
 
         # Check if we're in the attributes table (has Element and Attribute columns, but no Category)
-        if '| Element' in line and '| Attribute' in line and '| Category' not in line:
+        if "| Element" in line and "| Attribute" in line and "| Category" not in line:
             in_attributes_table = True
             in_elements_table = False
             in_categories_table = False
-            attributes_header_seen = True
             continue
 
         # Skip separator lines
-        if line.strip().startswith('|---'):
+        if line.strip().startswith("|---"):
             continue
 
         # Parse categories table rows
-        if in_categories_table and line.strip().startswith('|') and not line.strip().startswith('|---'):
-            parts = [p.strip() for p in line.split('|')]
+        if in_categories_table and line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 3:  # At least: empty, category, description
                 canonical_category = parts[1]
-                description = parts[2] if len(parts) > 2 else ''
-                if canonical_category and canonical_category != 'category':
+                description = parts[2] if len(parts) > 2 else ""
+                if canonical_category and canonical_category != "category":
                     # Store the canonical category name in order
                     # Capitalize each word for display
-                    formatted_category = ' '.join(word.capitalize() for word in canonical_category.split())
+                    formatted_category = " ".join(word.capitalize() for word in canonical_category.split())
                     if formatted_category not in category_order:
                         category_order.append(formatted_category)
                         category_descriptions[formatted_category] = description
@@ -173,20 +173,20 @@ def parse_intermediate_markdown(md_file):
                 in_categories_table = False
 
         # Parse elements table rows
-        if in_elements_table and line.strip().startswith('|') and not line.strip().startswith('|---'):
-            parts = [p.strip() for p in line.split('|')]
+        if in_elements_table and line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 5:  # At least: empty, Category, Element, Element description, Element context
                 prefixed_category = parts[1]
                 element = parts[2]
-                element_description = parts[3] if len(parts) > 3 else ''
-                element_context = parts[4] if len(parts) > 4 else ''
+                element_description = parts[3] if len(parts) > 3 else ""
+                element_context = parts[4] if len(parts) > 4 else ""
                 if (
                     tbd_column_idx is not None
                     and tbd_column_idx < len(parts)
-                    and parts[tbd_column_idx].strip().upper() == 'TRUE'
+                    and parts[tbd_column_idx].strip().upper() == "TRUE"
                 ):
                     continue
-                if prefixed_category and element and prefixed_category != 'Category':
+                if prefixed_category and element and prefixed_category != "Category":
                     # Normalize the category to get canonical name
                     canonical_category = normalize_category_name(prefixed_category)
                     elements_by_category[canonical_category].append(element)
@@ -203,21 +203,30 @@ def parse_intermediate_markdown(md_file):
                 in_elements_table = False
 
         # Parse attributes table rows - store full row data
-        if in_attributes_table and line.strip().startswith('|') and not line.strip().startswith('|---'):
-            parts = [p.strip() for p in line.split('|')]
+        if in_attributes_table and line.strip().startswith("|") and not line.strip().startswith("|---"):
+            parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 3:  # At least: empty, Element, Attribute, ...
                 element = parts[1]
-                if element and element != 'Element':
+                if element and element != "Element":
                     # Store the entire row data as a dict
                     attr_data = {
-                        'attribute': parts[2] if len(parts) > 2 else '',
-                        'required': parts[3] if len(parts) > 3 else '',
-                        'allowed_values': parts[4] if len(parts) > 4 else '',
-                        'description': parts[5] if len(parts) > 5 else ''
+                        "attribute": parts[2] if len(parts) > 2 else "",
+                        "required": parts[3] if len(parts) > 3 else "",
+                        "allowed_values": parts[4] if len(parts) > 4 else "",
+                        "description": parts[5] if len(parts) > 5 else "",
                     }
                     attributes_by_element[element].append(attr_data)
 
-    return elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header
+    return (
+        elements_by_category,
+        attributes_by_element,
+        content_types_by_element,
+        category_order,
+        category_descriptions,
+        element_descriptions,
+        element_contexts,
+        element_context_header,
+    )
 
 
 def load_example_for_element(element_name, input_dir, spec_path):
@@ -229,10 +238,10 @@ def load_example_for_element(element_name, input_dir, spec_path):
     in INPUT_DIR/examples/.
     """
     # Remove backticks and angle brackets from element name to get filename
-    clean_name = element_name.replace('`', '').replace('<', '').replace('>', '')
+    clean_name = element_name.replace("`", "").replace("<", "").replace(">", "")
 
     # Look for files in INPUT_DIR/examples/
-    examples_dir = Path(input_dir) / 'examples'
+    examples_dir = Path(input_dir) / "examples"
     xml_file = examples_dir / f"{clean_name}.dclg.xml"
 
     xml_content = None
@@ -240,7 +249,7 @@ def load_example_for_element(element_name, input_dir, spec_path):
 
     # Check for XML file
     if xml_file.exists():
-        with open(xml_file, 'r', encoding='utf-8') as f:
+        with open(xml_file, encoding="utf-8") as f:
             xml_content = f.read().strip()
 
     # Look for PNG file in the examples directory
@@ -263,12 +272,12 @@ def load_example_for_element(element_name, input_dir, spec_path):
 def create_element_anchor(element_name):
     """Create anchor link for an element"""
     # Remove backticks and angle brackets, convert to lowercase, replace spaces with hyphens
-    return element_name.replace('`', '').replace('<', '').replace('>', '').lower().replace(' ', '-')
+    return element_name.replace("`", "").replace("<", "").replace(">", "").lower().replace(" ", "-")
 
 
 def element_tag_name(element):
     """Extract tag name from a spreadsheet element label such as `<doclang>`."""
-    return element.replace('`', '').strip('<>')
+    return element.replace("`", "").strip("<>")
 
 
 def linkify_element_references(text, all_elements):
@@ -290,7 +299,7 @@ def linkify_element_references(text, all_elements):
 
         # Bare angle-bracket form; skip when already inside a markdown link or backticks
         text = re.sub(
-            r'(?<!\[)(?<!`)' + re.escape(bare_form) + r'(?!\]\(#)',
+            r"(?<!\[)(?<!`)" + re.escape(bare_form) + r"(?!\]\(#)",
             link,
             text,
         )
@@ -298,7 +307,18 @@ def linkify_element_references(text, all_elements):
     return text
 
 
-def generate_reference_content(elements_by_category, attributes_by_element, content_types_by_element, category_order, category_descriptions, element_descriptions, element_contexts, element_context_header, input_dir, spec_path):
+def generate_reference_content(
+    elements_by_category,
+    attributes_by_element,
+    content_types_by_element,
+    category_order,
+    category_descriptions,
+    element_descriptions,
+    element_contexts,
+    element_context_header,
+    input_dir,
+    spec_path,
+):
     """Generate the reference markdown content as a string"""
     print("Generating reference content...")
 
@@ -323,7 +343,7 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
         output_lines.append(f"### {display_category}\n\n")
 
         # Write category description if available (with linkified element references)
-        if category in category_descriptions and category_descriptions[category]:
+        if category_descriptions.get(category):
             description = linkify_element_references(category_descriptions[category], all_elements)
             output_lines.append(f"{description}\n\n")
 
@@ -337,12 +357,12 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
             output_lines.append(f"#### {normalized_element}\n\n")
 
             # Write element description if available (with linkified element references)
-            if element in element_descriptions and element_descriptions[element]:
+            if element_descriptions.get(element):
                 description = linkify_element_references(element_descriptions[element], all_elements)
                 output_lines.append(f"{description}\n\n")
 
             # Write element context if available (with linkified element references)
-            if element in element_contexts and element_contexts[element]:
+            if element_contexts.get(element):
                 # Use the dynamically extracted header name, or default to "Context"
                 context_heading = element_context_header if element_context_header else "Context"
                 output_lines.append(f"##### {context_heading}\n\n")
@@ -360,10 +380,10 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
 
                 # Write table rows (with linkified element references in description)
                 for attr_data in attributes:
-                    attr_name = normalize_element_name(attr_data['attribute'])
-                    required = linkify_element_references(attr_data['required'], all_elements)
-                    allowed_values = linkify_element_references(attr_data['allowed_values'], all_elements)
-                    description = linkify_element_references(attr_data['description'], all_elements)
+                    attr_name = normalize_element_name(attr_data["attribute"])
+                    required = linkify_element_references(attr_data["required"], all_elements)
+                    allowed_values = linkify_element_references(attr_data["allowed_values"], all_elements)
+                    description = linkify_element_references(attr_data["description"], all_elements)
                     output_lines.append(f"| {attr_name} | {required} | {allowed_values} | {description} |\n")
 
                 output_lines.append("\n")
@@ -371,15 +391,15 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
                 output_lines.append("##### Attributes\n\nNone\n\n")
 
             # Write content types table if they exist
-            if element in content_types_by_element and content_types_by_element[element]:
+            if content_types_by_element.get(element):
                 content_types = content_types_by_element[element]
                 output_lines.append("##### Allowed Content Types\n\n")
 
                 # If XML content is not allowed, the element is empty:
                 # omit the table and render a note. Otherwise, create a vertical
                 # table with Content Type and Allowed/Not allowed columns.
-                xml_content_value = content_types_by_element[element].get('XML content', '')
-                xml_content_allowed = linkify_element_references(xml_content_value, all_elements).lower() == 'true'
+                xml_content_value = content_types_by_element[element].get("XML content", "")
+                xml_content_allowed = linkify_element_references(xml_content_value, all_elements).lower() == "true"
 
                 if not xml_content_allowed:
                     output_lines.append("None (empty element).\n\n")
@@ -390,14 +410,14 @@ def generate_reference_content(elements_by_category, attributes_by_element, cont
 
                     # Write one row per content type
                     for header, v in content_types.items():
-                        if header == 'XML content':
+                        if header == "XML content":
                             continue
 
                         v_linked = linkify_element_references(v, all_elements)
-                        if v_linked.lower() == 'true':
-                            status = 'Allowed'
-                        elif v_linked.lower() == 'false':
-                            status = 'Not allowed'
+                        if v_linked.lower() == "true":
+                            status = "Allowed"
+                        elif v_linked.lower() == "false":
+                            status = "Not allowed"
                         else:
                             status = v_linked
 
@@ -435,11 +455,11 @@ def update_spec_appendix(reference_content, spec_file):
     print(f"\nUpdating Appendix A in {spec_file}...")
 
     try:
-        spec_content = Path(spec_file).read_text(encoding='utf-8')
+        spec_content = Path(spec_file).read_text(encoding="utf-8")
 
         # Find Appendix A and B section markers
-        appendix_a_pattern = r'(## Appendix A: Reference\n\n)'
-        appendix_b_pattern = r'(## Appendix B:)'
+        appendix_a_pattern = r"(## Appendix A: Reference\n\n)"
+        appendix_b_pattern = r"(## Appendix B:)"
 
         match_a = re.search(appendix_a_pattern, spec_content)
         match_b = re.search(appendix_b_pattern, spec_content)
@@ -453,13 +473,13 @@ def update_spec_appendix(reference_content, spec_file):
             return False
 
         # Reconstruct the file: before Appendix A + reference content + from Appendix B onwards
-        before_appendix_a = spec_content[:match_a.end()]
-        from_appendix_b = spec_content[match_b.start():]
+        before_appendix_a = spec_content[: match_a.end()]
+        from_appendix_b = spec_content[match_b.start() :]
         # Strip trailing whitespace from reference content to avoid extra blank lines
         new_content = before_appendix_a + reference_content.rstrip() + "\n\n" + from_appendix_b
 
         # Write back to spec.md
-        Path(spec_file).write_text(new_content, encoding='utf-8')
+        Path(spec_file).write_text(new_content, encoding="utf-8")
         print(f"✓ Successfully updated Appendix A in {spec_file}")
         return True
 
@@ -478,8 +498,7 @@ def generate_reference(input_dir: str | Path) -> None:
         raise NotADirectoryError(f"'{input_dir}' is not a directory.")
 
     excel_files = [
-        f for f in input_dir.iterdir()
-        if f.suffix.lower() in (".xlsx", ".xls") and not f.name.startswith("~$")
+        f for f in input_dir.iterdir() if f.suffix.lower() in (".xlsx", ".xls") and not f.name.startswith("~$")
     ]
 
     if not excel_files:
@@ -548,5 +567,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

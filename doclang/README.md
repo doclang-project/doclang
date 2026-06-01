@@ -1,42 +1,30 @@
-# DocLang XML Schema Validation
+# DocLang Validation
 
 Validate DocLang XML documents against XSD schema and Schematron rules.
-
-## Installation
-
-```bash
-uv sync
-```
 
 ## Usage
 
 ```bash
 # Validate a document using default bundled schemas
-uv run doclang validate document.xml
+doclang validate document.xml
 
 # Validate with custom schemas
-uv run doclang validate document.xml --xsd custom.xsd --sch custom.sch
+doclang validate document.xml --xsd custom.xsd --sch custom.sch
 
 # XSD validation only
-uv run doclang validate document.xml --xsd-only
+doclang validate document.xml --xsd-only
 
 # Schematron validation only
-uv run doclang validate document.xml --schematron-only
+doclang validate document.xml --schematron-only
 
 # JSON output
-uv run doclang validate document.xml --format json
+doclang validate document.xml --format json
 
 # Quiet mode (exit code only)
-uv run doclang validate document.xml --quiet
+doclang validate document.xml --quiet
 
 # Show help
-uv run doclang --help
-```
-
-## Run Tests
-
-```bash
-uv run pytest
+doclang --help
 ```
 
 ## Document Requirements
@@ -71,7 +59,7 @@ Additional business rules that XSD cannot express, using XSLT 3.0 and XPath 3.1:
 
 The validation uses XSLT 3.0 for modern XPath features.
 
-## Validation with VS Code
+## XSD Validation with VS Code
 
 In VS Code you can use [Red Hat's XML extension](https://open-vsx.org/vscode/item?itemName=redhat.vscode-xml) and enable IDE-native XSD validation by adding the following to your `settings.json` (ℹ️ replacing the actual XSD path):
 
@@ -91,6 +79,8 @@ For this to work, the DocLang XML document must include the relevant namespace:
     <!-- ... -->
 </doclang>
 ```
+
+Note that this approach does not cover Schematron validation rules.
 
 ## References
 

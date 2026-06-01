@@ -8,7 +8,7 @@ against XSD schemas and Schematron rules.
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 
@@ -104,7 +104,7 @@ def validate(
         typer.echo(f"Validating: {xml_file}")
         typer.echo("-" * 60)
 
-    results = {
+    results: dict[str, Any] = {
         "file": str(xml_file),
         "xsd": {"valid": True, "errors": []},
         "schematron": {"valid": True, "errors": []},
@@ -210,7 +210,6 @@ def main(
     ),
 ):
     """DocLang XML validation tool."""
-    pass
 
 
 if __name__ == "__main__":

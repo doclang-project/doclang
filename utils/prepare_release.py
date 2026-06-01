@@ -23,9 +23,9 @@ UTILS_DIR = Path(__file__).resolve().parent
 if str(UTILS_DIR) not in sys.path:
     sys.path.insert(0, str(UTILS_DIR))
 
+from export_docx import export_docx
 from generate_reference import generate_reference
 from sync_version import sync_version
-from export_docx import export_docx
 
 DEFAULT_CHANGELOG = ROOT / "CHANGELOG.md"
 DEFAULT_REFERENCE_INPUT = "reference/input"

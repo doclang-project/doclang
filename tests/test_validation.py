@@ -4,11 +4,12 @@ Pytest test suite for DocLang XML schema validation.
 Tests both valid and invalid XML documents against XSD and Schematron rules.
 """
 
-import pytest
 from pathlib import Path
-from doclang.xsd_validation import _validate_xsd
-from doclang.schematron_validation import _validate_with_schematron
 
+import pytest
+
+from doclang.schematron_validation import _validate_with_schematron
+from doclang.xsd_validation import _validate_xsd
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -30,9 +31,9 @@ def test_valid(xml_file):
     """Test that valid XML files pass both XSD and Schematron validation."""
     # Special handling for no_namespace test - requires flag
     # Handle .dclg.xml double extension: remove both extensions to get base name
-    base_name = xml_file.name.replace('.dclg.xml', '')
+    base_name = xml_file.name.replace(".dclg.xml", "")
     allow_empty = base_name == "ok_no_namespace"
-    
+
     # XSD validation
     xsd_valid, xsd_errors = _validate_xsd(xml_file, XSD_FILE, allow_empty_namespace=allow_empty)
     if not xsd_valid:
@@ -41,15 +42,12 @@ def test_valid(xml_file):
             if "line" in error:
                 error_msgs.append(f"Line {error['line']}: {error['message']}")
             else:
-                error_msgs.append(error.get('error', 'Unknown error'))
+                error_msgs.append(error.get("error", "Unknown error"))
         pytest.fail(f"XSD validation failed for {xml_file.name}:\n" + "\n".join(error_msgs))
-    
+
     # Schematron validation
     sch_valid, failed_asserts = _validate_with_schematron(
-        xml_file,
-        sch_file=SCH_FILE,
-        allow_empty_namespace=allow_empty,
-        verbose=False
+        xml_file, sch_file=SCH_FILE, allow_empty_namespace=allow_empty, verbose=False
     )
     if not sch_valid:
         error_msgs = []
@@ -66,15 +64,15 @@ def test_invalid(xml_file):
     """Test that invalid XML files fail either XSD or Schematron validation."""
     # Try XSD validation first
     xsd_valid, xsd_errors = _validate_xsd(xml_file, XSD_FILE, allow_empty_namespace=False)
-    
+
     # Try Schematron validation
     sch_valid, sch_failed_asserts = _validate_with_schematron(xml_file, sch_file=SCH_FILE, verbose=False)
-    
+
     # File should fail at least one validation
     assert not (xsd_valid and sch_valid), (
         f"Expected {xml_file.name} to fail XSD or Schematron validation, but it passed both"
     )
-    
+
     # Ensure we have error details if validation failed
     if not xsd_valid:
         assert len(xsd_errors) > 0, f"Expected XSD validation errors for {xml_file.name}"

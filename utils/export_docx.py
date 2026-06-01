@@ -21,21 +21,21 @@ and post-processing to add a TOC field.
 from __future__ import annotations
 
 import argparse
-import os
-import shutil
 import re
+import shutil
 import sys
+from html import unescape as _html_unescape
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 try:
     from docx import Document
-    from docx.shared import Inches, Pt
     from docx.enum.text import WD_BREAK
+    from docx.opc.constants import RELATIONSHIP_TYPE
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
-    from docx.opc.constants import RELATIONSHIP_TYPE
-except ImportError as exc:
+    from docx.shared import Inches, Pt
+except ImportError:
     print(
         "Missing dependency: python-docx. Install with `pip install python-docx`.",
         file=sys.stderr,
@@ -69,12 +69,11 @@ def add_toc(document: Document) -> None:
     run._r.append(fld_separate)
 
     # Placeholder text shown before updating fields in Word.
-    hint = p.add_run("Table of Contents – update to populate")
+    hint = p.add_run("Table of Contents - update to populate")
 
     fld_end = OxmlElement("w:fldChar")
     fld_end.set(qn("w:fldCharType"), "end")
     hint._r.append(fld_end)
-
 
 
 def process_html_paragraph(document: Document, text: str) -> None:
@@ -86,9 +85,9 @@ def process_html_paragraph(document: Document, text: str) -> None:
     - <br> or <br/> as line breaks within paragraphs
     """
     # Pattern to match <ul>...</ul> blocks
-    ul_pattern = re.compile(r'<ul>(.*?)</ul>', re.DOTALL | re.IGNORECASE)
+    ul_pattern = re.compile(r"<ul>(.*?)</ul>", re.DOTALL | re.IGNORECASE)
     # Pattern to match <li>...</li> items
-    li_pattern = re.compile(r'<li>(.*?)</li>', re.DOTALL | re.IGNORECASE)
+    li_pattern = re.compile(r"<li>(.*?)</li>", re.DOTALL | re.IGNORECASE)
 
     cursor = 0
 
@@ -96,7 +95,7 @@ def process_html_paragraph(document: Document, text: str) -> None:
     for ul_match in ul_pattern.finditer(text):
         # Process text before the <ul>
         if ul_match.start() > cursor:
-            pre_text = text[cursor:ul_match.start()].strip()
+            pre_text = text[cursor : ul_match.start()].strip()
             if pre_text:
                 # Process <br> tags in the pre-text
                 process_br_tags(document, pre_text)
@@ -122,7 +121,7 @@ def process_html_paragraph(document: Document, text: str) -> None:
 
 def process_br_tags(document: Document, text: str) -> None:
     """Process text containing <br> tags by splitting into multiple runs with line breaks."""
-    br_pattern = re.compile(r'<br\s*/?>', re.IGNORECASE)
+    br_pattern = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
     # Split by <br> tags
     segments = br_pattern.split(text)
@@ -141,20 +140,21 @@ def process_br_tags(document: Document, text: str) -> None:
             if idx < len(segments) - 1:
                 p.add_run().add_break(WD_BREAK.LINE)
 
-def finalize_paragraph_buf(document: Document, buf: List[str]) -> None:
+
+def finalize_paragraph_buf(document: Document, buf: list[str]) -> None:
     if not buf:
         return
     text = " ".join(line.strip() for line in buf).strip()
     if text:
         # Check if text contains HTML lists or line breaks that should be processed
-        if '<ul>' in text or '<br' in text:
+        if "<ul>" in text or "<br" in text:
             process_html_paragraph(document, text)
         else:
             add_formatted_paragraph(document, text)
     buf.clear()
 
 
-def replace_docx_parts_from_template(template_path: Path, docx_path: Path, parts: List[str]) -> None:
+def replace_docx_parts_from_template(template_path: Path, docx_path: Path, parts: list[str]) -> None:
     """
     Copy specific parts from a DOCX/DOTX template into a target DOCX, replacing
     any existing entries with the same names. This avoids duplicate entries and
@@ -223,7 +223,7 @@ def _strip_markdown_formatting(text: str) -> str:
     return text
 
 
-def parse_table_block(lines: List[str], start: int) -> Tuple[int, List[List[str]], Optional[List[str]]]:
+def parse_table_block(lines: list[str], start: int) -> tuple[int, list[list[str]], Optional[list[str]]]:
     # Detect a GitHub-style pipe table starting at index start.
     # Returns (end_index_exclusive, rows, aligns)
     table_lines = []
@@ -242,7 +242,7 @@ def parse_table_block(lines: List[str], start: int) -> Tuple[int, List[List[str]
     if not all(re.match(r"^:?-{3,}:?$", s) for s in sep) or len(sep) != len(header):
         return start, [], None
 
-    aligns: List[str] = []
+    aligns: list[str] = []
     for s in sep:
         if s.startswith(":") and s.endswith(":"):
             aligns.append("center")
@@ -263,7 +263,7 @@ def parse_table_block(lines: List[str], start: int) -> Tuple[int, List[List[str]
     return i, rows, aligns
 
 
-def split_md_row(row: str) -> List[str]:
+def split_md_row(row: str) -> list[str]:
     # Splits a pipe table row into cells, ignoring outer pipes.
     s = row.strip()
     if s.startswith("|"):
@@ -273,7 +273,7 @@ def split_md_row(row: str) -> List[str]:
     return [c.replace("\\|", "|") for c in re.split(r"\s*\|\s*", s)]
 
 
-def add_code_block(document: Document, code_lines: List[str], language: Optional[str]) -> None:
+def add_code_block(document: Document, code_lines: list[str], language: Optional[str]) -> None:
     # Add a monospaced, preformatted code block.
     p = document.add_paragraph()
     # Light grey background for the whole block
@@ -381,11 +381,11 @@ def _add_inline_formatted_runs(paragraph, text: str) -> None:
     # First pass: extract and process markdown links, preserving their structure
     cursor = 0
     # Segments: ("plain", text) | ("url", url, text) | ("anchor", anchor, text)
-    segments: List[Tuple[str, ...]] = []
+    segments: list[tuple[str, ...]] = []
 
     for m in _LINK_OR_URL_RE.finditer(text):
         if m.start() > cursor:
-            segments.append(("plain", text[cursor:m.start()]))
+            segments.append(("plain", text[cursor : m.start()]))
 
         if m.group("link_url") is not None:
             link_text = m.group("link_text")
@@ -479,7 +479,7 @@ FIGURE_IMG_SRC_RE = re.compile(r"<img[^>]*\bsrc\s*=\s*['\"]([^'\"]+)['\"][^>]*>"
 FIGCAPTION_RE = re.compile(r"<figcaption[^>]*>(.*?)</figcaption>", re.IGNORECASE | re.DOTALL)
 HTML_A_TAG_RE = re.compile(r"<a[^>]*\bhref\s*=\s*['\"]([^'\"]+)['\"][^>]*>(.*?)</a>", re.IGNORECASE | re.DOTALL)
 HTML_TAG_RE = re.compile(r"<[^>]+>")
-from html import unescape as _html_unescape
+
 
 def markdown_anchor(text: str) -> str:
     """Slug for in-document cross-references (aligned with generate_reference.py)."""
@@ -568,9 +568,8 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
     removes multi-line comments and inline fragments within a line.
     """
     lines = md_text.splitlines(keepends=True)
-    out: List[str] = []
+    out: list[str] = []
     in_code = False
-    code_fence: Optional[str] = None
     in_comment = False
     for line in lines:
         # Detect fenced code block start/end (must be fence-only line, like parser)
@@ -578,13 +577,7 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
             mcode = re.match(r"^(\s*)(`{3,}|~{3,})(\w+)?\s*$", line)
             if mcode:
                 # Toggle code state
-                if not in_code:
-                    in_code = True
-                    code_fence = mcode.group(2)
-                else:
-                    # Closing fence (any fence-only line ends block in our parser)
-                    in_code = False
-                    code_fence = None
+                in_code = not in_code
                 out.append(line)
                 continue
 
@@ -595,7 +588,7 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
         # Strip HTML comments in non-code text
         i = 0
         L = len(line)
-        buf: List[str] = []
+        buf: list[str] = []
         while i < L:
             if in_comment:
                 end = line.find("-->", i)
@@ -628,7 +621,7 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
 def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> None:
     lines = md_text.splitlines()
     i = 0
-    para_buf: List[str] = []
+    para_buf: list[str] = []
     # Track the last seen Markdown heading level to place sub-headers
     current_heading_level: int = 1
     next_bookmark_id = 0
@@ -651,9 +644,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
                 if msum:
                     summary_text = msum.group(1).strip()
                     sub_level = min(current_heading_level + 1, 6)
-                    add_heading_with_bookmark(
-                        document, summary_text, sub_level, next_bookmark_id
-                    )
+                    add_heading_with_bookmark(document, summary_text, sub_level, next_bookmark_id)
                     next_bookmark_id += 1
                     # Do not update current_heading_level so siblings remain at same level
                     i += 1
@@ -717,7 +708,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
                         p.add_run(tail_txt)
                 # Light italic for readability if no Caption style applied
                 try:
-                    if p.style is None or getattr(p.style, 'name', '') != 'Caption':
+                    if p.style is None or getattr(p.style, "name", "") != "Caption":
                         for r in p.runs:
                             r.italic = True
                 except Exception:
@@ -737,7 +728,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
             fence = mcode.group(2)
             language = mcode.group(3)
             i += 1
-            code_lines: List[str] = []
+            code_lines: list[str] = []
             while i < len(lines) and not re.match(rf"^\s*{re.escape(fence)}\s*$", lines[i]):
                 code_lines.append(lines[i])
                 i += 1
@@ -748,7 +739,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
             continue
 
         # Table detection
-        t_end, rows, aligns = parse_table_block(lines, i)
+        t_end, rows, _aligns = parse_table_block(lines, i)
         if t_end > i:
             finalize_paragraph_buf(document, para_buf)
             if rows:
@@ -844,7 +835,6 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
 
 
 def build_document(md_path: Path, out_path: Path, apply_template_style: bool = True) -> None:
-
     document = Document()
 
     # Title page is handled by the template if present. Insert a TOC after any
@@ -887,7 +877,7 @@ def export_docx(input_md: Path | None = None, out_path: Path | None = None) -> N
     print("Done.")
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Export DocLang spec markdown to DOCX")
     parser.add_argument(
         "--input",

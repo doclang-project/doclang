@@ -8,7 +8,7 @@ When no target version is given, the release triple is derived from git tags
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
 
-`doclang --version` reads from pyproject.toml (or installed package metadata).
+`doclang --version` reads the installed package metadata (see doclang.version).
 
 Usage:
     python utils/sync_version.py              # release triple from latest git tag
@@ -51,46 +51,39 @@ def resolve_sync_version(version_arg: str | None) -> str:
 
 def sync_version_in_xsd(file_path: Path, version: str) -> None:
     """Update version in doclang.xsd"""
-    content = file_path.read_text(encoding='utf-8')
-    
+    content = file_path.read_text(encoding="utf-8")
+
     # Extract MAJOR.MINOR for most places
-    major_minor = '.'.join(version.split('.')[:2])
-    
+    major_minor = ".".join(version.split(".")[:2])
+
     # Pattern 1: schema version attribute (line 8) in <xs:schema>
     # version="0.2.0" - full MAJOR.MINOR.PATCH
     # Match only the xs:schema element's version attribute
-    content = re.sub(
-        r'(<xs:schema[^>]*\s+version=")[\d.]+(")',
-        rf'\g<1>{version}\g<2>',
-        content,
-        flags=re.DOTALL
-    )
-    
+    content = re.sub(r'(<xs:schema[^>]*\s+version=")[\d.]+(")', rf"\g<1>{version}\g<2>", content, flags=re.DOTALL)
+
     # Pattern 2: doclang element default version (line 621)
     # <xs:attribute name="version" use="optional" default="0.2">
     # Uses MAJOR.MINOR only
     content = re.sub(
-        r'(<xs:attribute name="version" use="optional" default=")[\d.]+(")',
-        rf'\g<1>{major_minor}\g<2>',
-        content
+        r'(<xs:attribute name="version" use="optional" default=")[\d.]+(")', rf"\g<1>{major_minor}\g<2>", content
     )
-    
+
     # Pattern 3: enumeration values (line 627)
     # ALWAYS remove all previous v0.x enumerations and add only the new version
-   
+
     # Remove all enumeration lines (including any trailing whitespace before closing tag)
-    content = re.sub(r'\s*<xs:enumeration value="[\d.]+"/>\s*', '', content)
-    
+    content = re.sub(r'\s*<xs:enumeration value="[\d.]+"/>\s*', "", content)
+
     # Add only the new version with proper formatting (MAJOR.MINOR only)
     # Find the comment and the closing </xs:restriction> tag
-    insert_pattern = r'(<!-- enumeration set up for v1 and above.*?-->)\s*(</xs:restriction>)'
+    insert_pattern = r"(<!-- enumeration set up for v1 and above.*?-->)\s*(</xs:restriction>)"
     content = re.sub(
         insert_pattern,
         rf'\g<1>\n            <xs:enumeration value="{major_minor}"/>\n          \g<2>',
         content,
-        flags=re.DOTALL
-    )  
-    file_path.write_text(content, encoding='utf-8')
+        flags=re.DOTALL,
+    )
+    file_path.write_text(content, encoding="utf-8")
 
 
 def sync_version_in_excel(file_path: Path, version: str) -> None:
@@ -98,17 +91,17 @@ def sync_version_in_excel(file_path: Path, version: str) -> None:
     if not file_path.exists():
         print(f"⚠ Skipping {file_path} (file not found)")
         return
-    
+
     # Extract MAJOR.MINOR for Excel
-    major_minor = '.'.join(version.split('.')[:2])
-    
+    major_minor = ".".join(version.split(".")[:2])
+
     try:
         wb = load_workbook(file_path)
-        
+
         # Update the 'attributes' sheet
-        if 'attributes' in wb.sheetnames:
-            ws = wb['attributes']
-            
+        if "attributes" in wb.sheetnames:
+            ws = wb["attributes"]
+
             # Find the row with `<doclang>` version attribute
             updated = False
             for row in ws.iter_rows(min_row=2):  # Skip header row
@@ -116,36 +109,30 @@ def sync_version_in_excel(file_path: Path, version: str) -> None:
                 attribute_cell = row[1]
                 required_cell = row[2]
                 values_cell = row[3]
-                
-                if (element_cell.value == '`<doclang>`' and 
-                    attribute_cell.value == '`version`'):
-                    
+
+                if element_cell.value == "`<doclang>`" and attribute_cell.value == "`version`":
                     # Update "Optional; default: "0.2"" to new version
                     if required_cell.value:
                         required_cell.value = re.sub(
-                            r'(Optional; default: ")\d+\.\d+(")',
-                            rf'\g<1>{major_minor}\g<2>',
-                            str(required_cell.value)
+                            r'(Optional; default: ")\d+\.\d+(")', rf"\g<1>{major_minor}\g<2>", str(required_cell.value)
                         )
-                    
+
                     # Update {"0.2"} to new version
                     if values_cell.value:
                         values_cell.value = re.sub(
-                            r'(\{")\d+\.\d+("\})',
-                            rf'\g<1>{major_minor}\g<2>',
-                            str(values_cell.value)
+                            r'(\{")\d+\.\d+("\})', rf"\g<1>{major_minor}\g<2>", str(values_cell.value)
                         )
-                    
+
                     updated = True
                     break
-            
+
             if updated:
                 wb.save(file_path)
             else:
                 print(f"⚠ Could not find version attribute row in {file_path}")
         else:
             print(f"⚠ 'attributes' sheet not found in {file_path}")
-            
+
     except Exception as e:
         print(f"⚠ Error updating {file_path}: {e}")
 
@@ -161,10 +148,10 @@ def sync_version_in_pyproject(file_path: Path, version: str) -> None:
         flags=re.MULTILINE,
     )
 
-    if re.search(r'^version\s*=', content, re.MULTILINE):
+    if re.search(r"^version\s*=", content, re.MULTILINE):
         content = re.sub(
             r'^(version\s*=\s*")[^"]+("(?:\s+#.*)?)$',
-            rf'\g<1>{version}\g<2>',
+            rf"\g<1>{version}\g<2>",
             content,
             count=1,
             flags=re.MULTILINE,
@@ -223,5 +210,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

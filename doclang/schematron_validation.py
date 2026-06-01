@@ -5,13 +5,13 @@ This module provides Schematron validation by transpiling .sch files to XSLT
 on-the-fly using XSLT 3.0 / XPath 3.1.
 """
 
+import tempfile
 from pathlib import Path
+
 from lxml import etree
 from saxonche import PySaxonProcessor
-import tempfile
 
 from doclang.utils import _ensure_namespace
-
 
 # ISO Schematron transpiler - converts .sch to XSLT 3.0
 _ISO_SCHEMATRON_TRANSPILER = """<?xml version="1.0" encoding="UTF-8"?>
@@ -119,9 +119,7 @@ def _transpile_schematron_to_xslt(sch_file, verbose=False):
         xslt_proc = proc.new_xslt30_processor()
 
         # Compile the transpiler
-        xslt_executable = xslt_proc.compile_stylesheet(
-            stylesheet_text=_ISO_SCHEMATRON_TRANSPILER
-        )
+        xslt_executable = xslt_proc.compile_stylesheet(stylesheet_text=_ISO_SCHEMATRON_TRANSPILER)
 
         # Transform Schematron to XSLT
         result = xslt_executable.transform_to_string(source_file=str(sch_file))
@@ -156,7 +154,7 @@ def _validate_with_schematron(xml_file, sch_file=None, allow_empty_namespace=Fal
 
     try:
         # Load and optionally ensure namespace
-        with open(xml_file, 'rb') as f:
+        with open(xml_file, "rb") as f:
             xml_doc = etree.parse(f)
 
         if allow_empty_namespace:
@@ -164,8 +162,8 @@ def _validate_with_schematron(xml_file, sch_file=None, allow_empty_namespace=Fal
 
         # Write to temporary file for Saxon processing
         # Note: delete=True (default) but we need to close before Saxon can read
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.xml', delete=True) as tmp:
-            xml_doc.write(tmp, encoding='utf-8', xml_declaration=True)
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".xml", delete=True) as tmp:
+            xml_doc.write(tmp, encoding="utf-8", xml_declaration=True)
             tmp.flush()  # Ensure data is written
             tmp_xml_path = tmp.name
 
@@ -197,7 +195,7 @@ def _validate_with_schematron(xml_file, sch_file=None, allow_empty_namespace=Fal
 
                 # Parse result
                 if result:
-                    result_doc = etree.fromstring(result.encode('utf-8'))
+                    result_doc = etree.fromstring(result.encode("utf-8"))
                     failed_asserts = result_doc.findall(".//{http://purl.oclc.org/dsdl/svrl}failed-assert")
 
                     is_valid = len(failed_asserts) == 0
@@ -212,5 +210,6 @@ def _validate_with_schematron(xml_file, sch_file=None, allow_empty_namespace=Fal
         if verbose:
             print(f"✗ Error during Schematron validation: {e}")
             import traceback
+
             traceback.print_exc()
         raise

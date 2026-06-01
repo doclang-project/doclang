@@ -6,16 +6,16 @@ This module is a sibling to schematron_validator.py, with routing handled by cli
 """
 
 from pathlib import Path
-from typing import Union, Tuple, List, Dict, Any
+from typing import Any, Union
+
 from lxml import etree
+
 from doclang.utils import _ensure_namespace
 
 
 def _validate_xsd(
-    xml_file: Union[str, Path],
-    xsd_file: Union[str, Path],
-    allow_empty_namespace: bool = False
-) -> Tuple[bool, List[Dict[str, Any]]]:
+    xml_file: Union[str, Path], xsd_file: Union[str, Path], allow_empty_namespace: bool = False
+) -> tuple[bool, list[dict[str, Any]]]:
     """
     Validate XML against XSD schema using lxml.
 
@@ -31,12 +31,12 @@ def _validate_xsd(
     """
     try:
         # Parse XSD
-        with open(xsd_file, 'rb') as f:
+        with open(xsd_file, "rb") as f:
             schema_doc = etree.parse(f)
             schema = etree.XMLSchema(schema_doc)
 
         # Parse XML
-        with open(xml_file, 'rb') as f:
+        with open(xml_file, "rb") as f:
             xml_doc = etree.parse(f)
 
         # Optionally ensure namespace is present
@@ -47,10 +47,7 @@ def _validate_xsd(
         if schema.validate(xml_doc):
             return True, []
         else:
-            errors = [
-                {"line": error.line, "message": error.message}
-                for error in schema.error_log
-            ]
+            errors = [{"line": error.line, "message": error.message} for error in schema.error_log]
             return False, errors
 
     except Exception as e:
