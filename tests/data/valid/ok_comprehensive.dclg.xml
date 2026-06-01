@@ -46,12 +46,12 @@
 
   <!-- Example 1g: Formula element -->
   <formula>
-    E = mc<superscript>2</superscript>
+    E = mc^2
   </formula>
 
-  <!-- Example 1h: Formula with complex formatting -->
+  <!-- Example 1h: More complex formula -->
   <formula>
-    x = <superscript>-b ± √(b<superscript>2</superscript> - 4ac)</superscript> / <subscript>2a</subscript>
+    x = \frac{-b \pm \sqrt{b^{2} - 4ac}}{2a}
   </formula>
 
   <!-- Example 1i: Field region (empty) -->
@@ -175,7 +175,7 @@
 
   <!-- Example 3: New formatting elements -->
   <text>
-    <strikethrough>deleted text</strikethrough>, <underline>underlined text</underline>, <superscript>x²</superscript>, and <subscript>H₂O</subscript>
+    <strikethrough>deleted text</strikethrough>, <underline>underlined text</underline>, 2<superscript>nd</superscript>, O<subscript>2</subscript>.
   </text>
 
   <!-- Example 4: Picture with URI -->
@@ -407,7 +407,7 @@ Paragraph 2 after double break</content>
 
   <!-- Example 27: Scientific notation with super/subscript -->
   <text>
-    E = mc<superscript>2</superscript> and H<subscript>2</subscript>O
+    1<superscript>st</superscript> thing to remember: drink H<subscript>2</subscript>O.
   </text>
 
   <!-- Example 28: List with caption in element head -->
@@ -433,7 +433,7 @@ Paragraph 2 after double break</content>
     <text>
       Text with inline stuff
       <formula>
-        E = mc<superscript>2</superscript>
+        E = mc^2
       </formula>
     </text>
   </list>

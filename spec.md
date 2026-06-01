@@ -1829,8 +1829,8 @@ Superscript and subscript:
 
 ```xml
 <text>
-  The formula for water is H<subscript>2</subscript>O, and
-  Einstein's equation is E=mc<superscript>2</superscript>.
+  1<superscript>st</superscript> question: What is the formula for water?
+  Answer: H<subscript>2</subscript>O.
 </text>
 ```
 
@@ -2156,6 +2156,8 @@ None
 | Primary semantic elements | Allowed |
 
 #### `<formula>`
+
+Raw LaTeX formula content, i.e. without any LaTeX-specific wrapping such as `$ ... $`, `$$ ... $$`,  `\( ... \)`, `\[ ... \]`, `\begin{math} ... \end{math}` or `\begin{equation} ... \end{equation}`.
 
 ##### Allowed Context
 
