@@ -192,22 +192,21 @@ While the details are specified in the sections further below, this snippet show
 
 ### Subclasses
 
-Core document components like `<picture>` or `<code>` may be subclassed via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix D: Recommended Labels](#appendix-d-recommended-labels)), but for extensibility purposes, the label value is not to be validated.
+For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix D: Recommended Labels](#appendix-d-recommended-labels)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
 
 In the example further below:
-- `class="chart"` means the picture is semantically considered a chart and is therefore allowed to contain structured chart data in OTSL format
+- `class="chart"` means the picture is semantically considered a chart and is therefore associated with special structuring rules (in the case of a chart, it can namely contain structured chart data in OTSL format)
 - the label value is conveying the specific chart subclass for further classification purposes
 
 ```xml
 <doclang>
   <picture class="chart">
     <label value="bar_chart"/>
-    <table>
-    <!-- structured chart data in OTSL ... -->
-    </table>
+    <table><!-- structured chart data in OTSL ... --></table>
   </picture>
 </doclang>
+```
 
 ### Version Management and Compatibility
 
@@ -289,6 +288,52 @@ In case of page-layout information, the coordinates are provided only at the sem
   <heading level="3">Background</heading>
   <text>Previous work has shown...</text>
 </doclang>
+```
+
+### Pictures
+
+Pictures are captured with the `<picture>` element and may be specialized via the `class` attribute, as detailed
+in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI capturing the image
+either by reference (e.g. https URL) or as base64-encoded data (RFC 2397).
+
+Picture by reference URI:
+
+```xml
+<picture>
+  <src uri="https://example.com/image.jpg"/>
+</picture>
+```
+
+Picture by base64-encoded data:
+
+```xml
+<picture>
+  <src uri="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAIklEQVR4nO3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAA8G4wQAABiwCo9wAAAABJRU5ErkJggg=="/>
+</picture>
+```
+
+Chart with respective data in OTSL format:
+
+```xml
+<picture class="chart">
+  <label value="bar_chart"/>
+  <table>
+    <ched/>Category<ched/>Value<nl/>
+    <fcel/>A<fcel/>10<nl/>
+    <fcel/>B<fcel/>20<nl/>
+  </table>
+  <src uri="chart.svg"/>
+</picture>
+```
+
+Chemistry structure with respective data in SMILES format:
+
+```xml
+<picture class="chemistry">
+  <label value="molecule"/>
+  <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+  <src uri="molecule.svg"/>
+</picture>
 ```
 
 ### Code snippets
@@ -683,6 +728,9 @@ Fields provide a flexible structure for representing key-value data and structur
 | `<key>` | Key of the field item: can be a descendant of `field_item` |
 | `<value>` | Value of the field item: can be a descendant of `field_item`; optional `class` attribute with values `read_only` (default) or `fillable` |
 | `<hint>` | Hint for a fillable value field; recommended to be used within the context of a `field_item`; can describe a format, example, or additional description |
+
+Note that all of the above are [semantic elements](#semantic-elements) and can therefore contain their own element head,
+including e.g. their own bounding box location information.
 
 #### Field Structure Rules
 
@@ -2510,7 +2558,7 @@ Can only be child of [`<picture>`](#picture).
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. |
+| `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. Relative URIs are allowed too, e.g. `uri="assets/chart.svg"`. |
 
 ##### Allowed Content Types
 
@@ -2564,7 +2612,11 @@ None
 
 ##### Allowed Content Types
 
-None (empty element).
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Not allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Not allowed |
 
 ### Formatting Elements
 

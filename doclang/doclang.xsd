@@ -233,7 +233,7 @@
   <!-- ============================================ -->
 
   <xs:element name="smiles">
-    <xs:complexType/>
+    <xs:complexType mixed="true"/>
   </xs:element>
 
   <!-- ============================================ -->

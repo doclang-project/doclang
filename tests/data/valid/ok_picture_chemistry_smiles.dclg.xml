@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
   <picture class="chemistry">
-    <label value="caffeine"/>
-    <smiles/>
+    <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+    <src uri="molecule.svg"/>
   </picture>
 </doclang>
