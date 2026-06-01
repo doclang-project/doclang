@@ -6,25 +6,28 @@
 
 This specification was prepared by
 
-| Name | Company | Email |
-|------|---------|-------|
-| Peter Staar | IBM | taa@zurich.ibm.com |
-| Panos Vagenas | IBM | pva@zurich.ibm.com |
-| Maksym Lysak | IBM | mly@zurich.ibm.com |
-| Nikolaos Livathinos | IBM | nli@zurich.ibm.com |
-| Christoph Auer | IBM | cau@zurich.ibm.com |
-| Michele Dolfi | IBM | dol@zurich.ibm.com |
-| Said Gürbüz | IBM | Said.Gurbuz@ibm.com |
-| Marlene Wolfgruber | ABBYY | marlene.wolfgruber@abbyy.com |
-| Maxime Vermeir | ABBYY | maxime.vermeir@abbyy.com |
-| Morgan Logue | ABBYY | morgan.logue@abbyy.com |
-| Andrew Pery | ABBYY | andrew.pery@abbyy.com |
-| Christopher Giblin | IBM | cgi@zurich.ibm.com|
-| Jehlum Vitasta Pandit | RedHat | jepandit@redhat.com |
-| Ali Maredia | RedHat | amaredia@redhat.com |
-| Santosh Borse | IBM | ssborse@us.ibm.com |
-| Yousaf Shah | IBM | syshah@us.ibm.com |
-| Maroun Touma | IBM | touma@us.ibm.com |
+| Name | Company |
+|------|---------|
+| Peter Staar | IBM |
+| Panos Vagenas | IBM |
+| Maksym Lysak | IBM |
+| Nikolaos Livathinos | IBM |
+| Christoph Auer | IBM |
+| Michele Dolfi | IBM |
+| Said Gürbüz | IBM |
+| Santosh Borse | IBM |
+| Yousaf Shah | IBM |
+| Maroun Touma | IBM |
+| Christopher Giblin | IBM |
+| Marlene Wolfgruber | ABBYY |
+| Maxime Vermeir | ABBYY |
+| Morgan Logue | ABBYY |
+| Andrew Pery | ABBYY |
+| Jehlum Vitasta Pandit | RedHat |
+| Ali Maredia | RedHat | 
+| Micaela Kaplan | HumanSignal |
+| Ryan Chesler | NVIDIA | 
+| Riccardo Maggioni | Forgis | 
 
 This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
