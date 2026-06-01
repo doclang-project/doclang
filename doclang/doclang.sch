@@ -244,31 +244,19 @@
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- PICTURE BODY: class-specific first body element (table for chart, smiles for chemistry) -->
+  <!-- PICTURE BODY: table only as first body element when class="chart" -->
   <!-- ============================================ -->
 
   <sch:pattern id="picture-body">
     <sch:rule context="dl:picture">
       <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
-      <sch:assert test="not(not(@class) or @class = 'undefined') or (empty(dl:table) and empty(dl:smiles))">
-        Picture with class="undefined" (or no class) must not contain table or smiles in the element body.
-      </sch:assert>
-
-      <sch:assert test="not(@class = 'chart') or empty(dl:smiles)">
-        Picture with class="chart" must not contain smiles.
-      </sch:assert>
-
-      <sch:assert test="not(@class = 'chemistry') or empty(dl:table)">
-        Picture with class="chemistry" must not contain table.
+      <sch:assert test="not(not(@class) or @class = 'undefined') or empty(dl:table)">
+        Picture with class="undefined" (or no class) must not contain table in the element body.
       </sch:assert>
 
       <sch:assert test="empty(dl:table) or (@class = 'chart' and dl:table[1] is $first-body)">
         Element table is only allowed as the first element of the body of picture with class="chart".
-      </sch:assert>
-
-      <sch:assert test="empty(dl:smiles) or (@class = 'chemistry' and dl:smiles[1] is $first-body)">
-        Element smiles is only allowed as the first element of the body of picture with class="chemistry".
       </sch:assert>
     </sch:rule>
   </sch:pattern>

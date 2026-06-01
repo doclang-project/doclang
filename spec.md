@@ -24,10 +24,10 @@ This specification was prepared by
 | Morgan Logue | ABBYY |
 | Andrew Pery | ABBYY |
 | Jehlum Vitasta Pandit | RedHat |
-| Ali Maredia | RedHat | 
+| Ali Maredia | RedHat |
 | Micaela Kaplan | HumanSignal |
-| Ryan Chesler | NVIDIA | 
-| Riccardo Maggioni | Forgis | 
+| Ryan Chesler | NVIDIA |
+| Riccardo Maggioni | Forgis |
 
 This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
@@ -315,7 +315,7 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Chart with respective data in OTSL format:
+Bar chart using [recommended label](#appendix-d-recommended-labels) and [`<table>`](#table) for capturing chart data in OTSL format:
 
 ```xml
 <picture class="chart">
@@ -329,12 +329,14 @@ Chart with respective data in OTSL format:
 </picture>
 ```
 
-Chemistry structure with respective data in SMILES format:
+Chemistry structure with respective data in SMILES format using [recommended label](#appendix-d-recommended-labels) and [custom metadata](#custom):
 
 ```xml
-<picture class="chemistry">
-  <label value="molecule"/>
-  <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+<picture>
+  <label value="chemistry_structure"/>
+  <custom>
+    <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+  </custom>
   <src uri="molecule.svg"/>
 </picture>
 ```
@@ -2246,7 +2248,7 @@ None
 
 #### `<picture>`
 
-Can contain a [`<src>`](#src) for image bytes or reference. Additionally, the element body may begin with a [`<table>`](#table) in case of `<picture class="chart">` or with a [`<smiles>`](#smiles) in case of `<picture class="chemistry">`.
+Can contain a [`<src>`](#src) for image bytes or reference. Additionally, the element body may begin with a [`<table>`](#table) in case of `<picture class="chart">`.
 
 ##### Allowed Context
 
@@ -2256,7 +2258,7 @@ Any context that allows semantic elements.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `class` | Optional; default: "undefined" | {"undefined", "chart", "chemistry"} | The picture type. |
+| `class` | Optional; default: "undefined" | {"undefined", "chart"} | The picture type. |
 
 ##### Allowed Content Types
 
@@ -2588,26 +2590,6 @@ None (empty element).
 ##### Allowed Context
 
 Any context that allows raw text content.
-
-##### Attributes
-
-None
-
-##### Allowed Content Types
-
-| Content Type | Allowed / Not allowed |
-| --- | --- |
-| Element head | Not allowed |
-| Raw text | Allowed |
-| Primary semantic elements | Not allowed |
-
-#### `<smiles>`
-
-The SMILES representation of a molecule.
-
-##### Allowed Context
-
-Can only be the first element of the element body of `<picture class="chemistry">`.
 
 ##### Attributes
 
@@ -3563,7 +3545,7 @@ For picture labels, we recommend using the values defined below:
 | Context | Recommended values |
 | --- | --- |
 | `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot` |
-| `<picture class="undefined">` | `full_page_image`, `page_thumbnail`, `photograph`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
+| else, i.e. `<picture class="undefined">` (default) | `full_page_image`, `page_thumbnail`, `photograph`, `chemistry_structure`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
 
 The label value `undefined` is recommended if no more specific label is applicable (default).
 

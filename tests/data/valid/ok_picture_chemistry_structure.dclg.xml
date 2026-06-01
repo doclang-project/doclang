@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
-  <picture class="chemistry">
-    <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+  <picture>
+    <label value="chemistry_structure"/>
+    <custom>
+      <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+    </custom>
     <src uri="molecule.svg"/>
   </picture>
 </doclang>

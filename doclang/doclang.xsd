@@ -229,15 +229,7 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- SMILES ELEMENT: molecule representation (child of picture class="chemistry") -->
-  <!-- ============================================ -->
-
-  <xs:element name="smiles">
-    <xs:complexType mixed="true"/>
-  </xs:element>
-
-  <!-- ============================================ -->
-  <!-- PICTURE ELEMENT: element_head + body (table or smiles may begin body, then src) -->
+  <!-- PICTURE ELEMENT: element_head + body (table may begin body for chart, then src) -->
   <!-- ============================================ -->
 
   <xs:element name="picture">
@@ -245,7 +237,6 @@
       <xs:sequence>
         <xs:group ref="dl:element_head"/>
         <xs:element ref="dl:table" minOccurs="0"/>
-        <xs:element ref="dl:smiles" minOccurs="0"/>
         <xs:element ref="dl:src" minOccurs="0"/>
       </xs:sequence>
       <xs:attribute name="class" use="optional" default="undefined">
@@ -253,7 +244,6 @@
           <xs:restriction base="xs:string">
             <xs:enumeration value="undefined"/>
             <xs:enumeration value="chart"/>
-            <xs:enumeration value="chemistry"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
