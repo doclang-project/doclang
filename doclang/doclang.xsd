@@ -164,7 +164,7 @@
 
   <xs:element name="label">
     <xs:complexType>
-      <xs:attribute name="value" type="xs:string" default="unspecified"/>
+      <xs:attribute name="value" type="xs:string" default="undefined"/>
     </xs:complexType>
   </xs:element>
 
@@ -248,10 +248,10 @@
         <xs:element ref="dl:smiles" minOccurs="0"/>
         <xs:element ref="dl:src" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute name="class" use="optional" default="unspecified">
+      <xs:attribute name="class" use="optional" default="undefined">
         <xs:simpleType>
           <xs:restriction base="xs:string">
-            <xs:enumeration value="unspecified"/>
+            <xs:enumeration value="undefined"/>
             <xs:enumeration value="chart"/>
             <xs:enumeration value="chemistry"/>
           </xs:restriction>

@@ -251,8 +251,8 @@
     <sch:rule context="dl:picture">
       <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
-      <sch:assert test="not(not(@class) or @class = 'unspecified') or (empty(dl:table) and empty(dl:smiles))">
-        Picture with class="unspecified" (or no class) must not contain table or smiles in the element body.
+      <sch:assert test="not(not(@class) or @class = 'undefined') or (empty(dl:table) and empty(dl:smiles))">
+        Picture with class="undefined" (or no class) must not contain table or smiles in the element body.
       </sch:assert>
 
       <sch:assert test="not(@class = 'chart') or empty(dl:smiles)">

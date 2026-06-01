@@ -2195,7 +2195,7 @@ None
 
 #### `<picture>`
 
-Can contain a [`<src>`](#src). Additionally, the element body may begin with a [`<table>`](#table) in case of `<picture class="chart">` or with a [`<smiles>`](#smiles) in case of `<picture class="chemistry">`.
+Can contain a [`<src>`](#src) for image bytes or reference. Additionally, the element body may begin with a [`<table>`](#table) in case of `<picture class="chart">` or with a [`<smiles>`](#smiles) in case of `<picture class="chemistry">`.
 
 ##### Allowed Context
 
@@ -2205,7 +2205,7 @@ Any context that allows semantic elements.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `class` | Optional; default: "unspecified" | {"unspecified", "chart", "chemistry"} | The picture type. |
+| `class` | Optional; default: "undefined" | {"undefined", "chart", "chemistry"} | The picture type. |
 
 ##### Allowed Content Types
 
@@ -2391,7 +2391,7 @@ Can only be child of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `value` | Optional; default: "unspecified" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
+| `value` | Optional; default: "undefined" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
 
 ##### Allowed Content Types
 
@@ -2510,7 +2510,7 @@ Can only be child of [`<picture>`](#picture).
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `uri` | Required | URI | The source URI. |
+| `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. |
 
 ##### Allowed Content Types
 
@@ -3503,17 +3503,14 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 
 ### Pictures
 
-For picture labels, we recommend using the values defined below (as the `value` of `<label>`, without extra quoting):
-
- <!-- TODO: review `table` label below -->
+For picture labels, we recommend using the values defined below:
 
 | Context | Recommended values |
 | --- | --- |
-| `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot`, `table` |
-| `<picture class="chemistry">` | `chemistry_structure` |
-| `<picture>` (default, `class="unspecified"`) | `full_page_image`, `page_thumbnail`, `photograph`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
+| `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot` |
+| `<picture class="undefined">` | `full_page_image`, `page_thumbnail`, `photograph`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
 
-If undefined, the label value `unspecified` can be used (default).
+The label value `undefined` is recommended if no more specific label is applicable (default).
 
 ### Code
 
@@ -3521,4 +3518,4 @@ If undefined, the label value `unspecified` can be used (default).
 | --- | --- |
 | `<code>` | [Linguist](https://github.com/github-linguist/linguist/blob/v9.5.0/lib/linguist/languages.yml) v9.5.0 language keys (e.g. `Python`) |
 
-If undefined, the label value `unspecified` can be used (default).
+The label value `undefined` is recommended if no more specific label is applicable (default).
