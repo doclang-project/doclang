@@ -1,5 +1,7 @@
 # DocLang: Universal AI Document Format
 
+Version: 0.3
+
 ## Introduction and Overview
 
 ### Foreword
@@ -1676,10 +1678,10 @@ The scenario in the above figure is represented as follows:
 ```
 </details>
 
+<!-- commented out as h_thread is in planned status
+
 <details>
   <summary>Split table example</summary>
-
-  <!-- blank line after <summary> is important -->
 
 The table shown on the left may be split across pages, e.g. as shown on the middle. The figure on the right visualizes
 the thread elements (more details further below):
@@ -1715,7 +1717,6 @@ to be reached to add the thread for "Europe" in the example above.
 
 ```xml
 ...
-<!-- page 1: -->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="1"/>
@@ -1726,7 +1727,6 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 
-<!-- page 2: -->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="2"/>
@@ -1737,7 +1737,6 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 
-<!-- page 3: -->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="3"/>
@@ -1748,7 +1747,6 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 
-<!-- page 4: -->
 <table>
   <h_thread h_thread_id="1"/>
 
@@ -1758,7 +1756,6 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 
-<!-- page 5: -->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="2"/>
@@ -1769,7 +1766,6 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 
-<!-- page 6: -->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="3"/>
@@ -1780,7 +1776,6 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 
-<!-- page 7: -->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="1"/>
@@ -1793,6 +1788,8 @@ to be reached to add the thread for "Europe" in the example above.
 ...
 ```
 </details>
+
+-->
 
 ### References
 

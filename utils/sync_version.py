@@ -5,6 +5,7 @@ Version Sync Script for DocLang
 When no target version is given, the release triple is derived from git tags
 (vMAJOR.MINOR.PATCH). That version is synced to:
 - pyproject.toml
+- spec.md
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
 
@@ -83,6 +84,32 @@ def sync_version_in_xsd(file_path: Path, version: str) -> None:
         content,
         flags=re.DOTALL,
     )
+    file_path.write_text(content, encoding="utf-8")
+
+
+def sync_version_in_spec(file_path: Path, version: str) -> None:
+    """Insert or update the Version line in spec.md immediately after the first h1."""
+    major_minor = ".".join(version.split(".")[:2])
+    content = file_path.read_text(encoding="utf-8")
+    version_line = f"Version: {major_minor}"
+
+    if re.search(r"^Version: [\d.]+$", content, re.MULTILINE):
+        content = re.sub(
+            r"^Version: [\d.]+$",
+            version_line,
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+    else:
+        content = re.sub(
+            r"^(# .+)\n",
+            rf"\1\n\n{version_line}\n",
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+
     file_path.write_text(content, encoding="utf-8")
 
 
@@ -169,11 +196,12 @@ def sync_version_in_pyproject(file_path: Path, version: str) -> None:
 
 
 def sync_version(version_arg: str | None = None, project_root: Path | None = None) -> str:
-    """Sync version across pyproject.toml, doclang.xsd, and reference.xlsx."""
+    """Sync version across pyproject.toml, spec.md, doclang.xsd, and reference.xlsx."""
     if project_root is None:
         project_root = Path(__file__).resolve().parent.parent
 
     pyproject_path = project_root / "pyproject.toml"
+    spec_path = project_root / "spec.md"
     xsd_path = project_root / "doclang" / "doclang.xsd"
     excel_path = project_root / "reference" / "input" / "reference.xlsx"
 
@@ -181,10 +209,13 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
 
     if not pyproject_path.exists():
         raise FileNotFoundError(f"{pyproject_path} not found")
+    if not spec_path.exists():
+        raise FileNotFoundError(f"{spec_path} not found")
     if not xsd_path.exists():
         raise FileNotFoundError(f"{xsd_path} not found")
 
     sync_version_in_pyproject(pyproject_path, version)
+    sync_version_in_spec(spec_path, version)
     sync_version_in_xsd(xsd_path, version)
     sync_version_in_excel(excel_path, version)
 
@@ -194,7 +225,7 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sync DocLang version across pyproject.toml, doclang.xsd, and reference.xlsx",
+        description="Sync DocLang version across pyproject.toml, spec.md, doclang.xsd, and reference.xlsx",
     )
     parser.add_argument(
         "version",
