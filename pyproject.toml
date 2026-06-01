@@ -34,5 +34,5 @@ dev = [
 [tool.uv]
 package = true
 
-[tool.setuptools.packages.find]
-include = ["doclang*"]
+[tool.setuptools]
+packages = ["doclang"]

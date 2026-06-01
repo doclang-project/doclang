@@ -1,0 +1,14 @@
+# Runtime package and build metadata only; repo assets stay in git.
+graft doclang
+include pyproject.toml README.md LICENSE CHANGELOG.md
+
+prune examples
+prune exports
+prune reference
+prune resources
+prune utils
+prune tests
+
+exclude uv.lock spec.md .pre-commit-config.yaml .gitignore
+
+global-exclude *.py[cod] __pycache__ */__pycache__/*
