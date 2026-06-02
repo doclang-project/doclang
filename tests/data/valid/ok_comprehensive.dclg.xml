@@ -65,78 +65,99 @@
     <text>Phone: +1-555-0123</text>
   </field_region>
 
-  <!-- Example 1ka: Field heading with default level (1) -->
-  <field_heading>
-    <bold>Customer Information</bold>
-  </field_heading>
+  <!-- Example 1ka-1mc: Field elements in valid placement -->
+  <field_region>
+    <!-- Example 1ka: Field heading with default level (1) -->
+    <field_heading>
+      <bold>Customer Information</bold>
+    </field_heading>
 
-  <!-- Example 1kb: Field heading with explicit level 1 -->
-  <field_heading level="1">
-    Section A: Personal Details
-  </field_heading>
+    <!-- Example 1kb: Field heading with explicit level 1 -->
+    <field_heading level="1">
+      Section A: Personal Details
+    </field_heading>
 
-  <!-- Example 1kc: Field heading with level 2 -->
-  <field_heading level="2">
-    <italic>Subsection:</italic> Contact Information
-  </field_heading>
+    <!-- Example 1kc: Field heading with level 2 -->
+    <field_heading level="2">
+      <italic>Subsection:</italic> Contact Information
+    </field_heading>
 
-  <!-- Example 1kd: Field heading with level 3 and nested elements -->
-  <field_heading level="3">
-    <text>Address Details</text>
-  </field_heading>
+    <!-- Example 1kd: Field heading with level 3 and nested elements -->
+    <field_heading level="3">
+      <text>Address Details</text>
+    </field_heading>
 
-  <!-- Example 1k: Field item with text -->
-  <field_item>
-    <text>Customer Name</text>
-  </field_item>
+    <!-- Example 1k: Field item with text -->
+    <field_item>
+      <text>Customer Name</text>
+    </field_item>
 
-  <!-- Example 1l: Key with inline formatting -->
-  <key>
-    <bold>Invoice Number:</bold>
-  </key>
+    <!-- Example 1l: Key with inline formatting -->
+    <field_item>
+      <key>
+        <bold>Invoice Number:</bold>
+      </key>
+    </field_item>
 
-  <!-- Example 1la: Key with plain text (mixed content) -->
-  <key>Name:</key>
+    <!-- Example 1la: Key with plain text (mixed content) -->
+    <field_item><key>Name:</key></field_item>
 
-  <!-- Example 1lb: Key with text and formatting mixed -->
-  <key>Customer <bold>ID</bold>:</key>
+    <!-- Example 1lb: Key with text and formatting mixed -->
+    <field_item><key>Customer <bold>ID</bold>:</key></field_item>
 
-  <!-- Example 1lc: Key with content element -->
-  <key>
-    <content>Email Address:</content>
-  </key>
+    <!-- Example 1lc: Key with content element -->
+    <field_item>
+      <key>
+        <content>Email Address:</content>
+      </key>
+    </field_item>
 
-  <!-- Example 1ld: Key with multiple formatting -->
-  <key>
-    <bold>Customer</bold> <italic>Reference</italic> Number
-  </key>
+    <!-- Example 1ld: Key with multiple formatting -->
+    <field_item>
+      <key>
+        <bold>Customer</bold> <italic>Reference</italic> Number
+      </key>
+    </field_item>
 
-  <!-- Example 1m: Value with plain text (default read_only) -->
-  <value>INV-2024-001</value>
+    <!-- Example 1m: Value with plain text (default read_only) -->
+    <field_item><value>INV-2024-001</value></field_item>
 
-  <!-- Example 1ma: Value with text and formatting mixed (explicit read_only) -->
-  <value class="read_only">Status: <bold>Active</bold></value>
+    <!-- Example 1ma: Value with text and formatting mixed (explicit read_only) -->
+    <field_item><value class="read_only">Status: <bold>Active</bold></value></field_item>
 
-  <!-- Example 1mb: Value with content element (fillable) -->
-  <value class="fillable">
-    <content>john.doe@example.com</content>
-  </value>
+    <!-- Example 1mb: Value with content element (fillable) -->
+    <field_item>
+      <value class="fillable">
+        <content>john.doe@example.com</content>
+      </value>
+    </field_item>
 
-  <!-- Example 1mc: Value with formatting (fillable) -->
-  <value class="fillable">
-    <italic>Confidential</italic>
-  </value>
+    <!-- Example 1mc: Value with formatting (fillable) -->
+    <field_item>
+      <value class="fillable">
+        <italic>Confidential</italic>
+      </value>
+    </field_item>
+  </field_region>
 
   <!-- Example 1n: Field region with key-value pairs (mixed content and class attributes) -->
   <field_region>
-    <key><bold>Name:</bold></key>
-    <value class="read_only">John Doe</value>
-    <key>Email:</key>
-    <value class="fillable"><content>john@example.com</content></value>
-    <key><italic>Phone:</italic></key>
-    <value class="fillable">+1-555-0123</value>
-    <key>Status:</key>
-    <value class="read_only">Active (<bold>Verified</bold>)</value>
+    <field_item>
+      <key><bold>Name:</bold></key>
+      <value class="read_only">John Doe</value>
+    </field_item>
+    <field_item>
+      <key>Email:</key>
+      <value class="fillable"><content>john@example.com</content></value>
+    </field_item>
+    <field_item>
+      <key><italic>Phone:</italic></key>
+      <value class="fillable">+1-555-0123</value>
+    </field_item>
+    <field_item>
+      <key>Status:</key>
+      <value class="read_only">Active (<bold>Verified</bold>)</value>
+    </field_item>
   </field_region>
 
   <!-- Example 2: Text with formatting -->
@@ -342,8 +363,8 @@ Third line</content>
     <location value="100"/>
     <location value="50"/>
     <custom>
-      <source system="ocr">scanner-a</source>
-      <confidence_score value="0.98"/>
+      <acme_source system="ocr">scanner-a</acme_source>
+      <acme_confidence_score value="0.98"/>
     </custom>
     Regular text with <handwriting>handwritten notes</handwriting> and <marker>important</marker> markers.
   </text>
@@ -360,8 +381,8 @@ Third line</content>
     <location value="500"/>
     <location value="300"/>
     <custom>
-      <assessment>positive</assessment>
-      <confidence_score value="0.98"/>
+      <acme_assessment>positive</acme_assessment>
+      <acme_confidence_score value="0.98"/>
     </custom>
     <fcel/>
     <text>A</text>

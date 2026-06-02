@@ -3,7 +3,7 @@
   <picture>
     <label value="chemistry_structure"/>
     <custom>
-      <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
+      <acme_smiles>C1=CC=C(C=C1)C(=O)O</acme_smiles>
     </custom>
     <src uri="molecule.svg"/>
   </picture>

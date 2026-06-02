@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <field_region>
+    <field_item>
+      <key>Outer key 1</key>
+      <key>Outer key 2</key>
+    </field_item>
+  </field_region>
+</doclang>

@@ -293,6 +293,45 @@
   </sch:pattern>
 
   <!-- ============================================ -->
+  <!-- FIELD STRUCTURE: placement and key cardinality -->
+  <!-- Enforces Appendix A field ancestry constraints -->
+  <!-- ============================================ -->
+  <sch:pattern id="field-structure-placement">
+    <sch:rule context="dl:field_heading">
+      <sch:assert test="exists(ancestor::dl:field_region)">
+        field_heading and field_item must be descendants of field_region.
+      </sch:assert>
+    </sch:rule>
+
+    <sch:rule context="dl:field_item">
+      <sch:assert test="exists(ancestor::dl:field_region)">
+        field_heading and field_item must be descendants of field_region.
+      </sch:assert>
+    </sch:rule>
+
+    <sch:rule context="dl:key">
+      <sch:assert test="exists(ancestor::dl:field_item)">
+        key and value must be descendants of field_item.
+      </sch:assert>
+    </sch:rule>
+
+    <sch:rule context="dl:value">
+      <sch:assert test="exists(ancestor::dl:field_item)">
+        key and value must be descendants of field_item.
+      </sch:assert>
+    </sch:rule>
+
+    <sch:rule context="dl:field_item">
+      <sch:let name="own-key-count" value="count(.//dl:key[count(ancestor::dl:field_item) = 1])"/>
+      <sch:assert test="$own-key-count le 1">
+        A field_item may contain at most one own descendant key.
+        Keys that belong to nested field_item descendants are excluded from this count.
+        Found own-key-count=<sch:value-of select="$own-key-count"/>.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
   <!-- PICTURE BODY: table only as first body element when class="chart" -->
   <!-- ============================================ -->
 

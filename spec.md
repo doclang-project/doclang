@@ -197,7 +197,7 @@ While the details are specified in the sections further below, this snippet show
 
 ### Subclasses
 
-For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix B: Recommended Labels](#appendix-b-recommended-labels)), but for extensibility purposes, the label value is not to be validated.
+For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix B: Recommendations](#appendix-b-recommendations)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
 
 In the example further below:
@@ -245,11 +245,11 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Appendix A: Reference](#appendix-a-reference).
 
-Label recommendations are covered in [Appendix B: Recommended Labels](#appendix-b-recommended-labels).
+Non-normative recommendation guidelines are covered in [Appendix B: Recommendations](#appendix-b-recommendations).
 
 Planned extensions are discussed in [Appendix C: Planned Features](#appendix-c-planned-features).
 
-Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project/doclang).
+Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project).
 
 ## Usage Examples
 
@@ -317,7 +317,7 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Bar chart using [recommended label](#appendix-b-recommended-labels) and [`<table>`](#table) for capturing chart data in OTSL format:
+Bar chart using [recommended label](#appendix-b-recommendations) and [`<table>`](#table) for capturing chart data in OTSL format:
 
 ```xml
 <picture class="chart">
@@ -331,21 +331,9 @@ Bar chart using [recommended label](#appendix-b-recommended-labels) and [`<table
 </picture>
 ```
 
-Chemistry structure with respective data in SMILES format using [recommended label](#appendix-b-recommended-labels) and [custom metadata](#custom):
-
-```xml
-<picture>
-  <label value="chemistry_structure"/>
-  <custom>
-    <smiles>C1=CC=C(C=C1)C(=O)O</smiles>
-  </custom>
-  <src uri="molecule.svg"/>
-</picture>
-```
-
 ### Code snippets
 
-Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix B: Recommended Labels](#appendix-b-recommended-labels)).
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix B: Recommendations](#appendix-b-recommendations)).
 
 Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
 
@@ -746,6 +734,7 @@ including e.g. their own bounding box location information.
 - Any `field_heading` or `field_item` must be a descendant of a `field_region` (not necessarily a direct child)
 - Any `key` or `value` element must be a descendant of a `field_item` (not necessarily a direct child)
   — More precisely, 0 or 1 `key` element and 0 or more `value` elements are allowed within a single `field_item`
+    - For a given `field_item`, the 0..1 `key` constraint applies to its own descendant scope, excluding descendants that belong to nested `field_item` elements
   - This way, the `field_item` can serve for associating the `values` with a `key`
 - The `value` element has an optional `class` attribute:
   - `class="read_only"` (default): Indicates a pre-filled, non-editable value
@@ -1885,7 +1874,7 @@ Superscript and subscript:
 </text>
 ```
 
-#### Page Break with Continuation
+### Page Break with Continuation
 
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
 
@@ -1930,6 +1919,36 @@ A more complicated example is shown below in which we break the content of a lis
 
 Above, `<thread thread_id="1"/>` captures that the list itself is split, while `<thread thread_id="2"/>` captures that a particular
 list item is split.
+
+### Custom vocabularies
+
+The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in SMILES representation.
+
+For details, see [custom metadata](#custom) and vocabulary guidelines in [Appendix B: Recommendations](#appendix-b-recommendations).
+
+For shared/interoperable documents, using a formal XML namespace is recommended:
+
+```xml
+<picture xmlns:acme="https://example.com/ns/doclang/custom/chemistry/1">
+  <label value="chemistry_structure"/>
+  <custom>
+    <acme:smiles>C1=CC=C(C=C1)C(=O)O</acme:smiles>
+  </custom>
+  <src uri="molecule.svg"/>
+</picture>
+```
+
+For local/private usage where formal namespaces are not used, a collision-resistant project prefix can be used:
+
+```xml
+<picture>
+  <label value="chemistry_structure"/>
+  <custom>
+    <acme_smiles>C1=CC=C(C=C1)C(=O)O</acme_smiles>
+  </custom>
+  <src uri="molecule.svg"/>
+</picture>
+```
 
 ## Bibliography
 
@@ -2503,12 +2522,12 @@ Can only be child of a semantic element. Mutually exclusive with [`<xref>`](#xre
 | Content Type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
-| Raw text | Allowed |
+| Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
 #### `<custom>`
 
-Optional part of the element head; custom metadata, e.g. for application-specific purposes.
+Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Appendix B: Recommendations](#appendix-b-recommendations) for naming and namespacing guidance for custom vocabularies.
 
 ##### Allowed Context
 
@@ -2958,26 +2977,39 @@ Can only be child of [`<head>`](#head).
 
 None (empty element).
 
-## Appendix B: Recommended Labels
+## Appendix B: Recommendations
 
-### Pictures
+This appendix is informative and does not define conformance requirements.
 
-For picture labels, we recommend using the values defined below:
+### Recommended labels
+
+#### Pictures
+
+For the `label.value` of `<picture>` elements, we recommend using the values defined below, or `undefined` if no more specific label is applicable:
 
 | Context | Recommended values |
 | --- | --- |
 | `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot` |
 | else, i.e. `<picture class="undefined">` (default) | `full_page_image`, `page_thumbnail`, `photograph`, `chemistry_structure`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
 
-The label value `undefined` is recommended if no more specific label is applicable (default).
+#### Code
 
-### Code
+For the `label.value` of `<code>` elements, we recommend using the values defined below, or `undefined` if no more specific label is applicable:
 
 | Context | Recommended values |
 | --- | --- |
 | `<code>` | [Linguist](https://github.com/github-linguist/linguist/blob/v9.5.0/lib/linguist/languages.yml) v9.5.0 language keys (e.g. `Python`) |
 
-The label value `undefined` is recommended if no more specific label is applicable (default).
+### Custom vocabulary naming and namespacing
+
+Content inside [`<custom>`](#custom) is implementation-defined and not governed by this standard.
+To improve interoperability and reduce naming collisions, the following recommendations apply:
+
+- Producers of shared custom vocabularies SHOULD use formal XML namespaces with stable namespace URIs.
+- Processors SHOULD treat the namespace URI as the namespace identifier and MUST NOT assume semantic meaning from prefix names alone.
+- For private or local use where formal namespaces are not used, producers SHOULD use collision-resistant element names prefixed with a stable organization or project identifier (e.g. `acme_`).
+- Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, `data`, or `value` unless these are clearly scoped by namespace or equivalent prefixing.
+- Producers SHOULD document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
 
 ## Appendix C: Planned Features
 
@@ -3500,9 +3532,9 @@ Notes:
 - When `training_permitted` is `false`, implementations SHOULD treat training-related fields as either omitted or set to explicit "none" values.
 - Where retention elements include a `unit` attribute, producers MUST use consistent units and pre-normalized values.
 
-#### Component-level metadata
-
 <!--
+
+#### Component-level metadata
 
 Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
 

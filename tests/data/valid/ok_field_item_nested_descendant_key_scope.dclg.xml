@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <field_region>
+    <field_item>
+      <key>Key 1 (outer)</key>
+      <value>Outer value 1a</value>
+      <value>
+        <field_item>
+          <key>Key 2 (inner)</key>
+          <value>Inner value 2a</value>
+          <value>Inner value 2b</value>
+        </field_item>
+      </value>
+    </field_item>
+  </field_region>
+</doclang>
