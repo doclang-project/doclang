@@ -77,7 +77,7 @@
 
   <sch:pattern id="element-head-placement">
     <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption |
-                       dl:page_header | dl:page_footer | dl:footnote | dl:picture |
+                       dl:page_header | dl:page_footer | dl:footnote | dl:picture | dl:marker |
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
                        dl:list | dl:table | dl:index | dl:group">
       <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:location | dl:caption | dl:custom"/>
@@ -141,6 +141,55 @@
         Found value=<sch:value-of select="@value"/>, axis_limit=<sch:value-of select="$axis-limit"/>,
         axis=<sch:value-of select="if ($is-x-axis) then 'x' else 'y'"/>,
         location-index=<sch:value-of select="$location-index"/>.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- LOCATION BLOCK: enforce x0<=x1 and y0<=y1 -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="location-block-order">
+    <sch:rule context="*[dl:location]">
+      <sch:let name="x0" value="number(dl:location[1]/@value)"/>
+      <sch:let name="y0" value="number(dl:location[2]/@value)"/>
+      <sch:let name="x1" value="number(dl:location[3]/@value)"/>
+      <sch:let name="y1" value="number(dl:location[4]/@value)"/>
+
+      <!-- Effective resolution for each coordinate -->
+      <sch:let name="doc-default-width" value="if (/dl:doclang/dl:head[1]/dl:default_resolution[1]/@width)
+                                               then number(/dl:doclang/dl:head[1]/dl:default_resolution[1]/@width)
+                                               else 512"/>
+      <sch:let name="doc-default-height" value="if (/dl:doclang/dl:head[1]/dl:default_resolution[1]/@height)
+                                                then number(/dl:doclang/dl:head[1]/dl:default_resolution[1]/@height)
+                                                else 512"/>
+
+      <sch:let name="x0-res" value="if (dl:location[1]/@resolution)
+                                     then number(dl:location[1]/@resolution)
+                                     else $doc-default-width"/>
+      <sch:let name="y0-res" value="if (dl:location[2]/@resolution)
+                                     then number(dl:location[2]/@resolution)
+                                     else $doc-default-height"/>
+      <sch:let name="x1-res" value="if (dl:location[3]/@resolution)
+                                     then number(dl:location[3]/@resolution)
+                                     else $doc-default-width"/>
+      <sch:let name="y1-res" value="if (dl:location[4]/@resolution)
+                                     then number(dl:location[4]/@resolution)
+                                     else $doc-default-height"/>
+
+      <sch:let name="x0-norm" value="$x0 div $x0-res"/>
+      <sch:let name="y0-norm" value="$y0 div $y0-res"/>
+      <sch:let name="x1-norm" value="$x1 div $x1-res"/>
+      <sch:let name="y1-norm" value="$y1 div $y1-res"/>
+
+      <sch:assert test="$x0-norm le $x1-norm and $y0-norm le $y1-norm">
+        Location block must satisfy x0_norm &lt;= x1_norm and y0_norm &lt;= y1_norm,
+        where *_norm is each coordinate normalized by its effective resolution.
+        Found:
+        x0=<sch:value-of select="$x0"/>, x0_res=<sch:value-of select="$x0-res"/>, x0_norm=<sch:value-of select="$x0-norm"/>,
+        x1=<sch:value-of select="$x1"/>, x1_res=<sch:value-of select="$x1-res"/>, x1_norm=<sch:value-of select="$x1-norm"/>,
+        y0=<sch:value-of select="$y0"/>, y0_res=<sch:value-of select="$y0-res"/>, y0_norm=<sch:value-of select="$y0-norm"/>,
+        y1=<sch:value-of select="$y1"/>, y1_res=<sch:value-of select="$y1-res"/>, y1_norm=<sch:value-of select="$y1-norm"/>.
       </sch:assert>
     </sch:rule>
   </sch:pattern>

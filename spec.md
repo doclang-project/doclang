@@ -148,7 +148,7 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<label>`](#label) (optional)
 - [`<thread>`](#thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
-- sequence of 2*N [`<location>`](#location)s, whereby values are interpreted in alternating axis order (`x0, y0, ...`) (optional)
+- optional sequence of 4 [`<location>`](#location)s, whereby values are interpreted in alternating axis order, as `x_min, y_min, x_max, y_max` (after resolution normalization), w.r.t. the top-left corner of the page
 - [`<caption>`](#caption) (optional)
 - [`<custom>`](#custom) (optional)
 
@@ -197,7 +197,7 @@ While the details are specified in the sections further below, this snippet show
 
 ### Subclasses
 
-For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix D: Recommended Labels](#appendix-d-recommended-labels)), but for extensibility purposes, the label value is not to be validated.
+For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix B: Recommended Labels](#appendix-b-recommended-labels)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
 
 In the example further below:
@@ -245,11 +245,11 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Appendix A: Reference](#appendix-a-reference).
 
-Planned extensions are discussed in [Appendix B: Planned Features](#appendix-b-planned-features).
+Label recommendations are covered in [Appendix B: Recommended Labels](#appendix-b-recommended-labels).
 
-Special validation rules are covered in [Appendix C: Validation Rules](#appendix-c-validation-rules).
+Planned extensions are discussed in [Appendix C: Planned Features](#appendix-c-planned-features).
 
-Label recommendations are covered in [Appendix D: Recommended Labels](#appendix-d-recommended-labels).
+Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project/doclang).
 
 ## Usage Examples
 
@@ -317,7 +317,7 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Bar chart using [recommended label](#appendix-d-recommended-labels) and [`<table>`](#table) for capturing chart data in OTSL format:
+Bar chart using [recommended label](#appendix-b-recommended-labels) and [`<table>`](#table) for capturing chart data in OTSL format:
 
 ```xml
 <picture class="chart">
@@ -331,7 +331,7 @@ Bar chart using [recommended label](#appendix-d-recommended-labels) and [`<table
 </picture>
 ```
 
-Chemistry structure with respective data in SMILES format using [recommended label](#appendix-d-recommended-labels) and [custom metadata](#custom):
+Chemistry structure with respective data in SMILES format using [recommended label](#appendix-b-recommended-labels) and [custom metadata](#custom):
 
 ```xml
 <picture>
@@ -345,7 +345,7 @@ Chemistry structure with respective data in SMILES format using [recommended lab
 
 ### Code snippets
 
-Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix D: Recommended Labels](#appendix-d-recommended-labels)).
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix B: Recommended Labels](#appendix-b-recommended-labels)).
 
 Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
 
@@ -488,8 +488,9 @@ Note: All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the 
 
 ### Lists
 
-A list can in principle can contain as list items any semantic element sequence.
-List items are namely introduced by <ldiv> elements, whereby an <ldiv> may optionally contain a marker.
+A list can contain as list items any semantic element sequence.
+List items are namely introduced by `<ldiv>` elements, whereby an `<ldiv>` may optionally contain a marker.
+This means that a non-empty `<list>` element body must begin with an `<ldiv>`.
 
 To promote token efficiency within the repetitive context of a list, a list item may also comprise unwrapped text content.
 That case is called a *virtual `<text>`* and is to be handled exactly as if the whole list item (content between two sibling `<ldiv>`s or until `</list>`) were wrapped by `<text>` tags.
@@ -610,13 +611,14 @@ Single list-item broken by a page break
 Notes
 
 - `<marker>` is optional. Include it when the printed glyph/number is visible.
-- `<marker>` can include its own `location` coordinates to pinpoint bullet/number placement.
+- `<marker>` may begin with an [element head](#element-head) (e.g. [`<location>`](#location) coordinates to pinpoint bullet/number placement) before the visible glyph or [`<checkbox>`](#checkbox).
 - Lists can nest as shown above.
 - When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
 
 ### Tables
 
-A table is defined by a `table` element, that contains cells, as delimited by the respective structural elements (e.g., `<fcel/>`, `<ched/>`).
+A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL structural elements (e.g., `<fcel/>`, `<ched/>`).
+This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
 Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
 
@@ -729,7 +731,7 @@ Fields provide a flexible structure for representing key-value data and structur
 
 | element | Description |
 |-------|-------------|
-| `<field_region>` | Field region container; contains at least one `field_item` as descendant |
+| `<field_region>` | Field region container; can contain `field_item` elements as descendants |
 | `<field_item>` | Field item container; may contain 0-1 `key` and 0-many `value` elements as descendants |
 | `<field_heading>` | Field heading within a field region; has an optional attribute `level` |
 | `<key>` | Key of the field item: can be a descendant of `field_item` |
@@ -741,17 +743,15 @@ including e.g. their own bounding box location information.
 
 #### Field Structure Rules
 
-- A `field_region` must contain at least one `field_item` as a descendant (not necessarily a direct child)
-- A `field_item` may contain 0 or 1 `key` element as a descendant
-- A `field_item` may contain 0 or more `value` elements as descendants
-- Values within a `field_item` are implicitly associated with the `key` in that item
-- A `field_heading` should have a `field_region` as an ancestor
-- Field elements can contain any other DocLang elements (text, pictures, lists, etc.)
+- Any `field_heading` or `field_item` must be a descendant of a `field_region` (not necessarily a direct child)
+- Any `key` or `value` element must be a descendant of a `field_item` (not necessarily a direct child)
+  — More precisely, 0 or 1 `key` element and 0 or more `value` elements are allowed within a single `field_item`
+  - This way, the `field_item` can serve for associating the `values` with a `key`
 - The `value` element has an optional `class` attribute:
   - `class="read_only"` (default): Indicates a pre-filled, non-editable value
   - `class="fillable"`: Indicates an empty or editable field that can be filled in
-- The `hint` element is recommended to be used within a `field_item` context to provide guidance for fillable values
-- `<key>` or `<value>` are not necessarily just textual and can contain pictures, multiline text, etc.
+- The `hint` element is recommended to be used within a `field_item` context to provide guidance for relevant field elements, such as fillable values.
+- All field elements are [semantic elements](#semantic-elements) and can therefore contain their own element head, including e.g. their own bounding box location information.
 
 #### Field region examples
 
@@ -1572,7 +1572,8 @@ The basic structure is shown below, e.g. for a `text` tag:
 
 Each block that has location information is a top-level tag of the corresponding label, e.g. "text".
 
-Elements which belong to the same document component should have the same thread ID.
+Elements which belong to the same document component must have the same thread ID and same host element type (e.g. all
+under `<text>`, not mixed `<text>` and `<picture>`).
 
 ```xml
 <!-- ... -->
@@ -2145,7 +2146,7 @@ None
 
 #### `<list>`
 
-Captures a list. List items are delimited by the respective structural elements. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2167,7 +2168,7 @@ Any context that allows semantic elements.
 
 #### `<table>`
 
-Captures a table in an OTSL-based format. Table cells are delimited by the respective structural elements. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2187,7 +2188,7 @@ None
 
 #### `<index>`
 
-Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Cells are delimited by the respective structural elements. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
 ##### Allowed Context
 
@@ -2245,7 +2246,7 @@ None
 
 #### `<picture>`
 
-Can contain a [`<src>`](#src) for image bytes or reference. Additionally, the element body may begin with a [`<table>`](#table) in case of `<picture class="chart">`.
+Element body can generally only contain a [`<src>`](#src), for image bytes or reference. Additionally, in case of `<picture class="chart">` (and only then) the element body may contain a [`<table>`](#table), in which case it must begin with it.
 
 ##### Allowed Context
 
@@ -2263,7 +2264,7 @@ Any context that allows semantic elements.
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
-| Primary semantic elements | Allowed |
+| Primary semantic elements | Not allowed (except [`<table>`](#table) in case of `<picture class="chart">`) |
 
 #### `<marker>`
 
@@ -2459,7 +2460,7 @@ Can only be child of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Positive integer | A string that identifies a thread. |
+| `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` must be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
 
 ##### Allowed Content Types
 
@@ -2477,7 +2478,7 @@ Can only be child of a semantic element. Mutually exclusive with [`<href>`](#hre
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Positive integer | The ID of the referenced thread. |
+| `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the document. |
 
 ##### Allowed Content Types
 
@@ -2507,7 +2508,7 @@ Can only be child of a semantic element. Mutually exclusive with [`<xref>`](#xre
 
 #### `<custom>`
 
-Custom metadata, e.g. for application-specific purposes.
+Optional part of the element head; custom metadata, e.g. for application-specific purposes.
 
 ##### Allowed Context
 
@@ -2527,7 +2528,7 @@ None
 
 #### `<location>`
 
-Coordinate system is the bottom-left corner of the page.
+Optional part of the element head; coordinate system is the top-left corner of the page. When present, appears in sequence of 4 [`<location>`](#location) instances, representing x0, y0, x1, y1. The following must then hold: `x0_norm<=x1_norm` and `y0_norm<=y1_norm`(i.e. first top-left point then bottom-right point), whereby `*_norm` is the respective coordinate normalized to its effective resolution.
 
 ##### Allowed Context
 
@@ -2538,7 +2539,7 @@ Can only be child of a semantic element.
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
-| `value` | Required | Integer within [0, `location.resolution`) |  |
+| `value` | Required | Integer within [0, `location.resolution`) | Coordinate w.r.t. top-left corner. |
 
 ##### Allowed Content Types
 
@@ -2957,7 +2958,28 @@ Can only be child of [`<head>`](#head).
 
 None (empty element).
 
-## Appendix B: Planned Features
+## Appendix B: Recommended Labels
+
+### Pictures
+
+For picture labels, we recommend using the values defined below:
+
+| Context | Recommended values |
+| --- | --- |
+| `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot` |
+| else, i.e. `<picture class="undefined">` (default) | `full_page_image`, `page_thumbnail`, `photograph`, `chemistry_structure`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
+
+The label value `undefined` is recommended if no more specific label is applicable (default).
+
+### Code
+
+| Context | Recommended values |
+| --- | --- |
+| `<code>` | [Linguist](https://github.com/github-linguist/linguist/blob/v9.5.0/lib/linguist/languages.yml) v9.5.0 language keys (e.g. `Python`) |
+
+The label value `undefined` is recommended if no more specific label is applicable (default).
+
+## Appendix C: Planned Features
 
 These features are considered for future versions of the standard.
 
@@ -3493,63 +3515,3 @@ As applications can have varying requirements, this standard defines a set of re
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
 -->
-
-## Appendix C: Validation Rules
-
-### Required Structure Validation
-
-- Root element must be `<doclang>`
-- List items must appear only within list groupings
-- OTSL tokens must appear only within `<table>` elements
-- Every `thread_id` used by an `<xref>` must be defined by at least one `<thread>` in the same document
-- All `<thread>` elements that share a given `thread_id` must be under the same host element type (e.g. all under `<text>`, not mixed `<text>` and `<picture>`)
-
-### Geometric Validation
-
-- Origin: The coordinate origin is the bottom-left corner of the page.
-- Normalization: Each `location` value is an integer within [0, resolution); `location@resolution` overrides respective axis limit of `<default_resolution>`, else use 512×512.
-- Point: Exactly 2 consecutive `location` tokens are required (x, then y).
-- Bounding box: Exactly 4 consecutive `location` tokens are required in order x0, y0, x1, y1, with x0 ≤ x1 and y0 ≤ y1.
-- Rotated rectangle: Exactly 8 consecutive `location` tokens are required in order x0, y0, x1, y1, x2, y2, x3, y3; the segment (x0, y0)→(x1, y1) lies along the bottom edge in reading order.
-- Geometric elements should appear in reading order when possible.
-<!--
-### Temporal Validation
-
-- Components: Timestamps with second-level precision are encoded with `hour`, `minute`, and `second` tokens in strict order. Timestamps with sub-second precision are encoded with `hour`, `minute`, `second` and `centisecond` tokens in strict order.
-- Ranges: `hour.value` is an integer in `[0, 99]`; `minute.value` is an integer in `[0, 59]`; `second.value` is an integer in `[0, 59]`; `centisecond.value` is an integer in `[0, 99]`.
-- Point with second-level precision: Exactly 3 consecutive tokens are required (hour, then minute, then second).
-- Point with sub-second precision: Exactly 4 consecutive tokens are required (hour, then minute, then second, then centisecond).
-- Interval with second-level precision: Exactly 6 consecutive tokens are required: start triplet followed by end triplet.
-- Interval with sub-second precision: Exactly 8 consecutive tokens are required: start quadruplet followed by end quadruplet.
-- Normalization: Out-of-range carry is not allowed; producers MUST pre-normalize values (e.g., 61 minutes becomes 1 hour and 1 minute).
-- Monotonicity (intervals): End time MUST be greater than or equal to start time when converted to total seconds.
-- Placement: Timestamp tokens MAY only appear on block-level elements and MUST precede textual content and inline formatting when present.
-- Coexistence: When both geometric and temporal tokens are present, both appear before content; relative order has no semantic effect.
-- Interpretation: Values are relative to a media timeline (not wall-clock), so dates/time zones do not apply. -->
-
-### Content Validation
-
-- Text content must be valid Unicode (excluding null character)
-- Version strings must follow semantic versioning format
-- Classification values should use standard vocabularies where applicable
-
-## Appendix D: Recommended Labels
-
-### Pictures
-
-For picture labels, we recommend using the values defined below:
-
-| Context | Recommended values |
-| --- | --- |
-| `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot` |
-| else, i.e. `<picture class="undefined">` (default) | `full_page_image`, `page_thumbnail`, `photograph`, `chemistry_structure`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
-
-The label value `undefined` is recommended if no more specific label is applicable (default).
-
-### Code
-
-| Context | Recommended values |
-| --- | --- |
-| `<code>` | [Linguist](https://github.com/github-linguist/linguist/blob/v9.5.0/lib/linguist/languages.yml) v9.5.0 language keys (e.g. `Python`) |
-
-The label value `undefined` is recommended if no more specific label is applicable (default).

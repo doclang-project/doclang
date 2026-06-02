@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <text>
+    <location value="0"/>
+    <location value="1"/>
+    <location value="2"/>
+    <location value="3"/>
+    <location value="4"/>
+    Five locations in element head.
+  </text>
+</doclang>

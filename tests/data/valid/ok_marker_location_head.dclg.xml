@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <list class="unordered">
+    <ldiv>
+      <marker>
+        <location value="50"/><location value="110"/><location value="60"/><location value="120"/>
+        •
+      </marker>
+    </ldiv>
+    <text>Second item</text>
+  </list>
+</doclang>

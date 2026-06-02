@@ -4,10 +4,10 @@
     <default_resolution width="100" height="200"/>
   </head>
   <text>
-    <location value="99"/>
-    <location value="199"/>
+    <location value="9"/>
+    <location value="0"/>
     <location value="9" resolution="10"/>
     <location value="0" resolution="10"/>
-    Valid location values are strictly below their axis limits.
+    Valid location values are within axis limits and follow non-descending coordinate order.
   </text>
 </doclang>

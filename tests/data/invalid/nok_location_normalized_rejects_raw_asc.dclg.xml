@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="512" height="512"/>
+  </head>
+  <text>
+    <!-- Raw: x0=40 <= x1=50 -->
+    <!-- Normalized: x0_norm=40/41 > x1_norm=50/100 -->
+    <location value="40" resolution="41"/>
+    <location value="30" resolution="40"/>
+    <location value="50" resolution="100"/>
+    <location value="30" resolution="40"/>
+    Invalid: raw ordering holds, but normalized ordering fails.
+  </text>
+</doclang>

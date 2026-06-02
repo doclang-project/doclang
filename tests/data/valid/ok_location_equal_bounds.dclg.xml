@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <text>
+    <location value="20"/>
+    <location value="30"/>
+    <location value="20"/>
+    <location value="30"/>
+    Valid degenerate location box: x0 equals x1 and y0 equals y1.
+  </text>
+</doclang>

@@ -54,22 +54,21 @@
   </xs:complexType>
 
   <!-- ============================================ -->
-  <!-- MARKER_CAT: formatting elements plus checkbox -->
+  <!-- MARKER ELEMENT: optional element_head + formatting or checkbox -->
   <!-- ============================================ -->
 
-  <xs:complexType name="marker_cat" mixed="true">
-    <xs:choice minOccurs="0" maxOccurs="unbounded">
-      <xs:element ref="dl:content"/>
-      <xs:group ref="dl:formatting_group"/>
-      <xs:element ref="dl:checkbox"/>
-    </xs:choice>
-  </xs:complexType>
-
-  <!-- ============================================ -->
-  <!-- MARKER ELEMENT: contains formatting or checkbox -->
-  <!-- ============================================ -->
-
-  <xs:element name="marker" type="dl:marker_cat"/>
+  <xs:element name="marker">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:group ref="dl:element_head"/>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="dl:content"/>
+          <xs:group ref="dl:formatting_group"/>
+          <xs:element ref="dl:checkbox"/>
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 
   <!-- ============================================ -->
   <!-- HINT ELEMENT: contains an instance of formatting -->
@@ -130,7 +129,7 @@
 
   <xs:group name="location_block">
     <xs:sequence>
-      <xs:element ref="dl:location" minOccurs="4" maxOccurs="unbounded"/>
+      <xs:element ref="dl:location" minOccurs="4" maxOccurs="4"/>
     </xs:sequence>
   </xs:group>
 

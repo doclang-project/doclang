@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="512" height="512"/>
+  </head>
+  <text>
+    <!-- Raw: x0=80 > x1=50 -->
+    <!-- Normalized: x0_norm=80/100 <= x1_norm=50/51 -->
+    <location value="80" resolution="100"/>
+    <location value="30" resolution="40"/>
+    <location value="50" resolution="51"/>
+    <location value="30" resolution="40"/>
+    Valid: location order holds after resolution normalization.
+  </text>
+</doclang>

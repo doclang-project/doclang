@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <text>
+    <location value="30"/>
+    <location value="20"/>
+    <location value="10"/>
+    <location value="40"/>
+    Invalid location order: x0 is greater than x1.
+  </text>
+</doclang>

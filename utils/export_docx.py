@@ -5,8 +5,11 @@ Export spec.md to Word (DOCX).
 
 Features:
 - Parses markdown headings, paragraphs, lists, code blocks, tables, images.
+- Maps markdown headings to Word styles: `#` -> Title, `##` -> Heading 1,
+  `###` -> Heading 2, etc.
+- Starts a new page for each level-2 markdown heading (`##`).
 - Embeds images referenced in the markdown into the DOCX.
-- Inserts a Word Table of Contents field (updates on open in Word).
+- Inserts a Word Table of Contents field before the first `##` heading (updates on open in Word).
 - Optionally uses exports/templates/word.dotx if present.
 
 Dependencies:
@@ -34,7 +37,7 @@ try:
     from docx.opc.constants import RELATIONSHIP_TYPE
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
-    from docx.shared import Inches, Pt
+    from docx.shared import Inches, Pt, RGBColor
 except ImportError:
     print(
         "Missing dependency: python-docx. Install with `pip install python-docx`.",
@@ -69,11 +72,36 @@ def add_toc(document: Document) -> None:
     run._r.append(fld_separate)
 
     # Placeholder text shown before updating fields in Word.
-    hint = p.add_run("Table of Contents - update to populate")
+    hint = p.add_run("Contents - update to populate")
 
     fld_end = OxmlElement("w:fldChar")
     fld_end.set(qn("w:fldCharType"), "end")
     hint._r.append(fld_end)
+
+
+def add_toc_title_paragraph(document: Document):
+    """TOC section title: Heading 1 appearance without using Heading 1 style."""
+    try:
+        paragraph = document.add_paragraph("Contents", style="TOC Heading")
+    except KeyError:
+        paragraph = document.add_paragraph()
+        run = paragraph.add_run("Contents")
+        run.bold = True
+        run.font.size = Pt(16)
+        run.font.color.rgb = RGBColor(0x2F, 0x54, 0x96)
+        paragraph.paragraph_format.space_before = Pt(12)
+        paragraph.paragraph_format.space_after = Pt(0)
+    paragraph.paragraph_format.page_break_before = True
+    return paragraph
+
+
+def add_toc_section(document: Document) -> None:
+    """Insert a TOC title, the TOC field, and a page break after the section."""
+    add_toc_title_paragraph(document)
+    document.add_paragraph()
+    add_toc(document)
+    break_p = document.add_paragraph()
+    break_p.add_run().add_break(WD_BREAK.PAGE)
 
 
 def process_html_paragraph(document: Document, text: str) -> None:
@@ -554,10 +582,26 @@ def add_hyperlink(paragraph, url: str, text: str):
     return paragraph
 
 
-def add_heading_with_bookmark(document: Document, raw_title: str, level: int, bookmark_id: int) -> None:
-    """Add a heading paragraph and a bookmark for cross-reference targets."""
+def add_heading_with_bookmark(
+    document: Document,
+    raw_title: str,
+    markdown_level: int,
+    bookmark_id: int,
+    *,
+    page_break_before: bool = False,
+) -> None:
+    """Add a heading paragraph and a bookmark for cross-reference targets.
+
+    Markdown hash count maps to Word styles: # -> Title, ## -> Heading 1,
+    ### -> Heading 2, and so on.
+    """
     display = _strip_markdown_formatting(raw_title)
-    paragraph = document.add_heading(display, level=level)
+    if markdown_level == 1:
+        paragraph = document.add_paragraph(display, style="Title")
+    else:
+        paragraph = document.add_heading(display, level=markdown_level - 1)
+    if page_break_before:
+        paragraph.paragraph_format.page_break_before = True
     add_bookmark(paragraph, markdown_anchor(raw_title), bookmark_id)
 
 
@@ -625,6 +669,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
     # Track the last seen Markdown heading level to place sub-headers
     current_heading_level: int = 1
     next_bookmark_id = 0
+    toc_inserted = False
 
     # For list indentation, 2 spaces per level is common in this repo.
     def list_level_for_indent(s: str) -> int:
@@ -768,7 +813,19 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
             finalize_paragraph_buf(document, para_buf)
             level = len(mhead.group(1))
             raw_title = mhead.group(2).strip()
-            add_heading_with_bookmark(document, raw_title, level, next_bookmark_id)
+            if level == 2 and not toc_inserted:
+                add_toc_section(document)
+                toc_inserted = True
+                heading_page_break = False
+            else:
+                heading_page_break = level == 2
+            add_heading_with_bookmark(
+                document,
+                raw_title,
+                level,
+                next_bookmark_id,
+                page_break_before=heading_page_break,
+            )
             next_bookmark_id += 1
             current_heading_level = level
             i += 1
@@ -836,11 +893,6 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
 
 def build_document(md_path: Path, out_path: Path, apply_template_style: bool = True) -> None:
     document = Document()
-
-    # Title page is handled by the template if present. Insert a TOC after any
-    # initial content (e.g., before main body when no specialized template).
-    document.add_paragraph("Table of Contents", style="Heading 1")
-    add_toc(document)
 
     md_text = md_path.read_text(encoding="utf-8")
     # Remove HTML comments outside fenced code blocks
