@@ -41,7 +41,7 @@ doclang --help
 ### Python API
 
 ```python
-from doclang import ValidationError, validate
+from doclang import validate, ValidationError
 
 try:
     validate("my_document.dclg.xml")
