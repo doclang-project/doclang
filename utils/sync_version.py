@@ -25,10 +25,10 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 from doclang.version import (
-    normalize_version,
-    release_version_triple,
-    validate_version,
-    version_from_git,
+    _normalize_version,
+    _release_version_triple,
+    _validate_version,
+    _version_from_git,
 )
 
 
@@ -36,18 +36,18 @@ def resolve_sync_version(version_arg: str | None) -> str:
     """Explicit CLI version, or release triple from the latest git tag."""
     if version_arg is not None:
         try:
-            return normalize_version(version_arg)
+            return _normalize_version(version_arg)
         except ValueError as exc:
             print(f"Error: {exc}")
             sys.exit(1)
 
-    current = version_from_git()
-    if current is None or not validate_version(current):
+    current = _version_from_git()
+    if current is None or not _validate_version(current):
         print(f"Error: Could not resolve version from git (got '{current}')")
         print("Run from a git checkout or pass an explicit version (e.g. 0.4.0)")
         sys.exit(1)
 
-    return release_version_triple(current)
+    return _release_version_triple(current)
 
 
 def sync_version_in_xsd(file_path: Path, version: str) -> None:

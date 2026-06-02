@@ -16,7 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from doclang.version import normalize_version
+from doclang.version import _normalize_version
 
 ROOT = Path(__file__).resolve().parent.parent
 UTILS_DIR = Path(__file__).resolve().parent
@@ -122,7 +122,7 @@ def prepare_release(
     if project_root is None:
         project_root = ROOT
 
-    normalized = normalize_version(version)
+    normalized = _normalize_version(version)
     print(f"Preparing release {normalized}...")
 
     sync_version(normalized, project_root=project_root)

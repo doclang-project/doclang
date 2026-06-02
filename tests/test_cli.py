@@ -11,15 +11,15 @@ from typer.testing import CliRunner
 
 from doclang.cli import app
 from doclang.utils import _VERSION
-from doclang.version import version_from_describe
+from doclang.version import _version_from_describe
 
 runner = CliRunner()
 
 
 def test_version_from_describe():
-    assert version_from_describe("v0.3.0") == "0.3.0"
-    assert version_from_describe("v0.3.0-3-g93c2a53") == "0.3.0+g93c2a53"
-    assert version_from_describe("v0.3.0-3-g93c2a53-dirty").startswith("0.3.0+g93c2a53.d")
+    assert _version_from_describe("v0.3.0") == "0.3.0"
+    assert _version_from_describe("v0.3.0-3-g93c2a53") == "0.3.0+g93c2a53"
+    assert _version_from_describe("v0.3.0-3-g93c2a53-dirty").startswith("0.3.0+g93c2a53.d")
 
 
 def test_cli_version_matches_installed_metadata():

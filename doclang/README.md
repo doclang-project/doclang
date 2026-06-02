@@ -2,37 +2,54 @@
 
 Validate DocLang XML documents against XSD schema and Schematron rules.
 
-## Usage
+## Installation
 
 ```bash
-# Validate a document using default bundled schemas
-doclang validate document.xml
+pip install doclang
+```
 
-# Validate with custom schemas
-doclang validate document.xml --xsd custom.xsd --sch custom.sch
+## Usage
+
+### Basic CLI Usage
+
+```bash
+doclang validate my_document.dclg.xml
+```
+
+### More CLI Usage Scenarios
+
+```bash
+## Inject DocLang namespace if document doesn't declare it:
+doclang validate my_document.dclg.xml --allow-empty-namespace
 
 # XSD validation only
-doclang validate document.xml --xsd-only
+doclang validate my_document.dclg.xml --xsd-only
 
 # Schematron validation only
-doclang validate document.xml --schematron-only
+doclang validate my_document.dclg.xml --schematron-only
 
 # JSON output
-doclang validate document.xml --format json
+doclang validate my_document.dclg.xml --format json
 
 # Quiet mode (exit code only)
-doclang validate document.xml --quiet
+doclang validate my_document.dclg.xml --quiet
 
 # Show help
 doclang --help
 ```
 
-## Document Requirements
+### Python API
 
-If your document doesn't declare a namespace, you can use the CLI agument `--allow-empty-namespace` (or shorthand `-n`) to automatically inject the DocLang namespace during validation:
+```python
+from doclang import ValidationError, validate
 
-```bash
-doclang validate -n document.xml
+try:
+    validate("my_document.dclg.xml")
+    print("Validation OK (no exception)")
+except ValidationError as exc:
+    print(exc)  # human-readable summary
+    print(f"{exc.xsd_errors=}")
+    print(f"{exc.schematron_errors=}")
 ```
 
 ## Validation Rules

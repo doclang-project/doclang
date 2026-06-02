@@ -7,10 +7,12 @@ on-the-fly using XSLT 3.0 / XPath 3.1.
 
 import tempfile
 from pathlib import Path
+from typing import Union
 
 from lxml import etree
 from saxonche import PySaxonProcessor
 
+from doclang._schemas import _bundled_sch_path
 from doclang.utils import _ensure_namespace
 
 # ISO Schematron transpiler - converts .sch to XSLT 3.0
@@ -130,25 +132,13 @@ def _transpile_schematron_to_xslt(sch_file, verbose=False):
         return result
 
 
-def _validate_with_schematron(xml_file, sch_file=None, allow_empty_namespace=False, verbose=False):
-    """
-    Validate XML against Schematron rules using XSLT 3.0 / XPath 3.1.
-
-    Transpiles the Schematron file to XSLT on-the-fly, then validates.
-
-    Args:
-        xml_file: Path to XML file to validate
-        sch_file: Path to Schematron file (default: doclang/doclang.sch)
-        allow_empty_namespace: If True, automatically add DocLang namespace if missing
-        verbose: Print detailed progress messages
-
-    Returns:
-        tuple: (is_valid: bool, failed_asserts: list)
-    """
-    # Default to doclang.sch in same directory as this module
-    if sch_file is None:
-        sch_file = Path(__file__).parent / "doclang.sch"
-
+def _validate_with_schematron(
+    xml_file: Union[str, Path],
+    allow_empty_namespace: bool = False,
+    verbose: bool = False,
+) -> tuple[bool, list]:
+    """Validate XML against the bundled DocLang Schematron rules."""
+    sch_file = _bundled_sch_path()
     if verbose:
         print(f"Using Schematron file: {sch_file}")
 

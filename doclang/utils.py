@@ -4,10 +4,10 @@ Shared utility functions for DocLang validation.
 
 from lxml import etree
 
-from doclang.version import resolve_version
+from doclang.version import _resolve_version
 
 _DOCLANG_NAMESPACE = "https://www.doclang.ai/ns/v0"
-_VERSION = resolve_version()
+_VERSION = _resolve_version()
 
 
 def _ensure_namespace(xml_doc: etree._ElementTree) -> etree._ElementTree:

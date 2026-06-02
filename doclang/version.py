@@ -1,5 +1,5 @@
 """
-Version resolution for the doclang package.
+Version resolution for the doclang package (internal).
 
 Release scripts resolve from git tags (only-version: tag → X.Y.Z; commits after →
 X.Y.Z+g<sha>[.d<date> if dirty]). The CLI reads the installed package version via
@@ -21,7 +21,7 @@ _DESCRIBE_RE = re.compile(
 )
 
 
-def version_from_describe(describe: str) -> str | None:
+def _version_from_describe(describe: str) -> str | None:
     """Map git describe output to setuptools-scm only-version format."""
     match = _DESCRIBE_RE.match(describe.strip())
     if not match:
@@ -35,7 +35,7 @@ def version_from_describe(describe: str) -> str | None:
     return f"{tag}{local}"
 
 
-def version_from_git() -> str | None:
+def _version_from_git() -> str | None:
     """Resolve version from git tags."""
     try:
         describe = subprocess.run(
@@ -48,10 +48,10 @@ def version_from_git() -> str | None:
         ).stdout
     except (FileNotFoundError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-    return version_from_describe(describe)
+    return _version_from_describe(describe)
 
 
-def resolve_version() -> str:
+def _resolve_version() -> str:
     """Return the installed doclang distribution version."""
     try:
         return version("doclang")
@@ -59,7 +59,7 @@ def resolve_version() -> str:
         return "unknown"
 
 
-def release_version(version_str: str) -> str:
+def _release_version(version_str: str) -> str:
     """Strip PEP 440 local/dev/post suffixes; return MAJOR.MINOR[.PATCH]."""
     base = version_str.split("+", 1)[0]
     base = re.split(r"\.dev\d+", base, maxsplit=1)[0]
@@ -67,26 +67,26 @@ def release_version(version_str: str) -> str:
     return base
 
 
-def release_version_triple(version_str: str) -> str:
+def _release_version_triple(version_str: str) -> str:
     """Return MAJOR.MINOR.PATCH, padding PATCH with 0 when absent."""
-    parts = release_version(version_str).split(".")
+    parts = _release_version(version_str).split(".")
     while len(parts) < 3:
         parts.append("0")
     return ".".join(parts[:3])
 
 
-def validate_version(version_str: str) -> bool:
+def _validate_version(version_str: str) -> bool:
     """True if version_str has at least MAJOR.MINOR release components."""
-    parts = release_version(version_str).split(".")
+    parts = _release_version(version_str).split(".")
     if len(parts) < 2 or len(parts) > 3:
         return False
     return all(part.isdigit() for part in parts)
 
 
-def normalize_version(version_str: str) -> str:
+def _normalize_version(version_str: str) -> str:
     """Normalize and validate an explicit MAJOR.MINOR[.PATCH] version string."""
-    normalized = release_version_triple(version_str.lstrip("v"))
-    if not validate_version(normalized):
+    normalized = _release_version_triple(version_str.lstrip("v"))
+    if not _validate_version(normalized):
         raise ValueError(
             f"Invalid version format: '{version_str}' (expected MAJOR.MINOR or MAJOR.MINOR.PATCH, e.g. 0.4.0)"
         )
