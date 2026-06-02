@@ -32,10 +32,10 @@ def test_valid(xml_file):
     # Special handling for no_namespace test - requires flag
     # Handle .dclg.xml double extension: remove both extensions to get base name
     base_name = xml_file.name.replace(".dclg.xml", "")
-    allow_empty = base_name == "ok_no_namespace"
+    allow_empty_namespace = base_name in ["ok_no_namespace", "doclang_example"]
 
     # XSD validation
-    xsd_valid, xsd_errors = _validate_xsd(xml_file, XSD_FILE, allow_empty_namespace=allow_empty)
+    xsd_valid, xsd_errors = _validate_xsd(xml_file, XSD_FILE, allow_empty_namespace=allow_empty_namespace)
     if not xsd_valid:
         error_msgs = []
         for error in xsd_errors:
@@ -47,7 +47,7 @@ def test_valid(xml_file):
 
     # Schematron validation
     sch_valid, failed_asserts = _validate_with_schematron(
-        xml_file, sch_file=SCH_FILE, allow_empty_namespace=allow_empty, verbose=False
+        xml_file, sch_file=SCH_FILE, allow_empty_namespace=allow_empty_namespace, verbose=False
     )
     if not sch_valid:
         error_msgs = []

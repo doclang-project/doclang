@@ -247,7 +247,7 @@ The individual DocLang elements and attributes, as well as DocLang's contextual 
 
 Non-normative recommendation guidelines are covered in [Appendix B: Recommendations](#appendix-b-recommendations).
 
-Planned extensions are discussed in [Appendix C: Planned Features](#appendix-c-planned-features).
+Planned extensions are discussed in [Appendix C: Future Extensions](#appendix-c-future-extensions).
 
 Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project).
 
@@ -3011,7 +3011,7 @@ To improve interoperability and reduce naming collisions, the following recommen
 - Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, `data`, or `value` unless these are clearly scoped by namespace or equivalent prefixing.
 - Producers SHOULD document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
 
-## Appendix C: Planned Features
+## Appendix C: Future Extensions
 
 These features are considered for future versions of the standard.
 

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang>
+<!-- ... -->
+
+
+<picture>
+    <label value="flow_chart"/>
+    <location value="102"/><location value="85"/><location value="416"/><location value="160"/>
+    <caption>Fig. 3. OTSL description of table structure: A - table example; B - graphical ... cell encoding</caption>
+</picture>
+
+
+<!--...-->
+
+<table>
+    <location value="63"/><location value="78"/><location value="436"/><location value="158"/>
+    <caption>Table 2. ISR and cell detection results compared between OTSL and ... heads=8).</caption>
+    <ched/>Data set <ched/>Lang<ched/>TEDs  <lcel/>       <lcel/>     <ched/>mAP (0.75)<ched/>Inference time (secs)<nl/>
+    <ucel/>         <ucel/>    <ched/>simple<ched/>complex<ched/>all  <ucel/>          <ucel/>                     <nl/>
+    <rhed/>PubTabNet<rhed/>OTSL<fcel/>0.965 <fcel/>0.934  <fcel/>0.955<fcel/>0.88      <fcel/>2.73                 <nl/>
+    <ucel/>         <rhed/>HTML<fcel/>0.969 <fcel/>0.927  <fcel/>0.955<fcel/>0.857     <fcel/>5.39                 <nl/>
+    <!--...-->
+</table>
+
+<heading level="2"><location value="58"/><location value="343"/><location value="209"/><location value="351"/>
+    5.2 Quantitative Results</heading>
+
+
+<!--...-->
+
+
+<text><location value="66"/><location value="360"/><location value="358"/><location value="368"/>The OTSL ... tokens:</text>
+
+<list>
+    <ldiv/><location value="53"/><location value="377"/><location value="439"/><location value="385"/>"C" cell ...
+    <ldiv/><location value="53"/><location value="387"/><location value="439"/><location value="403"/>"L" cell ...
+    <ldiv/><location value="53"/><location value="405"/><location value="439"/><location value="421"/>"U" cell ...
+    <ldiv/><location value="53"/><location value="423"/><location value="409"/><location value="431"/>"X" cell  ...
+    <ldiv/><location value="53"/><location value="433"/><location value="269"/><location value="441"/>"NL" - ...
+</list>
+
+<!--...-->
+
+
+<code>
+    <label value="R"/>
+    <location value="58"/><location value="170"/><location value="443"/><location value="266"/>
+    <content><![CDATA[require (plyr)
+df <- data. frame(
+  x = runif(120, 1, 168),
+  y = runif(120, 7, 334),
+  z = runif(120, 1.7, 20.7),
+  month = rep(c(5,6,7,8), 30),
+  week = sample (1:4, 120, TRUE)
+)
+
+ddply(df, .(month, week), summarize,
+      mean = round(mean(x), 2),
+      sd = round(sd(x), 2))]]></content>
+</code>
+
+
+<!--...-->
+</doclang>
+
+
