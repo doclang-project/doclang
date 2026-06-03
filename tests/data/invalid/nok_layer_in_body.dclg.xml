@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- layer must be in the element head, not after body content -->
+  <text>
+    Body text first.
+    <layer value="furniture"/>
+  </text>
+
+</doclang>

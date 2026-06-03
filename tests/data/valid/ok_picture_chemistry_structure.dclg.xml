@@ -2,8 +2,8 @@
 <doclang xmlns="https://www.doclang.ai/ns/v0">
   <picture>
     <label value="chemistry_structure"/>
-    <custom>
-      <acme_smiles>C1=CC=C(C=C1)C(=O)O</acme_smiles>
+    <custom xmlns:acme="https://example.com/ns/doclang/custom/chemistry/1">
+      <acme:smiles>C1=CC=C(C=C1)C(=O)O</acme:smiles>
     </custom>
     <src uri="molecule.svg"/>
   </picture>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- layer without value defaults to body (per spec) -->
+  <text>
+    <layer/>
+    Paragraph on the default body layer.
+  </text>
+
+</doclang>

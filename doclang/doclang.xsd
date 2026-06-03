@@ -200,7 +200,25 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, location_block, caption, custom -->
+  <!-- LAYER ELEMENT: empty element with optional value (property element / element head) -->
+  <!-- ============================================ -->
+
+  <xs:element name="layer">
+    <xs:complexType>
+      <xs:attribute name="value" default="body">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="body"/>
+            <xs:enumeration value="background"/>
+            <xs:enumeration value="furniture"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, location_block, caption, custom -->
   <!-- ============================================ -->
 
   <xs:group name="element_head">
@@ -211,6 +229,7 @@
         <xs:element ref="dl:xref"/>
         <xs:element ref="dl:href"/>
       </xs:choice>
+      <xs:element ref="dl:layer" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
       <xs:element ref="dl:caption" minOccurs="0"/>
       <xs:element ref="dl:custom" minOccurs="0"/>

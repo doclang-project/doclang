@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <text>
+    <layer value="body"/>
+    Main content paragraph.
+  </text>
+
+  <picture>
+    <layer value="background"/>
+    <src uri="watermark.png"/>
+  </picture>
+
+  <page_header>
+    <layer value="furniture"/>
+    <text>Page 1</text>
+  </page_header>
+
+</doclang>

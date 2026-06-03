@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- layer must precede the location block in the element head -->
+  <text>
+    <location value="0"/><location value="0"/>
+    <location value="10"/><location value="10"/>
+    <layer value="background"/>
+    Layer after locations.
+  </text>
+
+</doclang>

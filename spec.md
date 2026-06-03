@@ -148,6 +148,7 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<label>`](#label) (optional)
 - [`<thread>`](#thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
+- [`<layer>`](#layer) (optional)
 - optional sequence of 4 [`<location>`](#location)s, whereby values are interpreted in alternating axis order, as `x_min, y_min, x_max, y_max` (after resolution normalization), w.r.t. the top-left corner of the page
 - [`<caption>`](#caption) (optional)
 - [`<custom>`](#custom) (optional)
@@ -1929,9 +1930,9 @@ For details, see [custom metadata](#custom) and vocabulary guidelines in [Append
 For shared/interoperable documents, using a formal XML namespace is recommended:
 
 ```xml
-<picture xmlns:acme="https://example.com/ns/doclang/custom/chemistry/1">
+<picture>
   <label value="chemistry_structure"/>
-  <custom>
+  <custom xmlns:acme="https://example.com/ns/doclang/custom/chemistry/1">
     <acme:smiles>C1=CC=C(C=C1)C(=O)O</acme:smiles>
   </custom>
   <src uri="molecule.svg"/>
@@ -2469,7 +2470,7 @@ None (empty element).
 
 #### `<thread>`
 
-Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references.<br/>  To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
+Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references. To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
 
 ##### Allowed Context
 
@@ -2559,6 +2560,24 @@ Can only be child of a semantic element.
 |-----------|----------|----------------|-------------|
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
 | `value` | Required | Integer within [0, `location.resolution`) | Coordinate w.r.t. top-left corner. |
+
+##### Allowed Content Types
+
+None (empty element).
+
+#### `<layer>`
+
+The conceptual layer of the host element in the document.
+
+##### Allowed Context
+
+Can only be child of a semantic element.
+
+##### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the document's main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the document's main content, such as navigation or decorations. |
 
 ##### Allowed Content Types
 
@@ -3008,8 +3027,121 @@ To improve interoperability and reduce naming collisions, the following recommen
 - Producers of shared custom vocabularies SHOULD use formal XML namespaces with stable namespace URIs.
 - Processors SHOULD treat the namespace URI as the namespace identifier and MUST NOT assume semantic meaning from prefix names alone.
 - For private or local use where formal namespaces are not used, producers SHOULD use collision-resistant element names prefixed with a stable organization or project identifier (e.g. `acme_`).
-- Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, `data`, or `value` unless these are clearly scoped by namespace or equivalent prefixing.
+- Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
 - Producers SHOULD document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
+
+### Token vocabulary
+
+Below is a list of tokens that can be used for a DocLang-compliant tokenizer.
+
+The token vocabulary trades off size and inference cost:
+- For frequent elements such as `<location>` (often paired with semantic elements), the vocabulary defines one token per concrete instance — e.g. `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` — to reduce inference overhead.
+- For rare elements such as `<thread>`, the vocabulary uses separate tokens — e.g. `<thread thread_id="`, the id, `"/>` — to limit vocabulary growth at the cost of slightly more inference work.
+
+| Token | Description |
+| --- | --- |
+| `<doclang>` | [`doclang`](#doclang) start |
+| `</doclang>` | [`doclang`](#doclang) end |
+| `<page_break/>` | [`page_break`](#page_break) |
+| `"/>` | end of self-closing element with attributes |
+| `<text>` | [`text`](#text) start |
+| `</text>` | [`text`](#text) end |
+| `<heading level="1">` | level-1 [`heading`](#heading) start |
+| `<heading level="2">` | level-2 [`heading`](#heading) start |
+| `<heading level="3">` | level-3 [`heading`](#heading) start |
+| `<heading level="4">` | level-4 [`heading`](#heading) start |
+| `<heading level="5">` | level-5 [`heading`](#heading) start |
+| `<heading level="6">` | level-6 [`heading`](#heading) start |
+| `</heading>` | [`heading`](#heading) end |
+| `<footnote>` | [`footnote`](#footnote) start |
+| `</footnote>` | [`footnote`](#footnote) end |
+| `<page_header>` | [`page_header`](#page_header) start |
+| `</page_header>` | [`page_header`](#page_header) end |
+| `<page_footer>` | [`page_footer`](#page_footer) start |
+| `</page_footer>` | [`page_footer`](#page_footer) end |
+| `<field_region>` | [`field_region`](#field_region) start |
+| `</field_region>` | [`field_region`](#field_region) end |
+| `<list>` | unordered [`list`](#list) start |
+| `<list class="ordered">` | ordered [`list`](#list) start |
+| `</list>` | [`list`](#list) end |
+| `<table>` | [`table`](#table) start |
+| `</table>` | [`table`](#table) end |
+| `<index>` | [`index`](#index) start |
+| `</index>` | [`index`](#index) end |
+| `<formula>` | [`formula`](#formula) start |
+| `</formula>` | [`formula`](#formula) end |
+| `<code><label value="` | start of [`code`](#code) with [`label`](#label) |
+| `</code>` | [`code`](#code) end |
+| `<picture><label value="` | start of [`picture`](#picture) with [`label`](#label) |
+| `<picture class="chart"><label value="` | start of chart [`picture`](#picture) with [`label`](#label) |
+| `</picture>` | [`picture`](#picture) end |
+| `<marker>` | [`marker`](#marker) start |
+| `</marker>` | [`marker`](#marker) end |
+| `<group>` | [`group`](#group) start |
+| `</group>` | [`group`](#group) end |
+| `<field_heading level="1">` | level-1 [`field_heading`](#field_heading) start |
+| `<field_heading level="2">` | level-2 [`field_heading`](#field_heading) start |
+| `<field_heading level="3">` | level-3 [`field_heading`](#field_heading) start |
+| `<field_heading level="4">` | level-4 [`field_heading`](#field_heading) start |
+| `<field_heading level="5">` | level-5 [`field_heading`](#field_heading) start |
+| `<field_heading level="6">` | level-6 [`field_heading`](#field_heading) start |
+| `</field_heading>` | [`field_heading`](#field_heading) end |
+| `<field_item>` | [`field_item`](#field_item) start |
+| `</field_item>` | [`field_item`](#field_item) end |
+| `<key>` | [`key`](#key) start |
+| `</key>` | [`key`](#key) end |
+| `<value>` | read-only [`value`](#value) start |
+| `<value class="fillable">` | fillable [`value`](#value) start |
+| `</value>` | [`value`](#value) end |
+| `<hint>` | [`hint`](#hint) start |
+| `</hint>` | [`hint`](#hint) end |
+| `<caption>` | [`caption`](#caption) start |
+| `</caption>` | [`caption`](#caption) end |
+| `<thread thread_id="` | [`thread`](#thread) with `thread_id` attribute start |
+| `<xref thread_id="` | [`xref`](#xref) with `thread_id` attribute start |
+| `<href uri="` | [`href`](#href) with `uri` attribute start |
+| `<custom>` | [`custom`](#custom) start |
+| `</custom>` | [`custom`](#custom) end |
+| `<smiles>` | custom SMILES element start (should best be [accordingly namespaced](#custom-vocabulary-naming-and-namespacing)) |
+| `</smiles>` | custom SMILES element end |
+| `<layer value="` | [`layer`](#layer) with `value` attribute start |
+| `<src uri="` | [`src`](#src) with `uri` attribute start |
+| `<checkbox class="unselected"/>` | unselected [`checkbox`](#checkbox) |
+| `<checkbox class="selected"/>` | selected [`checkbox`](#checkbox) |
+| `<content>` | [`content`](#content) start |
+| `</content>` | [`content`](#content) end |
+| `<![CDATA[` | CDATA section start |
+| `]]>` | CDATA section end |
+| `<bold>` | [`bold`](#bold) start |
+| `</bold>` | [`bold`](#bold) end |
+| `<italic>` | [`italic`](#italic) start |
+| `</italic>` | [`italic`](#italic) end |
+| `<underline>` | [`underline`](#underline) start |
+| `</underline>` | [`underline`](#underline) end |
+| `<strikethrough>` | [`strikethrough`](#strikethrough) start |
+| `</strikethrough>` | [`strikethrough`](#strikethrough) end |
+| `<superscript>` | [`superscript`](#superscript) start |
+| `</superscript>` | [`superscript`](#superscript) end |
+| `<subscript>` | [`subscript`](#subscript) start |
+| `</subscript>` | [`subscript`](#subscript) end |
+| `<handwriting>` | [`handwriting`](#handwriting) start |
+| `</handwriting>` | [`handwriting`](#handwriting) end |
+| `<rtl>` | [`rtl`](#rtl) start |
+| `</rtl>` | [`rtl`](#rtl) end |
+| `<fcel/>` | [`fcel`](#fcel) |
+| `<ecel/>` | [`ecel`](#ecel) |
+| `<ched/>` | [`ched`](#ched) |
+| `<rhed/>` | [`rhed`](#rhed) |
+| `<corn/>` | [`corn`](#corn) |
+| `<srow/>` | [`srow`](#srow) |
+| `<lcel/>` | [`lcel`](#lcel) |
+| `<ucel/>` | [`ucel`](#ucel) |
+| `<xcel/>` | [`xcel`](#xcel) |
+| `<nl/>` | [`nl`](#nl) |
+| `<ldiv/>` | [`lddiv`](#lddiv) |
+| `<ldiv><marker>` | start of [`lddiv`](#lddiv) with [`marker`](#marker) |
+| `</marker></ldiv>` | end of [`lddiv`](#lddiv) with [`marker`](#marker) |
+| `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
 
 ## Appendix C: Future Extensions
 
@@ -3018,10 +3150,6 @@ These features are considered for future versions of the standard.
 ### Horizontal Threading
 
 Horizontal threading enables linking related content across the horizontal axis in page or table layouts. The `h_thread` element supports this by explicitly connecting content (like table rows or columns) that spans multiple pages, ensuring these threads remain structured and traceable.
-
-### Layers
-
-Layers enable separating the document's main content (such as text and images) from supplementary information (such as guides or decorations).
 
 ### Metadata
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- element head order: thread, href, layer, locations, caption, custom -->
+  <text>
+    <thread thread_id="1"/>
+    <href uri="https://example.com/doc#intro"/>
+    <layer value="body"/>
+    <location value="0"/><location value="0"/>
+    <location value="100"/><location value="50"/>
+    <caption>Figure context</caption>
+    <custom>
+      <acme_source system="ocr">scanner-a</acme_source>
+    </custom>
+    Introductory text with a full element head.
+  </text>
+
+</doclang>
