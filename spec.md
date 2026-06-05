@@ -260,7 +260,7 @@ In the simplest document example, document elements are in a flat list,
 
 ```xml
 <doclang>
-  <heading level="1">Research Paper Title</heading>
+  <heading>Research Paper Title</heading>
   <heading level="2">Abstract</heading>
   <text>This paper presents...</text>
   <heading level="2">Introduction</heading>
@@ -274,7 +274,7 @@ In case of page-layout information, the coordinates are provided only at the sem
 
 ```xml
 <doclang>
-  <heading level="1">
+  <heading>
     <location value="10"/><location value="20"/><location value="30"/><location value="40"/>
     Research Paper Title
   </heading>
@@ -768,7 +768,7 @@ Field region with headings and complex layout:
 
 ```xml
 <field_region>
-  <field_heading level="1">Personal Information</field_heading>
+  <field_heading>Personal Information</field_heading>
 
   <field_item>
     <text><key>Full Name:</key></text>
@@ -857,7 +857,7 @@ Field region with mixed content:
   <location value="50"/><location value="100"/>
   <location value="500"/><location value="400"/>
 
-  <field_heading level="1">Product Specifications</field_heading>
+  <field_heading>Product Specifications</field_heading>
 
   <text>The following specifications apply to Model XYZ-2000:</text>
 
@@ -1114,8 +1114,8 @@ Field region with mixed content:
 
   ```xml
   <field_region>
-      <form_heading level="1">M31</field_heading>
-      <form_heading level="2">REDDITI DI CAPITALE SOGGETTI AD IMPOSIZIONE SOSTITUTIVA</field_heading>
+      <field_heading>M31</field_heading>
+      <field_heading level="2">REDDITI DI CAPITALE SOGGETTI AD IMPOSIZIONE SOSTITUTIVA</field_heading>
       <field_item>
         <marker>1</marker>
           <key>Tipo</key>
@@ -1151,8 +1151,8 @@ Field region with mixed content:
           <key>Opzione tassazione ordinaria</key>
           <value></value>
       </field_item>
-      <form_heading level="1">M32</field_heading>
-      <form_heading level="2">PROVENTI DELLE OBBLIGAZIONI NON ASSOGGETTATI A IMPOSTA SOSTITUTIVA</field_heading>
+      <field_heading>M32</field_heading>
+      <field_heading level="2">PROVENTI DELLE OBBLIGAZIONI NON ASSOGGETTATI A IMPOSTA SOSTITUTIVA</field_heading>
       <field_item>
           <marker>1</marker>
           <key>Ammontare reddito</key>
@@ -1163,8 +1163,8 @@ Field region with mixed content:
           <key>Aliquota %</key>
           <value></value>
       </field_item>
-      <form_heading level="1">M33</field_heading>
-      <form_heading level="2">PROVENTI DERIVANTI DA DEPOSITI IN GARANZIA</field_heading>
+      <field_heading>M33</field_heading>
+      <field_heading level="2">PROVENTI DERIVANTI DA DEPOSITI IN GARANZIA</field_heading>
       <field_item>
           <marker>1</marker>
           <key>Ammontare reddito</key>
@@ -1223,10 +1223,10 @@ Field region with mixed content:
   ![Form Example](examples/form/form_08.png)
 
   ```xml
-  <heading level="1">QUADRO W - Investimenti e...</heading>
+  <heading>QUADRO W - Investimenti e...</heading>
   <heading level="2">SEZIONE I - DATI RELATIVI...</heading>
   <field_region>
-      <form_heading level="1">W1</field_heading>
+      <field_heading>W1</field_heading>
       <field_item>
           <marker>1</marker>
           <key>CODICE TITOLO POSSESSO</key>
@@ -1238,7 +1238,7 @@ Field region with mixed content:
           <value></value>
       </field_item>
       ...
-      <form_heading level="1">W2</field_heading>
+      <field_heading>W2</field_heading>
       <field_item>
           <marker>1</marker>
           <value></value>
@@ -1267,9 +1267,9 @@ Field region with mixed content:
   <table><tr><td>
 
   ```xml
-  <heading level="1">QUADRO C - Redditi di lavoro...</heading>
+  <heading>QUADRO C - Redditi di lavoro...</heading>
   <field_region>
-      <form_heading level="1">SEZIONE I - RE...</field_heading>
+      <field_heading>SEZIONE I - RE...</field_heading>
       <field_item>
           <key>Casi particolari</key>
           <checkbox class="unselected"/>
@@ -1278,7 +1278,7 @@ Field region with mixed content:
         <key>Codice Stato estero</key>
         <value></value>
       </field_item>
-      <form_heading level="2">C1</field_heading>
+      <field_heading level="2">C1</field_heading>
       <field_item>
           <marker>1</marker>
           <key>TIPO</key>
@@ -1299,7 +1299,7 @@ Field region with mixed content:
           <key>ALTRI DATI</key>
           <checkbox class="unselected"/>
       </field_item>
-      <form_heading level="2">C2</field_heading>
+      <field_heading level="2">C2</field_heading>
       <field_item>
           <marker>1</marker>
           <key>TIPO</key>
@@ -1327,7 +1327,7 @@ Field region with mixed content:
           <key>ALTRI DATI</key>
           <checkbox class="unselected"/>
       </field_item>
-      <form_heading level="2">C3</field_heading>
+      <field_heading level="2">C3</field_heading>
       <field_item>
           <marker>1</marker>
           <key>TIPO</key>
@@ -1348,8 +1348,8 @@ Field region with mixed content:
           <key>ALTRI DATI</key>
           <checkbox class="unselected"/>
       </field_item>
-      <form_heading level="2">C4</field_heading>
-      <form_heading level="3">SOMME PER PREMI...
+      <field_heading level="2">C4</field_heading>
+      <field_heading level="3">SOMME PER PREMI...
       </field_heading>
       <field_item>
           <marker>1</marker>
@@ -3004,20 +3004,30 @@ This appendix is informative and does not define conformance requirements.
 
 #### Pictures
 
-For the `label.value` of `<picture>` elements, we recommend using the values defined below, or `undefined` if no more specific label is applicable:
+For the `label.value` of `<picture>` elements, we recommend using the values defined below:
 
 | Context | Recommended values |
 | --- | --- |
 | `<picture class="chart">` | `bar_chart`, `box_plot`, `flow_chart`, `line_chart`, `pie_chart`, `scatter_plot` |
 | else, i.e. `<picture class="undefined">` (default) | `full_page_image`, `page_thumbnail`, `photograph`, `chemistry_structure`, `bar_code`, `icon`, `logo`, `qr_code`, `signature`, `stamp`, `engineering_drawing`, `screenshot_from_computer`, `screenshot_from_manual`, `geographical_map`, `topographical_map`, `calendar`, `crossword_puzzle`, `music` |
 
+Additional special cases:
+- `other`: use when the picture was examined but does not fit any of the recommended values from above (e.g. a chart that is not bar/box/flow/line/pie/scatter).
+- `undefined`: use when classification has not been performed (default [`label@value`](#label)).
+
+Note: [`picture@class="undefined"`](#picture) (default picture type) and `label@value="undefined"` (unclassified subclass) are independent.
+
 #### Code
 
-For the `label.value` of `<code>` elements, we recommend using the values defined below, or `undefined` if no more specific label is applicable:
+For the `label.value` of `<code>` elements, we recommend using the values defined below:
 
 | Context | Recommended values |
 | --- | --- |
 | `<code>` | [Linguist](https://github.com/github-linguist/linguist/blob/v9.5.0/lib/linguist/languages.yml) v9.5.0 language keys (e.g. `Python`) |
+
+Additional special cases:
+- `other`: use when the code was examined but does not match any of the recommended values from above.
+- `undefined`: use when classification has not been performed (default [`label@value`](#label)).
 
 ### Custom vocabulary naming and namespacing
 
@@ -3046,7 +3056,7 @@ The token vocabulary trades off size and inference cost:
 | `"/>` | end of self-closing element with attributes |
 | `<text>` | [`text`](#text) start |
 | `</text>` | [`text`](#text) end |
-| `<heading level="1">` | level-1 [`heading`](#heading) start |
+| `<heading>` | level-1 [`heading`](#heading) start |
 | `<heading level="2">` | level-2 [`heading`](#heading) start |
 | `<heading level="3">` | level-3 [`heading`](#heading) start |
 | `<heading level="4">` | level-4 [`heading`](#heading) start |
@@ -3079,7 +3089,7 @@ The token vocabulary trades off size and inference cost:
 | `</marker>` | [`marker`](#marker) end |
 | `<group>` | [`group`](#group) start |
 | `</group>` | [`group`](#group) end |
-| `<field_heading level="1">` | level-1 [`field_heading`](#field_heading) start |
+| `<field_heading>` | level-1 [`field_heading`](#field_heading) start |
 | `<field_heading level="2">` | level-2 [`field_heading`](#field_heading) start |
 | `<field_heading level="3">` | level-3 [`field_heading`](#field_heading) start |
 | `<field_heading level="4">` | level-4 [`field_heading`](#field_heading) start |

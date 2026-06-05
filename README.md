@@ -1,12 +1,67 @@
+<p align="center">
+  <a href="https://github.com/doclang-project/doclang">
+    <img loading="lazy" alt="DocLang" src="https://github.com/doclang-project/doclang/raw/main/resources/logo.png" width="30%"/>
+  </a>
+</p>
+
 # DocLang
 
-Specification and reference validator for the [DocLang](https://www.doclang.ai/) document format.
+[![PyPI version](https://img.shields.io/pypi/v/doclang)](https://pypi.org/project/doclang/)
+![Python](https://img.shields.io/badge/python-3.10%20%7C%20%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![License Apache 2.0](https://img.shields.io/github/license/doclang-project/doclang)](https://opensource.org/licenses/Apache-2.0)
 
-This repository contains:
+**[DocLang](https://www.doclang.ai/) is the AI-native markup format for unstructured content** — including documents, images, and more. It maps cleanly to LLM tokens while preserving structure, semantics, layout, and geometry in a single, unambiguous representation.
 
-- **[spec.md](./spec.md)** — normative specification
-- **`doclang/`** — reference validator (XSD + Schematron, `doclang` CLI on PyPI)
+This repository is the home of the normative specification and the reference validator for DocLang. If you build with LLMs and VLMs on real-world content, this is where the standard lives.
 
-For validator usage (install, CLI, XSD/Schematron), see [doclang/README.md](./doclang/README.md).
+## Specification
 
-To work on this repository — setup, tests, reference generation, releases — see [CONTRIBUTING.md](./CONTRIBUTING.md).
+The source of the specification is available in [spec.md](https://github.com/doclang-project/doclang/blob/main/spec.md)
+and exports to different formats can be found in the [exports/](https://github.com/doclang-project/doclang/tree/main/exports)
+directory.
+
+## Reference Validator
+
+You can install the validator from PyPI:
+
+```bash
+pip install doclang
+```
+
+You can then validate a DocLang document as follows:
+
+```bash
+doclang validate -n my_document.dclg.xml
+```
+
+For more details, see the [doclang/README.md](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).
+
+## Citation
+
+If you use DocLang in academic or technical work, please cite the specification:
+
+```bibtex
+@misc{doclang_2026,
+  title        = {DocLang: Universal AI Document Format},
+  author       = {{DocLang Project}},
+  year         = {2026},
+  version      = {main},
+  howpublished = {\url{https://github.com/doclang-project/doclang}},
+}
+```
+
+## Development
+
+To work on this repository — setup, tests, reference generation, releases — see [CONTRIBUTING.md](https://github.com/doclang-project/doclang/blob/main/doclang/CONTRIBUTING.md).
+
+## We ❤️ Open Source AI
+
+DocLang is developed in the open and supported by the [LF AI & Data Foundation](https://lfaidata.foundation/projects/). Learn more about the project at [doclang-project](https://github.com/doclang-project).
+
+## License
+
+DocLang is licensed under the Apache License 2.0. See [LICENSE](https://github.com/doclang-project/doclang/blob/main/LICENSE) for details.

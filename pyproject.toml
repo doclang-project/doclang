@@ -5,14 +5,36 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "doclang"
 version = "0.4.0"  # DO NOT EDIT MANUALLY, updated automatically
-description = "DocLang specification and reference validator (XSD, Schematron, CLI)"
+description = "Reference validator for DocLang documents"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "DocLang Project" }]
+keywords = ["doclang", "xml", "validation", "xsd", "schematron", "documents", "llm"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Text Processing :: Markup :: XML",
+]
 dependencies = [
     "lxml>=6.0.2",
     "saxonche>=12.9.0",
     "typer>=0.15.1",
 ]
+
+[project.urls]
+Homepage = "https://www.doclang.ai/"
+Documentation = "https://github.com/doclang-project/doclang/blob/main/README.md"
+Repository = "https://github.com/doclang-project/doclang"
+Changelog = "https://github.com/doclang-project/doclang/blob/main/CHANGELOG.md"
+Issues = "https://github.com/doclang-project/doclang/issues"
 
 [project.scripts]
 doclang = "doclang.cli:app"
