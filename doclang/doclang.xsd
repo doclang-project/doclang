@@ -5,7 +5,7 @@
   xmlns:dl="https://www.doclang.ai/ns/v0"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
-  version="0.4.0"
+  version="0.5.0"
 >
 
   <!-- ============================================ -->
@@ -695,13 +695,13 @@
           <xs:element ref="dl:page_break"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="version" use="optional" default="0.4">
+      <xs:attribute name="version" use="optional" default="0.5">
         <xs:simpleType>
           <xs:restriction base="xs:string">
             <!-- enumeration set up for v1 and above, where all individual minor versions
              within major (up to and including current, i.e. `default` above)
              will have to be listed for backwards compatibility. -->
-            <xs:enumeration value="0.4"/>
+            <xs:enumeration value="0.5"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

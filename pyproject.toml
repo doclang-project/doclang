@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "doclang"
-version = "0.4.0"  # DO NOT EDIT MANUALLY, updated automatically
+version = "0.5.0"  # DO NOT EDIT MANUALLY, updated automatically
 description = "DocLang reference validator"
 readme = "README.md"
 requires-python = ">=3.10"

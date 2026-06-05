@@ -1,3 +1,8 @@
+## [v0.5.0](https://github.com/doclang-project/doclang/releases/tag/v0.5.0)
+
+* refine spec recommendations, add example fixes, BibTeX citation, PyPI metadata (#88)
+* add `<layer>`, document tokenization guidelines (#87)
+
 ## [v0.4.0](https://github.com/doclang-project/doclang/releases/tag/v0.4.0)
 
 * refine public API and reorganize validator docs (#85)
