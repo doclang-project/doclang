@@ -106,6 +106,8 @@ Adopted from XML:
 - **attribute**: An XML attribute.
 - **tag**: An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
+When referring to an attribute in prose, this specification uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
+
 Adopted from HTML:
 
 - **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
@@ -135,7 +137,7 @@ As DocLang is XML, standard XML encoding rules apply — for example:
 - any provided XML prolog defines the encoding, otherwise UTF-8 is assumed
 - special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
 
-DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides a dedicated element for whitespace preservation (i.e. `xml:space="preserve"` behavior).
+DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
 
 ### Head and Body Areas
 
@@ -209,7 +211,7 @@ In the example further below:
 <doclang>
   <picture class="chart">
     <label value="bar_chart"/>
-    <table><!-- structured chart data in OTSL ... --></table>
+    <tabular><!-- structured chart data ... --></tabular>
   </picture>
 </doclang>
 ```
@@ -318,17 +320,17 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Bar chart using [recommended label](#appendix-b-recommendations) and [`<table>`](#table) for capturing chart data in OTSL format:
+Bar chart using [recommended label](#appendix-b-recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
 
 ```xml
 <picture class="chart">
   <label value="bar_chart"/>
-  <table>
+  <src uri="chart.svg"/>
+  <tabular>
     <ched/>Category<ched/>Value<nl/>
     <fcel/>A<fcel/>10<nl/>
     <fcel/>B<fcel/>20<nl/>
-  </table>
-  <src uri="chart.svg"/>
+  </tabular>
 </picture>
 ```
 
@@ -364,24 +366,21 @@ Code block with language classification and whitespace preservation:
 Grouped code with caption and coordinates:
 
 ```xml
-<group>
+<code>
+  <label value="JavaScript"/>
+  <location value="10"/><location value="80"/><location value="400"/><location value="300"/>
   <caption>
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Listing 1: Minimal HTTP server
   </caption>
-  <code>
-    <label value="JavaScript"/>
-    <location value="10"/><location value="80"/><location value="400"/><location value="300"/>
-    <content><![CDATA[
-    // Minimal Node.js server
-    import http from 'node:http';
-    const server = http.createServer((req, res) => {
-      res.end('OK');
-    });
-    server.listen(3000);]]></content>
-  </code>
-  <footnote>Source: examples/code/server.js</footnote>
-</group>
+  <content><![CDATA[
+  // Minimal Node.js server
+  import http from 'node:http';
+  const server = http.createServer((req, res) => {
+    res.end('OK');
+  });
+  server.listen(3000);]]></content>
+</code>
 ```
 
 Long code blocks can be split across pages using continuation elements; keep `<label>` in the first fragment.
@@ -425,21 +424,17 @@ Block Formula:
 </formula>
 ```
 
-Grouped formula with caption and coordinates:
+Formula with caption and coordinates:
 
 ```xml
-<group>
+<formula>
+  <location value="10"/><location value="80"/><location value="400"/><location value="150"/>
   <caption>
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Equation for the normal distribution
   </caption>
-  <marker>(2)</marker>
-  <formula>
-    <location value="10"/><location value="80"/><location value="400"/><location value="150"/>
-    f(x) = \frac{1}{\sigma\sqrt{2\pi}}\,\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
-  </formula>
-  <footnote>Parameters: mean <formula>\mu</formula> and standard deviation <formula>\sigma</formula>.</footnote>
-</group>
+  f(x) = \frac{1}{\sigma\sqrt{2\pi}}\,\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
+</formula>
 ```
 
 Multi-line LaTeX in a single formula:
@@ -458,11 +453,11 @@ Cross-page block formula with continuation:
 
 ```xml
 <formula>
+  <thread thread_id="42"/>
   <content>
   \begin{equation}
     \mathbf{F}(t) = \int_0^t e^{A(t-\tau)}\,\mathbf{b}(\tau)\,d\tau
   \end{equation}</content>
-  <thread thread_id="42"/>
 </formula>
 <page_footer>Foo</page_footer>
 <page_break/>
@@ -497,7 +492,7 @@ Basic list with virtual `<text>`
 Unordered list with optional markers
 
 ```xml
-<list class="unordered">
+<list>
   <ldiv><marker>•</marker></ldiv>
   <text>First item with <bold>bold</bold> text</text>
   <ldiv>
@@ -528,7 +523,7 @@ Ordered list; markers are optional and can hold the printed numbering
 Checkbox items with selection state; markers optional
 
 ```xml
-<list class="unordered">
+<list>
   <ldiv><marker><checkbox class="selected"/></marker></ldiv>
   <text>Completed task</text>
   <ldiv><marker><checkbox class="unselected"/></marker></ldiv>
@@ -542,7 +537,7 @@ Nested lists (mixing ordered and unordered)
 <list class="ordered">
   <ldiv><marker>1.</marker></ldiv>
   <text>Setup project</text>
-  <list class="unordered">
+  <list>
     <ldiv><marker>•</marker></ldiv>
     <text>Create virtual environment</text>
     <ldiv><marker>•</marker></ldiv>
@@ -561,7 +556,7 @@ List split across pages
 
 ```xml
 <list class="ordered">
-  <thread thread_id="L1"/>
+  <thread thread_id="1"/>
   <ldiv><marker>1.</marker></ldiv>
   <text>First item</text>
   <ldiv><marker>2.</marker></ldiv>
@@ -569,7 +564,7 @@ List split across pages
 </list>
 <page_break/>
 <list class="ordered">
-  <thread thread_id="L1"/>
+  <thread thread_id="1"/>
   <ldiv><marker>3.</marker></ldiv>
   <text>Third item</text>
 </list>
@@ -578,20 +573,20 @@ List split across pages
 Single list-item broken by a page break
 
 ```xml
-<list class="unordered">
-  <thread thread_id="L2"/>
+<list>
+  <thread thread_id="2"/>
   <ldiv><marker>•</marker></ldiv>
   <text>
-    <thread thread_id="I7"/>
+    <thread thread_id="3"/>
     This item starts on page 1 and continues
   </text>
 </list>
 <page_break/>
-<list class="unordered">
-  <thread thread_id="L2"/>
+<list>
+  <thread thread_id="2"/>
   <ldiv/>
   <text>
-    <thread thread_id="I7"/>
+    <thread thread_id="3"/>
     on page 2 until it ends.
   </text>
 </list>
@@ -625,87 +620,81 @@ Example with table location and semantic elements:
 
 ```xml
 <table>
-  <location value="40"/><location value="130"/><location value="540"/><location value="320"/>
-  <ched/><text>Method</text><ched/><text>Accuracy</text><nl/>
-  <fcel/><text>Baseline</text><fcel/><text>0.85</text><nl/>
-  <fcel/><text>Proposed</text><fcel/><text>0.92</text><nl/>
+  <location value="40"/><location value="130"/><location value="400"/><location value="320"/>
+  <ched/>Method<ched/>Accuracy<nl/>
+  <fcel/>Baseline<fcel/>0.85<nl/>
+  <fcel/>Proposed<fcel/>0.92<nl/>
 </table>
 ```
 
-Example with caption and footnote:
-
-A `group` element can be employed for associating a table with other semantic elements, such as a caption or a footnote — for instance:
+Example with caption:
 
 ```xml
-<group>
+<table>
+  <location value="40"/><location value="130"/><location value="400"/><location value="320"/>
   <caption>
-    <location value="40"/><location value="80"/><location value="540"/><location value="110"/>
+    <location value="40"/><location value="80"/><location value="400"/><location value="110"/>
     Table 1: Experimental Results
   </caption>
-  <table>
-    <location value="40"/><location value="130"/><location value="540"/><location value="320"/>
-    <ched/><text>Method</text><ched/><text>Accuracy</text><nl/>
-    <fcel/><text>Baseline</text><fcel/><text>0.85</text><nl/>
-    <fcel/><text>Proposed</text><fcel/><text>0.92</text><nl/>
-  </table>
-  <footnote>Accuracy reported on validation set.</footnote>
-</group>
+  <ched/>Method<ched/>Accuracy<nl/>
+  <fcel/>Baseline<fcel/>0.85<nl/>
+  <fcel/>Proposed<fcel/>0.92<nl/>
+</table>
 ```
 
-Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include `text`, `list`, even nested `group` elements like another `table` or `picture`.
+Immediately after a cell-creating element (e.g., `<fcel/>`, `<ched/>`), place the cell’s content, which may include any [semantic element](#semantic-elements), such as `text`, `list`, even nested `table` or `picture` elements.
 
 ```xml
-<group>
-  <caption>Table 3: Rich Cells</caption>
+<table>
+  <location value="40"/><location value="200"/><location value="400"/><location value="400"/>
+  <caption>
+    <location value="40"/><location value="140"/><location value="400"/><location value="180"/>
+    Table 3: Rich Cells
+  </caption>
+  <ched/><text>Description</text><ched/><text>Details</text><nl/>
+  <fcel/>
+  <text>Pipeline steps</text>
+  <fcel/>
+  <list>
+    <ldiv/>
+    Ingest
+    <ldiv/>
+    Process
+    <ldiv/>
+    Export
+  </list>
+  <nl/>
+  <fcel/>
+  <text>Nested table</text>
+  <fcel/>
   <table>
-    <location value="40"/><location value="200"/><location value="560"/><location value="620"/>
-    <ched/><text>Description</text><ched/><text>Details</text><nl/>
-    <fcel/>
-    <text>Pipeline steps</text>
-    <fcel/>
-    <list class="unordered">
-      <ldiv><marker>•</marker></ldiv>
-      <text>Ingest</text>
-      <ldiv><marker>•</marker></ldiv>
-      <text>Process</text>
-      <ldiv><marker>•</marker></ldiv>
-      <text>Export</text>
-    </list>
+    <caption>Inner table</caption>
+    <ched/>
+    <text>Key</text>
+    <ched/>
+    <text>Value</text>
     <nl/>
     <fcel/>
-    <text>Nested table</text>
+    <text>A</text>
     <fcel/>
-    <group>
-      <caption>Inner table</caption>
-      <table>
-        <ched/>
-        <text>Key</text>
-        <ched/>
-        <text>Value</text>
-        <nl/>
-        <fcel/>
-        <text>A</text>
-        <fcel/>
-        <text>1</text>
-        <nl/>
-        <fcel/>
-        <text>B</text>
-        <fcel/>
-        <text>2</text>
-        <nl/>
-      </table>
-    </group>
+    <text>1</text>
     <nl/>
     <fcel/>
-    <text>Image</text>
+    <text>B</text>
     <fcel/>
-    <picture>
-      <caption>Example image inside a cell</caption>
-      <src uri="assets/img/sample.png"/>
-    </picture>
+    <text>2</text>
     <nl/>
   </table>
-</group>
+  <nl/>
+  <fcel/>
+  <text>Image</text>
+  <fcel/>
+  <picture>
+    <caption>Example image inside a cell</caption>
+    <src uri="assets/img/sample.png"/>
+  </picture>
+  <nl/>
+</table>
 ```
 
 Notes:
@@ -872,13 +861,13 @@ Field region with mixed content:
   </field_item>
 
   <picture>
-    <src uri="assets/product-diagram.png"/>
     <caption>Product diagram showing key components</caption>
+    <src uri="assets/product-diagram.png"/>
   </picture>
 
   <field_item>
     <key>Materials:</key>
-    <list class="unordered">
+    <list>
       <ldiv><marker>•</marker></ldiv>
       <text><value>Aluminum alloy frame</value></text>
       <ldiv><marker>•</marker></ldiv>
@@ -907,7 +896,7 @@ Field region with mixed content:
           <key>Datum:</key>
         <value>23.08.2019</value>
       </field_item>
-      ...
+      <!--...-->
       <field_item>
           <key>Petrograph. Typ:</key>
           <value>Quartiarer Sand + Kies</value>
@@ -942,7 +931,7 @@ Field region with mixed content:
             <key>ADR/RID class:</key>
             <value>8</value>
         </field_item>
-        ...
+        <!--...-->
     </field_region>
     <field_item>
         <key>River transport ADN/ADNR</key>
@@ -952,9 +941,9 @@ Field region with mixed content:
         <field_heading>
             Sea transport IMDG
         </field_heading>
-        ...
+        <!--...-->
     </field_region>
-    ...
+    <!--...-->
     <text>
         The transport ... considered.
     </text>
@@ -1013,14 +1002,14 @@ Field region with mixed content:
               <key>Maintenance</key>
               <value></value>
           </field_item>
-          ...
+          <!--...-->
       <field_region>
       <field_region>
           <field_item>
               <key>Date and time of delivery:</key>
               <value></value>
           </field_item>
-          ...
+          <!--...-->
           <field_item>
               <key>Guarantee</key>
               <value></value>
@@ -1029,7 +1018,7 @@ Field region with mixed content:
               Delivery Suppl...Finance Department
           </text>
       </field_region>
-      ...
+      <!--...-->
   </field_region>
   ```
 
@@ -1098,7 +1087,7 @@ Field region with mixed content:
         <key>Ste.</key>
         <checkbox class="unselected"/>
     </field_item>
-    ...
+    <!--...-->
 
   </field_region>
   ```
@@ -1170,7 +1159,7 @@ Field region with mixed content:
           <key>Ammontare reddito</key>
           <value>,00</value>
       </field_item>
-      ...
+      <!--...-->
   </field_region>
   ```
 
@@ -1237,7 +1226,7 @@ Field region with mixed content:
           <key>TIPO CONTRIBUENTE - IVAFE</key>
           <value></value>
       </field_item>
-      ...
+      <!--...-->
       <field_heading>W2</field_heading>
       <field_item>
           <marker>1</marker>
@@ -1251,7 +1240,7 @@ Field region with mixed content:
           <marker>3</marker>
           <value></value>
       </field_item>
-      ...
+      <!--...-->
   </field_region>
   ```
 
@@ -1315,13 +1304,13 @@ Field region with mixed content:
           <key>REDDITO (punti 1,2,3 CU 2025)</key>
           <value>,00</value>
       </field_item>
-      ...
+      <!--...-->
   ```
 
   </td><td style="vertical-align: top;">
 
   ```xml
-      ...
+      <!--...-->
       <field_item>
           <marker>4</marker>
           <key>ALTRI DATI</key>
@@ -1366,7 +1355,7 @@ Field region with mixed content:
           <key>SOMME A IMPOSTA SOSTITUTIVA</key>
           <value>,00</value>
       </field_item>
-      ...
+      <!--...-->
   </field_region>
   ```
 
@@ -1454,16 +1443,18 @@ Field region with mixed content:
   ```xml
   <field_region>
     <table>
-    <srow/><text>Beiträge zur Altersvorsorge</text>                                       <srow/>                                                           <srow/><text>52</text>                  <ecel/><nl>
-    <ecel/>                                                                               <ched/><text>Steuerpflichtige Person / Ehemann / Person A</text>  <ched/><text>Ehefrau / Person B</text>  <ecel/><nl>
-    <fcel/><text>Arbeitnehmeranteil laut Nr. 23 a / b der Lohnsteuerbescheinigung</text>  <fcel/><text>*FORM1*,-</text>                                     <fcel/><text>*FORM2*,-</text>           <fcel/><text>e</text><nl>
-    <fcel/><text>Beiträge zur landwirtschaftlichen Alterskasse; zu berufsständ...</text>  <fcel/><text>*FORM3*,-</text>                                     <fcel/><text>*FORM4*,-</text>           <ecel/><nl>
-    <fcel/><text>Beiträge zu gesetzlichen Rentenversicherungen...</text>                  <fcel/><text>*FORM5*,-</text>                                     <fcel/><text>*FORM6*,-</text>           <ecel/><nl>
-    <fcel/><text>Erstattete Beiträge und / oder steuerfreie Zuschüsse zu den...</text>    <fcel/><text>*FORM7*,-</text>                                     <fcel/><text>*FORM8*,-</text>           <fcel/><text>e</text><nl>
-    ...
+    <srow/><text>Beiträge zur Altersvorsorge</text>                                       <srow/>                                                           <srow/><text>52</text>                  <ecel/><nl/>
+    <ecel/>                                                                               <ched/><text>Steuerpflichtige Person / Ehemann / Person A</text>  <ched/><text>Ehefrau / Person B</text>  <ecel/><nl/>
+    <fcel/><text>Arbeitnehmeranteil laut Nr. 23 a / b der Lohnsteuerbescheinigung</text>  <fcel/><text>*FORM1*,-</text>                                     <fcel/><text>*FORM2*,-</text>           <fcel/><text>e</text><nl/>
+    <fcel/><text>Beiträge zur landwirtschaftlichen Alterskasse; zu berufsständ...</text>  <fcel/><text>*FORM3*,-</text>                                     <fcel/><text>*FORM4*,-</text>           <ecel/><nl/>
+    <fcel/><text>Beiträge zu gesetzlichen Rentenversicherungen...</text>                  <fcel/><text>*FORM5*,-</text>                                     <fcel/><text>*FORM6*,-</text>           <ecel/><nl/>
+    <fcel/><text>Erstattete Beiträge und / oder steuerfreie Zuschüsse zu den...</text>    <fcel/><text>*FORM7*,-</text>                                     <fcel/><text>*FORM8*,-</text>           <fcel/><text>e</text><nl/>
+    <!--...-->
     </table>
   </field_region>
-  ...
+  <!--...-->
+  ```
+
   *FORMS referred above:
   *FORM1*: <field_item><key>300</key><value></value><hint>EUR</hint></field_item>
   *FORM2*: <field_item><key>400</key><value></value><hint>EUR</hint></field_item>
@@ -1473,7 +1464,6 @@ Field region with mixed content:
   *FORM6*: <field_item><key>402</key><value></value></field_item>
   *FORM7*: <field_item><key>309</key><value></value></field_item>
   *FORM8*: <field_item><key>409</key><value></value></field_item>
-  ```
 
 </details>
 
@@ -1485,19 +1475,19 @@ Field region with mixed content:
   ![Form Example](examples/form/form_15_large_key.png)
 
   ```xml
-  ...
+  <!--...-->
   <heading>Part III</heading>
   <text>Figure Your Credit</text>
   <text>10</text>
   <table>
-    <ched/><text>If you checked (in Part l):</text><ched/><text>Enter</text><nl>
-    <fcel/><text>Box 1, 2, 4, or 7</text><fcel/><text>$5,000</text><nl>
-    <fcel/><text>Box 3, 5, or 6</text><fcel/><text>$7,500</text><nl>
-    <fcel/><text>Box 8 or 9</text><fcel/><text>$3,750</text><nl>
+    <ched/><text>If you checked (in Part l):</text><ched/><text>Enter</text><nl/>
+    <fcel/><text>Box 1, 2, 4, or 7</text><fcel/><text>$5,000</text><nl/>
+    <fcel/><text>Box 3, 5, or 6</text><fcel/><text>$7,500</text><nl/>
+    <fcel/><text>Box 8 or 9</text><fcel/><text>$3,750</text><nl/>
   </table>
   <field_region><field_item><key>10</key><value></value></field_item></field_region>
   <text>11 If you checked (in Part I):</text>
-  <list class="unordered">
+  <list>
       <ldiv/>
       <text>Box 6, add $5,000 to the taxable...</text>
       <ldiv/>
@@ -1510,7 +1500,7 @@ Field region with mixed content:
   <text>For more details on what to include on line 11...</text>
   <text>12 If you completed line 11, enter the smaller...</text>
   <field_region><field_item><key>12</key><value>74,992</value></field_item></field_region>
-  ...
+  <!--...-->
   ```
 
 </details>
@@ -1523,14 +1513,14 @@ Field region with mixed content:
   ![Form Example](examples/form/form_20_key_value_pair_in_the_wild.png)
 
   ```xml
-  ...
+  <!--...-->
   <field_region>
     <field_item>
       <key>Source</key>
       <value>www.pansi.org.uk and ... projections).</value>
     </field_item>
   </field_region>
-  ...
+  <!--...-->
   ```
 
 </details>
@@ -1548,7 +1538,7 @@ The basic structure is shown below, e.g. for a `text` tag:
   <thread thread_id="1"/>
   This text item starts here
 </text>
-...
+<!--...-->
 <text>
   <thread thread_id="1"/>
   and continues here.
@@ -1607,14 +1597,14 @@ under `<text>`, not mixed `<text>` and `<picture>`).
 The scenario in the above figure is represented as follows:
 
 ```xml
-...
+<!--...-->
 <text>
     <location value="10"/><location value="20"/>
     <location value="30"/><location value="40"/>
     <![CDATA[Our multi-faceted DE&I program includes the following initiatives:]]>
 </text>
 
-<list class="unordered">
+<list>
     <thread thread_id="1"/>
     <ldiv/>
     <text>
@@ -1622,20 +1612,20 @@ The scenario in the above figure is represented as follows:
         <location value="35"/><location value="45"/>
         Mentorships and internship programs featuring diverse employees and students
     </text>
-    ...
+    <!--...-->
     <ldiv/>
     <text>
         <location value="20"/><location value="30"/>
         <location value="40"/><location value="50"/>
         Build Science, Technology, Engineering and Mathematics (STEM) employee candidate pipeline via involvement with:
-        <list class="unordered">
+        <list>
             <ldiv/>
             <text>
                 <location value="25"/><location value="35"/>
                 <location value="45"/><location value="55"/>
                 Historically Black Colleges and Universities (HBCUs) site visits and career fairs
             </text>
-            ...
+            <!--...-->
             <ldiv/>
             <text>
                 <location value="30"/><location value="40"/>
@@ -1643,9 +1633,9 @@ The scenario in the above figure is represented as follows:
                 San Diego Squared (STEM-focused nonprofit organization connecting underrepresented student to the power
                 of STEM by providing access to education, mentorship and resources to develop STEM careers)
             </text>
-        <list>
+        </list>
     </text>
-<list>
+</list>
 
 <page_footer>
     <location value="35"/><location value="45"/>
@@ -1655,7 +1645,7 @@ The scenario in the above figure is represented as follows:
 
 <page_break/>
 
-<list class="unordered">
+<list>
     <thread thread_id="1"/>
     <ldiv/>
     <text>
@@ -1663,9 +1653,9 @@ The scenario in the above figure is represented as follows:
         <location value="60"/><location value="70"/>
         <![CDATA[Build upon DE&I employee education initiatives including: ...]]>
     </text>
-    ...
-<list>
-...
+    <!--...-->
+</list>
+<!--...-->
 ```
 </details>
 
@@ -1707,7 +1697,7 @@ similarly to the usual thread elements `thread`.
 to be reached to add the thread for "Europe" in the example above.
 
 ```xml
-...
+<!--...-->
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="1"/>
@@ -1776,7 +1766,7 @@ to be reached to add the thread for "Europe" in the example above.
   <fcel/><text>Prime Minister</text>                     <fcel/><text>125.1</text>                   <fcel/><text>377,975</text><nl/>
 </table>
 <page_break/>
-...
+<!--...-->
 ```
 </details>
 
@@ -1886,8 +1876,11 @@ An easy example is below,
 
 ```xml
 <doclang>
-  <text><thread thread_id="1"/>This paragraph spans across</text>
-  <caption>Some caption</caption>
+  <text>
+    <thread thread_id="1"/>
+    <caption>Some caption</caption>
+    This paragraph spans across
+  </text>
   <page_break/>
   <text><thread thread_id="1"/>multiple pages.</text>
 </doclang>
@@ -1905,7 +1898,7 @@ A more complicated example is shown below in which we break the content of a lis
     <text>First item</text>
     <ldiv/>
     <text><thread thread_id="2"/>Second </text>
-    ...
+    <!--...-->
   </list>
   <page_footer>...</page_footer>
   <page_break/>
@@ -1914,7 +1907,7 @@ A more complicated example is shown below in which we break the content of a lis
     <ldiv/>
     <text><thread thread_id="2"/>item</text>
   </list>
-  ...
+  <!--...-->
 </doclang>
 ```
 
@@ -2072,6 +2065,8 @@ None
 
 #### `<heading>`
 
+Captures a document heading.
+
 ##### Allowed Context
 
 Any context that allows semantic elements.
@@ -2080,7 +2075,7 @@ Any context that allows semantic elements.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `level` | Optional; default "1" | Positive integer |  |
+| `level` | Optional; default "1" | Positive integer | The heading depth (1 = top-level). |
 
 ##### Allowed Content Types
 
@@ -2091,6 +2086,8 @@ Any context that allows semantic elements.
 | Primary semantic elements | Allowed |
 
 #### `<footnote>`
+
+Captures footnote content.
 
 ##### Allowed Context
 
@@ -2110,6 +2107,8 @@ None
 
 #### `<page_header>`
 
+Captures page header content (material repeated at the top of a page).
+
 ##### Allowed Context
 
 Any context that allows semantic elements.
@@ -2127,6 +2126,8 @@ None
 | Primary semantic elements | Allowed |
 
 #### `<page_footer>`
+
+Captures page footer content (material repeated at the bottom of a page).
 
 ##### Allowed Context
 
@@ -2176,7 +2177,7 @@ Any context that allows semantic elements.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `class` | Optional; default: "unordered" | {"unordered", "ordered"} |  |
+| `class` | Optional; default: "unordered" | {"unordered", "ordered"} | The list type. |
 
 ##### Allowed Content Types
 
@@ -2192,7 +2193,7 @@ Captures a table in an OTSL-based format. Table cells are started by the respect
 
 ##### Allowed Context
 
-Any context that allows semantic elements. And additionally as the first element of the element body of `<picture class="chart">`.
+Any context that allows semantic elements.
 
 ##### Attributes
 
@@ -2248,6 +2249,8 @@ None
 
 #### `<code>`
 
+Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Appendix B: Recommendations](#appendix-b-recommendations)).
+
 ##### Allowed Context
 
 Any context that allows semantic elements.
@@ -2266,7 +2269,7 @@ None
 
 #### `<picture>`
 
-Element body can generally only contain a [`<src>`](#src), for image bytes or reference. Additionally, in case of `<picture class="chart">` (and only then) the element body may contain a [`<table>`](#table), in which case it must begin with it.
+The element body begins with a picture-specific sequence, followed by content allowed in any other semantic element body. The picture-specific sequence is:<ul><li>an optional [`<src>`](#src) element</li><li>an optional [`<tabular>`](#tabular) element (only allowed for `<picture class="chart">`)</li></ul>
 
 ##### Allowed Context
 
@@ -2284,9 +2287,11 @@ Any context that allows semantic elements.
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
-| Primary semantic elements | Not allowed (except [`<table>`](#table) in case of `<picture class="chart">`) |
+| Primary semantic elements | Allowed |
 
 #### `<marker>`
+
+Captures the visible glyph or identifier (e.g. number) of a marker, e.g. in the context of a list item.
 
 ##### Allowed Context
 
@@ -2326,6 +2331,8 @@ None
 
 #### `<field_heading>`
 
+Field heading within a `<field_region>; analogous to [`<heading>`](#heading) but scoped to field structures.
+
 ##### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
@@ -2334,7 +2341,7 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `level` | Optional; default "1" | Positive integer |  |
+| `level` | Optional; default "1" | Positive integer | The field heading depth (1 = top-level). |
 
 ##### Allowed Content Types
 
@@ -2396,7 +2403,7 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `class` | Optional; default: "read_only" | {"read_only", "fillable"} |  |
+| `class` | Optional; default: "read_only" | {"read_only", "fillable"} | The value type. |
 
 ##### Allowed Content Types
 
@@ -2432,7 +2439,7 @@ Optional part of the element head for capturing an associated caption.
 
 ##### Allowed Context
 
-Can only be part of the element head of a semantic element.
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2456,7 +2463,7 @@ Optional part of the element head; serves for providing a detailed label for the
 
 ##### Allowed Context
 
-Can only be child of a semantic element.
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2474,7 +2481,7 @@ Optional part of the element head; serves for establishing a logical document co
 
 ##### Allowed Context
 
-Can only be child of a semantic element.
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2492,7 +2499,7 @@ Optional part of the element head; serves for capturing an outgoing cross-refere
 
 ##### Allowed Context
 
-Can only be child of a semantic element. Mutually exclusive with [`<href>`](#href).
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2510,7 +2517,7 @@ Optional part of the element head; serves for capturing a URI referenced by this
 
 ##### Allowed Context
 
-Can only be child of a semantic element. Mutually exclusive with [`<xref>`](#xref).
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2532,7 +2539,7 @@ Optional part of the element head; custom metadata, e.g. for application-specifi
 
 ##### Allowed Context
 
-Can only be child of a semantic element.
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2552,14 +2559,14 @@ Optional part of the element head; coordinate system is the top-left corner of t
 
 ##### Allowed Context
 
-Can only be child of a semantic element.
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
-| `value` | Required | Integer within [0, `location.resolution`) | Coordinate w.r.t. top-left corner. |
+| `value` | Required | Integer within [0, `location@resolution`) | Coordinate w.r.t. top-left corner. |
 
 ##### Allowed Content Types
 
@@ -2571,7 +2578,7 @@ The conceptual layer of the host element in the document.
 
 ##### Allowed Context
 
-Can only be child of a semantic element.
+Can only be part of the [element head](#element-head) of a semantic element.
 
 ##### Attributes
 
@@ -2593,7 +2600,7 @@ The image's source.
 
 ##### Allowed Context
 
-Can only be child of [`<picture>`](#picture).
+Can only be part of the picture-specific element body sequence of [`<picture>`](#picture).
 
 ##### Attributes
 
@@ -2605,7 +2612,29 @@ Can only be child of [`<picture>`](#picture).
 
 None (empty element).
 
+#### `<tabular>`
+
+Structured tabular data. Uses the same cell model as [`<table>`](#table), but without an element head of its own.
+
+##### Allowed Context
+
+Can only be part of the picture-specific element body sequence of [`<picture class="chart">`](#picture).
+
+##### Attributes
+
+None
+
+##### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Only on cell level, in case of virtual [`<text>`](#text) |
+| Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
+| Primary semantic elements | Allowed |
+
 #### `<checkbox>`
+
+Empty element representing checkbox selection state.
 
 ##### Allowed Context
 
@@ -2615,13 +2644,15 @@ Any context that allows raw text content.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `class` | Optional; default: "unselected" | {"unselected", "selected"} |  |
+| `class` | Optional; default: "unselected" | {"unselected", "selected"} | The checkbox type. |
 
 ##### Allowed Content Types
 
 None (empty element).
 
 #### `<content>`
+
+Whitespace-preserving text container. Retains all whitespace within the element (equivalent to `xml:space="preserve"`), enabling use in whitespace-sensitive scenarios such as code blocks. XML special characters may alternatively be conveyed via CDATA.
 
 ##### Allowed Context
 
@@ -2645,6 +2676,8 @@ Formatting elements modify the styling and presentation within semantic or other
 
 #### `<bold>`
 
+Indicates bold formatting.
+
 ##### Allowed Context
 
 Any context that allows raw text content.
@@ -2662,6 +2695,8 @@ None
 | Primary semantic elements | Not allowed |
 
 #### `<italic>`
+
+Indicates italic formatting.
 
 ##### Allowed Context
 
@@ -2681,6 +2716,8 @@ None
 
 #### `<underline>`
 
+Indicates underlined formatting.
+
 ##### Allowed Context
 
 Any context that allows raw text content.
@@ -2698,6 +2735,8 @@ None
 | Primary semantic elements | Not allowed |
 
 #### `<strikethrough>`
+
+Indicates struck-through formatting.
 
 ##### Allowed Context
 
@@ -2717,6 +2756,8 @@ None
 
 #### `<superscript>`
 
+Indicates superscript formatting.
+
 ##### Allowed Context
 
 Any context that allows raw text content.
@@ -2735,6 +2776,8 @@ None
 
 #### `<subscript>`
 
+Indicates subscript formatting.
+
 ##### Allowed Context
 
 Any context that allows raw text content.
@@ -2752,6 +2795,8 @@ None
 | Primary semantic elements | Not allowed |
 
 #### `<handwriting>`
+
+Indicates handwritten text.
 
 ##### Allowed Context
 
@@ -2799,7 +2844,7 @@ Indicates the beginning of a full / regular cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2815,7 +2860,7 @@ Indicates the beginning of an empty cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2831,7 +2876,7 @@ Indicates the beginning of a column header cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2847,7 +2892,7 @@ Indicates the beginning of a row header cell.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2863,7 +2908,7 @@ Indicates the beginning of a corner cell, typically the top-left header intersec
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2879,7 +2924,7 @@ Indicates the beginning of a section row header.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2895,7 +2940,7 @@ Left-merge extension token; extends the previous cell horizontally (colspan cont
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2911,7 +2956,7 @@ Upward-merge extension token; extends the cell above vertically (rowspan continu
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2927,7 +2972,7 @@ Cross/combined span extension token; used where both horizontal and vertical spa
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -2943,7 +2988,7 @@ Denotes the end of a table row.
 
 ##### Allowed Context
 
-Can only be child of [`<table>`](#table) or [`<index>`](#index)
+Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
 ##### Attributes
 
@@ -3004,7 +3049,7 @@ This appendix is informative and does not define conformance requirements.
 
 #### Pictures
 
-For the `label.value` of `<picture>` elements, we recommend using the values defined below:
+For the `label@value` of `<picture>` elements, we recommend using the values defined below:
 
 | Context | Recommended values |
 | --- | --- |
@@ -3019,7 +3064,7 @@ Note: [`picture@class="undefined"`](#picture) (default picture type) and `label@
 
 #### Code
 
-For the `label.value` of `<code>` elements, we recommend using the values defined below:
+For the `label@value` of `<code>` elements, we recommend using the values defined below:
 
 | Context | Recommended values |
 | --- | --- |
@@ -3116,6 +3161,8 @@ The token vocabulary trades off size and inference cost:
 | `</smiles>` | custom SMILES element end |
 | `<layer value="` | [`layer`](#layer) with `value` attribute start |
 | `<src uri="` | [`src`](#src) with `uri` attribute start |
+| `<tabular>` | [`tabular`](#tabular) start |
+| `</tabular>` | [`tabular`](#tabular) end |
 | `<checkbox class="unselected"/>` | unselected [`checkbox`](#checkbox) |
 | `<checkbox class="selected"/>` | selected [`checkbox`](#checkbox) |
 | `<content>` | [`content`](#content) start |
@@ -3148,9 +3195,9 @@ The token vocabulary trades off size and inference cost:
 | `<ucel/>` | [`ucel`](#ucel) |
 | `<xcel/>` | [`xcel`](#xcel) |
 | `<nl/>` | [`nl`](#nl) |
-| `<ldiv/>` | [`lddiv`](#lddiv) |
-| `<ldiv><marker>` | start of [`lddiv`](#lddiv) with [`marker`](#marker) |
-| `</marker></ldiv>` | end of [`lddiv`](#lddiv) with [`marker`](#marker) |
+| `<ldiv/>` | [`lddiv`](#ldiv) |
+| `<ldiv><marker>` | start of [`ldiv`](#ldiv) with [`marker`](#marker) |
+| `</marker></ldiv>` | end of [`ldiv`](#ldiv) with [`marker`](#marker) |
 | `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
 
 ## Appendix C: Future Extensions
@@ -3199,7 +3246,7 @@ Here is an example:
     <language classifier="fastText" score="0.2">spa</language>
     <topic topic_taxonomy="taxonomy" score="0.5">Technology</topic>
     <topic topic_taxonomy="taxonomy" score="0.5">Math</topic>
-    <document_hash hash_function="sha256sum"/>75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
+    <document_hash hash_function="sha256sum">75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
     <summary>This is a summary of the document</summary>
     <generated_by>example_vlm_org/example_vlm_name</generated_by>
     <default_resolution width="512" height="512"/>
@@ -3207,9 +3254,9 @@ Here is an example:
     <page_size page_no="4" width="792" height="612"/>
 
       <!-- examples of custom elements -->
-    <my_company_hap_filter_hate/>0.1</my_company_hap_filter_hate>
-    <my_company_hap_filter_abuse/>0.1</my_company_hap_filter_abuse>
-    <my_company_hap_filter_profanity/>0.1</my_company_hap_filter_profanity>
+    <my_company_hap_filter_hate>0.1</my_company_hap_filter_hate>
+    <my_company_hap_filter_abuse>0.1</my_company_hap_filter_abuse>
+    <my_company_hap_filter_profanity>0.1</my_company_hap_filter_profanity>
   </head>
   <!-- document content -->
 </doclang>
@@ -3502,7 +3549,7 @@ Example use of the governance and compliance elements is shown below:
     <date>2024-01-01</date>
     <language classifier="fastText" score="0.7">eng</language>
     <topic topic_taxonomy="taxonomy" score="0.5">Technology</topic>
-    <document_hash hash_function="sha256sum"/>75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
+    <document_hash hash_function="sha256sum">75f2db0c6124527bf6dd48440f95fc864a5108d28517633f937923a7d8199185</document_hash>
     <summary>This is a summary of the document</summary>
     <generated_by>example_vlm_org/example_vlm_name</generated_by>
 

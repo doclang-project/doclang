@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
   <picture>
-    <table>
-      <fcel/>Cell<nl/>
-    </table>
     <src uri="figure.png"/>
+    <text>Figure 1: Example diagram with an explanatory caption in the body.</text>
   </picture>
 </doclang>

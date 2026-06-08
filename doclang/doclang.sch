@@ -332,19 +332,23 @@
   </sch:pattern>
 
   <!-- ============================================ -->
-  <!-- PICTURE BODY: table only as first body element when class="chart" -->
+  <!-- PICTURE BODY: src first when present; tabular only for chart, immediately after src -->
   <!-- ============================================ -->
 
   <sch:pattern id="picture-body">
     <sch:rule context="dl:picture">
       <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
-      <sch:assert test="not(not(@class) or @class = 'undefined') or empty(dl:table)">
-        Picture with class="undefined" (or no class) must not contain table in the element body.
+      <sch:assert test="empty(dl:tabular) or @class = 'chart'">
+        Element tabular is only allowed in picture with class="chart".
       </sch:assert>
 
-      <sch:assert test="empty(dl:table) or (@class = 'chart' and dl:table[1] is $first-body)">
-        Element table is only allowed as the first element of the body of picture with class="chart".
+      <sch:assert test="empty(dl:src) or dl:src[1] is $first-body">
+        Element src must be the first element of the picture body when present.
+      </sch:assert>
+
+      <sch:assert test="empty(dl:tabular) or (not(dl:src) and dl:tabular[1] is $first-body) or (dl:src and dl:tabular[1] is dl:src/following-sibling::*[1])">
+        Element tabular must immediately follow src when src is present, otherwise it may be the first body element.
       </sch:assert>
     </sch:rule>
   </sch:pattern>

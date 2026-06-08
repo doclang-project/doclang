@@ -56,7 +56,7 @@ If you use DocLang in academic or technical work, please cite the specification:
 
 ## Development
 
-To work on this repository — setup, tests, reference generation, releases — see [CONTRIBUTING.md](https://github.com/doclang-project/doclang/blob/main/doclang/CONTRIBUTING.md).
+To work on this repository — setup, tests, reference generation, releases — see [CONTRIBUTING.md](https://github.com/doclang-project/doclang/blob/main/CONTRIBUTING.md).
 
 ## We ❤️ Open Source AI
 

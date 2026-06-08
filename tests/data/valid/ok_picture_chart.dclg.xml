@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
-  <!-- Chart picture with label subclass and embedded OTSL table -->
+  <!-- Chart picture with label subclass and embedded OTSL data -->
   <picture class="chart">
     <label value="bar_chart"/>
-    <table>
+    <src uri="chart.svg"/>
+    <tabular>
       <ched/>Category<ched/>Value<nl/>
       <fcel/>A<fcel/>10<nl/>
       <fcel/>B<fcel/>20<nl/>
-    </table>
-    <src uri="chart.svg"/>
+    </tabular>
   </picture>
 </doclang>

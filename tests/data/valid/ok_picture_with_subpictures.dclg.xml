@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <picture>
+    <src uri="composite.png"/>
+    <picture>
+      <src uri="inset-a.png"/>
+    </picture>
+    <picture>
+      <src uri="inset-b.png"/>
+    </picture>
+  </picture>
+</doclang>

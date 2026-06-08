@@ -247,26 +247,27 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- PICTURE ELEMENT: element_head + body (table may begin body for chart, then src) -->
+  <!-- PICTURE ELEMENT: element_head + src + tabular (chart) + semantic body -->
   <!-- ============================================ -->
 
-  <xs:element name="picture">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:group ref="dl:element_head"/>
-        <xs:element ref="dl:table" minOccurs="0"/>
-        <xs:element ref="dl:src" minOccurs="0"/>
-      </xs:sequence>
-      <xs:attribute name="class" use="optional" default="undefined">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:enumeration value="undefined"/>
-            <xs:enumeration value="chart"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:attribute>
-    </xs:complexType>
-  </xs:element>
+  <xs:complexType name="picture_type" mixed="true">
+    <xs:sequence>
+      <xs:group ref="dl:element_head"/>
+      <xs:element ref="dl:src" minOccurs="0"/>
+      <xs:element ref="dl:tabular" minOccurs="0"/>
+      <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="class" use="optional" default="undefined">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="undefined"/>
+          <xs:enumeration value="chart"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:element name="picture" type="dl:picture_type"/>
 
   <!-- ============================================ -->
   <!-- TABLE_SEP: empty elements for table separators -->
@@ -557,6 +558,18 @@
     <xs:complexType mixed="true">
       <xs:sequence>
         <xs:group ref="dl:element_head"/>
+        <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- TABULAR ELEMENT: structured tabular data payload (child of picture) -->
+  <!-- ============================================ -->
+
+  <xs:element name="tabular">
+    <xs:complexType mixed="true">
+      <xs:sequence>
         <xs:group ref="dl:table_cell" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>
