@@ -33,6 +33,7 @@ from typing import Optional
 
 try:
     from docx import Document
+    from docx.document import Document as DocxDocument
     from docx.enum.text import WD_BREAK
     from docx.opc.constants import RELATIONSHIP_TYPE
     from docx.oxml import OxmlElement
@@ -53,7 +54,7 @@ DEFAULT_MD = ROOT / "spec.md"
 OUTPUT_DOCX = EXPORTS_DIR / "doclang.docx"
 
 
-def add_toc(document: Document) -> None:
+def add_toc(document: DocxDocument) -> None:
     # Insert a Word ToC field: TOC \o "1-3" \h \z \u
     p = document.add_paragraph()
     run = p.add_run()
@@ -79,7 +80,7 @@ def add_toc(document: Document) -> None:
     hint._r.append(fld_end)
 
 
-def add_toc_title_paragraph(document: Document):
+def add_toc_title_paragraph(document: DocxDocument):
     """TOC section title: Heading 1 appearance without using Heading 1 style."""
     try:
         paragraph = document.add_paragraph("Contents", style="TOC Heading")
@@ -95,7 +96,7 @@ def add_toc_title_paragraph(document: Document):
     return paragraph
 
 
-def add_toc_section(document: Document) -> None:
+def add_toc_section(document: DocxDocument) -> None:
     """Insert a TOC title, the TOC field, and a page break after the section."""
     add_toc_title_paragraph(document)
     document.add_paragraph()
@@ -104,7 +105,7 @@ def add_toc_section(document: Document) -> None:
     break_p.add_run().add_break(WD_BREAK.PAGE)
 
 
-def process_html_paragraph(document: Document, text: str) -> None:
+def process_html_paragraph(document: DocxDocument, text: str) -> None:
     """Process paragraph text that contains HTML elements like <ul>, <li>, and <br>.
 
     Splits the text into segments and processes each appropriately:
@@ -147,7 +148,7 @@ def process_html_paragraph(document: Document, text: str) -> None:
             process_br_tags(document, post_text)
 
 
-def process_br_tags(document: Document, text: str) -> None:
+def process_br_tags(document: DocxDocument, text: str) -> None:
     """Process text containing <br> tags by splitting into multiple runs with line breaks."""
     br_pattern = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
@@ -169,7 +170,7 @@ def process_br_tags(document: Document, text: str) -> None:
                 p.add_run().add_break(WD_BREAK.LINE)
 
 
-def finalize_paragraph_buf(document: Document, buf: list[str]) -> None:
+def finalize_paragraph_buf(document: DocxDocument, buf: list[str]) -> None:
     if not buf:
         return
     text = " ".join(line.strip() for line in buf).strip()
@@ -301,7 +302,7 @@ def split_md_row(row: str) -> list[str]:
     return [c.replace("\\|", "|") for c in re.split(r"\s*\|\s*", s)]
 
 
-def add_code_block(document: Document, code_lines: list[str], language: Optional[str]) -> None:
+def add_code_block(document: DocxDocument, code_lines: list[str], language: Optional[str]) -> None:
     # Add a monospaced, preformatted code block.
     p = document.add_paragraph()
     # Light grey background for the whole block
@@ -468,13 +469,13 @@ def _process_code_and_bold(paragraph, text: str) -> None:
         _add_bold_and_text_runs(paragraph, tail)
 
 
-def add_formatted_paragraph(document: Document, text: str):
+def add_formatted_paragraph(document: DocxDocument, text: str):
     p = document.add_paragraph()
     _add_inline_formatted_runs(p, text)
     return p
 
 
-def add_image(document: Document, src: str, base_dir: Path) -> bool:
+def add_image(document: DocxDocument, src: str, base_dir: Path) -> bool:
     # Resolve and add image; return True if added.
     # Skip if remote URL.
     if re.match(r"^[a-z]+://", src):
@@ -492,7 +493,12 @@ def add_image(document: Document, src: str, base_dir: Path) -> bool:
         # Resize to visible page width while preserving aspect ratio.
         try:
             section = document.sections[-1]
-            max_width = section.page_width - section.left_margin - section.right_margin
+            page_width = section.page_width
+            left_margin = section.left_margin
+            right_margin = section.right_margin
+            if page_width is None or left_margin is None or right_margin is None:
+                raise ValueError("section metrics unavailable")
+            max_width = page_width - left_margin - right_margin
             document.add_picture(str(img_path), width=max_width)
         except Exception:
             # Fallback if section metrics are unavailable
@@ -583,7 +589,7 @@ def add_hyperlink(paragraph, url: str, text: str):
 
 
 def add_heading_with_bookmark(
-    document: Document,
+    document: DocxDocument,
     raw_title: str,
     markdown_level: int,
     bookmark_id: int,
@@ -605,64 +611,91 @@ def add_heading_with_bookmark(
     add_bookmark(paragraph, markdown_anchor(raw_title), bookmark_id)
 
 
-def _strip_html_comments_outside_code(md_text: str) -> str:
-    """Remove HTML comments (<!-- ... -->) outside fenced code blocks.
+def _strip_html_comments_from_prose_line(
+    line: str, *, in_comment: bool, in_inline_code: bool
+) -> tuple[str, bool, bool]:
+    """Strip HTML comments from a prose line, preserving inline `` `code` `` spans."""
+    buf: list[str] = []
+    i = 0
+    length = len(line)
+    while i < length:
+        if in_comment:
+            end = line.find("-->", i)
+            if end == -1:
+                return "".join(buf), True, in_inline_code
+            i = end + 3
+            in_comment = False
+            continue
 
-    Preserves comment markers that appear inside fenced code blocks. Also
-    removes multi-line comments and inline fragments within a line.
+        if in_inline_code:
+            ch = line[i]
+            buf.append(ch)
+            if ch == "`":
+                in_inline_code = False
+            i += 1
+            continue
+
+        if line.startswith("<!--", i):
+            i += 4
+            in_comment = True
+            continue
+        if line[i] == "`":
+            in_inline_code = True
+            buf.append("`")
+            i += 1
+            continue
+        buf.append(line[i])
+        i += 1
+    return "".join(buf), in_comment, in_inline_code
+
+
+_FENCE_OPEN_RE = re.compile(r"^(\s*)(`{3,}|~{3,})(\w+)?\s*$")
+_FENCE_CLOSE_RE = re.compile(r"^(\s*)(`{3,}|~{3,})\s*$")
+
+
+def _is_fence_open_line(line: str) -> bool:
+    return _FENCE_OPEN_RE.match(line) is not None
+
+
+def _is_fence_close_line(line: str) -> bool:
+    return _FENCE_CLOSE_RE.match(line) is not None
+
+
+def _strip_html_comments_outside_code(md_text: str) -> str:
+    """Remove HTML comments (<!-- ... -->) outside code.
+
+    Preserves comment markers inside fenced code blocks and inline `` `code` ``
+    spans. Also removes multi-line comments and inline fragments within prose.
     """
     lines = md_text.splitlines(keepends=True)
     out: list[str] = []
     in_code = False
     in_comment = False
     for line in lines:
-        # Detect fenced code block start/end (must be fence-only line, like parser)
-        if not in_comment:
-            mcode = re.match(r"^(\s*)(`{3,}|~{3,})(\w+)?\s*$", line)
-            if mcode:
-                # Toggle code state
-                in_code = not in_code
-                out.append(line)
-                continue
+        # Fence lines inside HTML comments are comment text, not real code blocks.
+        # Opening fences may include a language tag (```xml); closing fences do not.
+        if not in_comment and not in_code and _is_fence_open_line(line):
+            in_code = True
+            out.append(line)
+            continue
+        if not in_comment and in_code and _is_fence_close_line(line):
+            in_code = False
+            out.append(line)
+            continue
 
         if in_code:
             out.append(line)
             continue
 
-        # Strip HTML comments in non-code text
-        i = 0
-        L = len(line)
-        buf: list[str] = []
-        while i < L:
-            if in_comment:
-                end = line.find("-->", i)
-                if end == -1:
-                    # Entire remainder is within comment
-                    i = L
-                    in_comment = True
-                    break
-                else:
-                    # Close comment and continue scanning after it
-                    i = end + 3
-                    in_comment = False
-                    continue
-            else:
-                start = line.find("<!--", i)
-                if start == -1:
-                    buf.append(line[i:])
-                    break
-                else:
-                    # Keep text before the comment start
-                    if start > i:
-                        buf.append(line[i:start])
-                    i = start + 4
-                    in_comment = True
-                    continue
-        out.append("".join(buf))
+        # Inline `code` spans are line-local; do not carry open backticks across lines.
+        processed, in_comment, _ = _strip_html_comments_from_prose_line(
+            line, in_comment=in_comment, in_inline_code=False
+        )
+        out.append(processed)
     return "".join(out)
 
 
-def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> None:
+def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path) -> None:
     lines = md_text.splitlines()
     i = 0
     para_buf: list[str] = []
@@ -850,7 +883,7 @@ def parse_markdown_to_docx(document: Document, md_text: str, base_dir: Path) -> 
                 level = list_level_for_indent(indent)
                 p = document.add_paragraph(style="List Bullet")
                 _add_inline_formatted_runs(p, text)
-            else:
+            elif mo:
                 indent = mo.group("indent")
                 text = mo.group("text")
                 level = list_level_for_indent(indent)
