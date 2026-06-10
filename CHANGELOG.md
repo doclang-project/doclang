@@ -1,3 +1,9 @@
+## [v0.6.0](https://github.com/doclang-project/doclang/releases/tag/v0.6.0)
+
+* improve spec export, minor test renaming (#91)
+* allow full sem. body in `<picture>`, add `<tabular>` for chart tables (#90)
+  * **BREAKING CHANGE**: chart-specific element body preamble shape changed from `<table>` -> `<src>` to `<src>` -> `<tabular>`
+
 ## [v0.5.0](https://github.com/doclang-project/doclang/releases/tag/v0.5.0)
 
 * refine spec recommendations, add example fixes, BibTeX citation, PyPI metadata (#88)
