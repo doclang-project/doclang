@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -364,6 +364,7 @@ ci = [
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
+    { name = "python-docx" },
     { name = "ruff" },
 ]
 dev = [
@@ -390,6 +391,7 @@ ci = [
     { name = "mypy", specifier = "~=1.6" },
     { name = "pre-commit", specifier = "~=3.7" },
     { name = "pytest", specifier = "~=8.3" },
+    { name = "python-docx", specifier = ">=1.2.0" },
     { name = "ruff", specifier = ">=0.14.11" },
 ]
 dev = [

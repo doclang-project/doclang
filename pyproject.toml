@@ -48,13 +48,13 @@ ci = [
     "mypy~=1.6",
     "ruff>=0.14.11",
     "pytest~=8.3",
+    "python-docx>=1.2.0",
 ]
 dev = [
     { include-group = "ci" },
     "pydantic>=2.11.10",
     "pyyaml>=6.0.3",
     "openpyxl>=3.1.0",
-    "python-docx>=1.2.0",
     "docling>=2.0.0",
 ]
 
@@ -130,6 +130,7 @@ exclude = "(^|/)tests/data/.*"
 
 [[tool.mypy.overrides]]
 module = [
+    "docx.*",
     "lxml.*",
     "saxonche.*",
     "typer.*",
