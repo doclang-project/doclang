@@ -28,30 +28,24 @@ class ValidationError(Exception):
 
     def __init__(
         self,
-        file: str,
         *,
-        xsd_valid: bool,
         xsd_errors: list[dict[str, Any]],
-        schematron_valid: bool,
         schematron_errors: list[dict[str, Any]],
     ) -> None:
-        self.file = file
-        self.xsd_valid = xsd_valid
         self.xsd_errors = xsd_errors
-        self.schematron_valid = schematron_valid
         self.schematron_errors = schematron_errors
         super().__init__(self._format_message())
 
     def _format_message(self) -> str:
-        lines: list[str] = [f"Validation failed for {self.file}"]
-        if not self.xsd_valid:
+        lines: list[str] = []
+        if self.xsd_errors:
             lines.append("XSD validation failed:")
             for error in self.xsd_errors:
                 if "line" in error:
                     lines.append(f"  Line {error['line']}: {error['message']}")
                 else:
                     lines.append(f"  {error.get('error', 'Unknown error')}")
-        if not self.schematron_valid:
+        if self.schematron_errors:
             lines.append("Schematron validation failed:")
             for error in self.schematron_errors:
                 if "location" in error:
@@ -73,32 +67,26 @@ def validate(
     Raises :class:`ValidationError` on failure.
     """
     path = Path(xml_file)
-    xsd_valid = True
     xsd_errors: list[dict[str, Any]] = []
-    schematron_valid = True
     schematron_errors: list[dict[str, Any]] = []
 
     if not schematron_only:
-        xsd_valid, xsd_errors = _validate_xsd(path, allow_empty_namespace=allow_empty_namespace)
+        xsd_errors = _validate_xsd(path, allow_empty_namespace=allow_empty_namespace)
 
-    if not xsd_only and (xsd_valid or schematron_only):
+    if not xsd_only:
         try:
-            schematron_valid, failed_asserts = _validate_with_schematron(
+            failed_asserts = _validate_with_schematron(
                 path,
                 allow_empty_namespace=allow_empty_namespace,
                 verbose=False,
             )
-            if not schematron_valid:
+            if failed_asserts:
                 schematron_errors = _failed_asserts_to_errors(failed_asserts)
         except Exception as exc:
-            schematron_valid = False
             schematron_errors = [{"error": str(exc)}]
 
-    if not (xsd_valid and schematron_valid):
+    if xsd_errors or schematron_errors:
         raise ValidationError(
-            str(path),
-            xsd_valid=xsd_valid,
             xsd_errors=xsd_errors,
-            schematron_valid=schematron_valid,
             schematron_errors=schematron_errors,
         )

@@ -15,7 +15,7 @@ from doclang.utils import _ensure_namespace
 
 def _validate_xsd_at(
     xml_file: Union[str, Path], xsd_file: Union[str, Path], allow_empty_namespace: bool = False
-) -> tuple[bool, list[dict[str, Any]]]:
+) -> list[dict[str, Any]]:
     """
     Validate XML against an XSD schema using lxml (internal).
 
@@ -25,7 +25,7 @@ def _validate_xsd_at(
         allow_empty_namespace: If True, automatically add DocLang namespace if missing
 
     Returns:
-        Tuple of (is_valid, errors) where errors is a list of dicts with 'line' and 'message' keys
+        Validation errors as a list of dicts with 'line' and 'message' keys
     """
     try:
         with open(xsd_file, "rb") as f:
@@ -39,14 +39,13 @@ def _validate_xsd_at(
             xml_doc = _ensure_namespace(xml_doc)
 
         if schema.validate(xml_doc):
-            return True, []
-        errors = [{"line": error.line, "message": error.message} for error in schema.error_log]
-        return False, errors
+            return []
+        return [{"line": error.line, "message": error.message} for error in schema.error_log]
 
     except Exception as e:
-        return False, [{"error": str(e)}]
+        return [{"error": str(e)}]
 
 
-def _validate_xsd(xml_file: Union[str, Path], allow_empty_namespace: bool = False) -> tuple[bool, list[dict[str, Any]]]:
+def _validate_xsd(xml_file: Union[str, Path], allow_empty_namespace: bool = False) -> list[dict[str, Any]]:
     """Validate XML against the bundled DocLang XSD schema."""
     return _validate_xsd_at(xml_file, _bundled_xsd_path(), allow_empty_namespace=allow_empty_namespace)

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- XSD: heading@level must be a positive integer -->
+  <heading level="0">Invalid heading level</heading>
+
+  <!-- Schematron: xref references a thread_id that is not defined -->
+  <text>
+    <xref thread_id="1"/>
+    Body text
+  </text>
+
+</doclang>

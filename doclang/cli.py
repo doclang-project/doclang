@@ -78,9 +78,8 @@ def validate(
         )
     except ValidationError as exc:
         results: dict[str, Any] = {
-            "file": exc.file,
-            "xsd": {"valid": exc.xsd_valid, "errors": exc.xsd_errors},
-            "schematron": {"valid": exc.schematron_valid, "errors": exc.schematron_errors},
+            "xsd": {"valid": not exc.xsd_errors, "errors": exc.xsd_errors},
+            "schematron": {"valid": not exc.schematron_errors, "errors": exc.schematron_errors},
         }
 
         if not quiet and format == OutputFormat.text:
@@ -88,7 +87,7 @@ def validate(
                 if verbose:
                     typer.echo("XSD Validation")
                     typer.echo(f"Schema: {bundled_xsd}")
-                if exc.xsd_valid:
+                if not exc.xsd_errors:
                     typer.echo("XSD validation passed")
                 else:
                     typer.echo("XSD validation failed")
@@ -98,11 +97,11 @@ def validate(
                         else:
                             typer.echo(f"  {error.get('error', 'Unknown error')}")
 
-            if not xsd_only and (exc.xsd_valid or schematron_only):
+            if not xsd_only:
                 if verbose:
                     typer.echo("Schematron Validation")
                     typer.echo(f"Schema: {bundled_sch}")
-                if exc.schematron_valid:
+                if not exc.schematron_errors:
                     typer.echo("Schematron validation passed")
                 else:
                     typer.echo("Schematron validation failed")
@@ -135,7 +134,6 @@ def validate(
         typer.echo(
             json.dumps(
                 {
-                    "file": str(xml_file),
                     "xsd": {"valid": True, "errors": []},
                     "schematron": {"valid": True, "errors": []},
                 },

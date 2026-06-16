@@ -136,8 +136,12 @@ def _validate_with_schematron(
     xml_file: Union[str, Path],
     allow_empty_namespace: bool = False,
     verbose: bool = False,
-) -> tuple[bool, list]:
-    """Validate XML against the bundled DocLang Schematron rules."""
+) -> list:
+    """Validate XML against the bundled DocLang Schematron rules.
+
+    Returns:
+        SVRL failed-assert elements; empty when validation passes.
+    """
     sch_file = _bundled_sch_path()
     if verbose:
         print(f"Using Schematron file: {sch_file}")
@@ -187,12 +191,10 @@ def _validate_with_schematron(
                 if result:
                     result_doc = etree.fromstring(result.encode("utf-8"))
                     failed_asserts = result_doc.findall(".//{http://purl.oclc.org/dsdl/svrl}failed-assert")
-
-                    is_valid = len(failed_asserts) == 0
-                    return is_valid, failed_asserts
+                    return failed_asserts
                 else:
                     # No output means validation passed
-                    return True, []
+                    return []
 
         # Temporary file automatically deleted when exiting context manager
 

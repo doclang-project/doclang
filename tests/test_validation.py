@@ -41,12 +41,23 @@ def test_invalid(xml_file):
         validate(xml_file, allow_empty_namespace=False)
 
     exc = exc_info.value
-    assert not (exc.xsd_valid and exc.schematron_valid), f"Expected {xml_file.name} to fail validation, but it passed"
+    assert exc.xsd_errors or exc.schematron_errors, f"Expected {xml_file.name} to fail validation, but it passed"
 
-    if not exc.xsd_valid:
+    if exc.xsd_errors:
         assert len(exc.xsd_errors) > 0, f"Expected XSD validation errors for {xml_file.name}"
-    if not exc.schematron_valid:
+    if exc.schematron_errors:
         assert len(exc.schematron_errors) > 0, f"Expected Schematron validation errors for {xml_file.name}"
+
+
+def test_invalid_reports_both_xsd_and_schematron_errors():
+    """A document may fail both XSD and Schematron validation in a single run."""
+    xml_file = INVALID_DIR / "nok_xsd_and_schematron.dclg.xml"
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, allow_empty_namespace=False)
+
+    exc = exc_info.value
+    assert len(exc.xsd_errors) == 1
+    assert len(exc.schematron_errors) == 1
 
 
 def test_schema_files_exist():
