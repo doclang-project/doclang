@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <head>
+    <default_resolution width="512" height="512"/>
+  </head>
+  <text>
+    <location value="50"/>
+    <location value="80"/>
+    <location value="200"/>
+    <location value="120"/>
+    A
+  </text>
+  <page_break/>
+  <text>
+    <location value="50"/>
+    <location value="100"/>
+    <location value="250"/>
+    <location value="150"/>
+    B
+  </text>
+  <page_break/>
+</doclang>

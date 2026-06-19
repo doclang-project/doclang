@@ -5,8 +5,8 @@ Script to generate markdown documentation from an Excel file and update spec.md
 Process:
 1. Use docling to convert xlsx to intermediate markdown
 2. Parse the intermediate markdown to extract elements and attributes
-3. Generate structured output with H3 for categories, H4 for elements, and attributes arrays
-4. Update Appendix A in spec.md with the generated content
+3. Generate structured output with H4 for categories, H5 for elements, and attributes arrays
+4. Update the Reference section in spec.md with the generated content
 
 Usage:
     python generate_reference.py <input_directory>
@@ -337,10 +337,10 @@ def generate_reference_content(
         all_elements.extend(elements_by_category[category])
 
     for category in ordered_categories:
-        # Write category as H3
+        # Write category as H4 (under ### Reference in spec.md)
         # Format category for display (add "Elements" suffix)
         display_category = format_category_for_display(category)
-        output_lines.append(f"### {display_category}\n\n")
+        output_lines.append(f"#### {display_category}\n\n")
 
         # Write category description if available (with linkified element references)
         if category_descriptions.get(category):
@@ -351,10 +351,10 @@ def generate_reference_content(
         elements = elements_by_category[category]
 
         for element in elements:
-            # Write element as H4
+            # Write element as H5
             # Normalize element name (keep backticks)
             normalized_element = normalize_element_name(element)
-            output_lines.append(f"#### {normalized_element}\n\n")
+            output_lines.append(f"##### {normalized_element}\n\n")
 
             # Write element description if available (with linkified element references)
             if element_descriptions.get(element):
@@ -365,14 +365,14 @@ def generate_reference_content(
             if element_contexts.get(element):
                 # Use the dynamically extracted header name, or default to "Context"
                 context_heading = element_context_header if element_context_header else "Context"
-                output_lines.append(f"##### {context_heading}\n\n")
+                output_lines.append(f"###### {context_heading}\n\n")
                 context = linkify_element_references(element_contexts[element], all_elements)
                 output_lines.append(f"{context}\n\n")
 
             # Write attributes table if they exist
             if element in attributes_by_element:
                 attributes = attributes_by_element[element]
-                output_lines.append("##### Attributes\n\n")
+                output_lines.append("###### Attributes\n\n")
 
                 # Write table header
                 output_lines.append("| Attribute | Required / Optional | Allowed Values | Description |\n")
@@ -388,12 +388,12 @@ def generate_reference_content(
 
                 output_lines.append("\n")
             else:
-                output_lines.append("##### Attributes\n\nNone\n\n")
+                output_lines.append("###### Attributes\n\nNone\n\n")
 
             # Write content types table if they exist
             if content_types_by_element.get(element):
                 content_types = content_types_by_element[element]
-                output_lines.append("##### Allowed Content Types\n\n")
+                output_lines.append("###### Allowed Content Types\n\n")
 
                 # If XML content is not allowed, the element is empty:
                 # omit the table and render a note. Otherwise, create a vertical
@@ -428,7 +428,7 @@ def generate_reference_content(
             # Check for and include example if it exists
             xml_content, image_path = load_example_for_element(element, input_dir, spec_path)
             if xml_content:
-                output_lines.append("##### Example\n\n")
+                output_lines.append("###### Example\n\n")
 
                 # Include image if available
                 if image_path:
@@ -449,38 +449,38 @@ def generate_reference_content(
 
 
 def update_spec_appendix(reference_content, spec_file):
-    """Update Appendix A in spec.md with generated reference content"""
+    """Update the Reference section in spec.md with generated reference content"""
     import re
 
-    print(f"\nUpdating Appendix A in {spec_file}...")
+    print(f"\nUpdating Reference in {spec_file}...")
 
     try:
         spec_content = Path(spec_file).read_text(encoding="utf-8")
 
-        # Find Appendix A and B section markers
-        appendix_a_pattern = r"(## Appendix A: Reference\n\n)"
-        appendix_b_pattern = r"(## Appendix B:)"
+        # Reference content sits between ### Reference and ### DocLang Archive Format
+        reference_pattern = r"(### Reference\n\n)"
+        next_section_pattern = r"(### DocLang Archive Format)"
 
-        match_a = re.search(appendix_a_pattern, spec_content)
-        match_b = re.search(appendix_b_pattern, spec_content)
+        match_reference = re.search(reference_pattern, spec_content)
+        match_next = re.search(next_section_pattern, spec_content)
 
-        if not match_a:
-            print("Error: Could not find '## Appendix A: Reference' marker in spec.md")
+        if not match_reference:
+            print("Error: Could not find '### Reference' marker in spec.md")
             return False
 
-        if not match_b:
-            print("Error: Could not find '## Appendix B:' marker in spec.md")
+        if not match_next:
+            print("Error: Could not find '### DocLang Archive Format' marker in spec.md")
             return False
 
-        # Reconstruct the file: before Appendix A + reference content + from Appendix B onwards
-        before_appendix_a = spec_content[: match_a.end()]
-        from_appendix_b = spec_content[match_b.start() :]
+        # Reconstruct: through Reference header + new content + from next appendix section on
+        before_reference = spec_content[: match_reference.end()]
+        from_next_section = spec_content[match_next.start() :]
         # Strip trailing whitespace from reference content to avoid extra blank lines
-        new_content = before_appendix_a + reference_content.rstrip() + "\n\n" + from_appendix_b
+        new_content = before_reference + reference_content.rstrip() + "\n\n" + from_next_section
 
         # Write back to spec.md
         Path(spec_file).write_text(new_content, encoding="utf-8")
-        print(f"✓ Successfully updated Appendix A in {spec_file}")
+        print(f"✓ Successfully updated Reference in {spec_file}")
         return True
 
     except Exception as e:
@@ -489,7 +489,7 @@ def update_spec_appendix(reference_content, spec_file):
 
 
 def generate_reference(input_dir: str | Path) -> None:
-    """Generate reference content from Excel input and update spec.md Appendix A."""
+    """Generate reference content from Excel input and update spec.md Reference section."""
     input_dir = Path(input_dir)
 
     if not input_dir.exists():
@@ -546,7 +546,7 @@ def generate_reference(input_dir: str | Path) -> None:
     )
 
     if not update_spec_appendix(reference_content, str(spec_path)):
-        raise RuntimeError("Failed to update Appendix A in spec.md")
+        raise RuntimeError("Failed to update Reference in spec.md")
 
     print("\nAll tasks completed successfully!")
     print(f"- Input: {input_file}")

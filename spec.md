@@ -200,7 +200,7 @@ While the details are specified in the sections further below, this snippet show
 
 ### Subclasses
 
-For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix B: Recommendations](#appendix-b-recommendations)), but for extensibility purposes, the label value is not to be validated.
+For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Recommendations](#recommendations)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
 
 In the example further below:
@@ -246,11 +246,13 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 ## Language Specification
 
-The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Appendix A: Reference](#appendix-a-reference).
+The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#reference).
 
-Non-normative recommendation guidelines are covered in [Appendix B: Recommendations](#appendix-b-recommendations).
+The DocLang archive format is defined in [DocLang Archive Format](#doclang-archive-format).
 
-Planned extensions are discussed in [Appendix C: Future Extensions](#appendix-c-future-extensions).
+Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
+
+Planned extensions are discussed in [Future Extensions](#future-extensions).
 
 Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project).
 
@@ -320,7 +322,7 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Bar chart using [recommended label](#appendix-b-recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
+Bar chart using [recommended label](#recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
 
 ```xml
 <picture class="chart">
@@ -336,7 +338,7 @@ Bar chart using [recommended label](#appendix-b-recommendations) and [`<tabular>
 
 ### Code snippets
 
-Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix B: Recommendations](#appendix-b-recommendations)).
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Recommendations](#recommendations)).
 
 Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
 
@@ -1918,7 +1920,7 @@ list item is split.
 
 The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in SMILES representation.
 
-For details, see [custom metadata](#custom) and vocabulary guidelines in [Appendix B: Recommendations](#appendix-b-recommendations).
+For details, see [custom metadata](#custom) and vocabulary guidelines in [Recommendations](#recommendations).
 
 For shared/interoperable documents, using a formal XML namespace is recommended:
 
@@ -1955,29 +1957,31 @@ For local/private usage where formal namespaces are not used, a collision-resist
 7. ISO 8601
 8. Semantic Versioning 2.0.0 (semver.org)
 
-<!-- NOTE: do not edit Appendix A manually; updates to be made using generate_reference.py -->
-## Appendix A: Reference
+## Appendix
 
-### Special Elements
+<!-- NOTE: do not edit Reference manually; updates to be made using generate_reference.py -->
+### Reference
+
+#### Special Elements
 
 This category comprises elements with specialized document-level function.
 
-#### `<doclang>`
+##### `<doclang>`
 
 The document root element. Starts with an optional [`<head>`](#head) followed by a sequence of applicable elements.
 
-##### Allowed Context
+###### Allowed Context
 
 Exists exactly once, as root element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
 | `version` | Optional; default: "0.6" | {"0.6"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -1985,7 +1989,7 @@ Exists exactly once, as root element.
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-##### Example
+###### Example
 
 ```xml
 <doclang>
@@ -1993,19 +1997,19 @@ Exists exactly once, as root element.
 </doclang>
 ```
 
-#### `<head>`
+##### `<head>`
 
 Includes doc-level metadata.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be first child of [`<doclang>`](#doclang).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2013,23 +2017,23 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<page_break>`
+##### `<page_break>`
 
 Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang document if wrapped in a `doclang` root element.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<doclang>`](#doclang).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-##### Example
+###### Example
 
 ```xml
 <doclang>
@@ -2039,23 +2043,23 @@ None (empty element).
 </doclang>
 ```
 
-### Semantic Elements
+#### Semantic Elements
 
 *Semantic elements* capture core components with specific meaning and functional role in the document (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
-#### `<text>`
+##### `<text>`
 
 Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2063,21 +2067,21 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<heading>`
+##### `<heading>`
 
 Captures a document heading.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The heading depth (1 = top-level). |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2085,19 +2089,19 @@ Any context that allows semantic elements.
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<footnote>`
+##### `<footnote>`
 
 Captures footnote content.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2105,19 +2109,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<page_header>`
+##### `<page_header>`
 
 Captures page header content (material repeated at the top of a page).
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2125,19 +2129,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<page_footer>`
+##### `<page_footer>`
 
 Captures page footer content (material repeated at the bottom of a page).
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2145,19 +2149,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<field_region>`
+##### `<field_region>`
 
 Serves for scoping of field items, for example encapsulating a whole form.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2165,21 +2169,21 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<list>`
+##### `<list>`
 
 Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unordered" | {"unordered", "ordered"} | The list type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2187,19 +2191,19 @@ Any context that allows semantic elements.
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<table>`
+##### `<table>`
 
 Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2207,19 +2211,19 @@ None
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<index>`
+##### `<index>`
 
 Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2227,19 +2231,19 @@ None
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<formula>`
+##### `<formula>`
 
 Raw LaTeX formula content, i.e. without any LaTeX-specific wrapping such as `$ ... $`, `$$ ... $$`,  `\( ... \)`, `\[ ... \]`, `\begin{math} ... \end{math}` or `\begin{equation} ... \end{equation}`.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2247,19 +2251,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<code>`
+##### `<code>`
 
-Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Appendix B: Recommendations](#appendix-b-recommendations)).
+Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Recommendations](#recommendations)).
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2267,21 +2271,21 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<picture>`
+##### `<picture>`
 
 The element body begins with a picture-specific sequence, followed by content allowed in any other semantic element body. The picture-specific sequence is:<ul><li>an optional [`<src>`](#src) element</li><li>an optional [`<tabular>`](#tabular) element (only allowed for `<picture class="chart">`)</li></ul>
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "undefined" | {"undefined", "chart"} | The picture type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2289,19 +2293,19 @@ Any context that allows semantic elements.
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<marker>`
+##### `<marker>`
 
 Captures the visible glyph or identifier (e.g. number) of a marker, e.g. in the context of a list item.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2309,19 +2313,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<group>`
+##### `<group>`
 
 Container for encapsulating multiple semantic elements.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2329,21 +2333,21 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<field_heading>`
+##### `<field_heading>`
 
 Field heading within a `<field_region>; analogous to [`<heading>`](#heading) but scoped to field structures.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The field heading depth (1 = top-level). |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2351,19 +2355,19 @@ Can only be descendant of [`<field_region>`](#field_region).
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<field_item>`
+##### `<field_item>`
 
 Scoping of a field key (optional) and any corresponding values.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2371,19 +2375,19 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<key>`
+##### `<key>`
 
 The key of a field (may correspond to  0-N field values).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2391,21 +2395,21 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<value>`
+##### `<value>`
 
 A value of a field (may correspond to 0 or 1 field key).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "read_only" | {"read_only", "fillable"} | The value type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2413,19 +2417,19 @@ Can only be descendant of [`<field_item>`](#field_item).
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<hint>`
+##### `<hint>`
 
 A hint regarding a field.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2433,19 +2437,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<caption>`
+##### `<caption>`
 
 Optional part of the element head for capturing an associated caption.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2453,79 +2457,79 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-### Property Elements
+#### Property Elements
 
 *Property elements* are non-semantic elements that help define useful traits of a semantic element, forming the main building blocks of the [element head](#element-head). Property elements that can appear on the top level of the element head are called *primary*, while those that can only appear within other property elements are called *secondary*. The various property elements are further specified in the following subsections.
 
-#### `<label>`
+##### `<label>`
 
 Optional part of the element head; serves for providing a detailed label for the respective element.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "undefined" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<thread>`
+##### `<thread>`
 
 Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references. To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` must be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<xref>`
+##### `<xref>`
 
 Optional part of the element head; serves for capturing an outgoing cross-reference from this component.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the document. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<href>`
+##### `<href>`
 
 Optional part of the element head; serves for capturing a URI referenced by this component.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The URI of the referenced resource. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2533,19 +2537,19 @@ Can only be part of the [element head](#element-head) of a semantic element.
 | Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<custom>`
+##### `<custom>`
 
-Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Appendix B: Recommendations](#appendix-b-recommendations) for naming and namespacing guidance for custom vocabularies.
+Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Recommendations](#recommendations) for naming and namespacing guidance for custom vocabularies.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2553,78 +2557,78 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<location>`
+##### `<location>`
 
 Optional part of the element head; coordinate system is the top-left corner of the page. When present, appears in sequence of 4 [`<location>`](#location) instances, representing x0, y0, x1, y1. The following must then hold: `x0_norm<=x1_norm` and `y0_norm<=y1_norm`(i.e. first top-left point then bottom-right point), whereby `*_norm` is the respective coordinate normalized to its effective resolution.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
 | `value` | Required | Integer within [0, `location@resolution`) | Coordinate w.r.t. top-left corner. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<layer>`
+##### `<layer>`
 
 The conceptual layer of the host element in the document.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the document's main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the document's main content, such as navigation or decorations. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-### Payload Elements
+#### Payload Elements
 
 Payload elements are low-level elements that help define the effective content of another element.
 
-#### `<src>`
+##### `<src>`
 
 The image's source.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the picture-specific element body sequence of [`<picture>`](#picture).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. Relative URIs are allowed too, e.g. `uri="assets/chart.svg"`. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<tabular>`
+##### `<tabular>`
 
 Structured tabular data. Uses the same cell model as [`<table>`](#table), but without an element head of its own.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the picture-specific element body sequence of [`<picture class="chart">`](#picture).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2632,37 +2636,37 @@ None
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<checkbox>`
+##### `<checkbox>`
 
 Empty element representing checkbox selection state.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unselected" | {"unselected", "selected"} | The checkbox type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<content>`
+##### `<content>`
 
 Whitespace-preserving text container. Retains all whitespace within the element (equivalent to `xml:space="preserve"`), enabling use in whitespace-sensitive scenarios such as code blocks. XML special characters may alternatively be conveyed via CDATA.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2670,23 +2674,23 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-### Formatting Elements
+#### Formatting Elements
 
 Formatting elements modify the styling and presentation within semantic or other formatting elements.
 
-#### `<bold>`
+##### `<bold>`
 
 Indicates bold formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2694,19 +2698,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<italic>`
+##### `<italic>`
 
 Indicates italic formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2714,19 +2718,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<underline>`
+##### `<underline>`
 
 Indicates underlined formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2734,19 +2738,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<strikethrough>`
+##### `<strikethrough>`
 
 Indicates struck-through formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2754,19 +2758,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<superscript>`
+##### `<superscript>`
 
 Indicates superscript formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2774,19 +2778,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<subscript>`
+##### `<subscript>`
 
 Indicates subscript formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2794,19 +2798,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<handwriting>`
+##### `<handwriting>`
 
 Indicates handwritten text.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2814,19 +2818,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<rtl>`
+##### `<rtl>`
 
 Indicates right-to-left direction.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2834,183 +2838,183 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-### Structural Elements
+#### Structural Elements
 
 Structural elements define boundaries within explicitly structured components like tables and lists.
 
-#### `<fcel>`
+##### `<fcel>`
 
 Indicates the beginning of a full / regular cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ecel>`
+##### `<ecel>`
 
 Indicates the beginning of an empty cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ched>`
+##### `<ched>`
 
 Indicates the beginning of a column header cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<rhed>`
+##### `<rhed>`
 
 Indicates the beginning of a row header cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<corn>`
+##### `<corn>`
 
 Indicates the beginning of a corner cell, typically the top-left header intersection.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<srow>`
+##### `<srow>`
 
 Indicates the beginning of a section row header.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<lcel>`
+##### `<lcel>`
 
 Left-merge extension token; extends the previous cell horizontally (colspan continuation).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ucel>`
+##### `<ucel>`
 
 Upward-merge extension token; extends the cell above vertically (rowspan continuation)
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<xcel>`
+##### `<xcel>`
 
 Cross/combined span extension token; used where both horizontal and vertical spanning intersect.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<nl>`
+##### `<nl>`
 
 Denotes the end of a table row.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ldiv>`
+##### `<ldiv>`
 
 Indicates the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<list>`](#list).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3018,36 +3022,99 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Only [`<marker>`](#marker) |
 
-### Document Head Elements
+#### Document Head Elements
 
 This category comprises the document-level metadata elements that are the building blocks of [`<head>`](#head).
 
-#### `<default_resolution>`
+##### `<default_resolution>`
 
 Defines the default resolution for the document.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<head>`](#head).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `width` | Optional; default "512" | Non-negative integer | Default document width in pixels. |
 | `height` | Optional; default "512" | Non-negative integer | Default document height in pixels. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-## Appendix B: Recommendations
+### DocLang Archive Format
+
+A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclg`**.
+
+An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang document part.
+
+#### Layout
+
+```
+[Content_Types].xml    # required — OPC content types
+_rels/
+  .rels                # required — package → main document
+document.xml           # required — valid DocLang document
+pages/                 # optional — page images, e.g. 1.png, 2.png
+assets/                # optional — files referenced from markup
+```
+
+##### `[Content_Types].xml` (required)
+
+Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`) and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
+
+Example:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/document.xml" ContentType="application/vnd.doclang.document+xml"/>
+</Types>
+```
+
+##### `_rels/.rels` (required)
+
+Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
+
+Example:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://doclang.ai/ns/package/2026/relationships/document"
+    Target="document.xml"/>
+</Relationships>
+```
+
+##### `document.xml` (required)
+
+The main document part: a valid DocLang document. Top-level `<page_break/>` elements separate pages; `<location>` coordinates are page-relative.
+
+##### `pages/` (optional)
+
+Optional raster images for review. Name files `{N}.{png|jpg|jpeg|webp}` with 1-based `N`. Gaps are allowed.
+
+##### `assets/` (optional)
+
+Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
+
+#### Page alignment
+
+Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* corresponds to page *N*. Page count is determined by markup: the number of `<page_break/>` elements plus one. Page images are optional and individual gaps are allowed, but page files must not exceed this count (e.g. two `<page_break/>` elements define three pages, so `4.png` is out of bounds).
+
+### Recommendations
 
 This appendix is informative and does not define conformance requirements.
 
-### Recommended labels
+#### Recommended labels
 
-#### Pictures
+##### Pictures
 
 For the `label@value` of `<picture>` elements, we recommend using the values defined below:
 
@@ -3062,7 +3129,7 @@ Additional special cases:
 
 Note: [`picture@class="undefined"`](#picture) (default picture type) and `label@value="undefined"` (unclassified subclass) are independent.
 
-#### Code
+##### Code
 
 For the `label@value` of `<code>` elements, we recommend using the values defined below:
 
@@ -3074,7 +3141,7 @@ Additional special cases:
 - `other`: use when the code was examined but does not match any of the recommended values from above.
 - `undefined`: use when classification has not been performed (default [`label@value`](#label)).
 
-### Custom vocabulary naming and namespacing
+#### Custom vocabulary naming and namespacing
 
 Content inside [`<custom>`](#custom) is implementation-defined and not governed by this standard.
 To improve interoperability and reduce naming collisions, the following recommendations apply:
@@ -3085,7 +3152,7 @@ To improve interoperability and reduce naming collisions, the following recommen
 - Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
 - Producers SHOULD document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
 
-### Token vocabulary
+#### Token vocabulary
 
 Below is a list of tokens that can be used for a DocLang-compliant tokenizer.
 
@@ -3200,17 +3267,17 @@ The token vocabulary trades off size and inference cost:
 | `</marker></ldiv>` | end of [`ldiv`](#ldiv) with [`marker`](#marker) |
 | `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
 
-## Appendix C: Future Extensions
+### Future Extensions
 
 These features are considered for future versions of the standard.
 
-### Horizontal Threading
+#### Horizontal Threading
 
 Horizontal threading enables linking related content across the horizontal axis in page or table layouts. The `h_thread` element supports this by explicitly connecting content (like table rows or columns) that spans multiple pages, ensuring these threads remain structured and traceable.
 
-### Metadata
+#### Metadata
 
-#### `<head>`
+##### `<head>`
 
 Document-level metadata is contained in the optional `<head>` element.
 
@@ -3262,7 +3329,7 @@ Here is an example:
 </doclang>
 ```
 
-##### Governance and compliance metadata
+###### Governance and compliance metadata
 
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
 These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
@@ -3719,7 +3786,7 @@ Notes:
 
 <!--
 
-#### Component-level metadata
+##### Component-level metadata
 
 Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
 
