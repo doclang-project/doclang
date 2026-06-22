@@ -32,13 +32,13 @@ def test_cli_version_matches_installed_metadata():
 
 def test_validate_valid_document():
     """Test validating a valid document."""
-    xml_file = Path("tests/data/valid/ok_comprehensive.dclg.xml")
+    xml_file = Path("tests/data/valid/ok_comprehensive.dclg")
     result = runner.invoke(app, ["validate", str(xml_file)])
     assert result.exit_code == 0
 
 
 def test_validate_invalid_document():
     """Test validating an invalid document."""
-    xml_file = Path("tests/data/invalid/nok_href_in_body.dclg.xml")
+    xml_file = Path("tests/data/invalid/nok_href_in_body.dclg")
     result = runner.invoke(app, ["validate", str(xml_file)])
     assert result.exit_code == 1
