@@ -13,7 +13,7 @@ Usage:
 
     Arguments:
     - input_directory: Directory containing the Excel file with element definitions
-      (also may contain .dclg.xml and .png files for examples)
+      (also may contain .dclg and .png files for examples)
 """
 
 import os
@@ -242,7 +242,7 @@ def load_example_for_element(element_name, input_dir, spec_path):
 
     # Look for files in INPUT_DIR/examples/
     examples_dir = Path(input_dir) / "examples"
-    xml_file = examples_dir / f"{clean_name}.dclg.xml"
+    xml_file = examples_dir / f"{clean_name}.dclg"
 
     xml_content = None
     image_path = None

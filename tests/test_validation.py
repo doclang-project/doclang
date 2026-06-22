@@ -19,13 +19,12 @@ SCHEMA_DIR = Path(doclang.__file__).resolve().parent
 
 
 # Collect test files
-valid_files = list(VALID_DIR.glob("*.dclg.xml")) if VALID_DIR.exists() else []
-invalid_files = list(INVALID_DIR.glob("*.dclg.xml")) if INVALID_DIR.exists() else []
+valid_files = list(VALID_DIR.glob("*.dclg")) if VALID_DIR.exists() else []
+invalid_files = list(INVALID_DIR.glob("*.dclg")) if INVALID_DIR.exists() else []
 
 
 def _allow_empty_namespace(xml_file: Path) -> bool:
-    base_name = xml_file.name.replace(".dclg.xml", "")
-    return base_name in ["ok_no_namespace", "doclang_example"]
+    return xml_file.stem in ["ok_no_namespace", "doclang_example"]
 
 
 @pytest.mark.parametrize("xml_file", valid_files, ids=lambda f: f.stem)
@@ -51,7 +50,7 @@ def test_invalid(xml_file):
 
 def test_invalid_reports_both_xsd_and_schematron_errors():
     """A document may fail both XSD and Schematron validation in a single run."""
-    xml_file = INVALID_DIR / "nok_xsd_and_schematron.dclg.xml"
+    xml_file = INVALID_DIR / "nok_xsd_and_schematron.dclg"
     with pytest.raises(ValidationError) as exc_info:
         validate(xml_file, allow_empty_namespace=False)
 

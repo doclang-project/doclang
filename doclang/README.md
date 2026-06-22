@@ -13,26 +13,26 @@ pip install doclang
 ### Basic CLI Usage
 
 ```bash
-doclang validate my_document.dclg.xml
+doclang validate my_document.dclg
 ```
 
 ### More CLI Usage Scenarios
 
 ```bash
 ## Inject DocLang namespace if document doesn't declare it:
-doclang validate my_document.dclg.xml --allow-empty-namespace
+doclang validate my_document.dclg --allow-empty-namespace
 
 # XSD validation only
-doclang validate my_document.dclg.xml --xsd-only
+doclang validate my_document.dclg --xsd-only
 
 # Schematron validation only
-doclang validate my_document.dclg.xml --schematron-only
+doclang validate my_document.dclg --schematron-only
 
 # JSON output
-doclang validate my_document.dclg.xml --format json
+doclang validate my_document.dclg --format json
 
 # Quiet mode (exit code only)
-doclang validate my_document.dclg.xml --quiet
+doclang validate my_document.dclg --quiet
 
 # Show help
 doclang --help
@@ -44,7 +44,7 @@ doclang --help
 from doclang import validate, ValidationError
 
 try:
-    validate("my_document.dclg.xml")
+    validate("my_document.dclg")
     print("Validation OK (no exception)")
 except ValidationError as exc:
     print(exc)  # human-readable summary
@@ -83,7 +83,7 @@ In VS Code you can use [Red Hat's XML extension](https://open-vsx.org/vscode/ite
 ```xml
     "xml.fileAssociations": [
         {
-            "pattern": "**/*.dclg.xml",
+            "pattern": "**/*.dclg",
             "systemId": "file:///absolute/path/to/doclang.xsd",
         }
     ],

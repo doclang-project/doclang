@@ -35,7 +35,7 @@ pip install doclang
 You can then validate a DocLang document as follows:
 
 ```bash
-doclang validate -n my_document.dclg.xml
+doclang validate -n my_document.dclg
 ```
 
 For more details, see the [doclang/README.md](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).

@@ -246,6 +246,8 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 ## Language Specification
 
+DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
+
 The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#reference).
 
 The DocLang archive format is defined in [DocLang Archive Format](#doclang-archive-format).
@@ -3047,7 +3049,7 @@ None (empty element).
 
 ### DocLang Archive Format
 
-A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclg`**.
+A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
 An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang document part.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pack a DocLang archive directory into a .dclg OPC ZIP file.
+# Pack a DocLang archive directory into a .dclx OPC ZIP file.
 # Usage: ./utils/pack-archive.sh <source-dir> [output-file]
 
 set -euo pipefail
@@ -11,7 +11,7 @@ fi
 
 SRC=$(cd "$1" && pwd)
 NAME=$(basename "$SRC")
-OUT=${2:-"${NAME}.dclg"}
+OUT=${2:-"${NAME}.dclx"}
 
 if [[ ! -f "$SRC/document.xml" ]]; then
   echo "Error: $SRC/document.xml not found" >&2
