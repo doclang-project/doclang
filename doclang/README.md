@@ -1,6 +1,6 @@
-# DocLang Validation
+# DocLang Toolkit
 
-Validate DocLang XML documents against XSD schema and Schematron rules.
+Official Python toolkit for working with DocLang — CLI commands and library APIs.
 
 ## Installation
 
@@ -8,15 +8,15 @@ Validate DocLang XML documents against XSD schema and Schematron rules.
 pip install doclang
 ```
 
-## Usage
+## CLI
 
-### Basic CLI Usage
+### Validation
 
 ```bash
 doclang validate my_document.dclg
 ```
 
-### More CLI Usage Scenarios
+#### More validation scenarios
 
 ```bash
 ## Inject DocLang namespace if document doesn't declare it:
@@ -38,7 +38,26 @@ doclang validate my_document.dclg --quiet
 doclang --help
 ```
 
-### Python API
+### Packaging
+
+```bash
+doclang pack markup.dclg
+```
+
+#### More packaging scenarios
+
+```bash
+doclang pack markup.dclg -o report.dclx
+doclang pack markup.dclg --pages screenshots/
+doclang pack markup.dclg --page a.png --page b.png
+doclang pack markup.dclg --asset chart.svg=exports/diagram.svg
+doclang pack markup.dclg --assets payload/
+doclang pack markup.dclg --validate
+```
+
+## Python API
+
+### Validation
 
 ```python
 from doclang import validate, ValidationError
@@ -50,6 +69,19 @@ except ValidationError as exc:
     print(exc)  # human-readable summary
     print(f"{exc.xsd_errors=}")
     print(f"{exc.schematron_errors=}")
+```
+
+### Packaging
+
+```python
+from doclang import pack, PackagingError
+
+path = pack(
+    "markup.dclg",
+    pages="screenshots/",
+    assets={"chart.svg": "exports/diagram.svg"},
+)
+print(f"Created {path}")
 ```
 
 ## Validation Rules

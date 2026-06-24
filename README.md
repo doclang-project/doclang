@@ -16,7 +16,7 @@
 
 **[DocLang](https://www.doclang.ai/) is the AI-native markup format for unstructured content** — including documents, images, and more. It maps cleanly to LLM tokens while preserving structure, semantics, layout, and geometry in a single, unambiguous representation.
 
-This repository is the home of the normative specification and the reference validator for DocLang. If you build with LLMs and VLMs on real-world content, this is where the standard lives.
+This repository is the home of the normative specification and the reference toolkit for DocLang. If you build with LLMs and VLMs on real-world content, this is where the standard lives.
 
 ## Specification
 
@@ -24,18 +24,24 @@ The source of the specification is available in [spec.md](https://github.com/doc
 and exports to different formats can be found in the [exports/](https://github.com/doclang-project/doclang/tree/main/exports)
 directory.
 
-## Reference Validator
+## Reference Toolkit
 
-You can install the validator from PyPI:
+You can install the toolkit from PyPI:
 
 ```bash
 pip install doclang
 ```
 
-You can then validate a DocLang document as follows:
+### Validation
 
 ```bash
 doclang validate -n my_document.dclg
+```
+
+### Packaging
+
+```bash
+doclang pack my_document.dclg
 ```
 
 For more details, see the [doclang/README.md](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).
