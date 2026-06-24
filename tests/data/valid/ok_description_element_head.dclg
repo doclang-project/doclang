@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- element head order: caption, description, summary, custom -->
+  <text>
+    <caption>Section 1.1</caption>
+    <description>
+      The authors describe a two-phase experimental setup with baseline and treatment groups.
+    </description>
+    <summary>Overview of the experimental methodology.</summary>
+    <custom>
+      <acme_annotation source="vlm">gpt-vision</acme_annotation>
+    </custom>
+    The full paragraph text follows here.
+  </text>
+
+  <code>
+    <label value="python"/>
+    <description>Prints a greeting to standard output.</description>
+    def main():
+        print("Hello, world!")
+  </code>
+
+  <picture>
+    <caption>FIG. 1. Example diagram</caption>
+    <description>A top-to-bottom flowchart: input, processing, and output nodes linked by arrows.</description>
+    <summary>Three-step linear process flow.</summary>
+    <src uri="fig1.png"/>
+  </picture>
+
+  <table>
+    <description>Quarterly revenue figures.</description>
+    <summary>Q1 revenue snapshot.</summary>
+    <fcel/>
+    <text>Q1</text>
+    <fcel/>
+    <text>100</text>
+    <nl/>
+  </table>
+
+</doclang>

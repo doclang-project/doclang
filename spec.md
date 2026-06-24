@@ -153,6 +153,8 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<layer>`](#layer) (optional)
 - optional sequence of 4 [`<location>`](#location)s, whereby values are interpreted in alternating axis order, as `x_min, y_min, x_max, y_max` (after resolution normalization), w.r.t. the top-left corner of the page
 - [`<caption>`](#caption) (optional)
+- [`<description>`](#description) (optional)
+- [`<summary>`](#summary) (optional)
 - [`<custom>`](#custom) (optional)
 
 #### Element Body
@@ -335,6 +337,20 @@ Bar chart using [recommended label](#recommendations) and [`<tabular>`](#tabular
     <fcel/>A<fcel/>10<nl/>
     <fcel/>B<fcel/>20<nl/>
   </tabular>
+</picture>
+```
+
+Picture with document [caption](#caption), [description](#description), and [summary](#summary):
+
+```xml
+<picture>
+  <caption>FIG. 2. System architecture</caption>
+  <description>
+    A block diagram with a browser client, an application server, and a database.
+    Arrows show HTTP requests from client to server and SQL queries from server to database.
+  </description>
+  <summary>The system uses a three-tier architecture.</summary>
+  <src uri="fig2.png"/>
 </picture>
 ```
 
@@ -2441,7 +2457,7 @@ None
 
 ##### `<caption>`
 
-Optional part of the element head for capturing an associated caption.
+Optional part of the element head for capturing an associated caption. Unlike [`<description>`](#description) or [`<summary>`](#summary), [`<caption>`](#caption) is an actual document component, which can have its own location information etc. For example, a caption shown underneath a chart.
 
 ###### Allowed Context
 
@@ -2537,6 +2553,46 @@ Can only be part of the [element head](#element-head) of a semantic element.
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
+| Primary semantic elements | Not allowed |
+
+##### `<description>`
+
+Optional part of the element head for capturing a derived textual account of what the host component is or what it shows. Unlike [`<caption>`](#caption), [`<description>`](#description) is meta-information and not an actual document component. For example, a picture description inferred by a model.
+
+###### Allowed Context
+
+Can only be part of the [element head](#element-head) of a semantic element.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Not allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Not allowed |
+
+##### `<summary>`
+
+Optional part of the element head for capturing a derived textual distillation of what the host component conveys. Unlike [`<caption>`](#caption), [`<summary>`](#summary) is meta-information and not part of the original document content.
+
+###### Allowed Context
+
+Can only be part of the [element head](#element-head) of a semantic element.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Not allowed |
+| Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
 ##### `<custom>`
@@ -3221,6 +3277,10 @@ The token vocabulary trades off size and inference cost:
 | `</hint>` | [`hint`](#hint) end |
 | `<caption>` | [`caption`](#caption) start |
 | `</caption>` | [`caption`](#caption) end |
+| `<description>` | [`description`](#description) start |
+| `</description>` | [`description`](#description) end |
+| `<summary>` | [`summary`](#summary) start |
+| `</summary>` | [`summary`](#summary) end |
 | `<thread thread_id="` | [`thread`](#thread) with `thread_id` attribute start |
 | `<xref thread_id="` | [`xref`](#xref) with `thread_id` attribute start |
 | `<href uri="` | [`href`](#href) with `uri` attribute start |
@@ -3264,7 +3324,7 @@ The token vocabulary trades off size and inference cost:
 | `<ucel/>` | [`ucel`](#ucel) |
 | `<xcel/>` | [`xcel`](#xcel) |
 | `<nl/>` | [`nl`](#nl) |
-| `<ldiv/>` | [`lddiv`](#ldiv) |
+| `<ldiv/>` | [`ldiv`](#ldiv) |
 | `<ldiv><marker>` | start of [`ldiv`](#ldiv) with [`marker`](#marker) |
 | `</marker></ldiv>` | end of [`ldiv`](#ldiv) with [`marker`](#marker) |
 | `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
@@ -3292,7 +3352,7 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
 - `generated_by`, upstream pipeline information, e.g. VLM ID
 - `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
-- `summary`, a summary of the document
+- `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
 - `document_hash`, Hash of the document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
 
 Here is an example:
