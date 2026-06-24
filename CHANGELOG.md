@@ -1,3 +1,12 @@
+## [v0.7.0](https://github.com/doclang-project/doclang/releases/tag/v0.7.0)
+
+* add archive packaging (#151)
+* add `<description>` and `<summary>` (#150)
+* update recommended file extensions (#148)
+* introduce archive format (#147)
+* report all XSD & Schematron errors in one run, simplify validation API (#95)
+  * **BREAKING CHANGE**: `ValidationError` no longer exposes `file`, `xsd_valid`, or `schematron_valid`; use `xsd_errors` and `schematron_errors` instead. CLI JSON output no longer includes a top-level `file` field.
+
 ## [v0.6.0](https://github.com/doclang-project/doclang/releases/tag/v0.6.0)
 
 * improve spec export, minor test renaming (#91)
