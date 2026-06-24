@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- summary must follow description in the element head -->
+  <picture>
+    <summary>Derived gist.</summary>
+    <description>Derived account of the figure.</description>
+    <caption>FIG. 1. Document caption</caption>
+    <src uri="fig1.png"/>
+  </picture>
+
+</doclang>

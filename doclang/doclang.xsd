@@ -218,7 +218,7 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, location_block, caption, custom -->
+  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, location_block, caption, description, summary, custom -->
   <!-- ============================================ -->
 
   <xs:group name="element_head">
@@ -232,6 +232,8 @@
       <xs:element ref="dl:layer" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
       <xs:element ref="dl:caption" minOccurs="0"/>
+      <xs:element ref="dl:description" minOccurs="0"/>
+      <xs:element ref="dl:summary" minOccurs="0"/>
       <xs:element ref="dl:custom" minOccurs="0"/>
     </xs:sequence>
   </xs:group>
@@ -397,6 +399,18 @@
   <xs:element name="caption" type="dl:component_with_semantic_seq"/>
 
   <!-- ============================================ -->
+  <!-- DESCRIPTION ELEMENT: raw text only (optionally wrapped in content) -->
+  <!-- ============================================ -->
+
+  <xs:element name="description" type="dl:content_cat"/>
+
+  <!-- ============================================ -->
+  <!-- SUMMARY ELEMENT: raw text only (optionally wrapped in content) -->
+  <!-- ============================================ -->
+
+  <xs:element name="summary" type="dl:content_cat"/>
+
+  <!-- ============================================ -->
   <!-- PAGE_HEADER ELEMENT: uses component_with_semantic_seq -->
   <!-- ============================================ -->
 
@@ -442,7 +456,7 @@
   <!-- ============================================ -->
   <!-- TOP_LEVEL_CAT: reusable group for top-level document elements -->
   <!-- Includes: text, heading, code, formula, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, index, group -->
-  <!-- Note: caption appears only in the element head (element_head), not in body content -->
+  <!-- Note: caption, description, and summary appear only in the element head (element_head), not in body content -->
   <!-- ============================================ -->
 
   <xs:group name="top_level_cat">
