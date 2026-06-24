@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve the DocLang standard and reference validator.
+Thanks for helping improve the DocLang standard and reference toolkit.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ CI installs only the `ci` group (`uv sync --frozen --no-default-groups --group c
 ## Repository layout
 
 - **`spec.md`** — normative specification
-- **`doclang/`** — reference validator (XSD, Schematron, CLI); see [doclang/README.md](./doclang/README.md) for package usage
+- **`doclang/`** — reference toolkit (Python package, CLI); see [doclang/README.md](./doclang/README.md) for usage
 - **`reference/`** — source data for Appendix A (Excel, examples)
 - **`exports/`** — generated Word exports from `spec.md`
 - **`utils/`** — maintenance scripts (version sync, reference generation, DOCX export, release preparation)

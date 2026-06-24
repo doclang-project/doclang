@@ -258,7 +258,7 @@ Non-normative recommendation guidelines are covered in [Recommendations](#recomm
 
 Planned extensions are discussed in [Future Extensions](#future-extensions).
 
-Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project).
+A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
 ## Usage Examples
 
