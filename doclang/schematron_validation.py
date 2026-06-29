@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Union
 
 from lxml import etree
-from saxonche import PySaxonProcessor
 
 from doclang._schemas import _bundled_sch_path
 from doclang.utils import _ensure_namespace
@@ -117,6 +116,13 @@ def _transpile_schematron_to_xslt(sch_file, verbose=False):
     if verbose:
         print(f"Transpiling Schematron: {sch_file}")
 
+    try:
+        from saxonche import PySaxonProcessor
+    except ImportError:
+        raise ImportError(
+            "saxonche is required for Schematron validation. Install it with: pip install doclang[schematron]"
+        ) from None
+
     with PySaxonProcessor(license=False) as proc:
         xslt_proc = proc.new_xslt30_processor()
 
@@ -162,6 +168,13 @@ def _validate_with_schematron(
             tmp_xml_path = tmp.name
 
             # File is still open but flushed, Saxon can read it
+            try:
+                from saxonche import PySaxonProcessor
+            except ImportError:
+                raise ImportError(
+                    "saxonche is required for Schematron validation. Install it with: pip install doclang[schematron]"
+                ) from None
+
             with PySaxonProcessor(license=False) as proc:
                 if verbose:
                     print(f"Using XSLT processor version: {proc.version}")

@@ -355,8 +355,12 @@ version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "lxml" },
-    { name = "saxonche" },
     { name = "typer" },
+]
+
+[package.optional-dependencies]
+schematron = [
+    { name = "saxonche" },
 ]
 
 [package.dev-dependencies]
@@ -382,9 +386,10 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "lxml", specifier = ">=6.0.2" },
-    { name = "saxonche", specifier = ">=12.9.0" },
+    { name = "saxonche", marker = "extra == 'schematron'", specifier = ">=12.9.0" },
     { name = "typer", specifier = ">=0.15.1" },
 ]
+provides-extras = ["schematron"]
 
 [package.metadata.requires-dev]
 ci = [

@@ -25,9 +25,11 @@ classifiers = [
 ]
 dependencies = [
     "lxml>=6.0.2",
-    "saxonche>=12.9.0",
     "typer>=0.15.1",
 ]
+
+[project.optional-dependencies]
+schematron = ["saxonche>=12.9.0"]
 
 [project.urls]
 Homepage = "https://www.doclang.ai/"
