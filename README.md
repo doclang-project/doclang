@@ -26,10 +26,14 @@ directory.
 
 ## Reference Toolkit
 
-You can install the toolkit from PyPI:
+The commands below illustrate basic scenarios. For advanced installation and usage options
+(minimal install, platform notes, custom Schematron backends, Python API), see the
+[toolkit README](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).
+
+### Installation
 
 ```bash
-pip install doclang
+pip install "doclang[schematron-saxon]"
 ```
 
 ### Validation
@@ -43,8 +47,6 @@ doclang validate -n my_document.dclg
 ```bash
 doclang pack my_document.dclg
 ```
-
-For more details, see the [doclang/README.md](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).
 
 ## Citation
 

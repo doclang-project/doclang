@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-schematron = ["saxonche>=12.9.0"]
+schematron-saxon = ["saxonche>=12.9.0"]
 
 [project.urls]
 Homepage = "https://www.doclang.ai/"
@@ -51,6 +51,7 @@ ci = [
     "ruff>=0.14.11",
     "pytest~=8.3",
     "python-docx>=1.2.0",
+    "saxonche>=12.9.0",
 ]
 dev = [
     { include-group = "ci" },
@@ -65,7 +66,7 @@ package = true
 default-groups = ["dev"]
 
 [tool.setuptools]
-packages = ["doclang"]
+packages = ["doclang", "doclang.backends"]
 
 [tool.ruff]
 target-version = "py310"

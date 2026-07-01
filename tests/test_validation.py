@@ -5,12 +5,15 @@ Tests both valid and invalid XML documents against XSD and Schematron rules
 via the public ``validate()`` API.
 """
 
+import builtins
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 import doclang
-from doclang import ValidationError, validate
+from doclang import SchematronBackendNotFound, SchematronViolation, ValidationError, validate
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
@@ -71,3 +74,44 @@ def test_test_directories_exist():
     assert INVALID_DIR.exists(), f"Invalid test directory not found: {INVALID_DIR}"
     assert len(valid_files) > 0, "No valid test files found"
     assert len(invalid_files) > 0, "No invalid test files found"
+
+
+class _AlwaysFailingSchematronValidator:
+    def validate(self, xml_path: Path, *, schema_path: Path, allow_empty_namespace: bool = False):
+        return [SchematronViolation(location="/doclang", message="custom backend failure")]
+
+
+def test_custom_schematron_validator():
+    """A caller-provided Schematron backend is used instead of the default."""
+    xml_file = valid_files[0]
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, schematron=_AlwaysFailingSchematronValidator())
+
+    assert exc_info.value.schematron_errors == [{"location": "/doclang", "message": "custom backend failure"}]
+
+
+def test_schematron_backend_not_found():
+    """Missing default backend raises SchematronBackendNotFound."""
+    xml_file = valid_files[0]
+    with patch("doclang.validation._default_schematron_validator", side_effect=SchematronBackendNotFound):
+        with pytest.raises(SchematronBackendNotFound):
+            validate(xml_file, schematron_only=True)
+
+
+def test_schematron_backend_not_found_when_saxonche_missing():
+    """Missing saxonche extra raises SchematronBackendNotFound, not ValidationError."""
+    xml_file = valid_files[0]
+    real_import = builtins.__import__
+    saxonche_modules = [name for name in sys.modules if name == "saxonche" or name.startswith("saxonche.")]
+
+    def import_without_saxonche(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "saxonche" or name.startswith("saxonche."):
+            raise ModuleNotFoundError("No module named 'saxonche'")
+        return real_import(name, globals, locals, fromlist, level)
+
+    with (
+        patch.dict(sys.modules, dict.fromkeys(saxonche_modules)),
+        patch("builtins.__import__", side_effect=import_without_saxonche),
+    ):
+        with pytest.raises(SchematronBackendNotFound):
+            validate(xml_file, schematron_only=True)

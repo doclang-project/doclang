@@ -359,7 +359,7 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-schematron = [
+schematron-saxon = [
     { name = "saxonche" },
 ]
 
@@ -370,6 +370,7 @@ ci = [
     { name = "pytest" },
     { name = "python-docx" },
     { name = "ruff" },
+    { name = "saxonche" },
 ]
 dev = [
     { name = "docling" },
@@ -381,15 +382,16 @@ dev = [
     { name = "python-docx" },
     { name = "pyyaml" },
     { name = "ruff" },
+    { name = "saxonche" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "lxml", specifier = ">=6.0.2" },
-    { name = "saxonche", marker = "extra == 'schematron'", specifier = ">=12.9.0" },
+    { name = "saxonche", marker = "extra == 'schematron-saxon'", specifier = ">=12.9.0" },
     { name = "typer", specifier = ">=0.15.1" },
 ]
-provides-extras = ["schematron"]
+provides-extras = ["schematron-saxon"]
 
 [package.metadata.requires-dev]
 ci = [
@@ -398,6 +400,7 @@ ci = [
     { name = "pytest", specifier = "~=8.3" },
     { name = "python-docx", specifier = ">=1.2.0" },
     { name = "ruff", specifier = ">=0.14.11" },
+    { name = "saxonche", specifier = ">=12.9.0" },
 ]
 dev = [
     { name = "docling", specifier = ">=2.0.0" },
@@ -409,6 +412,7 @@ dev = [
     { name = "python-docx", specifier = ">=1.2.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", specifier = ">=0.14.11" },
+    { name = "saxonche", specifier = ">=12.9.0" },
 ]
 
 [[package]]
