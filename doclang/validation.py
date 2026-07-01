@@ -3,23 +3,25 @@
 from pathlib import Path
 from typing import Any, Union
 
-from doclang.schematron_validation import _validate_with_schematron
+from doclang._schemas import _bundled_sch_path
+from doclang.schematron import (
+    SchematronBackendNotFound,
+    SchematronValidator,
+    SchematronViolation,
+    _default_schematron_validator,
+)
 from doclang.xsd_validation import _validate_xsd
 
-__all__ = ["ValidationError", "validate"]
-
-_SVRL_NS = "http://purl.oclc.org/dsdl/svrl"
+__all__ = ["SchematronBackendNotFound", "ValidationError", "validate"]
 
 
-def _failed_asserts_to_errors(failed_asserts: list) -> list[dict[str, Any]]:
+def _violations_to_errors(violations: list[SchematronViolation]) -> list[dict[str, Any]]:
     return [
         {
-            "location": assert_elem.get("location", "unknown"),
-            "message": assert_elem.find(f"{{{_SVRL_NS}}}text").text
-            if assert_elem.find(f"{{{_SVRL_NS}}}text") is not None
-            else "No message",
+            "location": violation.location or "unknown",
+            "message": violation.message,
         }
-        for assert_elem in failed_asserts
+        for violation in violations
     ]
 
 
@@ -61,10 +63,17 @@ def validate(
     allow_empty_namespace: bool = False,
     xsd_only: bool = False,
     schematron_only: bool = False,
+    schematron: SchematronValidator | None = None,
 ) -> None:
     """Validate a DocLang XML file using the bundled reference XSD and Schematron rules.
 
+    By default both XSD and Schematron validation run. Pass ``schematron`` to use a
+    custom Schematron backend; when omitted, the default Saxon/C backend is used
+    (requires ``doclang[schematron-saxon]``).
+
     Raises :class:`ValidationError` on failure.
+    Raises :class:`SchematronBackendNotFound` when Schematron validation is requested
+    but no backend is available.
     """
     path = Path(xml_file)
     xsd_errors: list[dict[str, Any]] = []
@@ -74,14 +83,17 @@ def validate(
         xsd_errors = _validate_xsd(path, allow_empty_namespace=allow_empty_namespace)
 
     if not xsd_only:
+        validator = schematron or _default_schematron_validator()
         try:
-            failed_asserts = _validate_with_schematron(
+            violations = validator.validate(
                 path,
+                schema_path=_bundled_sch_path(),
                 allow_empty_namespace=allow_empty_namespace,
-                verbose=False,
             )
-            if failed_asserts:
-                schematron_errors = _failed_asserts_to_errors(failed_asserts)
+            if violations:
+                schematron_errors = _violations_to_errors(violations)
+        except SchematronBackendNotFound:
+            raise
         except Exception as exc:
             schematron_errors = [{"error": str(exc)}]
 

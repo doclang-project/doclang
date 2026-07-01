@@ -14,6 +14,7 @@ import typer
 from doclang._schemas import _bundled_schema_paths
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
+from doclang.schematron import SchematronBackendNotFound
 from doclang.utils import _VERSION
 from doclang.validation import ValidationError
 from doclang.validation import validate as validate_document
@@ -77,6 +78,9 @@ def validate(
             xsd_only=xsd_only,
             schematron_only=schematron_only,
         )
+    except SchematronBackendNotFound as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
     except ValidationError as exc:
         results: dict[str, Any] = {
             "xsd": {"valid": not exc.xsd_errors, "errors": exc.xsd_errors},

@@ -1,18 +1,18 @@
 """
-Schematron validation utilities for DocLang.
+Saxon/C (saxonche) Schematron validation backend.
 
-This module provides Schematron validation by transpiling .sch files to XSLT
-on-the-fly using XSLT 3.0 / XPath 3.1.
+Transpiles .sch files to XSLT on-the-fly using XSLT 3.0 / XPath 3.1.
 """
+
+from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import Union
 
 from lxml import etree
-from saxonche import PySaxonProcessor
 
-from doclang._schemas import _bundled_sch_path
+from doclang.backends._svrl import _svrl_failed_asserts_to_violations
+from doclang.schematron import SchematronViolation, _require_saxonche_backend
 from doclang.utils import _ensure_namespace
 
 # ISO Schematron transpiler - converts .sch to XSLT 3.0
@@ -103,27 +103,16 @@ _ISO_SCHEMATRON_TRANSPILER = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def _transpile_schematron_to_xslt(sch_file, verbose=False):
-    """
-    Transpile Schematron (.sch) to XSLT 3.0 on-the-fly.
+def _transpile_schematron_to_xslt(sch_file: Path, *, verbose: bool = False) -> str:
+    _require_saxonche_backend()
+    from saxonche import PySaxonProcessor
 
-    Args:
-        sch_file: Path to Schematron file
-        verbose: Print progress messages
-
-    Returns:
-        str: Generated XSLT stylesheet as string
-    """
     if verbose:
         print(f"Transpiling Schematron: {sch_file}")
 
     with PySaxonProcessor(license=False) as proc:
         xslt_proc = proc.new_xslt30_processor()
-
-        # Compile the transpiler
         xslt_executable = xslt_proc.compile_stylesheet(stylesheet_text=_ISO_SCHEMATRON_TRANSPILER)
-
-        # Transform Schematron to XSLT
         result = xslt_executable.transform_to_string(source_file=str(sch_file))
 
         if not result:
@@ -132,76 +121,57 @@ def _transpile_schematron_to_xslt(sch_file, verbose=False):
         return result
 
 
-def _validate_with_schematron(
-    xml_file: Union[str, Path],
-    allow_empty_namespace: bool = False,
-    verbose: bool = False,
-) -> list:
-    """Validate XML against the bundled DocLang Schematron rules.
+class SaxoncheValidator:
+    """Schematron validator backed by Saxon/C (saxonche)."""
 
-    Returns:
-        SVRL failed-assert elements; empty when validation passes.
-    """
-    sch_file = _bundled_sch_path()
-    if verbose:
-        print(f"Using Schematron file: {sch_file}")
+    def validate(
+        self,
+        xml_path: Path,
+        *,
+        schema_path: Path,
+        allow_empty_namespace: bool = False,
+        verbose: bool = False,
+    ) -> list[SchematronViolation]:
+        _require_saxonche_backend()
+        from saxonche import PySaxonProcessor
 
-    try:
-        # Load and optionally ensure namespace
-        with open(xml_file, "rb") as f:
+        if verbose:
+            print(f"Using Schematron file: {schema_path}")
+
+        with open(xml_path, "rb") as f:
             xml_doc = etree.parse(f)
 
         if allow_empty_namespace:
             xml_doc = _ensure_namespace(xml_doc)
 
-        # Write to temporary file for Saxon processing
-        # Note: delete=True (default) but we need to close before Saxon can read
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".xml", delete=True) as tmp:
             xml_doc.write(tmp, encoding="utf-8", xml_declaration=True)
-            tmp.flush()  # Ensure data is written
+            tmp.flush()
             tmp_xml_path = tmp.name
 
-            # File is still open but flushed, Saxon can read it
             with PySaxonProcessor(license=False) as proc:
                 if verbose:
                     print(f"Using XSLT processor version: {proc.version}")
 
-                # Get XSLT 3.0 processor (supports XPath 3.1)
                 xslt_proc = proc.new_xslt30_processor()
 
-                # Transpile Schematron to XSLT
                 if verbose:
                     print("Transpiling Schematron to XSLT 3.0...")
 
-                xslt_text = _transpile_schematron_to_xslt(sch_file, verbose=verbose)
+                xslt_text = _transpile_schematron_to_xslt(schema_path, verbose=verbose)
 
-                # Compile the generated XSLT stylesheet
                 if verbose:
                     print("Compiling generated XSLT...")
 
                 xslt_executable = xslt_proc.compile_stylesheet(stylesheet_text=xslt_text)
 
-                # Transform XML
                 if verbose:
                     print("Executing Schematron validation...")
 
                 result = xslt_executable.transform_to_string(source_file=tmp_xml_path)
 
-                # Parse result
-                if result:
-                    result_doc = etree.fromstring(result.encode("utf-8"))
-                    failed_asserts = result_doc.findall(".//{http://purl.oclc.org/dsdl/svrl}failed-assert")
-                    return failed_asserts
-                else:
-                    # No output means validation passed
+                if not result:
                     return []
 
-        # Temporary file automatically deleted when exiting context manager
-
-    except Exception as e:
-        if verbose:
-            print(f"✗ Error during Schematron validation: {e}")
-            import traceback
-
-            traceback.print_exc()
-        raise
+                result_doc = etree.fromstring(result.encode("utf-8"))
+                return _svrl_failed_asserts_to_violations(result_doc)

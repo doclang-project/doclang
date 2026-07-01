@@ -56,7 +56,8 @@
       <sch:let name="cell-tokens" value="dl:fcel | dl:ecel | dl:ched | dl:rhed | dl:corn | dl:srow | dl:lcel | dl:ucel | dl:xcel"/>
 
       <!-- Count cells in first row (before first nl) -->
-      <sch:let name="first-row-cells" value="count($cell-tokens[following-sibling::dl:nl[1] is current()/dl:nl[1]])"/>
+      <sch:let name="first-nl" value="dl:nl[1]"/>
+      <sch:let name="first-row-cells" value="count($cell-tokens[following-sibling::dl:nl[1] is $first-nl])"/>
 
       <!-- Check that all subsequent rows have the same number of cells -->
       <sch:assert test="every $nl in dl:nl[position() > 1] satisfies
@@ -109,7 +110,8 @@
 
   <sch:pattern id="xref-thread-defined">
     <sch:rule context="dl:xref">
-      <sch:assert test="exists(//dl:thread[@thread_id = current()/@thread_id])">
+      <sch:let name="thread-id" value="@thread_id"/>
+      <sch:assert test="exists(//dl:thread[@thread_id = $thread-id])">
         Element xref references thread_id="<sch:value-of select="@thread_id"/>" but no thread element defines that id.
       </sch:assert>
     </sch:rule>
