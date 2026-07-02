@@ -8,6 +8,7 @@ When no target version is given, the release triple is derived from git tags
 - spec.md
 - doclang/doclang.xsd
 - reference/input/reference.xlsx
+- tests/data/valid/ok_namespaced_and_versioned.dclg
 
 `doclang --version` reads the installed package metadata (see doclang.version).
 
@@ -195,8 +196,20 @@ def sync_version_in_pyproject(file_path: Path, version: str) -> None:
     file_path.write_text(content, encoding="utf-8")
 
 
+def sync_version_in_valid_fixture(file_path: Path, version: str) -> None:
+    """Update version attribute in ok_namespaced_and_versioned.dclg test fixture."""
+    major_minor = ".".join(version.split(".")[:2])
+    content = file_path.read_text(encoding="utf-8")
+    content = re.sub(
+        r'(<doclang xmlns="https://www\.doclang\.ai/ns/v0" version=")[\d.]+(")',
+        rf"\g<1>{major_minor}\g<2>",
+        content,
+    )
+    file_path.write_text(content, encoding="utf-8")
+
+
 def sync_version(version_arg: str | None = None, project_root: Path | None = None) -> str:
-    """Sync version across pyproject.toml, spec.md, doclang.xsd, and reference.xlsx."""
+    """Sync version across pyproject.toml, spec.md, doclang.xsd, reference.xlsx, and test fixtures."""
     if project_root is None:
         project_root = Path(__file__).resolve().parent.parent
 
@@ -204,6 +217,7 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
     spec_path = project_root / "spec.md"
     xsd_path = project_root / "doclang" / "doclang.xsd"
     excel_path = project_root / "reference" / "input" / "reference.xlsx"
+    fixture_path = project_root / "tests" / "data" / "valid" / "ok_namespaced_and_versioned.dclg"
 
     version = resolve_sync_version(version_arg)
 
@@ -218,6 +232,8 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
     sync_version_in_spec(spec_path, version)
     sync_version_in_xsd(xsd_path, version)
     sync_version_in_excel(excel_path, version)
+    if fixture_path.exists():
+        sync_version_in_valid_fixture(fixture_path, version)
 
     print(f"Version synced to: {version}")
     return version
@@ -225,7 +241,7 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sync DocLang version across pyproject.toml, spec.md, doclang.xsd, and reference.xlsx",
+        description="Sync DocLang version across pyproject.toml, spec.md, doclang.xsd, reference.xlsx, and test fixtures",
     )
     parser.add_argument(
         "version",
