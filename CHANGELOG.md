@@ -1,3 +1,9 @@
+## [v0.7.1](https://github.com/doclang-project/doclang/releases/tag/v0.7.1)
+
+* extend version sync to versioned fixture (#156)
+* add pluggable Schematron validation backends (#155)
+  * **BREAKING CHANGE**: `saxonche` is no longer installed by default; install `doclang[schematron-saxon]` (or pass a custom `schematron=` backend) for Schematron validation.
+
 ## [v0.7.0](https://github.com/doclang-project/doclang/releases/tag/v0.7.0)
 
 * add archive packaging (#151)
