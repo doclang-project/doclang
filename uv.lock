@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -387,7 +387,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "lxml", specifier = ">=6.0.2" },
+    { name = "lxml", specifier = ">=4.8.0" },
     { name = "saxonche", marker = "extra == 'schematron-saxon'", specifier = ">=12.9.0" },
     { name = "typer", specifier = ">=0.15.1" },
 ]

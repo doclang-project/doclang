@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: XML",
 ]
 dependencies = [
-    "lxml>=6.0.2",
+    "lxml>=4.8.0",
     "typer>=0.15.1",
 ]
 
