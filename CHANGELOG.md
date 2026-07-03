@@ -1,3 +1,7 @@
+## [v0.7.2](https://github.com/doclang-project/doclang/releases/tag/v0.7.2)
+
+* expand lxml version support (#158)
+
 ## [v0.7.1](https://github.com/doclang-project/doclang/releases/tag/v0.7.1)
 
 * extend version sync to versioned fixture (#156)
