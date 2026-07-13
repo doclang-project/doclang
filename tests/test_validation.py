@@ -14,6 +14,7 @@ import pytest
 
 import doclang
 from doclang import SchematronBackendNotFound, SchematronViolation, ValidationError, validate
+from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
@@ -60,6 +61,78 @@ def test_invalid_reports_both_xsd_and_schematron_errors():
     exc = exc_info.value
     assert len(exc.xsd_errors) == 1
     assert len(exc.schematron_errors) == 1
+
+
+def test_dtd_and_entity_payloads_are_rejected(tmp_path: Path):
+    """DTD / entity payloads are rejected with a clear error (no expansion)."""
+    bomb = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doclang [
+  <!ENTITY a "aaaaaaaaaa">
+  <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+  <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+  <!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">
+  <!ENTITY e "&d;&d;&d;&d;&d;&d;&d;&d;&d;&d;">
+]>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <text>&e;</text>
+</doclang>
+"""
+    xml_file = tmp_path / "entity_bomb.dclg"
+    xml_file.write_text(bomb, encoding="utf-8")
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, xsd_only=True)
+
+    assert any(_DTD_REJECTED_MESSAGE in (err.get("error") or "") for err in exc_info.value.xsd_errors)
+
+
+def test_doctype_without_entities_is_rejected(tmp_path: Path):
+    """A DOCTYPE alone is enough to reject — DocLang does not use DTDs."""
+    xml_file = tmp_path / "with_doctype.dclg"
+    xml_file.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doclang>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <text>Hello</text>
+</doclang>
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, xsd_only=True)
+
+    assert any(_DTD_REJECTED_MESSAGE in (err.get("error") or "") for err in exc_info.value.xsd_errors)
+
+
+def test_schematron_temp_serialization_omits_doctype(tmp_path: Path):
+    """Saxon input must not re-emit a DOCTYPE even if parse somehow retained one."""
+    # Build a tree via the safe parser without going through the reject helper,
+    # then ensure the Schematron rewrite path strips DOCTYPE.
+    from doclang.utils import _parse_xml
+
+    xml_file = tmp_path / "doctype.dclg"
+    xml_file.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doclang [
+  <!ENTITY x "secret">
+]>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <text>&x;</text>
+</doclang>
+""",
+        encoding="utf-8",
+    )
+    doc = _parse_xml(xml_file)
+    assert (doc.docinfo.doctype or "").strip()
+
+    out = tmp_path / "rewritten.xml"
+    with out.open("wb") as handle:
+        _write_xml_without_dtd(doc, handle)
+
+    rewritten = out.read_text(encoding="utf-8")
+    assert "<!DOCTYPE" not in rewritten
+    assert "<!ENTITY" not in rewritten
 
 
 def test_schema_files_exist():
