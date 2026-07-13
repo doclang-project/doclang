@@ -13,7 +13,7 @@ from lxml import etree
 
 from doclang.backends._svrl import _svrl_failed_asserts_to_violations
 from doclang.schematron import SchematronViolation, _require_saxonche_backend
-from doclang.utils import _ensure_namespace
+from doclang.utils import _ensure_namespace, _parse_doclang_document, _write_xml_without_dtd
 
 # ISO Schematron transpiler - converts .sch to XSLT 3.0
 _ISO_SCHEMATRON_TRANSPILER = """<?xml version="1.0" encoding="UTF-8"?>
@@ -139,13 +139,14 @@ class SaxoncheValidator:
             print(f"Using Schematron file: {schema_path}")
 
         with open(xml_path, "rb") as f:
-            xml_doc = etree.parse(f)
+            xml_doc = _parse_doclang_document(f)
 
         if allow_empty_namespace:
             xml_doc = _ensure_namespace(xml_doc)
 
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".xml", delete=True) as tmp:
-            xml_doc.write(tmp, encoding="utf-8", xml_declaration=True)
+            # Never re-emit a DOCTYPE: Saxon would otherwise expand entities.
+            _write_xml_without_dtd(xml_doc, tmp)
             tmp.flush()
             tmp_xml_path = tmp.name
 
