@@ -140,3 +140,75 @@ def test_pack_invalid_asset_path(tmp_path: Path) -> None:
             output=tmp_path / "bad-asset.dclx",
             assets={"../escape.svg": asset_source},
         )
+
+
+def test_pack_rejects_symlink_asset_file(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_description_element_head.dclg"
+    secret = tmp_path / "secret.txt"
+    secret.write_text("sensitive", encoding="utf-8")
+    link = tmp_path / "chart.svg"
+    link.symlink_to(secret)
+    output = tmp_path / "symlink-asset.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(document, output=output, assets={"chart.svg": link})
+
+    assert not output.exists()
+
+
+def test_pack_rejects_symlink_in_assets_directory(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_description_element_head.dclg"
+    secret = tmp_path / "secret.txt"
+    secret.write_text("sensitive", encoding="utf-8")
+    assets_dir = tmp_path / "payload"
+    assets_dir.mkdir()
+    (assets_dir / "chart.svg").symlink_to(secret)
+    output = tmp_path / "symlink-assets-dir.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(document, output=output, assets=assets_dir)
+
+    assert not output.exists()
+
+
+def test_pack_rejects_nested_symlink_directory_in_assets(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_description_element_head.dclg"
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "leak.png").write_bytes(b"png")
+    assets_dir = tmp_path / "payload"
+    assets_dir.mkdir()
+    (assets_dir / "img").symlink_to(outside)
+    output = tmp_path / "symlink-assets-subdir.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(document, output=output, assets=assets_dir)
+
+    assert not output.exists()
+
+
+def test_pack_rejects_symlink_page_file(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_description_element_head.dclg"
+    secret = tmp_path / "secret.png"
+    secret.write_bytes(b"png")
+    link = tmp_path / "1.png"
+    link.symlink_to(secret)
+    output = tmp_path / "symlink-page.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(document, output=output, pages=[link])
+
+    assert not output.exists()
+
+
+def test_pack_rejects_symlink_pages_directory(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_description_element_head.dclg"
+    real_pages = ARCHIVE_DEMO / "pages"
+    pages_link = tmp_path / "pages"
+    pages_link.symlink_to(real_pages)
+    output = tmp_path / "symlink-pages-dir.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(document, output=output, pages=pages_link)
+
+    assert not output.exists()

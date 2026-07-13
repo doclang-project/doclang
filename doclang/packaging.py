@@ -34,9 +34,12 @@ def pack(
     ``assets`` may be a directory (copied into ``assets/``) or a mapping of
     archive-relative asset path to source file.
 
+    Symbolic links are refused for ``pages`` and ``assets`` (including entries
+    inside directories) so pack does not follow link targets into the archive.
+
     Returns the resolved path to the created archive.
 
-    Raises :class:`PackagingError` on packaging failure.
+    Raises :class:`PackagingError` on packaging failure (including symbolic links).
     Raises :class:`~doclang.ValidationError` when ``validate=True`` and the
     document fails validation.
     """

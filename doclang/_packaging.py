@@ -58,6 +58,11 @@ def _require_directory(path: Path, *, label: str) -> None:
         raise PackagingError(f"{label} not found or not a directory: {path}")
 
 
+def _reject_symlink(path: Path, *, label: str) -> None:
+    if path.is_symlink():
+        raise PackagingError(f"{label} must not be a symbolic link: {path}")
+
+
 def _validate_archive_relative_path(path: str, *, label: str) -> None:
     if not path or path.startswith("/") or "\\" in path:
         raise PackagingError(f"Invalid {label} path: {path!r}")
@@ -66,12 +71,22 @@ def _validate_archive_relative_path(path: str, *, label: str) -> None:
         raise PackagingError(f"Invalid {label} path: {path!r}")
 
 
-def _copy_tree_into(source: Path, destination: Path) -> None:
+def _copy_file(source: Path, destination: Path, *, label: str) -> None:
+    _reject_symlink(source, label=label)
+    _require_file(source, label=label)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+
+
+def _copy_tree_into(source: Path, destination: Path, *, label: str) -> None:
+    _reject_symlink(source, label=label)
+    _require_directory(source, label=label)
     destination.mkdir(parents=True, exist_ok=True)
     for item in source.iterdir():
         target = destination / item.name
+        _reject_symlink(item, label=label)
         if item.is_dir():
-            shutil.copytree(item, target, dirs_exist_ok=True)
+            _copy_tree_into(item, target, label=label)
         else:
             shutil.copy2(item, target)
 
@@ -88,24 +103,18 @@ def _place_pages(stage: Path, pages: PagesInput) -> None:
             if not isinstance(page_number, int) or page_number < 1:
                 raise PackagingError(f"Page numbers must be positive integers, got {page_number!r}")
             source_path = Path(source)
-            _require_file(source_path, label="Page file")
             destination = pages_dir / f"{page_number}{source_path.suffix}"
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_path, destination)
+            _copy_file(source_path, destination, label="Page file")
         return
 
     if isinstance(pages, str | Path):
-        source_dir = Path(pages)
-        _require_directory(source_dir, label="Pages directory")
-        _copy_tree_into(source_dir, pages_dir)
+        _copy_tree_into(Path(pages), pages_dir, label="Pages directory")
         return
 
     for index, source in enumerate(pages, start=1):
         source_path = Path(source)
-        _require_file(source_path, label="Page file")
         destination = pages_dir / f"{index}{source_path.suffix}"
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_path, destination)
+        _copy_file(source_path, destination, label="Page file")
 
 
 def _place_assets(stage: Path, assets: AssetsInput) -> None:
@@ -113,16 +122,11 @@ def _place_assets(stage: Path, assets: AssetsInput) -> None:
     if isinstance(assets, Mapping):
         for archive_path, source in assets.items():
             _validate_archive_relative_path(archive_path, label="asset")
-            source_path = Path(source)
-            _require_file(source_path, label="Asset file")
             destination = assets_dir / archive_path
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source_path, destination)
+            _copy_file(Path(source), destination, label="Asset file")
         return
 
-    source_dir = Path(assets)
-    _require_directory(source_dir, label="Assets directory")
-    _copy_tree_into(source_dir, assets_dir)
+    _copy_tree_into(Path(assets), assets_dir, label="Assets directory")
 
 
 def _write_opc_metadata(stage: Path) -> None:
