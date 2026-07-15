@@ -1,3 +1,8 @@
+## [v0.7.3](https://github.com/doclang-project/doclang/releases/tag/v0.7.3)
+
+* refuse symbolic links when packing pages and assets (#171)
+* reject DTD and entity references in DocLang validation (#170)
+
 ## [v0.7.2](https://github.com/doclang-project/doclang/releases/tag/v0.7.2)
 
 * expand lxml version support (#158)
