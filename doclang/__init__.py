@@ -2,6 +2,7 @@
 
 from doclang.packaging import PackagingError, pack
 from doclang.schematron import SchematronBackendNotFound, SchematronValidator, SchematronViolation
+from doclang.tokenization import get_special_tokens
 from doclang.validation import ValidationError, validate
 
 __all__ = [
@@ -10,6 +11,7 @@ __all__ = [
     "SchematronValidator",
     "SchematronViolation",
     "ValidationError",
+    "get_special_tokens",
     "pack",
     "validate",
 ]
