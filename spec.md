@@ -3286,8 +3286,6 @@ The token vocabulary trades off size and inference cost:
 | `<href uri="` | [`href`](#href) with `uri` attribute start |
 | `<custom>` | [`custom`](#custom) start |
 | `</custom>` | [`custom`](#custom) end |
-| `<smiles>` | custom SMILES element start (should best be [accordingly namespaced](#custom-vocabulary-naming-and-namespacing)) |
-| `</smiles>` | custom SMILES element end |
 | `<layer value="` | [`layer`](#layer) with `value` attribute start |
 | `<src uri="` | [`src`](#src) with `uri` attribute start |
 | `<tabular>` | [`tabular`](#tabular) start |
