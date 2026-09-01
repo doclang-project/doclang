@@ -105,12 +105,45 @@ _FIXED_TOKENS: tuple[str, ...] = (
     "<ldiv/>",
     "<ldiv><marker>",
     "</marker></ldiv>",
+    "<track>",
+    "</track>",
+    "<bdiv/>",
+    "<frame>",
+    "</frame>",
+    "<audio>",
+    "</audio>",
+    "<voice>",
+    "</voice>",
+    '<hours value="',
+    '<minutes value="',
+    '<seconds value="',
+    '<msecs value="',
 )
 
 
 def _location_tokens(resolution: int) -> list[str]:
     """Return one concrete ``<location value="N"/>`` token per value in ``[0, resolution)``."""
     return [f'<location value="{value}"/>' for value in range(resolution)]
+
+
+def _hours_tokens() -> list[str]:
+    """Return concrete ``<hours value="N"/>`` tokens for ``N`` in ``[0, 10)``."""
+    return [f'<hours value="{value}"/>' for value in range(10)]
+
+
+def _minutes_tokens() -> list[str]:
+    """Return concrete ``<minutes value="N"/>`` tokens for ``N`` in ``[0, 60)``."""
+    return [f'<minutes value="{value}"/>' for value in range(60)]
+
+
+def _seconds_tokens() -> list[str]:
+    """Return concrete ``<seconds value="N"/>`` tokens for ``N`` in ``[0, 60)``."""
+    return [f'<seconds value="{value}"/>' for value in range(60)]
+
+
+def _msecs_tokens() -> list[str]:
+    """Return concrete ``<msecs value="N"/>`` tokens for ``N`` in ``{0, 10, 20, ..., 990}``."""
+    return [f'<msecs value="{value}"/>' for value in range(0, 1000, 10)]
 
 
 def get_special_tokens(*, max_resolution: int = DEFAULT_MAX_RESOLUTION) -> list[str]:
@@ -125,4 +158,11 @@ def get_special_tokens(*, max_resolution: int = DEFAULT_MAX_RESOLUTION) -> list[
     ``default_resolution@width``/``@height``, or a per-``<location>`` override) used across your
     documents; pass the larger of your x/y resolutions if they differ.
     """
-    return [*_FIXED_TOKENS, *_location_tokens(max_resolution)]
+    return [
+        *_FIXED_TOKENS,
+        *_location_tokens(max_resolution),
+        *_hours_tokens(),
+        *_minutes_tokens(),
+        *_seconds_tokens(),
+        *_msecs_tokens(),
+    ]

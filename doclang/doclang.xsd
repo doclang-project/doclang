@@ -455,7 +455,7 @@
 
   <!-- ============================================ -->
   <!-- TOP_LEVEL_CAT: reusable group for top-level document elements -->
-  <!-- Includes: text, heading, code, formula, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, index, group -->
+  <!-- Includes: text, heading, code, formula, page_header, page_footer, footnote, list, field_region, field_heading, field_item, key, value, picture, table, index, group, track -->
   <!-- Note: caption, description, and summary appear only in the element head (element_head), not in body content -->
   <!-- ============================================ -->
 
@@ -478,6 +478,7 @@
       <xs:element ref="dl:picture"/>
       <xs:element ref="dl:table"/>
       <xs:element ref="dl:index"/>
+      <xs:element ref="dl:track"/>
     </xs:choice>
   </xs:group>
 
@@ -690,6 +691,111 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- TRACK: time-aligned media transcript -->
+  <!-- element_head + sequence of cue blocks; each cue block is delimited by <bdiv/> -->
+  <!-- (parallel to <ldiv/> for lists) and carries: a mandatory start timestamp, an -->
+  <!-- optional end timestamp, an optional <frame>, an optional <audio>, then an -->
+  <!-- optional transcript of <voice>-attributed turns and inline-formatted text. -->
+  <!-- ============================================ -->
+
+  <!-- Timestamp component value ranges -->
+  <xs:simpleType name="minsec_value">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="59"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="msec_value">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="999"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Timestamp component elements (empty, value required) -->
+  <xs:element name="hours">
+    <xs:complexType>
+      <xs:attribute name="value" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="minutes">
+    <xs:complexType>
+      <xs:attribute name="value" type="dl:minsec_value" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="seconds">
+    <xs:complexType>
+      <xs:attribute name="value" type="dl:minsec_value" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="msecs">
+    <xs:complexType>
+      <xs:attribute name="value" type="dl:msec_value" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Timestamp run: hours? minutes seconds msecs? (hours/msecs default to 0 when omitted) -->
+  <xs:group name="timestamp">
+    <xs:sequence>
+      <xs:element ref="dl:hours" minOccurs="0"/>
+      <xs:element ref="dl:minutes"/>
+      <xs:element ref="dl:seconds"/>
+      <xs:element ref="dl:msecs" minOccurs="0"/>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- BDIV ELEMENT: cue-block delimiter (parallel to ldiv) -->
+  <xs:element name="bdiv"><xs:complexType/></xs:element>
+
+  <!-- FRAME / AUDIO: picture_type minus <tabular> and minus @class -->
+  <xs:complexType name="media_capture_type" mixed="true">
+    <xs:sequence>
+      <xs:group ref="dl:element_head"/>
+      <xs:element ref="dl:src" minOccurs="0"/>
+      <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="frame" type="dl:media_capture_type"/>
+  <xs:element name="audio" type="dl:media_capture_type"/>
+
+  <!-- VOICE ELEMENT: speaker attribution; same content model as <text> -->
+  <xs:element name="voice" type="dl:component_with_semantic_seq"/>
+
+  <!-- Transcript region: <voice>-attributed turns plus inline-formatted / raw text -->
+  <xs:group name="transcript_content">
+    <xs:choice>
+      <xs:element ref="dl:content"/>
+      <xs:element ref="dl:voice"/>
+      <xs:group ref="dl:headless_txt"/>
+    </xs:choice>
+  </xs:group>
+
+  <!-- TRACK_CUE_BLOCK: bdiv + start timestamp + optional end timestamp + optional frame/audio + optional transcript -->
+  <xs:group name="track_cue_block">
+    <xs:sequence>
+      <xs:element ref="dl:bdiv"/>
+      <xs:group ref="dl:timestamp"/>
+      <xs:group ref="dl:timestamp" minOccurs="0"/>
+      <xs:element ref="dl:frame" minOccurs="0"/>
+      <xs:element ref="dl:audio" minOccurs="0"/>
+      <xs:group ref="dl:transcript_content" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:group>
+
+  <!-- TRACK ELEMENT: optional element_head + track_cue_block* -->
+  <!-- Semantic element: may optionally begin with element_head (per spec.md) -->
+  <!-- mixed: a literal newline between consecutive unattributed transcript turns is allowed -->
+  <!-- Schematron enforces: must start with bdiv (after optional track-level element head) -->
+  <xs:element name="track">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:group ref="dl:element_head"/>
+        <xs:group ref="dl:track_cue_block" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
 

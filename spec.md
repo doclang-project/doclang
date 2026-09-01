@@ -1547,6 +1547,78 @@ Field region with mixed content:
 
 Detailed examples can be seen here: [Form Examples](/examples/form/form-examples.md)
 
+### Tracks
+
+A `<track>` captures a time-aligned media transcript — subtitles, captions, or diarized speech associated with an audio or video recording. It is a [semantic element](#semantic-elements) and may begin with an [element head](#element-head).
+
+The body of a `<track>` is a sequence of *cue blocks*. Each cue block is introduced by a `<bdiv/>` delimiter (analogous to `<ldiv/>` for lists): a non-empty `<track>` body must begin with a `<bdiv/>`, and a cue block spans everything between two sibling `<bdiv/>` elements (or until `</track>`).
+
+A cue block consists of, in order:
+
+- a **start time** (mandatory): a run of `<hours value="H"/>` (optional), `<minutes value="M"/>`, `<seconds value="S"/>`, `<msecs value="MS"/>` (optional). `<minutes>` and `<seconds>` are always present; `<hours>` and `<msecs>` default to `0` when omitted.
+- an **end time** (optional): the same run shape, immediately following the start time. A cue block covers the inclusive interval `[start, end]`. When the end time is omitted it is taken to equal the start time, i.e. the cue block is the single instant `[start, start]` — for example, the timestamp of a `<frame>` or a point annotation.
+- an optional `<frame>` — a still image of the recording at this cue, shaped like a [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
+- an optional `<audio>` — an audio clip for this cue, with the same shape as `<frame>`.
+- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting). When `<voice>` is omitted the turn belongs to an undefined speaker; a turn runs until the next `<voice>` or the end of the cue block.
+
+Minimal cue block (start time and one line of text):
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="0"/><seconds value="2"/>
+  Hello, and welcome.
+</track>
+```
+
+Start and end time, two attributed turns:
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="0"/><seconds value="2"/><msecs value="500"/>
+  <minutes value="0"/><seconds value="7"/>
+  <voice>John</voice>Hi Mary!
+  <voice><italic>Mary</italic></voice><bold>Hello</bold> John!
+</track>
+```
+
+Cue block with a video frame and an audio clip:
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="1"/><seconds value="4"/>
+  <minutes value="1"/><seconds value="9"/>
+  <frame><src uri="assets/frames/00-01-04.jpg"/></frame>
+  <audio><src uri="assets/clips/00-01-04.opus"/></audio>
+  <voice>Narrator</voice>The results are shown on screen.
+</track>
+```
+
+Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#doclang-archive-format).
+
+Crossing the hour mark, and consecutive turns with no speaker attribution:
+
+```xml
+<track>
+  <label value="lecture"/>
+  <bdiv/>
+  <minutes value="59"/><seconds value="58"/><msecs value="450"/>
+  <hours value="1"/><minutes value="0"/><seconds value="1"/><msecs value="210"/>
+  So that concludes the first part.
+  Take a five minute break.
+</track>
+```
+
+Notes:
+
+- A non-empty `<track>` body must begin with a `<bdiv/>`; there must be no text before the first cue block, nor between a `<bdiv/>` and its start time.
+- Every timestamp run carries at least `<minutes>` and `<seconds>`; an end time, when present, must not be earlier than the start time. Cue-block intervals are inclusive of both endpoints; a missing end time means the interval `[start, start]`.
+- Cue blocks appear in non-decreasing order of start time. They may still overlap — for example, two speakers talking at once. When two cue blocks share a start time, their relative order is not further constrained (end times are not used as a tie-breaker).
+- `<msecs value="…"/>` accepts any integer in `[0, 999]`.
+- `<bdiv>`, `<frame>`, `<audio>`, `<voice>`, and the timestamp elements are only meaningful inside a `<track>`.
+
 ### Split structure
 
 We can capture content that is split (e.g. across columns or across pages) using the `<thread thread_id="N"/>` element, where `N` is a unique identifier.
@@ -2475,6 +2547,107 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
+##### `<track>`
+
+Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body is a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
+
+###### Allowed Context
+
+Any context that allows semantic elements.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Only within a cue block transcript |
+| Primary semantic elements | Only [`<frame>`](#frame), [`<audio>`](#audio), and [`<voice>`](#voice), within cue blocks |
+
+###### Example
+
+```xml
+<doclang>
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/><msecs value="500"/>
+    <minutes value="0"/><seconds value="5"/>
+    <voice>Alice</voice>
+    Good morning.
+    <voice>Bob</voice>
+    Morning - did you see the report?
+    <bdiv/>
+    <minutes value="59"/><seconds value="58"/><msecs value="450"/>
+    <hours value="1"/><minutes value="0"/><seconds value="1"/><msecs value="210"/>
+    <frame><src uri="assets/frames/00-59-58.jpg"/></frame>
+    Wrapping up as we pass the hour.
+  </track>
+</doclang>
+```
+
+##### `<frame>`
+
+A still image of the recording at a [`<track>`](#track) cue block. Shaped like [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Not allowed |
+| Primary semantic elements | Allowed |
+
+##### `<audio>`
+
+An audio clip for a [`<track>`](#track) cue block. Same shape as [`<frame>`](#frame): an optional element head followed by an optional [`<src>`](#src).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Not allowed |
+| Primary semantic elements | Allowed |
+
+##### `<voice>`
+
+Speaker attribution for a transcript turn within a [`<track>`](#track) cue block. Handled like [`<text>`](#text) (may carry its own element head and inline formatting).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Allowed |
+
 #### Property Elements
 
 *Property elements* are non-semantic elements that help define useful traits of a semantic element, forming the main building blocks of the [element head](#element-head). Property elements that can appear on the top level of the element head are called *primary*, while those that can only appear within other property elements are called *secondary*. The various property elements are further specified in the following subsections.
@@ -2731,6 +2904,78 @@ None
 | Element head | Not allowed |
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
+
+##### `<hours>`
+
+Hours component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Non-negative integer | Hours component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+##### `<minutes>`
+
+Minutes component of a [`<track>`](#track) cue timestamp.
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, 59] | Minutes component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+##### `<seconds>`
+
+Seconds component of a [`<track>`](#track) cue timestamp.
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, 59] | Seconds component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+##### `<msecs>`
+
+Milliseconds component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, 999] | Milliseconds component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
 
 #### Formatting Elements
 
@@ -3080,6 +3325,22 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Only [`<marker>`](#marker) |
 
+##### `<bdiv>`
+
+Indicates the beginning of a [`<track>`](#track) cue block.
+
+###### Allowed Context
+
+Can only be a child of [`<track>`](#track).
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+None (empty element).
+
 #### Document Head Elements
 
 This category comprises the document-level metadata elements that are the building blocks of [`<head>`](#head).
@@ -3117,12 +3378,14 @@ _rels/
   .rels                # required — package → main document
 document.xml           # required — valid DocLang document
 pages/                 # optional — page images, e.g. 1.png, 2.png
+audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
+video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
 assets/                # optional — files referenced from markup
 ```
 
 ##### `[Content_Types].xml` (required)
 
-Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`) and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
+Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
 
 Example:
 
@@ -3131,6 +3394,8 @@ Example:
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="png" ContentType="image/png"/>
+  <Default Extension="mp3" ContentType="audio/mpeg"/>
+  <Default Extension="mp4" ContentType="video/mp4"/>
   <Override PartName="/document.xml" ContentType="application/vnd.doclang.document+xml"/>
 </Types>
 ```
@@ -3158,6 +3423,12 @@ The main document part: a valid DocLang document. Top-level `<page_break/>` elem
 
 Optional raster images for review. Name files `{N}.{png|jpg|jpeg|webp}` with 1-based `N`. Gaps are allowed.
 
+##### `audio/` (optional)
+
+##### `video/` (optional)
+
+Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` MUST NOT exceed the number of `<track>` elements in the document.
+
 ##### `assets/` (optional)
 
 Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
@@ -3165,6 +3436,10 @@ Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/c
 #### Page alignment
 
 Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* corresponds to page *N*. Page count is determined by markup: the number of `<page_break/>` elements plus one. Page images are optional and individual gaps are allowed, but page files must not exceed this count (e.g. two `<page_break/>` elements define three pages, so `4.png` is out of bounds).
+
+#### Track alignment
+
+The *N*-th [`<track>`](#track) in the document aligns with `audio/{N}.*` and/or `video/{N}.*` when present. A cue block's timestamps are then playback offsets into that file, measured from its start (`00:00:00.000`). Per-cue [`<frame>`](#frame) and [`<audio>`](#audio) fragments are independent references (via [`<src>`](#src)) and are not derived from the whole-track files. A track with neither an `audio/` nor a `video/` entry is simply a transcript whose timestamps refer to a recording the archive does not carry.
 
 ### Recommendations
 
@@ -3325,7 +3600,24 @@ The token vocabulary trades off size and inference cost:
 | `<ldiv/>` | [`ldiv`](#ldiv) |
 | `<ldiv><marker>` | start of [`ldiv`](#ldiv) with [`marker`](#marker) |
 | `</marker></ldiv>` | end of [`ldiv`](#ldiv) with [`marker`](#marker) |
+| `<track>` | [`track`](#track) start |
+| `</track>` | [`track`](#track) end |
+| `<bdiv/>` | [`bdiv`](#bdiv) cue-block delimiter |
+| `<frame>` | [`frame`](#frame) start |
+| `</frame>` | [`frame`](#frame) end |
+| `<audio>` | [`audio`](#audio) start |
+| `</audio>` | [`audio`](#audio) end |
+| `<voice>` | [`voice`](#voice) start |
+| `</voice>` | [`voice`](#voice) end |
+| `<hours value="` | [`hours`](#hours) with `value` attribute start (out-of-range values) |
+| `<minutes value="` | [`minutes`](#minutes) with `value` attribute start (out-of-range values) |
+| `<seconds value="` | [`seconds`](#seconds) with `value` attribute start (out-of-range values) |
+| `<msecs value="` | [`msecs`](#msecs) with `value` attribute start (out-of-range values) |
 | `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
+| `<hours value="0"/>`, `<hours value="1"/>`, ..., `<hours value="9"/>` | [`hours`](#hours) tokens with values from 0 to 9 |
+| `<minutes value="0"/>`, `<minutes value="1"/>`, ..., `<minutes value="59"/>` | [`minutes`](#minutes) tokens with values from 0 to 59 |
+| `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
+| `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
 
 ### Future Extensions
 
@@ -3334,6 +3626,14 @@ These features are considered for future versions of the standard.
 #### Horizontal Threading
 
 Horizontal threading enables linking related content across the horizontal axis in page or table layouts. The `h_thread` element supports this by explicitly connecting content (like table rows or columns) that spans multiple pages, ensuring these threads remain structured and traceable.
+
+#### Explicitly wrapped repetitive items
+
+Repetitive structures currently rely on a bare delimiter plus unwrapped content: `<ldiv/>` for [list](#list) items, cell tokens for [table](#table) cells, and `<bdiv/>` for [track](#track) cue blocks. A future revision may allow each item to alternatively be written as an explicit wrapper element carrying its own element head, in a way that stays backward compatible with the delimiter form and remains consistent across all three modalities.
+
+#### Multi-part track media
+
+The [archive format](#doclang-archive-format) carries at most one whole-track file per [`<track>`](#track) per modality (`audio/{N}.*`, `video/{N}.*`). A future revision may add a backward-compatible form for media split into ordered segments (e.g. an `audio/{N}/` directory plus a small manifest giving each segment's start offset), for very long recordings or capture that was paused and resumed.
 
 #### Metadata
 

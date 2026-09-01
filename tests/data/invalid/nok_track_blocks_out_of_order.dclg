@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- cue blocks must be in non-decreasing order of start time -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="30"/>
+    Second, chronologically.
+    <bdiv/>
+    <minutes value="0"/><seconds value="10"/>
+    But it comes first in the timeline.
+  </track>
+</doclang>
