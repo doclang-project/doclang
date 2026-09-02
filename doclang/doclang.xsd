@@ -765,6 +765,10 @@
   <!-- VOICE ELEMENT: speaker attribution; same content model as <text> -->
   <xs:element name="voice" type="dl:component_with_semantic_seq"/>
 
+  <!-- CHAPTER ELEMENT: chapter/section title marking a boundary at its cue block's start time -->
+  <!-- Same content model as <text>; effective only from the start time of the cue block that carries it -->
+  <xs:element name="chapter" type="dl:component_with_semantic_seq"/>
+
   <!-- Transcript region: <voice>-attributed turns plus inline-formatted / raw text -->
   <xs:group name="transcript_content">
     <xs:choice>
@@ -774,12 +778,13 @@
     </xs:choice>
   </xs:group>
 
-  <!-- TRACK_CUE_BLOCK: bdiv + start timestamp + optional end timestamp + optional frame/audio + optional transcript -->
+  <!-- TRACK_CUE_BLOCK: bdiv + start timestamp + optional end timestamp + optional chapter + optional frame/audio + optional transcript -->
   <xs:group name="track_cue_block">
     <xs:sequence>
       <xs:element ref="dl:bdiv"/>
       <xs:group ref="dl:timestamp"/>
       <xs:group ref="dl:timestamp" minOccurs="0"/>
+      <xs:element ref="dl:chapter" minOccurs="0"/>
       <xs:element ref="dl:frame" minOccurs="0"/>
       <xs:element ref="dl:audio" minOccurs="0"/>
       <xs:group ref="dl:transcript_content" minOccurs="0" maxOccurs="unbounded"/>

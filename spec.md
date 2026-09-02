@@ -1557,8 +1557,9 @@ A cue block consists of, in order:
 
 - a **start time** (mandatory): a run of `<hours value="H"/>` (optional), `<minutes value="M"/>`, `<seconds value="S"/>`, `<msecs value="MS"/>` (optional). `<minutes>` and `<seconds>` are always present; `<hours>` and `<msecs>` default to `0` when omitted.
 - an **end time** (optional): the same run shape, immediately following the start time. A cue block covers the inclusive interval `[start, end]`. When the end time is omitted it is taken to equal the start time, i.e. the cue block is the single instant `[start, start]` — for example, the timestamp of a `<frame>` or a point annotation.
-- an optional `<frame>` — a still image of the recording at this cue, shaped like a [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
-- an optional `<audio>` — an audio clip for this cue, with the same shape as `<frame>`.
+- an optional `<chapter>` — a chapter or section title (see [Chapters](#chapters) below), handled like [`<text>`](#text): it may carry its own element head and inline [formatting](#formatting).
+- an optional `<frame>` — the still image of the recording at the cue block's start time, shaped like a [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src). A point sample; valid on any cue block.
+- an optional `<audio>` — the recording over the cue block's interval `[start, end]`, with the same shape as `<frame>`. It is a temporal crop of the track's audio, the way a [`<picture>`](#picture) crop corresponds to its page region; the timestamps are authoritative and the clip is a best-effort fragment. Requires the cue block to carry an end time.
 - an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting). When `<voice>` is omitted the turn belongs to an undefined speaker; a turn runs until the next `<voice>` or the end of the cue block.
 
 Minimal cue block (start time and one line of text):
@@ -1611,13 +1612,41 @@ Crossing the hour mark, and consecutive turns with no speaker attribution:
 </track>
 ```
 
+#### Chapters
+
+A cue block may carry a `<chapter>` — a chapter or section title — placed just after its timestamps (before any `<frame>`). A `<chapter>` **marks a boundary at its cue block's start time and nothing else**: the chapter runs from that instant until the next cue block that carries a `<chapter>` (or `</track>`). The cue block's own end time bounds its transcript and audio, not the chapter. The stretch before the first `<chapter>` is unchaptered.
+
+Chapters therefore form a **flat partition** of the timeline: no nesting, no overlap, no explicit chapter end. "Which chapter is active at time *T*?" is answered by the last `<chapter>` at or before *T*.
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="0"/><seconds value="0"/>
+  <chapter>Introduction</chapter>
+  Welcome, everyone.
+  <bdiv/>
+  <minutes value="0"/><seconds value="40"/>
+  Still in the introduction; this cue block starts no chapter.
+  <bdiv/>
+  <minutes value="1"/><seconds value="30"/>
+  <chapter><italic>Part 1</italic> — Background</chapter>
+  Let's start with some history.
+</track>
+```
+
+Because only the start time counts, a chapter boundary may fall inside an earlier, still-open cue block. Given a cue block with `<chapter>A</chapter>` starting at `01:00` and one with `<chapter>B</chapter>` starting at `01:15`, chapter A is `[01:00, 01:15)` and B begins at `01:15` — even if A's cue block carries transcript out to `01:30`.
+
+Chapters MUST begin at strictly increasing times — two chapters cannot mark the same instant. A `<chapter>` has no attributes in this version; nesting would be a future `level` attribute.
+
 Notes:
 
 - A non-empty `<track>` body must begin with a `<bdiv/>`; there must be no text before the first cue block, nor between a `<bdiv/>` and its start time.
 - Every timestamp run carries at least `<minutes>` and `<seconds>`; an end time, when present, must not be earlier than the start time. Cue-block intervals are inclusive of both endpoints; a missing end time means the interval `[start, start]`.
 - Cue blocks appear in non-decreasing order of start time. They may still overlap — for example, two speakers talking at once. When two cue blocks share a start time, their relative order is not further constrained (end times are not used as a tie-breaker).
+- A `<frame>` is the still at the cue block's start time. An `<audio>` clip is the recording over `[start, end]`, so a cue block with an `<audio>` must have an end time. Its duration is expected to correspond to `end − start`, but small differences from codec framing and encoder padding are normal and not significant; the timestamps, not the clip, are authoritative, and DocLang does not decode media to check this.
+- A `<chapter>`, when present, comes after the timestamps and before any `<frame>`. It defines a chapter boundary at the cue block's start time only — see [Chapters](#chapters).
 - `<msecs value="…"/>` accepts any integer in `[0, 999]`.
-- `<bdiv>`, `<frame>`, `<audio>`, `<voice>`, and the timestamp elements are only meaningful inside a `<track>`.
+- `<bdiv>`, `<chapter>`, `<frame>`, `<audio>`, `<voice>`, and the timestamp elements are only meaningful inside a `<track>`.
 
 ### Split structure
 
@@ -2590,7 +2619,7 @@ None
 
 ##### `<frame>`
 
-A still image of the recording at a [`<track>`](#track) cue block. Shaped like [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
+The still image of the recording at a [`<track>`](#track) cue block's start time. Shaped like [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
 
 ###### Allowed Context
 
@@ -2610,7 +2639,7 @@ None
 
 ##### `<audio>`
 
-An audio clip for a [`<track>`](#track) cue block. Same shape as [`<frame>`](#frame): an optional element head followed by an optional [`<src>`](#src).
+The recording over a [`<track>`](#track) cue block's interval `[start, end]` — a temporal crop of the track's audio, as a [`<picture>`](#picture) crop corresponds to its page region. Requires the cue block to carry an end time; the timestamps are authoritative and the clip is a best-effort fragment. Same shape as [`<frame>`](#frame).
 
 ###### Allowed Context
 
@@ -2635,6 +2664,26 @@ Speaker attribution for a transcript turn within a [`<track>`](#track) cue block
 ###### Allowed Context
 
 Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Allowed |
+
+##### `<chapter>`
+
+A chapter or section title for a [`<track>`](#track). It marks a chapter boundary at the start time of the cue block that carries it; the chapter runs until the next [`<chapter>`](#chapter) (or `</track>`), and the region before the first [`<chapter>`](#chapter) is unchaptered. Only the start time matters — the cue block's end time bounds its transcript, not the chapter. Chapters form a flat partition (no nesting, no overlap). Handled like [`<text>`](#text) (may carry its own element head and inline formatting).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block, after the start (and optional end) timestamp and before any [`<frame>`](#frame).
 
 ###### Attributes
 
@@ -3609,6 +3658,8 @@ The token vocabulary trades off size and inference cost:
 | `</audio>` | [`audio`](#audio) end |
 | `<voice>` | [`voice`](#voice) start |
 | `</voice>` | [`voice`](#voice) end |
+| `<chapter>` | [`chapter`](#chapter) start |
+| `</chapter>` | [`chapter`](#chapter) end |
 | `<hours value="` | [`hours`](#hours) with `value` attribute start (out-of-range values) |
 | `<minutes value="` | [`minutes`](#minutes) with `value` attribute start (out-of-range values) |
 | `<seconds value="` | [`seconds`](#seconds) with `value` attribute start (out-of-range values) |

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- a <chapter> may carry its own element head (e.g. where the chapter title renders) -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    <chapter>
+      <location value="20"/><location value="20"/><location value="300"/><location value="60"/>
+      Act I
+    </chapter>
+    Curtain up.
+  </track>
+</doclang>

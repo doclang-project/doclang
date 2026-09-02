@@ -114,6 +114,8 @@ _FIXED_TOKENS: tuple[str, ...] = (
     "</audio>",
     "<voice>",
     "</voice>",
+    "<chapter>",
+    "</chapter>",
     '<hours value="',
     '<minutes value="',
     '<seconds value="',
