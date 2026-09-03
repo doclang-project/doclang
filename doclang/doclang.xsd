@@ -738,11 +738,13 @@
     </xs:complexType>
   </xs:element>
 
-  <!-- Timestamp run: hours? minutes seconds msecs? (hours/msecs default to 0 when omitted) -->
+  <!-- Timestamp run: hours? minutes? seconds msecs? -->
+  <!-- Only <seconds> is mandatory; hours, minutes and msecs default to 0 when omitted. -->
+  <!-- <seconds> is the per-run anchor: consecutive runs stay deterministically separable. -->
   <xs:group name="timestamp">
     <xs:sequence>
       <xs:element ref="dl:hours" minOccurs="0"/>
-      <xs:element ref="dl:minutes"/>
+      <xs:element ref="dl:minutes" minOccurs="0"/>
       <xs:element ref="dl:seconds"/>
       <xs:element ref="dl:msecs" minOccurs="0"/>
     </xs:sequence>
@@ -761,6 +763,9 @@
   </xs:complexType>
   <xs:element name="frame" type="dl:media_capture_type"/>
   <xs:element name="audio" type="dl:media_capture_type"/>
+
+  <!-- COVER: whole-track representative image (before the first cue block); same shape as frame -->
+  <xs:element name="cover" type="dl:media_capture_type"/>
 
   <!-- VOICE ELEMENT: speaker attribution; same content model as <text> -->
   <xs:element name="voice" type="dl:component_with_semantic_seq"/>
@@ -791,14 +796,15 @@
     </xs:sequence>
   </xs:group>
 
-  <!-- TRACK ELEMENT: optional element_head + track_cue_block* -->
+  <!-- TRACK ELEMENT: optional element_head + optional cover + track_cue_block* -->
   <!-- Semantic element: may optionally begin with element_head (per spec.md) -->
   <!-- mixed: a literal newline between consecutive unattributed transcript turns is allowed -->
-  <!-- Schematron enforces: must start with bdiv (after optional track-level element head) -->
+  <!-- Schematron enforces: first cue block is a bdiv (after the optional element head and cover) -->
   <xs:element name="track">
     <xs:complexType mixed="true">
       <xs:sequence>
         <xs:group ref="dl:element_head"/>
+        <xs:element ref="dl:cover" minOccurs="0"/>
         <xs:group ref="dl:track_cue_block" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
     </xs:complexType>

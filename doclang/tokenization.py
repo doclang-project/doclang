@@ -108,6 +108,8 @@ _FIXED_TOKENS: tuple[str, ...] = (
     "<track>",
     "</track>",
     "<bdiv/>",
+    "<cover>",
+    "</cover>",
     "<frame>",
     "</frame>",
     "<audio>",
