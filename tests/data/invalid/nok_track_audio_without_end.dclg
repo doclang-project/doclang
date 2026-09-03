@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- <audio> spans [start, end]; the cue block therefore needs an end time -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="4"/>
+    <audio><src uri="assets/clips/00-04.opus"/></audio>
+  </track>
+</doclang>

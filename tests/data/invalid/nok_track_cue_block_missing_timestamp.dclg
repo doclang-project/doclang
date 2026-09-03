@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- a cue block must open with a start timestamp -->
+  <track>
+    <bdiv/>
+    Just some text, no timestamp.
+  </track>
+</doclang>

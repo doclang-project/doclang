@@ -28,6 +28,27 @@
   </sch:pattern>
 
   <!-- ============================================ -->
+  <!-- TRACK: Must start with bdiv (after optional element head) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-structure">
+    <sch:rule context="dl:track[*]">
+      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom)][1]"/>
+      <sch:let name="text-before-first-bdiv" value="text()[following-sibling::dl:bdiv and not(preceding-sibling::dl:bdiv)][normalize-space(.) != '']"/>
+
+      <sch:assert test="not($first-non-header) or $first-non-header[self::dl:cover or self::dl:bdiv]">
+        Track must have bdiv (optionally preceded by a single cover) as first element after the optional element head (property elements: label, thread, xref, href, layer, location, caption, description, summary, custom).
+        Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
+      </sch:assert>
+
+      <sch:assert test="empty($text-before-first-bdiv)">
+        Track must not contain non-whitespace text before its first cue block (bdiv).
+        Found: '<sch:value-of select="normalize-space(string-join($text-before-first-bdiv, ''))"/>'
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
   <!-- TABLE: Must start with cell token (after optional element head) -->
   <!-- ============================================ -->
 
@@ -80,7 +101,7 @@
     <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption | dl:description | dl:summary |
                        dl:page_header | dl:page_footer | dl:footnote | dl:picture | dl:marker |
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
-                       dl:list | dl:table | dl:index | dl:group">
+                       dl:list | dl:table | dl:index | dl:group | dl:track | dl:voice | dl:chapter | dl:cover | dl:frame | dl:audio">
       <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:layer | dl:location | dl:caption | dl:description | dl:summary | dl:custom"/>
 
       <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]]"/>
@@ -351,6 +372,160 @@
 
       <sch:assert test="empty(dl:tabular) or (not(dl:src) and dl:tabular[1] is $first-body) or (dl:src and dl:tabular[1] is dl:src/following-sibling::*[1])">
         Element tabular must immediately follow src when src is present, otherwise it may be the first body element.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: must open with a start timestamp; no text before it -->
+  <!-- The cue block is the run of siblings after a <bdiv/> up to the next <bdiv/> -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-cue-block">
+    <sch:rule context="dl:track/dl:bdiv">
+      <sch:let name="next-bdiv" value="following-sibling::dl:bdiv[1]"/>
+      <sch:let name="cue-content" value="if ($next-bdiv)
+                                         then following-sibling::node()[following-sibling::dl:bdiv[1] is $next-bdiv]
+                                         else following-sibling::node()"/>
+      <sch:let name="first-elem" value="$cue-content[self::*][1]"/>
+      <sch:let name="first-elem-index" value="if ($first-elem)
+                                              then index-of($cue-content, $first-elem)[1]
+                                              else 0"/>
+      <sch:let name="text-before-first-elem" value="if ($first-elem-index > 0)
+                                                    then for $i in 1 to ($first-elem-index - 1)
+                                                         return $cue-content[$i][self::text()][normalize-space(.) != '']
+                                                    else $cue-content[self::text()][normalize-space(.) != '']"/>
+
+      <sch:assert test="not($first-elem) or $first-elem[self::dl:hours or self::dl:minutes or self::dl:seconds]">
+        A track cue block must begin with a start timestamp: its first element must be hours, minutes or seconds.
+        Found: <sch:value-of select="if ($first-elem) then name($first-elem) else 'nothing'"/>
+      </sch:assert>
+
+      <sch:assert test="empty($text-before-first-elem)">
+        A track cue block must not contain non-whitespace text before its start timestamp.
+        Found: '<sch:value-of select="normalize-space(string-join($text-before-first-elem, ''))"/>'
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: end timestamp must not precede the start timestamp -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-cue-block-timestamp-order">
+    <sch:rule context="dl:track/dl:bdiv">
+      <sch:let name="next-bdiv" value="following-sibling::dl:bdiv[1]"/>
+      <sch:let name="cue" value="if ($next-bdiv)
+                                 then following-sibling::*[following-sibling::dl:bdiv[1] is $next-bdiv]
+                                 else following-sibling::*"/>
+      <!-- <seconds> is the per-run anchor (the only mandatory component) -->
+      <sch:let name="secs" value="$cue[self::dl:seconds]"/>
+
+      <sch:let name="s1" value="$secs[1]"/>
+      <sch:let name="m1" value="$s1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h1" value="if ($m1) then $m1/preceding-sibling::*[1][self::dl:hours] else $s1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms1" value="$s1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="start-ms" value="3600000 * (if ($h1) then number($h1/@value) else 0)
+                                      + 60000 * (if ($m1) then number($m1/@value) else 0)
+                                      + 1000 * number($s1/@value)
+                                      + (if ($ms1) then number($ms1/@value) else 0)"/>
+
+      <sch:let name="s2" value="$secs[2]"/>
+      <sch:let name="m2" value="$s2/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h2" value="if ($m2) then $m2/preceding-sibling::*[1][self::dl:hours] else $s2/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms2" value="$s2/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="end-ms" value="3600000 * (if ($h2) then number($h2/@value) else 0)
+                                    + 60000 * (if ($m2) then number($m2/@value) else 0)
+                                    + 1000 * number($s2/@value)
+                                    + (if ($ms2) then number($ms2/@value) else 0)"/>
+
+      <sch:assert test="count($secs) != 2 or $end-ms ge $start-ms">
+        A track cue block end timestamp must not be earlier than its start timestamp.
+        Found start=<sch:value-of select="$start-ms"/>ms, end=<sch:value-of select="$end-ms"/>ms.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: cue blocks appear in non-decreasing order of start time -->
+  <!-- (blocks may still overlap, e.g. simultaneous speakers) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-cue-block-sequence">
+    <sch:rule context="dl:track/dl:bdiv[preceding-sibling::dl:bdiv]">
+      <sch:let name="prev-bdiv" value="preceding-sibling::dl:bdiv[1]"/>
+
+      <sch:let name="s1" value="following-sibling::dl:seconds[1]"/>
+      <sch:let name="m1" value="$s1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h1" value="if ($m1) then $m1/preceding-sibling::*[1][self::dl:hours] else $s1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms1" value="$s1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="start-ms" value="3600000 * (if ($h1) then number($h1/@value) else 0)
+                                      + 60000 * (if ($m1) then number($m1/@value) else 0)
+                                      + 1000 * number($s1/@value)
+                                      + (if ($ms1) then number($ms1/@value) else 0)"/>
+
+      <sch:let name="ps1" value="$prev-bdiv/following-sibling::dl:seconds[1]"/>
+      <sch:let name="pm1" value="$ps1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="ph1" value="if ($pm1) then $pm1/preceding-sibling::*[1][self::dl:hours] else $ps1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="pms1" value="$ps1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="prev-start-ms" value="3600000 * (if ($ph1) then number($ph1/@value) else 0)
+                                           + 60000 * (if ($pm1) then number($pm1/@value) else 0)
+                                           + 1000 * number($ps1/@value)
+                                           + (if ($pms1) then number($pms1/@value) else 0)"/>
+
+      <sch:assert test="$start-ms ge $prev-start-ms">
+        Track cue blocks must appear in non-decreasing order of start time.
+        Found this cue block start=<sch:value-of select="$start-ms"/>ms, previous cue block start=<sch:value-of select="$prev-start-ms"/>ms.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CHAPTER: a <chapter> marks a boundary at its cue block's start time; -->
+  <!-- consecutive chapter boundaries must be strictly increasing (no two chapters at one instant) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-chapter-strictly-increasing">
+    <sch:rule context="dl:track/dl:chapter[preceding-sibling::dl:chapter]">
+      <!-- start time of the cue block this <chapter> belongs to (first timestamp run after its <bdiv>) -->
+      <sch:let name="s1" value="preceding-sibling::dl:bdiv[1]/following-sibling::dl:seconds[1]"/>
+      <sch:let name="m1" value="$s1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h1" value="if ($m1) then $m1/preceding-sibling::*[1][self::dl:hours] else $s1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms1" value="$s1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="start-ms" value="3600000 * (if ($h1) then number($h1/@value) else 0)
+                                      + 60000 * (if ($m1) then number($m1/@value) else 0)
+                                      + 1000 * number($s1/@value)
+                                      + (if ($ms1) then number($ms1/@value) else 0)"/>
+
+      <sch:let name="ps1" value="preceding-sibling::dl:chapter[1]/preceding-sibling::dl:bdiv[1]/following-sibling::dl:seconds[1]"/>
+      <sch:let name="pm1" value="$ps1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="ph1" value="if ($pm1) then $pm1/preceding-sibling::*[1][self::dl:hours] else $ps1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="pms1" value="$ps1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="prev-start-ms" value="3600000 * (if ($ph1) then number($ph1/@value) else 0)
+                                           + 60000 * (if ($pm1) then number($pm1/@value) else 0)
+                                           + 1000 * number($ps1/@value)
+                                           + (if ($pms1) then number($pms1/@value) else 0)"/>
+
+      <sch:assert test="$start-ms gt $prev-start-ms">
+        Each chapter must begin strictly later than the previous chapter; two chapters cannot mark the same instant.
+        Found this chapter start=<sch:value-of select="$start-ms"/>ms, previous chapter start=<sch:value-of select="$prev-start-ms"/>ms.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: an <audio> clip spans [start, end], so its cue block needs an end time -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-audio-requires-end">
+    <sch:rule context="dl:track/dl:bdiv">
+      <sch:let name="next-bdiv" value="following-sibling::dl:bdiv[1]"/>
+      <sch:let name="cue" value="if ($next-bdiv)
+                                 then following-sibling::*[following-sibling::dl:bdiv[1] is $next-bdiv]
+                                 else following-sibling::*"/>
+
+      <sch:assert test="not($cue[self::dl:audio]) or count($cue[self::dl:minutes]) = 2">
+        A track cue block with an audio clip must carry an end time; the clip spans the cue block's interval [start, end].
       </sch:assert>
     </sch:rule>
   </sch:pattern>

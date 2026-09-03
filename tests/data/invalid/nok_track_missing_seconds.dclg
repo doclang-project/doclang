@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- a timestamp run requires both minutes and seconds -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/>
+    Seconds are missing.
+  </track>
+</doclang>

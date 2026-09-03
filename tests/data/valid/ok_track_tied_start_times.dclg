@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- two cue blocks sharing a start time; end times not used as a tie-breaker -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="4"/>
+    <minutes value="0"/><seconds value="12"/>
+    <voice>Alice</voice>
+    That's the long version.
+    <bdiv/>
+    <minutes value="0"/><seconds value="4"/>
+    <minutes value="0"/><seconds value="6"/>
+    <voice>Bob</voice>
+    Yep.
+  </track>
+</doclang>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- <chapter> must precede <frame> -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    <frame><src uri="assets/frames/00-00.jpg"/></frame>
+    <chapter>Too late</chapter>
+  </track>
+</doclang>

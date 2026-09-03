@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- single cue block: start time only, unwrapped transcript text -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/>
+    Hello, and welcome.
+  </track>
+</doclang>

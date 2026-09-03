@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <track>
+    <!-- speaker name in <voice>; the utterance follows as a sibling -->
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/>
+    <voice>John</voice>
+    Hi Mary!
+    <voice><italic>Mary</italic></voice>
+    <bold>Hello</bold> John!
+    <bdiv/>
+    <minutes value="0"/><seconds value="9"/>
+    First unattributed line.
+    Second unattributed line.
+  </track>
+</doclang>

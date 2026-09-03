@@ -1,0 +1,16 @@
+<doclang>
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/><msecs value="500"/>
+    <minutes value="0"/><seconds value="5"/>
+    <voice>Alice</voice>
+    Good morning.
+    <voice>Bob</voice>
+    Morning - did you see the report?
+    <bdiv/>
+    <minutes value="59"/><seconds value="58"/><msecs value="450"/>
+    <hours value="1"/><minutes value="0"/><seconds value="1"/><msecs value="210"/>
+    <frame><src uri="assets/frames/00-59-58.jpg"/></frame>
+    Wrapping up as we pass the hour.
+  </track>
+</doclang>

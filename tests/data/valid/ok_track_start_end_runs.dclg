@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- start + end timestamp, with optional hours and msecs, crossing the hour mark -->
+  <track>
+    <bdiv/>
+    <minutes value="59"/><seconds value="58"/><msecs value="450"/>
+    <hours value="1"/><minutes value="0"/><seconds value="1"/><msecs value="210"/>
+    So that concludes the first part.
+  </track>
+</doclang>
