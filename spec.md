@@ -1614,6 +1614,19 @@ Crossing the hour mark, and consecutive turns with no speaker attribution:
 </track>
 ```
 
+The kind of a track —for example whether it is audio-only or video— is not modelled explicitly. A producer that wants to record it may do so informally with a [`<label>`](#label) in the track's element head (`audio`, `video`, `podcast`, `screencast` etc.); label values are open and not validated. For instance:
+
+```xml
+<track>
+  <label value="audio"/>
+  <bdiv/>
+  <seconds value="0"/>
+  <seconds value="2"/>
+  <voice>Host</voice>
+  Welcome back to the show.
+</track>
+```
+
 #### Chapters
 
 A cue block may carry a `<chapter>` — a chapter or section title — placed just after its timestamps (before any `<frame>`). A `<chapter>` **marks a boundary at its cue block's start time and nothing else**: the chapter runs from that instant until the next cue block that carries a `<chapter>` (or `</track>`). The cue block's own end time bounds its transcript and audio, not the chapter. The stretch before the first `<chapter>` is unchaptered.
@@ -2580,7 +2593,7 @@ None
 
 ##### `<track>`
 
-Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body is a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
+Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
 
 ###### Allowed Context
 
@@ -2596,7 +2609,7 @@ None
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Only within a cue block transcript |
-| Primary semantic elements | Only [`<frame>`](#frame), [`<audio>`](#audio), and [`<voice>`](#voice), within cue blocks |
+| Primary semantic elements | [`<cover>`](#cover) before the first cue block; within cue blocks, [`<chapter>`](#chapter), [`<frame>`](#frame), [`<audio>`](#audio), and [`<voice>`](#voice) |
 
 ###### Example
 
@@ -2621,7 +2634,7 @@ None
 
 ##### `<cover>`
 
-A representative image for a [`<track>`](#track) as a whole — podcast artwork, a poster, a title card. Appears once, before the first cue block. Same shape as [`<frame>`](#frame): an optional element head followed by an optional [`<src>`](#src).
+A representative image for a [`<track>`](#track) as a whole — for example podcast artwork, a poster, or a title card. Appears once, before the first cue block. Same shape as [`<frame>`](#frame): an optional element head followed by an optional [`<src>`](#src).
 
 ###### Allowed Context
 
