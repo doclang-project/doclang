@@ -12,5 +12,9 @@
     <minutes value="0"/><seconds value="9"/>
     First unattributed line.
     Second unattributed line.
+    <bdiv/>
+    <minutes value="0"/><seconds value="12"/>
+    <voice>Esme</voice>Hee!
+    <voice/><italic>laughter</italic>
   </track>
 </doclang>

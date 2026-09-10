@@ -131,8 +131,8 @@ def _location_tokens(resolution: int) -> list[str]:
 
 
 def _hours_tokens() -> list[str]:
-    """Return concrete ``<hours value="N"/>`` tokens for ``N`` in ``[0, 10)``."""
-    return [f'<hours value="{value}"/>' for value in range(10)]
+    """Return concrete ``<hours value="N"/>`` tokens for ``N`` in ``[0, 24)``."""
+    return [f'<hours value="{value}"/>' for value in range(24)]
 
 
 def _minutes_tokens() -> list[str]:

@@ -524,7 +524,7 @@
                                  then following-sibling::*[following-sibling::dl:bdiv[1] is $next-bdiv]
                                  else following-sibling::*"/>
 
-      <sch:assert test="not($cue[self::dl:audio]) or count($cue[self::dl:minutes]) = 2">
+      <sch:assert test="not($cue[self::dl:audio]) or count($cue[self::dl:seconds]) = 2">
         A track cue block with an audio clip must carry an end time; the clip spans the cue block's interval [start, end].
       </sch:assert>
     </sch:rule>

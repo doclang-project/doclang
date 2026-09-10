@@ -1562,7 +1562,7 @@ A cue block consists of, in order:
 - an optional `<chapter>` — a chapter or section title (see [Chapters](#chapters) below), handled like [`<text>`](#text): it may carry its own element head and inline [formatting](#formatting).
 - an optional `<frame>` — a still image for the cue block's start time, with an optional element head and an optional [`<src>`](#src). Typically a video frame, but equally a slide, a keyframe, or any representative still for that moment. A point sample; valid on any cue block. (For a track-wide image, use `<cover>` instead.)
 - an optional `<audio>` — the recording over the cue block's interval `[start, end]`, with the same shape as `<frame>`. It is a temporal crop of the track's audio, the way a [`<picture>`](#picture) crop corresponds to its page region; the timestamps are authoritative and the clip is a best-effort fragment. Requires the cue block to carry an end time.
-- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting). When `<voice>` is omitted the turn belongs to an undefined speaker; a turn runs until the next `<voice>` or the end of the cue block.
+- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting); it runs until the next `<voice>` or the end of the cue block. An empty `<voice/>` ends the current speaker's turn — the text after it is unattributed. How unattributed text is interpreted — e.g. as an unknown speaker, no speaker (e.g. a sound description), continuation of the last named speaker, etc. — is application-defined.
 
 Minimal cue block (start time and one line of text) — `<hours>`, `<minutes>` and `<msecs>` omitted:
 
@@ -3702,7 +3702,7 @@ The token vocabulary trades off size and inference cost:
 | `<seconds value="` | [`seconds`](#seconds) with `value` attribute start (out-of-range values) |
 | `<msecs value="` | [`msecs`](#msecs) with `value` attribute start (out-of-range values) |
 | `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
-| `<hours value="0"/>`, `<hours value="1"/>`, ..., `<hours value="9"/>` | [`hours`](#hours) tokens with values from 0 to 9 |
+| `<hours value="0"/>`, `<hours value="1"/>`, ..., `<hours value="23"/>` | [`hours`](#hours) tokens with values from 0 to 23 |
 | `<minutes value="0"/>`, `<minutes value="1"/>`, ..., `<minutes value="59"/>` | [`minutes`](#minutes) tokens with values from 0 to 59 |
 | `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
 | `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
