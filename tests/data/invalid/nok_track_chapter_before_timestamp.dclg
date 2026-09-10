@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- <chapter> must come after the timestamps, not before -->
+  <track>
+    <bdiv/>
+    <chapter>Too early</chapter>
+    <minutes value="0"/><seconds value="0"/>
+    x
+  </track>
+</doclang>

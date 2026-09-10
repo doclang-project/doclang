@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- no non-whitespace text between a <bdiv/> and its start timestamp -->
+  <track>
+    <bdiv/>
+    stray text
+    <minutes value="0"/><seconds value="1"/>
+  </track>
+</doclang>

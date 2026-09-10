@@ -5,12 +5,30 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from doclang.tokenization import DEFAULT_MAX_RESOLUTION, get_special_tokens
+from doclang.tokenization import get_special_tokens
 
 SPEC_PATH = Path(__file__).resolve().parents[1] / "spec.md"
 
 _ROW_RE = re.compile(r"^\|(.+)\|(.+)\|\s*$", re.MULTILINE)
 _BACKTICK_RE = re.compile(r"`([^`]*)`")
+_RANGE_TOKEN_RE = re.compile(r'^(<\w+ value=")(\d+)("/>)$')
+
+
+def _parse_range_token(token: str) -> tuple[str, int, str]:
+    match = _RANGE_TOKEN_RE.match(token)
+    assert match is not None, f'not a `<name value="N"/>` token: {token!r}'
+    return match.group(1), int(match.group(2)), match.group(3)
+
+
+def _expand_range_row(backticked: list[str]) -> list[str]:
+    """Expand a ``...`` token-vocabulary row (e.g. ``<location value="0"/>``, ``<location
+    value="1"/>``, ..., ``<location value="511"/>``) into every concrete token, inferring the
+    step from the first two listed values and the bounds from the first and last."""
+    prefix, first, suffix = _parse_range_token(backticked[0])
+    _, second, _ = _parse_range_token(backticked[1])
+    _, last, _ = _parse_range_token(backticked[-1])
+    step = second - first
+    return [f"{prefix}{value}{suffix}" for value in range(first, last + 1, step)]
 
 
 def _tokens_from_spec() -> list[str]:
@@ -23,8 +41,7 @@ def _tokens_from_spec() -> list[str]:
         if column in ("Token", "---") or not column.startswith("`"):
             continue
         if "..." in column:
-            # The location row lists a `<location value="0"/>` ... `<location value="511"/>` range.
-            tokens.extend(f'<location value="{value}"/>' for value in range(DEFAULT_MAX_RESOLUTION))
+            tokens.extend(_expand_range_row(_BACKTICK_RE.findall(column)))
             continue
         tokens.extend(_BACKTICK_RE.findall(column))
 

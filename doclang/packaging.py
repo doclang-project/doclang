@@ -17,6 +17,8 @@ def pack(
     output: Union[str, Path, None] = None,
     pages: (Union[str, Path] | Sequence[Union[str, Path]] | Mapping[int, Union[str, Path]] | None) = None,
     assets: (Union[str, Path] | Mapping[str, Union[str, Path]] | None) = None,
+    audio: (Union[str, Path] | Sequence[Union[str, Path]] | Mapping[int, Union[str, Path]] | None) = None,
+    video: (Union[str, Path] | Sequence[Union[str, Path]] | Mapping[int, Union[str, Path]] | None) = None,
     validate: bool = False,
 ) -> Path:
     """Pack a DocLang markup file and optional media into a ``.dclx`` OPC archive.
@@ -31,11 +33,18 @@ def pack(
     paths (renumbered as ``1.ext``, ``2.ext``, …), or a mapping of page number
     to image path.
 
+    ``audio`` and ``video`` carry whole-track media, one file per ``<track>``,
+    placed under ``audio/`` and ``video/`` as ``{N}.{ext}`` where ``N`` is the
+    1-based position of the ``<track>`` in document order. Each accepts the same
+    forms as ``pages`` (directory, sequence, or ``{track_number: path}`` mapping);
+    the mapping form suits the common sparse case where only some tracks have media.
+
     ``assets`` may be a directory (copied into ``assets/``) or a mapping of
     archive-relative asset path to source file.
 
-    Symbolic links are refused for ``pages`` and ``assets`` (including entries
-    inside directories) so pack does not follow link targets into the archive.
+    Symbolic links are refused for ``pages``, ``audio``, ``video`` and ``assets``
+    (including entries inside directories) so pack does not follow link targets
+    into the archive.
 
     Returns the resolved path to the created archive.
 
@@ -48,5 +57,7 @@ def pack(
         output=output,
         pages=pages,
         assets=assets,
+        audio=audio,
+        video=video,
         validate=validate,
     )

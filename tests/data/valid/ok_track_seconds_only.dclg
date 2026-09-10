@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- only <seconds> is required; hours/minutes/msecs omitted -->
+  <track>
+    <bdiv/>
+    <seconds value="2"/>
+    Hello, and welcome.
+    <bdiv/>
+    <seconds value="9"/><msecs value="250"/>
+    <seconds value="14"/>
+    <voice>Host</voice>
+    Let's get started.
+  </track>
+</doclang>

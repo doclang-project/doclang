@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- overlapping cue blocks are allowed (e.g. simultaneous speakers) -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/>
+    <minutes value="0"/><seconds value="8"/>
+    <voice>Alice</voice>
+    ... and that's the main point.
+    <bdiv/>
+    <minutes value="0"/><seconds value="6"/>
+    <minutes value="0"/><seconds value="9"/>
+    <voice>Bob</voice>
+    Exactly right.
+  </track>
+</doclang>

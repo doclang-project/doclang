@@ -200,6 +200,38 @@ def pack(
         file_okay=False,
         dir_okay=True,
     ),
+    audio_dir: Path | None = typer.Option(
+        None,
+        "--audio-dir",
+        help="Directory of whole-track audio files (2.mp3, 4.ogg, …)",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+    ),
+    audio_files: list[Path] | None = typer.Option(
+        None,
+        "--audio",
+        help="Whole-track audio file; repeat to add tracks in order (renumbered as 1.ext, 2.ext, …)",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+    ),
+    video_dir: Path | None = typer.Option(
+        None,
+        "--video-dir",
+        help="Directory of whole-track video files (3.mp4, 4.mkv, …)",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+    ),
+    video_files: list[Path] | None = typer.Option(
+        None,
+        "--video",
+        help="Whole-track video file; repeat to add tracks in order (renumbered as 1.ext, 2.ext, …)",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+    ),
     validate_before_pack: bool = typer.Option(False, "--validate", help="Validate document before packing"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
 ):
@@ -207,8 +239,10 @@ def pack(
     Pack a DocLang markup file and optional media into a .dclx archive.
 
     DOCUMENT is copied to document.xml. Optional page images (--pages, --page)
-    are placed under pages/. Optional payload files (--assets, --asset) are
-    placed under assets/ for URIs referenced in the markup. OPC metadata
+    are placed under pages/. Optional whole-track audio/video (--audio-dir,
+    --audio, --video-dir, --video) are placed under audio/ and video/ as
+    {N}.{ext} for the Nth <track>. Optional payload files (--assets, --asset)
+    are placed under assets/ for URIs referenced in the markup. OPC metadata
     ([Content_Types].xml, _rels/.rels) is generated automatically.
 
     By default, writes <document>.dclx next to the input file.
@@ -219,6 +253,7 @@ def pack(
         doclang pack markup.dclg -o report.dclx --pages screenshots/
         doclang pack markup.dclg --page a.png --page b.png
         doclang pack markup.dclg --asset chart.svg=exports/diagram.svg
+        doclang pack markup.dclg --audio-dir recordings/ --video-dir recordings/
         doclang pack markup.dclg --assets payload/ --validate
     """
     if pages_dir is not None and page_files:
@@ -226,6 +261,12 @@ def pack(
         raise typer.Exit(1)
     if assets_dir is not None and asset_mappings:
         typer.echo("Error: --assets and --asset are mutually exclusive", err=True)
+        raise typer.Exit(1)
+    if audio_dir is not None and audio_files:
+        typer.echo("Error: --audio-dir and --audio are mutually exclusive", err=True)
+        raise typer.Exit(1)
+    if video_dir is not None and video_files:
+        typer.echo("Error: --video-dir and --video are mutually exclusive", err=True)
         raise typer.Exit(1)
 
     output_path = output or document.with_suffix(".dclx")
@@ -246,12 +287,17 @@ def pack(
     else:
         assets = None
 
+    audio: Path | list[Path] | None = audio_dir if audio_dir is not None else (audio_files or None)
+    video: Path | list[Path] | None = video_dir if video_dir is not None else (video_files or None)
+
     try:
         created = pack_document(
             document,
             output=output_path,
             pages=pages,
             assets=assets,
+            audio=audio,
+            video=video,
             validate=validate_before_pack,
         )
     except ValidationError as exc:

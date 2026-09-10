@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- a chapter boundary is a single instant: two chapters cannot share a start time -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="5"/>
+    <chapter>A</chapter>
+    first
+    <bdiv/>
+    <hours value="0"/><minutes value="0"/><seconds value="5"/>
+    <chapter>B</chapter>
+    same instant
+  </track>
+</doclang>

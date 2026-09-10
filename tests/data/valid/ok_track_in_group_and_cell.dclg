@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- track is a primary semantic element: valid inside a group and inside a table cell -->
+  <group>
+    <track>
+      <bdiv/>
+      <minutes value="0"/><seconds value="2"/>
+      Inside a group.
+    </track>
+  </group>
+  <table>
+    <fcel/>
+    <track>
+      <bdiv/>
+      <minutes value="0"/><seconds value="3"/>
+      Inside a table cell.
+    </track>
+    <nl/>
+  </table>
+</doclang>

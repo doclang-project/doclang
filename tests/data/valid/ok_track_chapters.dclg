@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- <chapter> follows the timestamps; marks a boundary at the cue block's start time -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    Cold open, no chapter yet.
+    <bdiv/>
+    <minutes value="0"/><seconds value="20"/>
+    <chapter>Introduction</chapter>
+    Welcome, everyone.
+    <bdiv/>
+    <minutes value="0"/><seconds value="50"/>
+    Still the introduction; this cue block starts no chapter.
+    <bdiv/>
+    <minutes value="1"/><seconds value="30"/>
+    <chapter><italic>Part 1</italic> — Background</chapter>
+    Let's start with some history.
+  </track>
+</doclang>

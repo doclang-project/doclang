@@ -17,6 +17,17 @@ _CONTENT_TYPES_XML = """\
   <Default Extension="jpg" ContentType="image/jpeg"/>
   <Default Extension="jpeg" ContentType="image/jpeg"/>
   <Default Extension="webp" ContentType="image/webp"/>
+  <Default Extension="mp3" ContentType="audio/mpeg"/>
+  <Default Extension="m4a" ContentType="audio/mp4"/>
+  <Default Extension="aac" ContentType="audio/aac"/>
+  <Default Extension="ogg" ContentType="audio/ogg"/>
+  <Default Extension="opus" ContentType="audio/ogg"/>
+  <Default Extension="wav" ContentType="audio/wav"/>
+  <Default Extension="flac" ContentType="audio/flac"/>
+  <Default Extension="mp4" ContentType="video/mp4"/>
+  <Default Extension="webm" ContentType="video/webm"/>
+  <Default Extension="mkv" ContentType="video/x-matroska"/>
+  <Default Extension="mov" ContentType="video/quicktime"/>
   <Override PartName="/document.xml" ContentType="application/vnd.doclang.document+xml"/>
 </Types>
 """
@@ -36,6 +47,9 @@ PagesInput = Union[
     Sequence[Union[str, Path]],
     Mapping[int, Union[str, Path]],
 ]
+
+# Whole-track media (audio/, video/) uses the same 1-based positional model as pages/.
+MediaInput = PagesInput
 
 AssetsInput = Union[
     str,
@@ -96,25 +110,71 @@ def _place_document(stage: Path, document: Path) -> None:
     shutil.copy2(document, stage / "document.xml")
 
 
-def _place_pages(stage: Path, pages: PagesInput) -> None:
-    pages_dir = stage / "pages"
-    if isinstance(pages, Mapping):
-        for page_number, source in pages.items():
-            if not isinstance(page_number, int) or page_number < 1:
-                raise PackagingError(f"Page numbers must be positive integers, got {page_number!r}")
+def _place_indexed(
+    stage: Path,
+    spec: PagesInput,
+    *,
+    subdir: str,
+    file_label: str,
+    dir_label: str,
+    number_label: str,
+) -> None:
+    """Place 1-based positionally-indexed files (``{N}.{ext}``) under ``stage/subdir``.
+
+    Shared by ``pages/`` (page images) and ``audio/`` / ``video/`` (whole-track media),
+    which all key a file to an integer position in the document.
+    """
+    target_dir = stage / subdir
+    if isinstance(spec, Mapping):
+        for number, source in spec.items():
+            if not isinstance(number, int) or number < 1:
+                raise PackagingError(f"{number_label} must be positive integers, got {number!r}")
             source_path = Path(source)
-            destination = pages_dir / f"{page_number}{source_path.suffix}"
-            _copy_file(source_path, destination, label="Page file")
+            destination = target_dir / f"{number}{source_path.suffix}"
+            _copy_file(source_path, destination, label=file_label)
         return
 
-    if isinstance(pages, str | Path):
-        _copy_tree_into(Path(pages), pages_dir, label="Pages directory")
+    if isinstance(spec, str | Path):
+        _copy_tree_into(Path(spec), target_dir, label=dir_label)
         return
 
-    for index, source in enumerate(pages, start=1):
+    for index, source in enumerate(spec, start=1):
         source_path = Path(source)
-        destination = pages_dir / f"{index}{source_path.suffix}"
-        _copy_file(source_path, destination, label="Page file")
+        destination = target_dir / f"{index}{source_path.suffix}"
+        _copy_file(source_path, destination, label=file_label)
+
+
+def _place_pages(stage: Path, pages: PagesInput) -> None:
+    _place_indexed(
+        stage,
+        pages,
+        subdir="pages",
+        file_label="Page file",
+        dir_label="Pages directory",
+        number_label="Page numbers",
+    )
+
+
+def _place_audio(stage: Path, audio: MediaInput) -> None:
+    _place_indexed(
+        stage,
+        audio,
+        subdir="audio",
+        file_label="Audio file",
+        dir_label="Audio directory",
+        number_label="Audio track numbers",
+    )
+
+
+def _place_video(stage: Path, video: MediaInput) -> None:
+    _place_indexed(
+        stage,
+        video,
+        subdir="video",
+        file_label="Video file",
+        dir_label="Video directory",
+        number_label="Video track numbers",
+    )
 
 
 def _place_assets(stage: Path, assets: AssetsInput) -> None:
@@ -164,6 +224,8 @@ def _pack(
     output: Union[str, Path, None] = None,
     pages: PagesInput | None = None,
     assets: AssetsInput | None = None,
+    audio: MediaInput | None = None,
+    video: MediaInput | None = None,
     validate: bool = False,
 ) -> Path:
     document_path = Path(document)
@@ -176,6 +238,10 @@ def _pack(
             _place_pages(stage, pages)
         if assets is not None:
             _place_assets(stage, assets)
+        if audio is not None:
+            _place_audio(stage, audio)
+        if video is not None:
+            _place_video(stage, video)
         _write_opc_metadata(stage)
 
         if validate:

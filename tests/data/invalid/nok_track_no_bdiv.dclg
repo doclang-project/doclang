@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- non-empty track body must begin with <bdiv/> -->
+  <track>
+    <minutes value="0"/><seconds value="1"/>
+    Missing the cue-block delimiter.
+  </track>
+</doclang>

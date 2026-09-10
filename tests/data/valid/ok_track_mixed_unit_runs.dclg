@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- terse early cues, fuller runs once past the minute mark -->
+  <track>
+    <bdiv/>
+    <seconds value="55"/>
+    still under a minute
+    <bdiv/>
+    <minutes value="1"/><seconds value="3"/>
+    <minutes value="1"/><seconds value="8"/>
+    now with minutes
+  </track>
+</doclang>

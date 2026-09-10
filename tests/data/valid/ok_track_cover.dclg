@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- a track-wide <cover> image, before the first cue block -->
+  <track>
+    <label value="podcast"/>
+    <cover>
+      <caption>Episode 12 artwork</caption>
+      <src uri="assets/cover.png"/>
+    </cover>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    <voice>Host</voice>
+    Welcome back to the show.
+  </track>
+</doclang>

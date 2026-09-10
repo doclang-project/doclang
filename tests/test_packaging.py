@@ -82,6 +82,87 @@ def test_pack_with_pages_mapping(tmp_path: Path) -> None:
     assert "pages/2.png" not in members
 
 
+def test_pack_archive_demo_with_audio_directory(tmp_path: Path) -> None:
+    output = tmp_path / "demo.dclx"
+
+    pack(
+        ARCHIVE_DEMO / "document.xml",
+        output=output,
+        pages=ARCHIVE_DEMO / "pages",
+        audio=ARCHIVE_DEMO / "audio",
+        validate=True,
+    )
+
+    members = _zip_members(output)
+    assert "audio/1.wav" in members
+    assert "pages/1.png" in members
+
+
+def test_pack_with_audio_and_video_mapping(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_track_frame_audio.dclg"
+    source = ARCHIVE_DEMO / "pages" / "1.png"
+    track_two_audio = tmp_path / "two.mp3"
+    track_two_audio.write_bytes(source.read_bytes())
+    track_three_video = tmp_path / "three.mp4"
+    track_three_video.write_bytes(source.read_bytes())
+    output = tmp_path / "media.dclx"
+
+    pack(document, output=output, audio={2: track_two_audio}, video={3: track_three_video})
+
+    members = _zip_members(output)
+    assert "audio/2.mp3" in members
+    assert "video/3.mp4" in members
+    assert "audio/1.mp3" not in members
+
+
+def test_pack_with_audio_sequence_renumbers_from_one(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_track_frame_audio.dclg"
+    source = ARCHIVE_DEMO / "pages" / "1.png"
+    first = tmp_path / "a.ogg"
+    first.write_bytes(source.read_bytes())
+    output = tmp_path / "seq.dclx"
+
+    pack(document, output=output, audio=[first])
+
+    assert "audio/1.ogg" in _zip_members(output)
+
+
+def test_pack_with_video_directory_preserves_names(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_track_frame_audio.dclg"
+    source = ARCHIVE_DEMO / "pages" / "1.png"
+    video_dir = tmp_path / "clips"
+    video_dir.mkdir()
+    (video_dir / "3.webm").write_bytes(source.read_bytes())
+    output = tmp_path / "viddir.dclx"
+
+    pack(document, output=output, video=video_dir)
+
+    assert "video/3.webm" in _zip_members(output)
+
+
+def test_pack_rejects_zero_audio_track_number(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_track_frame_audio.dclg"
+    source = tmp_path / "a.mp3"
+    source.write_bytes(b"audio")
+
+    with pytest.raises(PackagingError, match="positive integers"):
+        pack(document, output=tmp_path / "bad.dclx", audio={0: source})
+
+
+def test_pack_rejects_symlink_audio_file(tmp_path: Path) -> None:
+    document = VALID_DIR / "ok_track_frame_audio.dclg"
+    secret = tmp_path / "secret.mp3"
+    secret.write_bytes(b"audio")
+    link = tmp_path / "1.mp3"
+    link.symlink_to(secret)
+    output = tmp_path / "symlink-audio.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(document, output=output, audio=[link])
+
+    assert not output.exists()
+
+
 def test_pack_with_asset_mapping(tmp_path: Path) -> None:
     document = VALID_DIR / "ok_description_element_head.dclg"
     asset_source = ARCHIVE_DEMO / "pages" / "1.png"

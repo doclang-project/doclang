@@ -18,5 +18,21 @@
     <location value="150"/>
     B
   </text>
+  <track>
+    <location value="40"/>
+    <location value="400"/>
+    <location value="470"/>
+    <location value="470"/>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    <minutes value="0"/><seconds value="1"/><msecs value="262"/>
+    <voice>Narrator</voice>
+    Hello from page two.
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/><msecs value="62"/>
+    <minutes value="0"/><seconds value="3"/><msecs value="94"/>
+    <voice>Narrator</voice>
+    That is all for now.
+  </track>
   <page_break/>
 </doclang>

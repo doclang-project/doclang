@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- chapter B's boundary (01:15) falls inside chapter A's still-open cue block (ends 01:30) -->
+  <track>
+    <bdiv/>
+    <minutes value="1"/><seconds value="0"/>
+    <minutes value="1"/><seconds value="30"/>
+    <chapter>A</chapter>
+    A's content runs to 1:30.
+    <bdiv/>
+    <minutes value="1"/><seconds value="15"/>
+    <minutes value="1"/><seconds value="45"/>
+    <chapter>B</chapter>
+    B begins at 1:15 regardless.
+  </track>
+</doclang>
