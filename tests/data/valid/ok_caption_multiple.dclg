@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- multiple captions in the element head, followed by description and summary -->
+  <picture>
+    <caption>FIG. 1. System architecture</caption>
+    <caption>Source: internal design review</caption>
+    <description>Block diagram of the system.</description>
+    <summary>Shows the main components.</summary>
+    <src uri="fig1.png"/>
+  </picture>
+
+  <!-- multiple captions on a table, after location -->
+  <table>
+    <location value="40"/><location value="130"/>
+    <location value="440"/><location value="300"/>
+    <caption>Table 1: Results</caption>
+    <caption>Table 1 (cont.)</caption>
+    <fcel/>Value<nl/>
+  </table>
+
+</doclang>

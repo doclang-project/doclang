@@ -218,7 +218,7 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, location_block, caption, description, summary, custom -->
+  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, location_block, zero or more captions, description, summary, custom -->
   <!-- ============================================ -->
 
   <xs:group name="element_head">
@@ -231,7 +231,7 @@
       </xs:choice>
       <xs:element ref="dl:layer" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
-      <xs:element ref="dl:caption" minOccurs="0"/>
+      <xs:element ref="dl:caption" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element ref="dl:description" minOccurs="0"/>
       <xs:element ref="dl:summary" minOccurs="0"/>
       <xs:element ref="dl:custom" minOccurs="0"/>

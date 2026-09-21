@@ -152,7 +152,7 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
 - [`<layer>`](#layer) (optional)
 - optional sequence of 4 [`<location>`](#location)s, whereby values are interpreted in alternating axis order, as `x_min, y_min, x_max, y_max` (after resolution normalization), w.r.t. the top-left corner of the page
-- [`<caption>`](#caption) (optional)
+- [`<caption>`](#caption) (optional, may be repeated)
 - [`<description>`](#description) (optional)
 - [`<summary>`](#summary) (optional)
 - [`<custom>`](#custom) (optional)
@@ -2573,7 +2573,7 @@ None
 
 ##### `<caption>`
 
-Optional part of the element head for capturing an associated caption. Unlike [`<description>`](#description) or [`<summary>`](#summary), [`<caption>`](#caption) is an actual document component, which can have its own location information etc. For example, a caption shown underneath a chart.
+Optional part of the element head for capturing an associated caption. Unlike [`<description>`](#description) or [`<summary>`](#summary), [`<caption>`](#caption) is an actual document component, which can have its own location information etc. For example, a caption shown underneath a chart. An element head may contain multiple captions, e.g. a figure with both a title above and a note below, or the same caption in several languages.
 
 ###### Allowed Context
 
