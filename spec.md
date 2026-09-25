@@ -19,11 +19,11 @@ DocLang aims to address these challenges by providing a minimalist, unambiguous 
 - Maintains token efficiency by defining controlled vocabulary of tags and attributes
 - Eliminates ambiguity by enforcing a well defined set of tags with restricted, non generic usage ( and preserves semantic clarity )
 
-This standard builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
+This document builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
 
 ### Scope
 
-This standard specifies:
+This document specifies:
 
 - The syntax and semantics of the DocLang markup language
 - Rules for encoding document structure, content, and metadata
@@ -93,7 +93,7 @@ This denotes an `elem` element, including its properties (`size` and `color`) an
 For an element with multiple possible property values, the attribute syntax can lead to an increased complexity of the respective possible tokenized representations.
 For instance, the following could all be valid variants of an `elem` start tag: `<elem size="300" color="#aabbcc">`, `<elem size="42">`, `<elem color="#112233">`, `<elem>`.
 
-Aiming at LLM-friendliness, in such cases, the DocLang format often favors an alternative representation of property semantics, namely captured as respective elements leading the content.
+Aiming at LLM-friendliness, in such cases, DocLang often favors an alternative representation of property semantics, namely captured as respective elements leading the content.
 The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, empty elements are used too.
 
 This representation can reduce the number of tokens and streamline how XML is mapped to them, making it easier for language models to learn and predict.
@@ -189,7 +189,7 @@ In the example further below:
 
 ### Version Management and Compatibility
 
-DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
+DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the version of this document against which the document is intended to be validated.
 
 #### Semantic Versioning Principles
 
@@ -3521,7 +3521,7 @@ Additional special cases:
 
 #### Custom vocabulary naming and namespacing
 
-Content inside [`<custom>`](#custom) is implementation-defined and not governed by this standard.
+Content inside [`<custom>`](#custom) is implementation-defined and not governed by this document.
 To improve interoperability and reduce naming collisions, the following recommendations apply:
 
 - Producers of shared custom vocabularies SHOULD use formal XML namespaces with stable namespace URIs.
@@ -3670,7 +3670,7 @@ The token vocabulary trades off size and inference cost:
 
 ### Future Extensions
 
-These features are considered for future versions of the standard.
+These features are considered for future versions of Doclang.
 
 #### Horizontal Threading
 
@@ -3753,7 +3753,7 @@ They are **informative**, not normative, unless explicitly stated otherwise.
 These references are intended to:
 - Clarify regulatory or industry concepts reflected by the metadata elements
 - Assist implementers in mapping DocLang governance signals to existing compliance programs
-- Avoid re-defining legal or regulatory obligations within this standard
+- Avoid re-defining legal or regulatory obligations within this document
 
 DocLang governance metadata does **not** claim conformance to any listed framework by itself.
 Rather, it provides structured, machine-readable signals that downstream systems MAY use to support compliance, risk management, and audit workflows.
@@ -4204,7 +4204,7 @@ Metadata elements are meant to capture information that is not directly part of 
   - or in combination with other context, e.g. from external knowledge sources
 - or reflects properties of the upstream pipeline, e.g. the VLM that generated the document.
 
-As applications can have varying requirements, this standard defines a set of reserved metadata elements for common use
+As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
 -->
