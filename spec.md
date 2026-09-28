@@ -2,6 +2,12 @@
 
 Version: 0.7
 
+## Foreword
+
+This document was prepared by the Joint Development Foundation (JDF) and drafted in accordance with its editorial rules.
+
+Any feedback or questions on this document should be directed to the [Doclang GitHub repo](https://github.com/doclang-project/doclang) or Doclang Slack channel [#doclang-project](https://lfaifoundation.slack.com/archives/C0BAYP8898E).
+
 ## Introduction and Overview
 
 ### Foreword
