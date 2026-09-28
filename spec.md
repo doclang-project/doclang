@@ -1624,7 +1624,7 @@ Chapters therefore form a **flat partition** of the timeline: no nesting, no ove
 
 Because only the start time counts, a chapter boundary may fall inside an earlier, still-open cue block. Given a cue block with `<chapter>A</chapter>` starting at `01:00` and one with `<chapter>B</chapter>` starting at `01:15`, chapter A is `[01:00, 01:15)` and B begins at `01:15` — even if A's cue block carries transcript out to `01:30`.
 
-Chapters MUST begin at strictly increasing times — two chapters cannot mark the same instant. A `<chapter>` has no attributes in this version; nesting would be a future `level` attribute.
+Chapters must begin at strictly increasing times — two chapters cannot mark the same instant. A `<chapter>` has no attributes in this version; nesting would be a future `level` attribute.
 
 Notes:
 
@@ -3434,7 +3434,7 @@ assets/                # optional — files referenced from markup
 
 ##### `[Content_Types].xml` (required)
 
-Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
+Declares content types for package parts. Must include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. should declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
 
 Example:
 
@@ -3451,7 +3451,7 @@ Example:
 
 ##### `_rels/.rels` (required)
 
-Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
+Package-level relationships. Must contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
 
 Example:
 
@@ -3476,7 +3476,7 @@ Optional raster images for review. Name files `{N}.{png|jpg|jpeg|webp}` with 1-b
 
 ##### `video/` (optional)
 
-Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` MUST NOT exceed the number of `<track>` elements in the DocLang instance.
+Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` must not exceed the number of `<track>` elements in the document.
 
 ##### `assets/` (optional)
 
@@ -3528,11 +3528,11 @@ Additional special cases:
 Content inside [`<custom>`](#custom) is implementation-defined and not governed by this document.
 To improve interoperability and reduce naming collisions, the following recommendations apply:
 
-- Producers of shared custom vocabularies SHOULD use formal XML namespaces with stable namespace URIs.
-- Processors SHOULD treat the namespace URI as the namespace identifier and MUST NOT assume semantic meaning from prefix names alone.
-- For private or local use where formal namespaces are not used, producers SHOULD use collision-resistant element names prefixed with a stable organization or project identifier (e.g. `acme_`).
-- Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
-- Producers SHOULD document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
+- Producers of shared custom vocabularies should use formal XML namespaces with stable namespace URIs.
+- Processors should treat the namespace URI as the namespace identifier and must not assume semantic meaning from prefix names alone.
+- For private or local use where formal namespaces are not used, producers should use collision-resistant element names prefixed with a stable organization or project identifier (e.g. `acme_`).
+- Producers should avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
+- Producers should document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
 
 #### Token vocabulary
 
@@ -3700,7 +3700,7 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - each `author` element can optionally begin with one or more `affiliation` elements
 - `date`
 - `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
-- `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
+- `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content must be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries may be provided.
 - `generated_by`, upstream pipeline information, e.g. VLM ID
 - `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
 - `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
@@ -3747,7 +3747,7 @@ Here is an example:
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
 These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
 
-Governance and compliance metadata MUST be expressed at the document level inside `<head>` and MAY be overridden at component level for finer-grained control.
+Governance and compliance metadata must be expressed at the document level inside `<head>` and may be overridden at component level for finer-grained control.
 
 ###### Standards reference and interpretation
 
@@ -3760,7 +3760,7 @@ These references are intended to:
 - Avoid re-defining legal or regulatory obligations within this document
 
 DocLang governance metadata does **not** claim conformance to any listed framework by itself.
-Rather, it provides structured, machine-readable signals that downstream systems MAY use to support compliance, risk management, and audit workflows.
+Rather, it provides structured, machine-readable signals that downstream systems may use to support compliance, risk management, and audit workflows.
 
 The following standards and regulations are commonly referenced:
 
@@ -3776,7 +3776,7 @@ The following standards and regulations are commonly referenced:
 | **FedRAMP** | U.S. government program defining security requirements for cloud services used by federal agencies. |
 
 Where multiple standards are referenced for a single metadata element, the intent is to indicate conceptual alignment rather than impose cumulative obligations.
-Implementers SHOULD consult authoritative sources and legal counsel to determine applicability within their specific legal and regulatory context.
+Implementers should consult authoritative sources and legal counsel to determine applicability within their specific legal and regulatory context.
 
 ###### Governance narrative and flow
 
@@ -3825,8 +3825,8 @@ This section uses the following terminology consistently:
 - **Training** refers to using content for model training, fine-tuning, evaluation, or benchmarking.
 - **Artifacts** refers to derived outputs created by processing the DocLang instance (e.g., extracted datasets, embeddings/indexes, caches, training datasets).
 
-Where an element carries an enumerated value (e.g., `pii_status`, `rag_embedding_scope`), implementations SHOULD use a controlled vocabulary.
-Where an element carries a boolean, implementations SHOULD use explicit `true` / `false` values.
+Where an element carries an enumerated value (e.g., `pii_status`, `rag_embedding_scope`), implementations should use a controlled vocabulary.
+Where an element carries a boolean, implementations should use explicit `true` / `false` values.
 
 ###### Governance overview
 
@@ -3867,9 +3867,9 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 ###### Privacy and PII controls
 
 This subsection defines governance signals related to personal data detection, sensitivity, and permitted handling.
-Implementations SHOULD use these elements to drive privacy-aware processing (e.g., redaction, restricted access, minimization).
+Implementations should use these elements to drive privacy-aware processing (e.g., redaction, restricted access, minimization).
 
-The following optional elements MAY be provided to describe personal data presence, sensitivity, permitted processing, and privacy-related obligations.
+The following optional elements may be provided to describe personal data presence, sensitivity, permitted processing, and privacy-related obligations.
 Unless otherwise required by an implementation, these elements are intended to be expressed at the document level inside `<head>`.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
@@ -3895,17 +3895,17 @@ Unless otherwise required by an implementation, these elements are intended to b
 | `automated_decisioning_relevance` | Indicates whether automated decision-making/profiling obligations apply. | GDPR Art. 22 |
 | `logging_monitoring_enabled` | Indicates whether logging/monitoring is enabled for access and processing (accountability/auditability). | ISO 27001 A.12/A.16; GDPR Art. 5(2) |
 
-Implementations SHOULD define controlled vocabularies (and, where applicable, boolean conventions) for these elements.
-If an organization already has established internal taxonomies for classification, purpose, lawful basis, access tiers, or transfer mechanisms, those SHOULD be used consistently.
+Implementations should define controlled vocabularies (and, where applicable, boolean conventions) for these elements.
+If an organization already has established internal taxonomies for classification, purpose, lawful basis, access tiers, or transfer mechanisms, those should be used consistently.
 
 ###### Data extraction controls
 
 This subsection defines governance signals that constrain automated extraction, transformation, and downstream use of extracted fields.
-Implementations SHOULD use these elements to ensure purpose limitation and auditability of extraction.
+Implementations should use these elements to ensure purpose limitation and auditability of extraction.
 
-The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the DocLang instance.
+The following optional elements may be provided to express constraints and obligations related to automated or manual data extraction from the document.
 These elements are intended to guide downstream systems that perform field extraction, transformation, enrichment, or export.
-Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
+Unless otherwise required by an implementation, these elements should be expressed at the document level inside `<head>`, and may be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
@@ -3924,17 +3924,17 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 | `human_in_the_loop_required` | Indicates whether human review/approval is required before or after extraction. | ISO 23894; ISO 27701 |
 | `automated_decisioning_dependency` | Indicates whether extracted data feeds automated decision-making systems. | GDPR Art. 22 |
 
-Implementations SHOULD define controlled vocabularies for scope, purpose, granularity, transformations, and output constraints.
-Where extraction interacts with PII, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
+Implementations should define controlled vocabularies for scope, purpose, granularity, transformations, and output constraints.
+Where extraction interacts with PII, these elements should be interpreted in conjunction with the Privacy and PII controls defined above.
 
 ###### RAG and retrieval controls
 
 This subsection defines governance signals that constrain whether and how document content may be embedded, indexed, chunked, retrieved, and presented to models during retrieval-augmented generation.
-Implementations SHOULD use these elements to control exposure, leakage risk, and attribution requirements.
+Implementations should use these elements to control exposure, leakage risk, and attribution requirements.
 
-The following optional elements MAY be provided to govern whether and how document content may be embedded, indexed, retrieved, and surfaced to models or users as part of retrieval-augmented generation (RAG) workflows.
+The following optional elements may be provided to govern whether and how document content may be embedded, indexed, retrieved, and surfaced to models or users as part of retrieval-augmented generation (RAG) workflows.
 These elements are intended to control exposure risk, attribution, and downstream use of retrieved content.
-Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
+Unless otherwise required by an implementation, these elements should be expressed at the document level inside `<head>`, and may be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
@@ -3954,17 +3954,17 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 | `rag_audit_retention` | Specifies retention period for RAG access and retrieval logs. | GDPR Art. 5(1)(e) |
 | `rag_model_scope` | Restricts which models or model classes may access this content via RAG. | ISO 23894; internal governance |
 
-Implementations SHOULD define controlled vocabularies for embedding scope, chunking constraints, query restrictions, and model scope.
-Where RAG interacts with PII or sensitive data, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
+Implementations should define controlled vocabularies for embedding scope, chunking constraints, query restrictions, and model scope.
+Where RAG interacts with PII or sensitive data, these elements should be interpreted in conjunction with the Privacy and PII controls defined above.
 
 ###### Document training controls
 
 This subsection defines governance signals that constrain whether and how document content may be used for training, fine-tuning, or evaluation of models.
-Implementations SHOULD use these elements to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
+Implementations should use these elements to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
 
-The following optional elements MAY be provided to govern whether and how document content may be used for model training, fine-tuning, evaluation, or benchmarking.
+The following optional elements may be provided to govern whether and how document content may be used for model training, fine-tuning, evaluation, or benchmarking.
 These elements are intended to ensure licensing compliance, privacy protection, provenance tracking, and alignment with regulatory and contractual obligations.
-Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
+Unless otherwise required by an implementation, these elements should be expressed at the document level inside `<head>`, and may be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
@@ -3984,8 +3984,8 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 | `model_output_usage_constraints` | Specifies constraints on use of models trained on this content (e.g., internal-only, non-commercial). | Licensing and IP best practice |
 | `right_to_be_forgotten_applicability` | Indicates whether erasure obligations apply to trained models or datasets. | GDPR Art. 17; emerging AI guidance |
 
-Implementations SHOULD define controlled vocabularies for training scope, purpose, model type, and transformation requirements.
-Where training involves personal or sensitive data, these elements SHOULD be interpreted in conjunction with the Privacy and PII controls defined above.
+Implementations should define controlled vocabularies for training scope, purpose, model type, and transformation requirements.
+Where training involves personal or sensitive data, these elements should be interpreted in conjunction with the Privacy and PII controls defined above.
 
 ###### Minimal and full governance profiles
 
@@ -4012,7 +4012,7 @@ The full profile includes the minimal profile plus additional elements from the 
 - caching/index retention and auditability
 - model scope restrictions and provenance requirements
 
-Producers SHOULD avoid emitting elements with ambiguous free-text values when a controlled vocabulary is available.
+Producers should avoid emitting elements with ambiguous free-text values when a controlled vocabulary is available.
 
 ###### Example
 
@@ -4090,7 +4090,7 @@ Example use of the governance and compliance elements is shown below:
 ###### Consolidated example (PII + extraction + RAG + training)
 
 The following example illustrates a single `<head>` that combines Privacy and PII controls, Data extraction controls, RAG and retrieval controls, and Document training controls.
-Implementations MAY choose to interpret these as organization-wide defaults for the DocLang instance, and MAY override at component level for finer-grained control.
+Implementations may choose to interpret these as organization-wide defaults for the DocLang instance, and may override at component level for finer-grained control.
 
 ```xml
 <doclang>
@@ -4193,9 +4193,9 @@ Implementations MAY choose to interpret these as organization-wide defaults for 
 
 Notes:
 
-- The example uses illustrative values. Implementations SHOULD define controlled vocabularies for enums such as `pii_status`, `pii_sensitivity_level`, `extraction_scope`, `rag_embedding_scope`, and `training_model_type`.
-- When `training_permitted` is `false`, implementations SHOULD treat training-related fields as either omitted or set to explicit "none" values.
-- Where retention elements include a `unit` attribute, producers MUST use consistent units and pre-normalized values.
+- The example uses illustrative values. Implementations should define controlled vocabularies for enums such as `pii_status`, `pii_sensitivity_level`, `extraction_scope`, `rag_embedding_scope`, and `training_model_type`.
+- When `training_permitted` is `false`, implementations should treat training-related fields as either omitted or set to explicit "none" values.
+- Where retention elements include a `unit` attribute, producers must use consistent units and pre-normalized values.
 
 <!--
 
@@ -4210,7 +4210,7 @@ Metadata elements are meant to capture information that is not directly part of 
 
 As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
-To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
+To avoid collisions, custom metadata should always be properly namespaced, as illustrated in the examples further below.
 -->
 
 ## Bibliography
