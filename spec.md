@@ -104,7 +104,7 @@ Beyond certain low-level similarities (e.g. presence of bounding box information
 
 2. **attribute** An XML attribute.
 
-Note 1 to entry: When referring to an attribute in prose, this specification uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
+Note 1 to entry: When referring to an attribute in prose, this document uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
 
 3. **tag** An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
