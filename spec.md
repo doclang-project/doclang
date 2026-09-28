@@ -104,9 +104,9 @@ Beyond certain low-level similarities (e.g. presence of bounding box information
 
 2. **attribute** An XML attribute.
 
-3. **tag** An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
+Note 1 to entry: When referring to an attribute in prose, this specification uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
 
-When referring to an attribute in prose, this specification uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
+3. **tag** An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
 ### Adopted from HTML
 
@@ -114,7 +114,7 @@ When referring to an attribute in prose, this specification uses XPath-style not
 
 2. **inline element** An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
 
-Note that, whether block-level or inline, an element may contain *explicit* new lines.
+Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
 
 ## Language Design Principles
 
