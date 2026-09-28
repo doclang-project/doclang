@@ -378,6 +378,9 @@ dev = [
     { name = "pyyaml" },
     { name = "ruff" },
 ]
+docling = [
+    { name = "docling" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -405,6 +408,7 @@ dev = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", specifier = ">=0.14.11" },
 ]
+docling = [{ name = "docling", specifier = ">=2.89.0" }]
 
 [[package]]
 name = "docling"
