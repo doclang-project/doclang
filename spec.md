@@ -86,6 +86,71 @@ For the purposes of this document, the following terms and definitions apply. Te
 
    Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
 
+## Symbols and abbreviated terms
+
+**DPIA**
+Data protection impact assessment
+
+**DSR**
+Data subject rights
+
+**GDPR**
+General data protection regulation
+
+**HIPAA**
+Health insurance portability and accountability act
+
+**HTML**
+Hypertext markup language
+
+**HTR**
+Handwritten text recognition
+
+**IANA**
+Internet assigned numbers authority
+
+**LLM**
+Large language model
+
+**OCR**
+Optical character recognition
+
+**OPC**
+Open packaging conventions
+
+**OTSL**
+Optimised table-structure language
+
+**PCI DSS**
+Payment card industry data security standard
+
+**PII**
+Personally identifiable information
+
+**RAG**
+Retrieval-augmented generation
+
+**RFC**
+Request for comments
+
+**URI**
+Uniform resource identifier
+
+**URL**
+Uniform resource locator
+
+**UTF**
+Unicode transformation format
+
+**VLM**
+Vision language model
+
+**XML**
+Extensible markup language
+
+**XSD**
+XML schema definition
+
 ## Language Design Principles
 
 ### Property Semantics
