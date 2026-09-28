@@ -92,6 +92,71 @@ Beyond certain low-level similarities (e.g. presence of bounding box information
 - The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocLang is designed for LLM/VLM generation, with token efficiency in mind.
 - Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocLang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
 
+## Symbols and abbreviated terms
+
+**DPIA**
+Data protection impact assessment
+
+**DSR**
+Data subject rights
+
+**GDPR**
+General data protection regulation
+
+**HIPAA**
+Health insurance portability and accountability act
+
+**HTML**
+Hypertext markup language
+
+**HTR**
+Handwritten text recognition
+
+**IANA**
+Internet assigned numbers authority
+
+**LLM**
+Large language model
+
+**OCR**
+Optical character recognition
+
+**OPC**
+Open packaging conventions
+
+**OTSL**
+Optimised table-structure language
+
+**PCI DSS**
+Payment card industry data security standard
+
+**PII**
+Personally identifiable information
+
+**RAG**
+Retrieval-augmented generation
+
+**RFC**
+Request for comments
+
+**URI**
+Uniform resource identifier
+
+**URL**
+Uniform resource locator
+
+**UTF**
+Unicode transformation format
+
+**VLM**
+Vision language model
+
+**XML**
+Extensible markup language
+
+**XSD**
+XML schema definition
+
 ## Language Design Principles
 
 ### Terminology
