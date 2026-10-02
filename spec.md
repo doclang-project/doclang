@@ -2,7 +2,7 @@
 
 Version: 0.7
 
-## Introduction and Overview
+## Introduction and overview
 
 This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
@@ -65,7 +65,7 @@ Beyond certain low-level similarities (e.g. presence of bounding box information
 - The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocLang is designed for LLM/VLM generation, with token efficiency in mind.
 - Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocLang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
 
-## Language Design Principles
+## Language design principles
 
 ### Terminology
 
@@ -88,7 +88,7 @@ Adopted from HTML:
 
 Note that, whether block-level or inline, an element may contain *explicit* new lines.
 
-### Property Semantics
+### Property semantics
 
 In XML, the attribute syntax allows explicitly separating an element's properties from its content.
 Let's consider the following example: `<elem size="250" color="#ffeedd">foo</elem>`.
@@ -104,7 +104,7 @@ This representation can reduce the number of tokens and streamline how XML is ma
 
 For elements with a strictly limited set of possible property values, attributes are still used.
 
-### Content Encoding and Whitespace Handling
+### Content encoding and whitespace handling
 
 As DocLang is XML, standard XML encoding rules apply — for example:
 - any provided XML prolog defines the encoding, otherwise UTF-8 is assumed
@@ -112,12 +112,12 @@ As DocLang is XML, standard XML encoding rules apply — for example:
 
 DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
 
-### Head and Body Areas
+### Head and body areas
 
 Documents and their core components (as implemented via [semantic elements](#semantic-elements)) can have various properties associated with them.
 To separate between properties and actual content, DocLang follows a two-part scheme, both on the the component / element level and on the global document level.
 
-#### Element Head
+#### Element head
 
 The XML content of a semantic element begins with an *element head*, which is a sequence of dedicated elements that establish the element's properties, namely in this order:
 - [`<label>`](#label) (optional)
@@ -130,19 +130,19 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<summary>`](#summary) (optional)
 - [`<custom>`](#custom) (optional)
 
-#### Element Body
+#### Element body
 
 The XML content after the element head is called the *element body* and contains the effective payload of the semantic element.
 
-#### Document Head
+#### Document head
 
 Root element [`<doclang>`](#doclang) begins with an optional *document head*, which encapsulates any global document properties in a dedicated [`<head>`](#head) element.
 
-#### Document Body
+#### Document body
 
 The remaining XML content after the optional document head is called the *document body* and contains the effective payload of the document.
 
-#### Head and Body Example
+#### Head and body example
 
 While the details are specified in the sections further below, this snippet shows an example of this scheme:
 
@@ -191,11 +191,11 @@ In the example further below:
 </doclang>
 ```
 
-### Version Management and Compatibility
+### Version management and compatibility
 
 DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
 
-#### Semantic Versioning Principles
+#### Semantic versioning principles
 
 The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. considering X >= 1, and Y < Z:
 
@@ -206,7 +206,7 @@ The XSD schema used for validating DocLang XML documents defines the specificati
 - A `1.0` document is compatible with a `1.1` schema
 - A `1.1` document is considered incompatible with a `1.0` schema
 
-#### Version 0.x Behavior
+#### Version 0.x behavior
 
 As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate initial development and always break backward compatibility. Therefore:
 
@@ -215,11 +215,11 @@ As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate init
 
 Each minor version increment in the 0.x series represents a breaking change.
 
-#### XSD Schema Versioning
+#### XSD schema versioning
 
 The XSD schema itself may additionally capture a patch version and internally define a full Semantic Versioning (SemVer) version string (e.g., `1.0.0`, `1.0.1`) to track schema-level changes that do not affect document compatibility.
 
-## Language Specification
+## Language specification
 
 DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
@@ -233,9 +233,9 @@ Planned extensions are discussed in [Future Extensions](#future-extensions).
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
-## Usage Examples
+## Usage examples
 
-### Simple Document Structure
+### Simple document structure
 
 In the simplest document example, document elements are in a flat list,
 
@@ -395,7 +395,7 @@ Long code blocks can be split across pages using continuation elements; keep `<l
 </code>
 ```
 
-### Math and Equations
+### Math and equations
 
 All math is authored as LaTeX inside <formula>, whether in standalone blocks or inlined within a semantic element (similar to code).
 
@@ -712,7 +712,7 @@ Fields provide a flexible structure for representing key-value data and structur
 Note that all of the above are [semantic elements](#semantic-elements) and can therefore contain their own element head,
 including e.g. their own bounding box location information.
 
-#### Field Structure Rules
+#### Field structure rules
 
 - Any `field_heading` or `field_item` must be a descendant of a `field_region` (not necessarily a direct child)
 - Any `key` or `value` element must be a descendant of a `field_item` (not necessarily a direct child)
@@ -1977,7 +1977,7 @@ Superscript and subscript:
 </text>
 ```
 
-### Page Break with Continuation
+### Page break with continuation
 
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
 
@@ -2072,7 +2072,7 @@ For local/private usage where formal namespaces are not used, a collision-resist
 <!-- NOTE: do not edit Reference manually; updates to be made using generate_reference.py -->
 ### Reference
 
-#### Special Elements
+#### Special elements
 
 This category comprises elements with specialized document-level function.
 
@@ -2080,7 +2080,7 @@ This category comprises elements with specialized document-level function.
 
 The document root element. Starts with an optional [`<head>`](#head) followed by a sequence of applicable elements.
 
-###### Allowed Context
+###### Allowed context
 
 Exists exactly once, as root element.
 
@@ -2091,7 +2091,7 @@ Exists exactly once, as root element.
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
 | `version` | Optional; default: "0.7" | {"0.7"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2111,7 +2111,7 @@ Exists exactly once, as root element.
 
 Includes doc-level metadata.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be first child of [`<doclang>`](#doclang).
 
@@ -2119,7 +2119,7 @@ Can only be first child of [`<doclang>`](#doclang).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2131,7 +2131,7 @@ None
 
 Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang document if wrapped in a `doclang` root element.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<doclang>`](#doclang).
 
@@ -2139,7 +2139,7 @@ Can only be child of [`<doclang>`](#doclang).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2153,7 +2153,7 @@ None (empty element).
 </doclang>
 ```
 
-#### Semantic Elements
+#### Semantic elements
 
 *Semantic elements* capture core components with specific meaning and functional role in the document (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
@@ -2161,7 +2161,7 @@ None (empty element).
 
 Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2169,7 +2169,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2181,7 +2181,7 @@ None
 
 Captures a document heading.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2191,7 +2191,7 @@ Any context that allows semantic elements.
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The heading depth (1 = top-level). |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2203,7 +2203,7 @@ Any context that allows semantic elements.
 
 Captures footnote content.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2211,7 +2211,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2223,7 +2223,7 @@ None
 
 Captures page header content (material repeated at the top of a page).
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2231,7 +2231,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2243,7 +2243,7 @@ None
 
 Captures page footer content (material repeated at the bottom of a page).
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2251,7 +2251,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2263,7 +2263,7 @@ None
 
 Serves for scoping of field items, for example encapsulating a whole form.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2271,7 +2271,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2283,7 +2283,7 @@ None
 
 Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2293,7 +2293,7 @@ Any context that allows semantic elements.
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unordered" | {"unordered", "ordered"} | The list type. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2305,7 +2305,7 @@ Any context that allows semantic elements.
 
 Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2313,7 +2313,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2325,7 +2325,7 @@ None
 
 Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2333,7 +2333,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2345,7 +2345,7 @@ None
 
 Raw LaTeX formula content, i.e. without any LaTeX-specific wrapping such as `$ ... $`, `$$ ... $$`,  `\( ... \)`, `\[ ... \]`, `\begin{math} ... \end{math}` or `\begin{equation} ... \end{equation}`.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2353,7 +2353,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2365,7 +2365,7 @@ None
 
 Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Recommendations](#recommendations)).
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2373,7 +2373,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2385,7 +2385,7 @@ None
 
 The element body begins with a picture-specific sequence, followed by content allowed in any other semantic element body. The picture-specific sequence is:<ul><li>an optional [`<src>`](#src) element</li><li>an optional [`<tabular>`](#tabular) element (only allowed for `<picture class="chart">`)</li></ul>
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2395,7 +2395,7 @@ Any context that allows semantic elements.
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "undefined" | {"undefined", "chart"} | The picture type. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2407,7 +2407,7 @@ Any context that allows semantic elements.
 
 Captures the visible glyph or identifier (e.g. number) of a marker, e.g. in the context of a list item.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2415,7 +2415,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2427,7 +2427,7 @@ None
 
 Container for encapsulating multiple semantic elements.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2435,7 +2435,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2447,7 +2447,7 @@ None
 
 Field heading within a `<field_region>; analogous to [`<heading>`](#heading) but scoped to field structures.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
@@ -2457,7 +2457,7 @@ Can only be descendant of [`<field_region>`](#field_region).
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The field heading depth (1 = top-level). |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2469,7 +2469,7 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 Scoping of a field key (optional) and any corresponding values.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
@@ -2477,7 +2477,7 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2489,7 +2489,7 @@ None
 
 The key of a field (may correspond to  0-N field values).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
@@ -2497,7 +2497,7 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2509,7 +2509,7 @@ None
 
 A value of a field (may correspond to 0 or 1 field key).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
@@ -2519,7 +2519,7 @@ Can only be descendant of [`<field_item>`](#field_item).
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "read_only" | {"read_only", "fillable"} | The value type. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2531,7 +2531,7 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 A hint regarding a field.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
@@ -2539,7 +2539,7 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2551,7 +2551,7 @@ None
 
 Optional part of the element head for capturing an associated caption. Unlike [`<description>`](#description) or [`<summary>`](#summary), [`<caption>`](#caption) is an actual document component, which can have its own location information etc. For example, a caption shown underneath a chart. An element head may contain multiple captions, e.g. a figure with both a title above and a note below, or the same caption in several languages.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2559,7 +2559,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2571,7 +2571,7 @@ None
 
 Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows semantic elements.
 
@@ -2579,7 +2579,7 @@ Any context that allows semantic elements.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2612,7 +2612,7 @@ None
 
 A representative image for a [`<track>`](#track) as a whole — for example podcast artwork, a poster, or a title card. Appears once, before the first cue block. Same shape as [`<frame>`](#frame): an optional element head followed by an optional [`<src>`](#src).
 
-###### Allowed Context
+###### Allowed context
 
 Can only appear inside a [`<track>`](#track), before the first [`<bdiv>`](#bdiv).
 
@@ -2620,7 +2620,7 @@ Can only appear inside a [`<track>`](#track), before the first [`<bdiv>`](#bdiv)
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2632,7 +2632,7 @@ None
 
 The still image of the recording at a [`<track>`](#track) cue block's start time. Shaped like [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
 
-###### Allowed Context
+###### Allowed context
 
 Can only appear inside a [`<track>`](#track) cue block.
 
@@ -2640,7 +2640,7 @@ Can only appear inside a [`<track>`](#track) cue block.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2652,7 +2652,7 @@ None
 
 The recording over a [`<track>`](#track) cue block's interval `[start, end]` — a temporal crop of the track's audio, as a [`<picture>`](#picture) crop corresponds to its page region. Requires the cue block to carry an end time; the timestamps are authoritative and the clip is a best-effort fragment. Same shape as [`<frame>`](#frame).
 
-###### Allowed Context
+###### Allowed context
 
 Can only appear inside a [`<track>`](#track) cue block.
 
@@ -2660,7 +2660,7 @@ Can only appear inside a [`<track>`](#track) cue block.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2672,7 +2672,7 @@ None
 
 Speaker attribution for a transcript turn within a [`<track>`](#track) cue block. Handled like [`<text>`](#text) (may carry its own element head and inline formatting).
 
-###### Allowed Context
+###### Allowed context
 
 Can only appear inside a [`<track>`](#track) cue block.
 
@@ -2680,7 +2680,7 @@ Can only appear inside a [`<track>`](#track) cue block.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2692,7 +2692,7 @@ None
 
 A chapter or section title for a [`<track>`](#track). It marks a chapter boundary at the start time of the cue block that carries it; the chapter runs until the next [`<chapter>`](#chapter) (or `</track>`), and the region before the first [`<chapter>`](#chapter) is unchaptered. Only the start time matters — the cue block's end time bounds its transcript, not the chapter. Chapters form a flat partition (no nesting, no overlap). Handled like [`<text>`](#text) (may carry its own element head and inline formatting).
 
-###### Allowed Context
+###### Allowed context
 
 Can only appear inside a [`<track>`](#track) cue block, after the start (and optional end) timestamp and before any [`<frame>`](#frame).
 
@@ -2700,7 +2700,7 @@ Can only appear inside a [`<track>`](#track) cue block, after the start (and opt
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2708,7 +2708,7 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### Property Elements
+#### Property elements
 
 *Property elements* are non-semantic elements that help define useful traits of a semantic element, forming the main building blocks of the [element head](#element-head). Property elements that can appear on the top level of the element head are called *primary*, while those that can only appear within other property elements are called *secondary*. The various property elements are further specified in the following subsections.
 
@@ -2716,7 +2716,7 @@ None
 
 Optional part of the element head; serves for providing a detailed label for the respective element.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2726,7 +2726,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "undefined" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2734,7 +2734,7 @@ None (empty element).
 
 Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references. To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2744,7 +2744,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` must be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2752,7 +2752,7 @@ None (empty element).
 
 Optional part of the element head; serves for capturing an outgoing cross-reference from this component.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2762,7 +2762,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the document. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2770,7 +2770,7 @@ None (empty element).
 
 Optional part of the element head; serves for capturing a URI referenced by this component.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2780,7 +2780,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The URI of the referenced resource. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2792,7 +2792,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 Optional part of the element head for capturing a derived textual account of what the host component is or what it shows. Unlike [`<caption>`](#caption), [`<description>`](#description) is meta-information and not an actual document component. For example, a picture description inferred by a model.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2800,7 +2800,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2812,7 +2812,7 @@ None
 
 Optional part of the element head for capturing a derived textual distillation of what the host component conveys. Unlike [`<caption>`](#caption), [`<summary>`](#summary) is meta-information and not part of the original document content.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2820,7 +2820,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2832,7 +2832,7 @@ None
 
 Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Recommendations](#recommendations) for naming and namespacing guidance for custom vocabularies.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2840,7 +2840,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2852,7 +2852,7 @@ None
 
 Optional part of the element head; coordinate system is the top-left corner of the page. When present, appears in sequence of 4 [`<location>`](#location) instances, representing x0, y0, x1, y1. The following must then hold: `x0_norm<=x1_norm` and `y0_norm<=y1_norm`(i.e. first top-left point then bottom-right point), whereby `*_norm` is the respective coordinate normalized to its effective resolution.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2863,7 +2863,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
 | `value` | Required | Integer within [0, `location@resolution`) | Coordinate w.r.t. top-left corner. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2871,7 +2871,7 @@ None (empty element).
 
 The conceptual layer of the host element in the document.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
@@ -2881,11 +2881,11 @@ Can only be part of the [element head](#element-head) of a semantic element.
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the document's main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the document's main content, such as navigation or decorations. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
-#### Payload Elements
+#### Payload elements
 
 Payload elements are low-level elements that help define the effective content of another element.
 
@@ -2893,7 +2893,7 @@ Payload elements are low-level elements that help define the effective content o
 
 The image's source.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the picture-specific element body sequence of [`<picture>`](#picture).
 
@@ -2903,7 +2903,7 @@ Can only be part of the picture-specific element body sequence of [`<picture>`](
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. Relative URIs are allowed too, e.g. `uri="assets/chart.svg"`. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2911,7 +2911,7 @@ None (empty element).
 
 Structured tabular data. Uses the same cell model as [`<table>`](#table), but without an element head of its own.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of the picture-specific element body sequence of [`<picture class="chart">`](#picture).
 
@@ -2919,7 +2919,7 @@ Can only be part of the picture-specific element body sequence of [`<picture cla
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2931,7 +2931,7 @@ None
 
 Empty element representing checkbox selection state.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -2941,7 +2941,7 @@ Any context that allows raw text content.
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unselected" | {"unselected", "selected"} | The checkbox type. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2949,7 +2949,7 @@ None (empty element).
 
 Whitespace-preserving text container. Retains all whitespace within the element (equivalent to `xml:space="preserve"`), enabling use in whitespace-sensitive scenarios such as code blocks. XML special characters may alternatively be conveyed via CDATA.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -2957,7 +2957,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2969,7 +2969,7 @@ None
 
 Hours component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
@@ -2979,7 +2979,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Non-negative integer | Hours component of a track cue timestamp. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -2987,7 +2987,7 @@ None (empty element).
 
 Minutes component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
@@ -2997,7 +2997,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, 59] | Minutes component of a track cue timestamp. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3005,7 +3005,7 @@ None (empty element).
 
 Seconds component of a [`<track>`](#track) cue timestamp.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
@@ -3015,7 +3015,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, 59] | Seconds component of a track cue timestamp. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3023,7 +3023,7 @@ None (empty element).
 
 Milliseconds component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
@@ -3033,11 +3033,11 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, 999] | Milliseconds component of a track cue timestamp. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
-#### Formatting Elements
+#### Formatting elements
 
 Formatting elements modify the styling and presentation within semantic or other formatting elements.
 
@@ -3045,7 +3045,7 @@ Formatting elements modify the styling and presentation within semantic or other
 
 Indicates bold formatting.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3053,7 +3053,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3065,7 +3065,7 @@ None
 
 Indicates italic formatting.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3073,7 +3073,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3085,7 +3085,7 @@ None
 
 Indicates underlined formatting.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3093,7 +3093,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3105,7 +3105,7 @@ None
 
 Indicates struck-through formatting.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3113,7 +3113,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3125,7 +3125,7 @@ None
 
 Indicates superscript formatting.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3133,7 +3133,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3145,7 +3145,7 @@ None
 
 Indicates subscript formatting.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3153,7 +3153,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3165,7 +3165,7 @@ None
 
 Indicates handwritten text.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3173,7 +3173,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3185,7 +3185,7 @@ None
 
 Indicates right-to-left direction.
 
-###### Allowed Context
+###### Allowed context
 
 Any context that allows raw text content.
 
@@ -3193,7 +3193,7 @@ Any context that allows raw text content.
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3201,7 +3201,7 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### Structural Elements
+#### Structural elements
 
 Structural elements define boundaries within explicitly structured components like tables and lists.
 
@@ -3209,7 +3209,7 @@ Structural elements define boundaries within explicitly structured components li
 
 Indicates the beginning of a full / regular cell.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3217,7 +3217,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3225,7 +3225,7 @@ None (empty element).
 
 Indicates the beginning of an empty cell.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3233,7 +3233,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3241,7 +3241,7 @@ None (empty element).
 
 Indicates the beginning of a column header cell.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3249,7 +3249,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3257,7 +3257,7 @@ None (empty element).
 
 Indicates the beginning of a row header cell.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3265,7 +3265,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3273,7 +3273,7 @@ None (empty element).
 
 Indicates the beginning of a corner cell, typically the top-left header intersection.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3281,7 +3281,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3289,7 +3289,7 @@ None (empty element).
 
 Indicates the beginning of a section row header.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3297,7 +3297,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3305,7 +3305,7 @@ None (empty element).
 
 Left-merge extension token; extends the previous cell horizontally (colspan continuation).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3313,7 +3313,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3321,7 +3321,7 @@ None (empty element).
 
 Upward-merge extension token; extends the cell above vertically (rowspan continuation)
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3329,7 +3329,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3337,7 +3337,7 @@ None (empty element).
 
 Cross/combined span extension token; used where both horizontal and vertical spanning intersect.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3345,7 +3345,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3353,7 +3353,7 @@ None (empty element).
 
 Denotes the end of a table row.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
@@ -3361,7 +3361,7 @@ Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
@@ -3369,7 +3369,7 @@ None (empty element).
 
 Indicates the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<list>`](#list).
 
@@ -3377,7 +3377,7 @@ Can only be child of [`<list>`](#list).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3389,7 +3389,7 @@ None
 
 Indicates the beginning of a [`<track>`](#track) cue block.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be a child of [`<track>`](#track).
 
@@ -3397,11 +3397,11 @@ Can only be a child of [`<track>`](#track).
 
 None
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
-#### Document Head Elements
+#### Document head elements
 
 This category comprises the document-level metadata elements that are the building blocks of [`<head>`](#head).
 
@@ -3409,7 +3409,7 @@ This category comprises the document-level metadata elements that are the buildi
 
 Defines the default resolution for the document.
 
-###### Allowed Context
+###### Allowed context
 
 Can only be child of [`<head>`](#head).
 
@@ -3420,11 +3420,11 @@ Can only be child of [`<head>`](#head).
 | `width` | Optional; default "512" | Non-negative integer | Default document width in pixels. |
 | `height` | Optional; default "512" | Non-negative integer | Default document height in pixels. |
 
-###### Allowed Content Types
+###### Allowed content types
 
 None (empty element).
 
-### DocLang Archive Format
+### DocLang archive format
 
 A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
@@ -3683,11 +3683,11 @@ The token vocabulary trades off size and inference cost:
 | `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
 | `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
 
-### Future Extensions
+### Future extensions
 
 These features are considered for future versions of the standard.
 
-#### Horizontal Threading
+#### Horizontal threading
 
 Horizontal threading enables linking related content across the horizontal axis in page or table layouts. The `h_thread` element supports this by explicitly connecting content (like table rows or columns) that spans multiple pages, ensuring these threads remain structured and traceable.
 
