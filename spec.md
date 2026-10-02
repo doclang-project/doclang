@@ -35,9 +35,9 @@ This document specifies the DocLang format, a universal markup language for repr
 
 ### Introduction
 
-The proliferation of digital documents across diverse formats has created significant challenges in document processing, conversion, and understanding. These were mainly designed for efficient rendering and often result in loss of semantic information, structural relationships, or geometric context during document conversion.
+Digital documents exist in many formats, which makes processing, conversion, and understanding challenging. Moreover, many of these formats have been designed primarily for rendering, so semantic information, structural relationships, and geometric context may be lost during document conversion.
 
-DocLang addresses these challenges by providing a minimalist, unambiguous markup format that:
+DocLang aims to address these challenges by providing a minimalist, unambiguous markup format that:
 
 - Preserves complete document structure and semantics
 - Maintains geometric and layout information when appropriate
