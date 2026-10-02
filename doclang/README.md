@@ -2,6 +2,8 @@
 
 Official Python toolkit for working with DocLang — CLI commands and library APIs.
 
+This toolkit and associated schemas are meant to enable validation of DocLang documents in line with the DocLang specification. In case of discrepancies, the authoritative source is the specification.
+
 ## Installation
 
 Recommended — full validation (XSD + Schematron):
