@@ -18,6 +18,8 @@
 
 This repository is the home of the normative specification and the reference toolkit for DocLang. If you build with LLMs and VLMs on real-world content, this is where the standard lives.
 
+For additional background information see [MOTIVATION.md](https://github.com/doclang-project/doclang/blob/main/MOTIVATION.md).
+
 ## Specification
 
 The source of the specification is available in [spec.md](https://github.com/doclang-project/doclang/blob/main/spec.md)
