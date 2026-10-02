@@ -4,33 +4,6 @@ Version: 0.7
 
 ## Introduction and Overview
 
-### Foreword
-
-This specification was prepared by
-
-| Name | Company |
-|------|---------|
-| Peter Staar | IBM |
-| Panos Vagenas | IBM |
-| Maksym Lysak | IBM |
-| Nikolaos Livathinos | IBM |
-| Christoph Auer | IBM |
-| Michele Dolfi | IBM |
-| Said Gürbüz | IBM |
-| Santosh Borse | IBM |
-| Yousaf Shah | IBM |
-| Maroun Touma | IBM |
-| Christopher Giblin | IBM |
-| Marlene Wolfgruber | ABBYY |
-| Maxime Vermeir | ABBYY |
-| Morgan Logue | ABBYY |
-| Andrew Pery | ABBYY |
-| Jehlum Vitasta Pandit | RedHat |
-| Ali Maredia | RedHat |
-| Micaela Kaplan | HumanSignal |
-| Ryan Chesler | NVIDIA |
-| Riccardo Maggioni | Forgis |
-
 This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
 ### Introduction
