@@ -2118,7 +2118,7 @@ None
 
 ##### `<page_break>`
 
-Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang document if wrapped in a `doclang` root element.
+Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang instance if wrapped in a `doclang` root element.
 
 ###### Allowed Context
 
@@ -2144,7 +2144,7 @@ None (empty element).
 
 #### Semantic Elements
 
-*Semantic elements* capture core components with specific meaning and functional role in the document (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
+*Semantic elements* capture core document components with specific meaning and functional role (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
 ##### `<text>`
 
@@ -2868,7 +2868,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the document's main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the document's main content, such as navigation or decorations. |
+| `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the main content, such as navigation or decorations. |
 
 ###### Allowed Content Types
 
@@ -3417,7 +3417,7 @@ None (empty element).
 
 A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
-An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang document part.
+An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part.
 
 #### Layout
 
@@ -3425,7 +3425,7 @@ An archive is a **package** of **parts** (files in the ZIP). Each part has a pat
 [Content_Types].xml    # required — OPC content types
 _rels/
   .rels                # required — package → main document
-document.xml           # required — valid DocLang document
+document.xml           # required — valid DocLang instance
 pages/                 # optional — page images, e.g. 1.png, 2.png
 audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
 video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
@@ -3466,7 +3466,7 @@ Example:
 
 ##### `document.xml` (required)
 
-The main document part: a valid DocLang document. Top-level `<page_break/>` elements separate pages; `<location>` coordinates are page-relative.
+The main part: a valid DocLang instance. Top-level `<page_break/>` elements separate pages; `<location>` coordinates are page-relative.
 
 ##### `pages/` (optional)
 
@@ -3704,7 +3704,7 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - `generated_by`, upstream pipeline information, e.g. VLM ID
 - `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
 - `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
-- `document_hash`, Hash of the document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
+- `document_hash`, Hash of the source document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
 
 Here is an example:
 
@@ -3848,7 +3848,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 ###### Stewardship and contact
 
-- `stewardship` Provides the name of a person and/or organization with governance responsibility at the document owning organization.
+- `stewardship` Provides the name of a person and/or organization with governance responsibility at the owning organization.
 
 ###### Access control policy
 
@@ -3858,7 +3858,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 ###### Retention and deletion
 
-- `retention_policy` Allows organizations to state retention objectives for the document data.
+- `retention_policy` Allows organizations to state retention objectives.
 
 ###### Compliance frameworks
 
