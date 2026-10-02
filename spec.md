@@ -52,7 +52,15 @@ For the purposes of this document, the following terms and definitions apply. Te
 
 1. **document component**
 
-   A cohesive and meaningful part of the document, e.g. a table, list item with a marker, a bold piece of text, etc.
+   A cohesive and meaningful part of the source document, e.g. a table, list item with a marker, a bold piece of text, etc.
+
+2. **source document**
+
+   A document, in any original form (e.g. a PDF file, a scanned page, a word-processing file), whose content is represented by a DocLang instance.
+
+3. **DocLang instance**
+
+   A piece of markup that conforms to this document and represents the content of a source document.
 
 ### Adopted from XML
 
@@ -189,7 +197,7 @@ In the example further below:
 
 ### Version Management and Compatibility
 
-DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the version of this document against which the document is intended to be validated.
+DocLang instances define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the version of this document against which the instance is intended to be validated.
 
 #### Semantic Versioning Principles
 
@@ -3880,8 +3888,8 @@ Unless otherwise required by an implementation, these elements are intended to b
 | `pii_minimisation_status` | Indicates whether minimisation has been applied (data minimisation / privacy by design). | GDPR Art. 5(1)(c), Art. 25 |
 | `pii_transformation_level` | Indicates transformation applied to PII (e.g., redacted, masked, pseudonymized). | GDPR Recital 26; GDPR Art. 4(5) |
 | `reidentification_risk` | Expresses assessed risk of re-identification where transformations are used. | ISO 27701; GDPR Recital 26 |
-| `access_control_level` | Required access tier/controls for handling this document. | ISO 27001 A.9; GDPR Art. 32 |
-| `ai_use_restriction` | Indicates allowed AI uses or prohibitions for this document’s content. | GDPR Art. 5(1)(b–c) |
+| `access_control_level` | Required access tier/controls for handling this DocLang instance. | ISO 27001 A.9; GDPR Art. 32 |
+| `ai_use_restriction` | Indicates allowed AI uses or prohibitions for the content of this DocLang instance. | GDPR Art. 5(1)(b–c) |
 | `cross_border_transfer_status` | Indicates whether cross-border transfers occur/are allowed. | GDPR Art. 44–49 |
 | `transfer_mechanism` | Indicates transfer mechanism where applicable (e.g., adequacy, SCCs). | GDPR Art. 45–47 |
 | `retention_category` | Indicates retention category for personal data contained in the document. | GDPR Art. 5(1)(e) |
@@ -3968,7 +3976,7 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 | `training_scope` | Defines which parts or components of the document may be used for training (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `training_purpose` | Specifies the intended purpose of training (e.g., general models, domain-specific models, evaluation only). | GDPR Art. 5(1)(b) |
 | `training_model_type` | Restricts the types or classes of models that may be trained using this content. | ISO 23894; internal governance |
-| `training_data_retention` | Specifies retention period for training datasets derived from this document. | GDPR Art. 5(1)(e) |
+| `training_data_retention` | Specifies retention period for training datasets derived from this DocLang instance. | GDPR Art. 5(1)(e) |
 | `training_dataset_reuse_allowed` | Indicates whether derived training datasets may be reused beyond the initial training purpose. | GDPR Art. 5(1)(b) |
 | `training_derivative_sharing_permitted` | Indicates whether trained models or derivatives may be shared with third parties. | GDPR Art. 28; licensing obligations |
 | `training_pii_included` | Indicates whether training data may include PII. | GDPR Art. 6; ISO 27701 |
