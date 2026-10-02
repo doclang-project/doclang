@@ -4,40 +4,13 @@ Version: 0.7
 
 ## Introduction and Overview
 
-### Foreword
-
-This specification was prepared by
-
-| Name | Company |
-|------|---------|
-| Peter Staar | IBM |
-| Panos Vagenas | IBM |
-| Maksym Lysak | IBM |
-| Nikolaos Livathinos | IBM |
-| Christoph Auer | IBM |
-| Michele Dolfi | IBM |
-| Said Gürbüz | IBM |
-| Santosh Borse | IBM |
-| Yousaf Shah | IBM |
-| Maroun Touma | IBM |
-| Christopher Giblin | IBM |
-| Marlene Wolfgruber | ABBYY |
-| Maxime Vermeir | ABBYY |
-| Morgan Logue | ABBYY |
-| Andrew Pery | ABBYY |
-| Jehlum Vitasta Pandit | RedHat |
-| Ali Maredia | RedHat |
-| Micaela Kaplan | HumanSignal |
-| Ryan Chesler | NVIDIA |
-| Riccardo Maggioni | Forgis |
-
 This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
 ### Introduction
 
-The proliferation of digital documents across diverse formats (PDF, HTML, Word, etc.) has created significant challenges in document processing, conversion, and understanding. These were mainly designed for efficient rendering and often result in loss of semantic information, structural relationships, or geometric context during document conversion.
+Digital documents exist in many formats, which makes processing, conversion, and understanding challenging. Moreover, many of these formats have been designed primarily for rendering, so semantic information, structural relationships, and geometric context may be lost during document conversion.
 
-DocLang addresses these challenges by providing a minimalist, unambiguous markup format that:
+DocLang aims to address these challenges by providing a minimalist, unambiguous markup format that:
 
 - Preserves complete document structure and semantics
 - Maintains geometric and layout information when appropriate
@@ -59,38 +32,17 @@ This standard specifies:
 - Specifications for complex document components (tables, charts, formulas, code, forms)
 - Requirements for conforming implementations
 
-### Motivation
+## Normative references
 
-The motivation for this new markup language is twofold,
+The following documents are referred to in the text in such a way that some or all of their content constitutes requirements of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. It is created from the ground up to be able to represent complex, multimodal content with visual grounding in plain text with markup
-2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally and efficiently between DocLang elements and LLM tokens.
-
-As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
-
-There is an exception for meta-data markup. Meta-data is not intended to be heavily used or produced by LLMs, so it is in general possible to include an expanded set of protected markup tokens. Nevertheless, we do want to normalize as much as possible this representation.
-
-Such requirements preclude us from using existing markup languages such as Markdown (incomplete scope), HTML (not concise enough), LaTeX (ambiguity of representation) etc.
-
-<figure style="text-align: left">
-    <img src="resources/html_v_otsl.png"
-         alt="HTML vs OTSL" style="width:700px">
-    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to DocLang (OTSL tags). HTML sequence is both longer and uses more tokens than DocLang</figcaption>
-</figure>
-
-<!-- TODO: update image text for DocLang: replace <section> with <heading>, add CDATA in <code> -->
-<figure style="text-align: left">
-    <img src="resources/doclang_example.png"
-         alt="HTML vs OTSL" style="width:1000px">
-    <figcaption>Examples of real-world document fragments and their DocLang representation</figcaption>
-</figure>
-
-A specific class of related formats is the one operating on the OCR level, including [PageXML](https://github.com/PRImA-Research-Lab/PAGE-XML), [ALTO XML](https://github.com/altoxml), and [hOCR](https://github.com/kba/hocr-spec).
-
-Beyond certain low-level similarities (e.g. presence of bounding box information), the DocLang format is significantly differentiated as it is designed to be AI-native:
-
-- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocLang is designed for LLM/VLM generation, with token efficiency in mind.
-- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocLang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
+1. Optimized Table Tokenization for Table Structure Recognition (OTSL), https://doi.org/10.1007/978-3-031-41679-8_3
+2. W3C XML 1.0 Specification (Fifth Edition)
+3. W3C XML Schema Definition Language (XSD) 1.0 (Second Edition): Part 1 (Structures) and Part 2 (Datatypes)
+4. IETF RFC 3629: UTF-8, a transformation format of ISO 10646
+5. IETF RFC 3986: Uniform Resource Identifier (URI): Generic Syntax
+6. IETF RFC 2397: The "data" URL scheme
+7. Semantic Versioning 2.0.0 (semver.org)
 
 ## Terms and definitions
 
@@ -98,7 +50,7 @@ Beyond certain low-level similarities (e.g. presence of bounding box information
 
 1. **document component** A cohesive and meaningful part of the document, e.g. a table, list item with a marker, a bold piece of text, etc.
 
-### Adopted from XML
+### Adopted from XML [2]
 
 1. **element** An XML element.
 
@@ -108,7 +60,7 @@ Note 1 to entry: When referring to an attribute in prose, this document uses XPa
 
 3. **tag** An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
-### Adopted from HTML
+### Adopted from HTML (see Bibliography [1])
 
 1. **block-level element** An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
 
@@ -136,8 +88,8 @@ For elements with a strictly limited set of possible property values, attributes
 
 ### Content Encoding and Whitespace Handling
 
-As DocLang is XML, standard XML encoding rules apply — for example:
-- any provided XML prolog defines the encoding, otherwise UTF-8 is assumed
+As DocLang is XML, standard XML [2] encoding rules apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
 - special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
 
 DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
@@ -227,7 +179,7 @@ DocLang documents define a version in `MAJOR.MINOR` format through the `version`
 
 #### Semantic Versioning Principles
 
-The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. considering X >= 1, and Y < Z:
+The XSD [3] schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
 
 - A document with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a document that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
 - A document with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a document that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
@@ -310,8 +262,8 @@ In case of page-layout information, the coordinates are provided only at the sem
 ### Pictures
 
 Pictures are captured with the `<picture>` element and may be specialized via the `class` attribute, as detailed
-in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI capturing the image
-either by reference (e.g. https URL) or as base64-encoded data (RFC 2397).
+in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI [5] capturing the image
+either by reference (e.g. https URL) or as base64-encoded data (data URI [6]).
 
 Picture by reference URI:
 
@@ -624,7 +576,7 @@ Notes
 
 ### Tables
 
-A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL structural elements (e.g., `<fcel/>`, `<ched/>`).
+A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
 This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
 Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
@@ -1799,6 +1751,7 @@ The scenario in the above figure is represented as follows:
 </details>
 
 <!-- commented out as h_thread is in planned status
+     note: this is split over several comments because comments cannot be nested in XML and the first comment end tag closes the outer comment.
 
 <details>
   <summary>Split table example</summary>
@@ -1837,6 +1790,7 @@ to be reached to add the thread for "Europe" in the example above.
 
 ```xml
 <!--...-->
+<!--
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="1"/>
@@ -1906,6 +1860,7 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 <!--...-->
+<!--
 ```
 </details>
 
@@ -2082,17 +2037,6 @@ For local/private usage where formal namespaces are not used, a collision-resist
   <src uri="molecule.svg"/>
 </picture>
 ```
-
-## Bibliography
-
-1. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
-2. Optimized Table Tokenization for Table Structure Recognition
-3. DoclingDocument API Specification
-4. W3C XML 1.0 Specification (Fifth Edition)
-5. W3C HTML5 Specification
-6. ISO 32000-2:2020 (PDF 2.0)
-7. ISO 8601
-8. Semantic Versioning 2.0.0 (semver.org)
 
 ## Appendix
 
@@ -4250,3 +4194,11 @@ As applications can have varying requirements, this standard defines a set of re
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
 -->
+
+## Bibliography
+
+The following lists the documents which are cited informatively in this document, as well as other information resources. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
+
+1. W3C HTML5 Specification
+2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
+3. DoclingDocument API Specification

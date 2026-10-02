@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- ============================================ -->
+<!-- This schema is meant to enable validation of DocLang documents in line with the DocLang specification. -->
+<!-- In case of discrepancies, the authoritative source is the specification. -->
+<!-- ============================================ -->
+
 <xs:schema
   targetNamespace="https://www.doclang.ai/ns/v0"
   xmlns:dl="https://www.doclang.ai/ns/v0"
