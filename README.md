@@ -72,7 +72,7 @@ DocLang is developed in the open and supported by the [LF AI & Data Foundation](
 
 ## Acknowledgements
 
-The following people have contributed to the Doclang specification.
+The following people have contributed to the DocLang specification.
 
 | Name | Company |
 |------|---------|
