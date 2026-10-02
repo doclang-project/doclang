@@ -36,10 +36,13 @@ This standard specifies:
 
 The following documents are referred to in the text in such a way that some or all of their content constitutes requirements of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. Optimized Table Tokenization for Table Structure Recognition (OTSL)
+1. Optimized Table Tokenization for Table Structure Recognition (OTSL), https://doi.org/10.1007/978-3-031-41679-8_3
 2. W3C XML 1.0 Specification (Fifth Edition)
-3. W3C HTML5 Specification
-4. Semantic Versioning 2.0.0 (semver.org)
+3. W3C XML Schema Definition Language (XSD) 1.0 (Second Edition): Part 1 (Structures) and Part 2 (Datatypes)
+4. IETF RFC 3629: UTF-8, a transformation format of ISO 10646
+5. IETF RFC 3986: Uniform Resource Identifier (URI): Generic Syntax
+6. IETF RFC 2397: The "data" URL scheme
+7. Semantic Versioning 2.0.0 (semver.org)
 
 ## Language Design Principles
 
@@ -49,7 +52,7 @@ Abstract concepts:
 
 - **document component**: A cohesive and meaningful part of the document, e.g. a table, list item with a marker, a bold piece of text, etc.
 
-Adopted from XML:
+Adopted from XML [2]:
 
 - **element**: An XML element.
 - **attribute**: An XML attribute.
@@ -57,7 +60,7 @@ Adopted from XML:
 
 When referring to an attribute in prose, this specification uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
 
-Adopted from HTML:
+Adopted from HTML (see Bibliography [1]):
 
 - **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
 - **inline element**: An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
@@ -82,8 +85,8 @@ For elements with a strictly limited set of possible property values, attributes
 
 ### Content Encoding and Whitespace Handling
 
-As DocLang is XML, standard XML encoding rules apply — for example:
-- any provided XML prolog defines the encoding, otherwise UTF-8 is assumed
+As DocLang is XML, standard XML [2] encoding rules apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
 - special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
 
 DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
@@ -173,7 +176,7 @@ DocLang documents define a version in `MAJOR.MINOR` format through the `version`
 
 #### Semantic Versioning Principles
 
-The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. considering X >= 1, and Y < Z:
+The XSD [3] schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
 
 - A document with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a document that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
 - A document with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a document that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
@@ -256,8 +259,8 @@ In case of page-layout information, the coordinates are provided only at the sem
 ### Pictures
 
 Pictures are captured with the `<picture>` element and may be specialized via the `class` attribute, as detailed
-in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI capturing the image
-either by reference (e.g. https URL) or as base64-encoded data (RFC 2397).
+in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI [5] capturing the image
+either by reference (e.g. https URL) or as base64-encoded data (data URI [6]).
 
 Picture by reference URI:
 
@@ -570,7 +573,7 @@ Notes
 
 ### Tables
 
-A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL structural elements (e.g., `<fcel/>`, `<ched/>`).
+A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
 This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
 Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
@@ -4193,6 +4196,6 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 
 The following lists the documents which are cited informatively in this document, as well as other information resources. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
-2. DoclingDocument API Specification
-3. ISO 8601
+1. W3C HTML5 Specification
+2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
+3. DoclingDocument API Specification
