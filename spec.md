@@ -50,17 +50,13 @@ For the purposes of this document, the following terms and definitions apply. Te
 
 ### Abstract concepts
 
-1. **source document**
+1. **DocLang instance**
 
-   A document, in any original form (e.g. a PDF file, a scanned page, a word-processing file), whose content is to be represented in DocLang.
+   Document content (e.g. text, tables, images) expressed in DocLang markup.
 
-2. **DocLang instance**
+2. **document component**
 
-   A piece of markup that conforms to this document and represents the content of a source document.
-
-3. **document component**
-
-   A cohesive and meaningful part of the source document, e.g. a table, list item with a marker, a bold piece of text, etc.
+   A cohesive and meaningful part of document content, e.g. a table, list item with a marker, a bold piece of text, etc.
 
 ### Adopted from XML
 
