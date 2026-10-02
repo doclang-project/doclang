@@ -1796,6 +1796,7 @@ The scenario in the above figure is represented as follows:
 </details>
 
 <!-- commented out as h_thread is in planned status
+     note: this is split over several comments because comments cannot be nested in XML and the first comment end tag closes the outer comment.
 
 <details>
   <summary>Split table example</summary>
@@ -1834,6 +1835,7 @@ to be reached to add the thread for "Europe" in the example above.
 
 ```xml
 <!--...-->
+<!--
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="1"/>
@@ -1903,6 +1905,7 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 <!--...-->
+<!--
 ```
 </details>
 
