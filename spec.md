@@ -140,7 +140,7 @@ Root element [`<doclang>`](#doclang) begins with an optional *document head*, wh
 
 #### Document Body
 
-The remaining XML content after the optional document head is called the *document body* and contains the effective payload of the document.
+The remaining XML content after the optional document head is called the *document body* and contains the effective payload of the DocLang instance.
 
 #### Head and Body Example
 
@@ -199,8 +199,8 @@ DocLang instances define a version in `MAJOR.MINOR` format through the `version`
 
 The XSD [3] schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
 
-- A document with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a document that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
-- A document with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a document that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
+- A DocLang instance with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a DocLang instance that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
+- A DocLang instance with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a DocLang instance that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
 
 **Example:**
 - A `1.0` document is compatible with a `1.1` schema
@@ -210,8 +210,8 @@ The XSD [3] schema used for validating DocLang XML documents defines the specifi
 
 As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate initial development and always break backward compatibility. Therefore:
 
-- A document of version `0.1` is considered incompatible with a `0.2` schema
-- A document of version `0.2` is considered incompatible with a `0.1` schema
+- A DocLang instance of version `0.1` is considered incompatible with a `0.2` schema
+- A DocLang instance of version `0.2` is considered incompatible with a `0.1` schema
 
 Each minor version increment in the 0.x series represents a breaking change.
 
@@ -2078,7 +2078,7 @@ Exists exactly once, as root element.
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "0.7" | {"0.7"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
+| `version` | Optional; default: "0.7" | {"0.7"} | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
 ###### Allowed Content Types
 
@@ -2749,7 +2749,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the document. |
+| `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the DocLang instance. |
 
 ###### Allowed Content Types
 
@@ -2858,7 +2858,7 @@ None (empty element).
 
 ##### `<layer>`
 
-The conceptual layer of the host element in the document.
+The conceptual layer of the host element in the DocLang instance.
 
 ###### Allowed Context
 
@@ -3396,7 +3396,7 @@ This category comprises the document-level metadata elements that are the buildi
 
 ##### `<default_resolution>`
 
-Defines the default resolution for the document.
+Defines the default resolution for the DocLang instance.
 
 ###### Allowed Context
 
@@ -3476,7 +3476,7 @@ Optional raster images for review. Name files `{N}.{png|jpg|jpeg|webp}` with 1-b
 
 ##### `video/` (optional)
 
-Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` MUST NOT exceed the number of `<track>` elements in the document.
+Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` MUST NOT exceed the number of `<track>` elements in the DocLang instance.
 
 ##### `assets/` (optional)
 
@@ -3488,7 +3488,7 @@ Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* c
 
 #### Track alignment
 
-The *N*-th [`<track>`](#track) in the document aligns with `audio/{N}.*` and/or `video/{N}.*` when present. A cue block's timestamps are then playback offsets into that file, measured from its start (`00:00:00.000`). Per-cue [`<frame>`](#frame) and [`<audio>`](#audio) fragments are independent references (via [`<src>`](#src)) and are not derived from the whole-track files. A track with neither an `audio/` nor a `video/` entry is simply a transcript whose timestamps refer to a recording the archive does not carry.
+The *N*-th [`<track>`](#track) in the DocLang instance aligns with `audio/{N}.*` and/or `video/{N}.*` when present. A cue block's timestamps are then playback offsets into that file, measured from its start (`00:00:00.000`). Per-cue [`<frame>`](#frame) and [`<audio>`](#audio) fragments are independent references (via [`<src>`](#src)) and are not derived from the whole-track files. A track with neither an `audio/` nor a `video/` entry is simply a transcript whose timestamps refer to a recording the archive does not carry.
 
 ### Recommendations
 
@@ -3780,7 +3780,7 @@ Implementers SHOULD consult authoritative sources and legal counsel to determine
 
 ###### Governance narrative and flow
 
-Governance metadata is intended to travel with the document and provide downstream systems with machine-readable constraints.
+Governance metadata is intended to travel with the DocLang instance and provide downstream systems with machine-readable constraints.
 The diagram below illustrates how the four governance areas map to common document-to-AI workflows.
 
 ```mermaid
@@ -3823,7 +3823,7 @@ This section uses the following terminology consistently:
 - **RAG** refers to retrieval-augmented generation workflows that embed/index content and retrieve it at inference time.
 - **Extraction** refers to producing structured outputs (fields/records) derived from document content.
 - **Training** refers to using content for model training, fine-tuning, evaluation, or benchmarking.
-- **Artifacts** refers to derived outputs created by processing the document (e.g., extracted datasets, embeddings/indexes, caches, training datasets).
+- **Artifacts** refers to derived outputs created by processing the DocLang instance (e.g., extracted datasets, embeddings/indexes, caches, training datasets).
 
 Where an element carries an enumerated value (e.g., `pii_status`, `rag_embedding_scope`), implementations SHOULD use a controlled vocabulary.
 Where an element carries a boolean, implementations SHOULD use explicit `true` / `false` values.
@@ -3834,7 +3834,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 ###### Licensing and rights
 
-- `licenses` Indicate one or more licenses covering use of the document.
+- `licenses` Indicate one or more licenses covering use of the DocLang instance.
 
 ###### Data classification and privacy posture
 
@@ -3874,7 +3874,7 @@ Unless otherwise required by an implementation, these elements are intended to b
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
-| `pii_status` | Indicates whether the document contains PII. | ISO 27701; ISO 27001 A.5/A.8; GDPR Art. 4(1), 5(1) |
+| `pii_status` | Indicates whether the DocLang instance contains PII. | ISO 27701; ISO 27001 A.5/A.8; GDPR Art. 4(1), 5(1) |
 | `pii_sensitivity_level` | Classifies the sensitivity level of detected PII. | ISO 27701; GDPR Art. 9–10 |
 | `pii_source_type` | Identifies the origin/source of PII (e.g., provided by user, derived, third-party). | GDPR Art. 13–14 |
 | `controller_processor_role` | Defines the organizational role for processing (controller/processor or equivalent). | GDPR Art. 24–28 |
@@ -3888,7 +3888,7 @@ Unless otherwise required by an implementation, these elements are intended to b
 | `ai_use_restriction` | Indicates allowed AI uses or prohibitions for the content of this DocLang instance. | GDPR Art. 5(1)(b–c) |
 | `cross_border_transfer_status` | Indicates whether cross-border transfers occur/are allowed. | GDPR Art. 44–49 |
 | `transfer_mechanism` | Indicates transfer mechanism where applicable (e.g., adequacy, SCCs). | GDPR Art. 45–47 |
-| `retention_category` | Indicates retention category for personal data contained in the document. | GDPR Art. 5(1)(e) |
+| `retention_category` | Indicates retention category for personal data contained in the DocLang instance. | GDPR Art. 5(1)(e) |
 | `dsr_impact_flag` | Signals potential impact on data subject rights (DSR handling implications). | GDPR Art. 12–23 |
 | `dpia_required` | Indicates whether a DPIA is required for intended processing. | GDPR Art. 35–36 |
 | `children_pii_present` | Flags whether children’s data is present. | GDPR Art. 8 |
@@ -3903,14 +3903,14 @@ If an organization already has established internal taxonomies for classificatio
 This subsection defines governance signals that constrain automated extraction, transformation, and downstream use of extracted fields.
 Implementations SHOULD use these elements to ensure purpose limitation and auditability of extraction.
 
-The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the document.
+The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the DocLang instance.
 These elements are intended to guide downstream systems that perform field extraction, transformation, enrichment, or export.
 Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
 | `extraction_permitted` | Indicates whether automated data extraction is permitted at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
-| `extraction_scope` | Defines which parts or components of the document may be extracted (e.g., full document, tables only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `extraction_scope` | Defines which parts or components of the DocLang instance may be extracted (e.g., full document, tables only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `extraction_purpose` | Specifies the allowed purpose(s) for extracted data. | GDPR Art. 5(1)(b); ISO 27701 |
 | `extraction_granularity` | Indicates permitted level of granularity (e.g., aggregate only, field-level, record-level). | GDPR Art. 5(1)(c) |
 | `pii_extraction_allowed` | Indicates whether PII may be included in extracted outputs. | GDPR Art. 6; ISO 27701 |
@@ -3938,9 +3938,9 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
-| `rag_permitted` | Indicates whether the document may be used in RAG workflows at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `rag_permitted` | Indicates whether the DocLang instance may be used in RAG workflows at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
 | `rag_indexing_allowed` | Indicates whether the document content may be indexed or embedded for retrieval. | GDPR Art. 5(1)(b,c); ISO 27001 A.8 |
-| `rag_embedding_scope` | Defines which parts or components of the document may be embedded (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `rag_embedding_scope` | Defines which parts or components of the DocLang instance may be embedded (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `rag_chunking_constraints` | Specifies constraints on chunking strategy (e.g., max size, boundaries, semantic-only). | ISO 23894; privacy-by-design principles |
 | `rag_query_restrictions` | Defines restrictions on the types of queries that may retrieve this content. | GDPR Art. 5(1)(b) |
 | `rag_output_attribution_required` | Indicates whether attribution or citation is required when content is retrieved or surfaced. | ISO 27001 A.18; copyright best practice |
@@ -3968,8 +3968,8 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
-| `training_permitted` | Indicates whether the document may be used for any form of model training or fine-tuning. | GDPR Art. 5(1)(a,b); ISO 27701 |
-| `training_scope` | Defines which parts or components of the document may be used for training (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `training_permitted` | Indicates whether the DocLang instance may be used for any form of model training or fine-tuning. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `training_scope` | Defines which parts or components of the DocLang instance may be used for training (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `training_purpose` | Specifies the intended purpose of training (e.g., general models, domain-specific models, evaluation only). | GDPR Art. 5(1)(b) |
 | `training_model_type` | Restricts the types or classes of models that may be trained using this content. | ISO 23894; internal governance |
 | `training_data_retention` | Specifies retention period for training datasets derived from this DocLang instance. | GDPR Art. 5(1)(e) |
@@ -4090,7 +4090,7 @@ Example use of the governance and compliance elements is shown below:
 ###### Consolidated example (PII + extraction + RAG + training)
 
 The following example illustrates a single `<head>` that combines Privacy and PII controls, Data extraction controls, RAG and retrieval controls, and Document training controls.
-Implementations MAY choose to interpret these as organization-wide defaults for the document, and MAY override at component level for finer-grained control.
+Implementations MAY choose to interpret these as organization-wide defaults for the DocLang instance, and MAY override at component level for finer-grained control.
 
 ```xml
 <doclang>
@@ -4206,7 +4206,7 @@ Metadata elements are meant to capture information that is not directly part of 
 - deriveable from the document
   - either directly, e.g. a summary of a certain component
   - or in combination with other context, e.g. from external knowledge sources
-- or reflects properties of the upstream pipeline, e.g. the VLM that generated the document.
+- or reflects properties of the upstream pipeline, e.g. the VLM that generated the DocLang instance.
 
 As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
