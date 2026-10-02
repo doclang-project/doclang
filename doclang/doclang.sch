@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!-- ============================================ -->
-<!-- This schema is meant to enable validation of Doclang documents in line with the Doclang specification. -->
+<!-- This schema is meant to enable validation of DocLang documents in line with the DocLang specification. -->
 <!-- In case of discrepancies, the authoritative source is the specification. -->
 <!-- ============================================ -->
 
@@ -9,7 +9,7 @@
             xmlns:dl="https://www.doclang.ai/ns/v0"
             queryBinding="xslt3">
 
-  <sch:title>Doclang Schematron Validation Rules (XSLT 3.0)</sch:title>
+  <sch:title>DocLang Schematron Validation Rules (XSLT 3.0)</sch:title>
 
   <sch:ns prefix="dl" uri="https://www.doclang.ai/ns/v0"/>
 

@@ -24,7 +24,7 @@ The source of the specification is available in [spec.md](https://github.com/doc
 and exports to different formats can be found in the [exports/](https://github.com/doclang-project/doclang/tree/main/exports)
 directory.
 
-In case of discrepancies, the authoritative version of the specification is the original MarkDown document.
+In case of discrepancies, the authoritative version of the specification is the original Markdown document.
 
 ## Reference Toolkit
 
