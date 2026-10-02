@@ -50,25 +50,37 @@ For the purposes of this document, the following terms and definitions apply. Te
 
 ### Abstract concepts
 
-1. **document component** A cohesive and meaningful part of the document, e.g. a table, list item with a marker, a bold piece of text, etc.
+1. **document component**
+
+   A cohesive and meaningful part of the document, e.g. a table, list item with a marker, a bold piece of text, etc.
 
 ### Adopted from XML
 
-1. **element** An XML element.
+1. **element**
 
-2. **attribute** An XML attribute.
+   An XML element.
 
-Note 1 to entry: When referring to an attribute in prose, this document uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
+2. **attribute**
 
-3. **tag** An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
+   An XML attribute.
+
+   Note 1 to entry: When referring to an attribute in prose, this document uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
+
+3. **tag**
+
+   An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
 ### Adopted from HTML
 
-1. **block-level element** An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
+1. **block-level element**
 
-2. **inline element** An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
+   An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
 
-Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
+2. **inline element**
+
+   An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
+
+   Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
 
 ## Language Design Principles
 
