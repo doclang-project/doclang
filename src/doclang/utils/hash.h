@@ -73,10 +73,8 @@ namespace doclang::native
               }
             codepoint = (codepoint << 6) | (next & 0x3f);
           }
-        if(!valid || (width == 3 && codepoint < 0x800) ||
-           (width == 4 && codepoint < 0x10000) ||
-           (codepoint >= 0xd800 && codepoint <= 0xdfff) ||
-           codepoint > 0x10ffff)
+        if(!valid || (width == 3 && codepoint < 0x800) || (width == 4 && codepoint < 0x10000)
+           || (codepoint >= 0xd800 && codepoint <= 0xdfff) || codepoint > 0x10ffff)
           {
             break;
           }

@@ -39,8 +39,7 @@ namespace doclang::native
 
   private:
 
-    static bool read_file(const std::filesystem::path& path,
-                          std::vector<std::byte>& data,
+    static bool read_file(const std::filesystem::path& path, std::vector<std::byte>& data,
                           std::string& error);
   };
 
@@ -48,17 +47,17 @@ namespace doclang::native
   {
     std::string ext = path.extension().string();
 
-    for(char& c:ext)
+    for(char& c : ext)
       {
         c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
       }
 
-    if(ext==".dclg")
+    if(ext == ".dclg")
       {
         return format::dclg;
       }
 
-    if(ext==".dclx")
+    if(ext == ".dclx")
       {
         return format::dclx;
       }
@@ -98,8 +97,8 @@ namespace doclang::native
           case format::unknown:
           default:
             {
-              out.set_last_error("unsupported DocLang file extension: " +
-                                 path.extension().string());
+              out.set_last_error("unsupported DocLang file extension: "
+                                 + path.extension().string());
               break;
             }
           }
@@ -142,9 +141,8 @@ namespace doclang::native
     return load_annotations(out);
   }
 
-  inline bool reader::read_file(const std::filesystem::path& path,
-                         std::vector<std::byte>& data,
-                         std::string& error)
+  inline bool reader::read_file(const std::filesystem::path& path, std::vector<std::byte>& data,
+                                std::string& error)
   {
     std::ifstream ifs(path, std::ios::binary);
     if(not ifs)
@@ -155,7 +153,7 @@ namespace doclang::native
 
     ifs.seekg(0, std::ios::end);
     std::streamoff size = ifs.tellg();
-    if(size<0)
+    if(size < 0)
       {
         error = "could not determine file size: " + path.string();
         return false;
@@ -164,7 +162,7 @@ namespace doclang::native
     ifs.seekg(0, std::ios::beg);
     data.resize(static_cast<std::size_t>(size));
 
-    if(size>0)
+    if(size > 0)
       {
         ifs.read(reinterpret_cast<char*>(data.data()), size);
         if(not ifs)

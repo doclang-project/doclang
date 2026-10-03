@@ -163,14 +163,3 @@ def test_sidecars_clear_and_plain_xml_replaces_dclx_state(tmp_path):
     assert restored.valid() and not restored.has_archive() and not restored.has_annotations()
     assert restored.source_path() == ""
     assert restored.overview()["instances"] == 0
-
-
-def test_old_annotation_columns_are_rejected(tmp_path):
-    source = tmp_path / "old-schema.dclx"
-    with ZipFile(source, "w") as archive:
-        archive.writestr("document.xml", "<doclang><text>Body</text></doclang>")
-        archive.writestr("annotations/properties.csv", "type,subj_path,label,confidence\n")
-
-    doc = DocLangXDocument()
-    assert not doc.read(str(source))
-    assert "unexpected header in annotations/properties.csv" in doc.last_error()

@@ -39,7 +39,7 @@ namespace doclang::native
     bool has(std::string_view path) const;
 
     std::optional<std::string_view> text(std::string_view path) const;
-    std::optional<std::span<const std::byte> > bytes(std::string_view path) const;
+    std::optional<std::span<const std::byte>> bytes(std::string_view path) const;
 
     void set_text(std::string_view path, std::string_view text);
     void set_bytes(std::string_view path, std::span<const std::byte> data);
@@ -47,7 +47,10 @@ namespace doclang::native
 
     std::vector<std::string> paths() const;
 
-    const std::string& get_last_error() const { return last_error; }
+    const std::string& get_last_error() const
+    {
+      return last_error;
+    }
 
   private:
 
@@ -87,7 +90,7 @@ namespace doclang::native
     bool success = true;
     const mz_uint num_files = mz_zip_reader_get_num_files(&zip);
 
-    for(mz_uint i=0; i<num_files; i++)
+    for(mz_uint i = 0; i < num_files; i++)
       {
         mz_zip_archive_file_stat stat;
         std::memset(&stat, 0, sizeof(stat));
@@ -107,7 +110,7 @@ namespace doclang::native
         size_t uncomp_size = 0;
         void* raw = mz_zip_reader_extract_to_heap(&zip, i, &uncomp_size, 0);
 
-        if(raw==nullptr)
+        if(raw == nullptr)
           {
             set_error("could not extract zip entry: " + std::string(stat.m_filename));
             success = false;
@@ -145,14 +148,13 @@ namespace doclang::native
       }
 
     bool success = true;
-    for(const auto& item:entries)
+    for(const auto& item : entries)
       {
         const auto& path = item.first;
         const auto& bytes = item.second;
         const void* ptr = static_cast<const void*>(bytes.data());
 
-        success = success and mz_zip_writer_add_mem(&zip, path.c_str(),
-                                                    ptr, bytes.size(), 0);
+        success = success and mz_zip_writer_add_mem(&zip, path.c_str(), ptr, bytes.size(), 0);
         if(not success)
           {
             break;
@@ -169,9 +171,9 @@ namespace doclang::native
 
     mz_zip_writer_end(&zip);
 
-    if(not success or raw==nullptr)
+    if(not success or raw == nullptr)
       {
-        if(raw!=nullptr)
+        if(raw != nullptr)
           {
             mz_free(raw);
           }
@@ -207,13 +209,13 @@ namespace doclang::native
 
   inline bool archive::has(std::string_view path) const
   {
-    return entries.count(std::string(path))==1;
+    return entries.count(std::string(path)) == 1;
   }
 
   inline std::optional<std::string_view> archive::text(std::string_view path) const
   {
     auto itr = entries.find(std::string(path));
-    if(itr==entries.end())
+    if(itr == entries.end())
       {
         return std::nullopt;
       }
@@ -223,10 +225,10 @@ namespace doclang::native
     return std::string_view(ptr, data.size());
   }
 
-  inline std::optional<std::span<const std::byte> > archive::bytes(std::string_view path) const
+  inline std::optional<std::span<const std::byte>> archive::bytes(std::string_view path) const
   {
     auto itr = entries.find(std::string(path));
-    if(itr==entries.end())
+    if(itr == entries.end())
       {
         return std::nullopt;
       }
@@ -237,7 +239,7 @@ namespace doclang::native
   inline void archive::set_text(std::string_view path, std::string_view text)
   {
     const auto* ptr = reinterpret_cast<const std::byte*>(text.data());
-    entries[std::string(path)] = bytes_type(ptr, ptr+text.size());
+    entries[std::string(path)] = bytes_type(ptr, ptr + text.size());
   }
 
   inline void archive::set_bytes(std::string_view path, std::span<const std::byte> data)
@@ -255,7 +257,7 @@ namespace doclang::native
     std::vector<std::string> result;
     result.reserve(entries.size());
 
-    for(const auto& item:entries)
+    for(const auto& item : entries)
       {
         result.push_back(item.first);
       }

@@ -1,8 +1,58 @@
 """DocLang reference validator."""
 
-from doclang._native import DoclangDocument, DocLangXDocument
-from doclang.validation import ValidationError, validate
+from doclang._native import (
+    AttributeName,
+    DoclangDocument,
+    DoclangFieldItemNode,
+    DoclangFieldRegionNode,
+    DoclangFootnoteNode,
+    DoclangFormulaNode,
+    DoclangHeadingNode,
+    DoclangListNode,
+    DoclangNode,
+    DoclangPictureNode,
+    DoclangTableNode,
+    DoclangTextNode,
+    DoclangVersion,
+    DocLangXDocument,
+    ElementTag,
+    InsertionSite,
+    OtslToken,
+    ValidationReport,
+    attribute_name_from_string,
+    element_tag_from_string,
+    otsl_token_from_string,
+    xml_name,
+)
+from doclang.validation import ValidationError, validate, validate_document
 
 DoclangXDocument = DocLangXDocument
 
-__all__ = ["DocLangXDocument", "DoclangDocument", "DoclangXDocument", "ValidationError", "validate"]
+__all__ = [
+    "AttributeName",
+    "DocLangXDocument",
+    "DoclangDocument",
+    "DoclangFieldItemNode",
+    "DoclangFieldRegionNode",
+    "DoclangFootnoteNode",
+    "DoclangFormulaNode",
+    "DoclangHeadingNode",
+    "DoclangListNode",
+    "DoclangNode",
+    "DoclangPictureNode",
+    "DoclangTableNode",
+    "DoclangTextNode",
+    "DoclangVersion",
+    "DoclangXDocument",
+    "ElementTag",
+    "InsertionSite",
+    "OtslToken",
+    "ValidationError",
+    "ValidationReport",
+    "attribute_name_from_string",
+    "element_tag_from_string",
+    "otsl_token_from_string",
+    "validate",
+    "validate_document",
+    "xml_name",
+]

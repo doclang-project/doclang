@@ -25,18 +25,15 @@ namespace doclang::native
   {
   public:
 
-    static bool write_dclx(const std::filesystem::path& path,
-                           dclx_document& doc,
+    static bool write_dclx(const std::filesystem::path& path, dclx_document& doc,
                            const writer_options& options = writer_options());
 
-    static bool write_dclx_buffer(dclx_document& doc,
-                                  std::vector<std::byte>& out,
+    static bool write_dclx_buffer(dclx_document& doc, std::vector<std::byte>& out,
                                   const writer_options& options = writer_options());
   };
 
-  inline bool writer::write_dclx(const std::filesystem::path& path,
-                          dclx_document& doc,
-                          const writer_options& options)
+  inline bool writer::write_dclx(const std::filesystem::path& path, dclx_document& doc,
+                                 const writer_options& options)
   {
     std::vector<std::byte> data;
     if(not write_dclx_buffer(doc, data, options))
@@ -62,9 +59,8 @@ namespace doclang::native
     return true;
   }
 
-  inline bool writer::write_dclx_buffer(dclx_document& doc,
-                                 std::vector<std::byte>& out,
-                                 const writer_options& options)
+  inline bool writer::write_dclx_buffer(dclx_document& doc, std::vector<std::byte>& out,
+                                        const writer_options& options)
   {
     archive zip;
     if(doc.has_archive())

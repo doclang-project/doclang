@@ -20,7 +20,7 @@
     <sch:rule context="dl:list[*]">
       <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
-      <sch:assert test="not($first-non-header) or $first-non-header[self::dl:ldiv]">
+      <sch:assert id="list-structure" test="not($first-non-header) or $first-non-header[self::dl:ldiv]">
         List must have ldiv as first element after optional element head (property elements: label, thread, xref, href, layer, location, caption, custom).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
       </sch:assert>
@@ -35,7 +35,7 @@
     <sch:rule context="dl:table[*] | dl:index[*]">
       <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
-      <sch:assert test="not($first-non-header) or
+      <sch:assert id="table-structure" test="not($first-non-header) or
                         $first-non-header[self::dl:fcel or self::dl:ecel or self::dl:ched or
                                          self::dl:rhed or self::dl:corn or self::dl:srow or
                                          self::dl:lcel or self::dl:ucel or self::dl:xcel]">
@@ -59,7 +59,7 @@
       <sch:let name="first-row-cells" value="count($cell-tokens[following-sibling::dl:nl[1] is current()/dl:nl[1]])"/>
 
       <!-- Check that all subsequent rows have the same number of cells -->
-      <sch:assert test="every $nl in dl:nl[position() > 1] satisfies
+      <sch:assert id="table-rectangular-grid" test="every $nl in dl:nl[position() > 1] satisfies
                         count($cell-tokens[preceding-sibling::dl:nl[1] is $nl/preceding-sibling::dl:nl[1] and
                                           following-sibling::dl:nl[1] is $nl]) = $first-row-cells">
         Table and index must follow the rectangular rule: all rows must have the same number of cells.
@@ -72,7 +72,7 @@
   <!-- ============================================ -->
   <!-- ELEMENT HEAD: Text must not precede property elements -->
   <!-- Property elements: label, thread, xref, href, layer, location, caption, custom (per XSD element_head group) -->
-  <!-- This rule applies to regular semantic elements AND virtual <text> in lists/tables -->
+  <!-- List items and table cells have their own virtual-text rules below. -->
   <!-- ============================================ -->
 
   <sch:pattern id="element-head-placement">
@@ -81,10 +81,19 @@
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
                        dl:list | dl:table | dl:index | dl:group">
       <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:layer | dl:location | dl:caption | dl:custom"/>
+      <sch:let name="first-structure" value="if (self::dl:list) then dl:ldiv[1]
+                                             else if (self::dl:table or self::dl:index)
+                                             then *[self::dl:fcel or self::dl:ecel or self::dl:ched or
+                                                    self::dl:rhed or self::dl:corn or self::dl:srow or
+                                                    self::dl:lcel or self::dl:ucel or self::dl:xcel][1]
+                                             else ()"/>
 
-      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom]]"/>
+      <sch:let name="text-before-header" value="text()[(not($first-structure) or . &lt;&lt; $first-structure) and
+        following-sibling::*[(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or
+                              self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom) and
+                             (not($first-structure) or . &lt;&lt; $first-structure)]]"/>
 
-      <sch:assert test="every $t in $text-before-header satisfies normalize-space($t) = ''">
+      <sch:assert id="element-head-placement" test="every $t in $text-before-header satisfies normalize-space($t) = ''">
         Property elements in the element head (label, thread, xref, href, layer, location, caption, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
@@ -97,7 +106,7 @@
 
   <sch:pattern id="xref-href-mutual-exclusivity">
     <sch:rule context="*[dl:xref and dl:href]">
-      <sch:assert test="false()">
+      <sch:assert id="xref-href-mutual-exclusivity" test="false()">
         Element head must not contain both xref and href elements; they are mutually exclusive.
       </sch:assert>
     </sch:rule>
@@ -109,7 +118,7 @@
 
   <sch:pattern id="xref-thread-defined">
     <sch:rule context="dl:xref">
-      <sch:assert test="exists(//dl:thread[@thread_id = current()/@thread_id])">
+      <sch:assert id="xref-thread-defined" test="exists(//dl:thread[@thread_id = current()/@thread_id])">
         Element xref references thread_id="<sch:value-of select="@thread_id"/>" but no thread element defines that id.
       </sch:assert>
     </sch:rule>
@@ -136,7 +145,7 @@
                                        then $doc-default-width
                                        else $doc-default-height"/>
 
-      <sch:assert test="number(@value) ge 0 and number(@value) lt $axis-limit">
+      <sch:assert id="location-value-range" test="number(@value) ge 0 and number(@value) lt $axis-limit">
         Location value must satisfy 0 &lt;= value &lt; axis_limit.
         Found value=<sch:value-of select="@value"/>, axis_limit=<sch:value-of select="$axis-limit"/>,
         axis=<sch:value-of select="if ($is-x-axis) then 'x' else 'y'"/>,
@@ -182,7 +191,7 @@
       <sch:let name="x1-norm" value="$x1 div $x1-res"/>
       <sch:let name="y1-norm" value="$y1 div $y1-res"/>
 
-      <sch:assert test="$x0-norm le $x1-norm and $y0-norm le $y1-norm">
+      <sch:assert id="location-block-order" test="$x0-norm le $x1-norm and $y0-norm le $y1-norm">
         Location block must satisfy x0_norm &lt;= x1_norm and y0_norm &lt;= y1_norm,
         where *_norm is each coordinate normalized by its effective resolution.
         Found:
@@ -204,7 +213,7 @@
       <sch:let name="threads" value="//dl:thread"/>
       <sch:let name="thread-ids" value="distinct-values($threads/@thread_id)"/>
       <sch:let name="cell-token-names" value="('fcel','ecel','ched','rhed','corn','srow','lcel','ucel','xcel')"/>
-      <sch:assert test="every $tid in $thread-ids satisfies
+      <sch:assert id="thread-host-type-consistency" test="every $tid in $thread-ids satisfies
                         count(distinct-values(
                           for $t in $threads[@thread_id = $tid]
                           return
@@ -245,7 +254,7 @@
                                                       return $item-content[$i][self::text()][normalize-space(.) != '']
                                                  else ()"/>
 
-      <sch:assert test="empty($text-before-header)">
+      <sch:assert id="list-virtual-text-element-head" test="empty($text-before-header)">
         In list items (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
@@ -285,7 +294,7 @@
                                                       return $cell-content[$i][self::text()][normalize-space(.) != '']
                                                  else ()"/>
 
-      <sch:assert test="empty($text-before-header)">
+      <sch:assert id="table-virtual-text-element-head" test="empty($text-before-header)">
         In table and index cells (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
@@ -298,32 +307,32 @@
   <!-- ============================================ -->
   <sch:pattern id="field-structure-placement">
     <sch:rule context="dl:field_heading">
-      <sch:assert test="exists(ancestor::dl:field_region)">
+      <sch:assert id="field-heading-region" test="exists(ancestor::dl:field_region)">
         field_heading and field_item must be descendants of field_region.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:field_item">
-      <sch:assert test="exists(ancestor::dl:field_region)">
+      <sch:assert id="field-item-region" test="exists(ancestor::dl:field_region)">
         field_heading and field_item must be descendants of field_region.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:key">
-      <sch:assert test="exists(ancestor::dl:field_item)">
+      <sch:assert id="key-field-item" test="exists(ancestor::dl:field_item)">
         key and value must be descendants of field_item.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:value">
-      <sch:assert test="exists(ancestor::dl:field_item)">
+      <sch:assert id="value-field-item" test="exists(ancestor::dl:field_item)">
         key and value must be descendants of field_item.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:field_item">
       <sch:let name="own-key-count" value="count(.//dl:key[count(ancestor::dl:field_item) = 1])"/>
-      <sch:assert test="$own-key-count le 1">
+      <sch:assert id="field-item-own-key" test="$own-key-count le 1">
         A field_item may contain at most one own descendant key.
         Keys that belong to nested field_item descendants are excluded from this count.
         Found own-key-count=<sch:value-of select="$own-key-count"/>.
@@ -339,15 +348,15 @@
     <sch:rule context="dl:picture">
       <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
 
-      <sch:assert test="empty(dl:tabular) or @class = 'chart'">
+      <sch:assert id="picture-tabular-chart" test="empty(dl:tabular) or @class = 'chart'">
         Element tabular is only allowed in picture with class="chart".
       </sch:assert>
 
-      <sch:assert test="empty(dl:src) or dl:src[1] is $first-body">
+      <sch:assert id="picture-src-first" test="empty(dl:src) or dl:src[1] is $first-body">
         Element src must be the first element of the picture body when present.
       </sch:assert>
 
-      <sch:assert test="empty(dl:tabular) or (not(dl:src) and dl:tabular[1] is $first-body) or (dl:src and dl:tabular[1] is dl:src/following-sibling::*[1])">
+      <sch:assert id="picture-tabular-after-src" test="empty(dl:tabular) or (not(dl:src) and dl:tabular[1] is $first-body) or (dl:src and dl:tabular[1] is dl:src/following-sibling::*[1])">
         Element tabular must immediately follow src when src is present, otherwise it may be the first body element.
       </sch:assert>
     </sch:rule>

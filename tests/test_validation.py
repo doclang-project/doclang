@@ -12,6 +12,8 @@ import pytest
 import doclang
 from doclang import ValidationError, validate
 
+pytestmark = pytest.mark.validation
+
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
 INVALID_DIR = TEST_DATA_DIR / "invalid"

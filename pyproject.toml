@@ -9,7 +9,7 @@ description = "DocLang reference validator"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
-license-files = ["LICENSE", "src/doclang/LICENSE.docling-nlp"]
+license-files = ["LICENSE"]
 authors = [{ name = "DocLang Project" }]
 keywords = ["doclang", "xml", "validation", "xsd", "schematron", "documents", "llm"]
 classifiers = [
@@ -25,7 +25,6 @@ classifiers = [
 ]
 dependencies = [
     "lxml>=6.0.2",
-    "saxonche>=12.9.0",
     "typer>=0.15.1",
 ]
 
@@ -65,8 +64,11 @@ default-groups = ["dev"]
 [tool.scikit-build]
 wheel.packages = ["doclang"]
 sdist.inclusion-mode = "explicit"
-sdist.include = ["pyproject.toml", "README.md", "LICENSE", "CMakeLists.txt", "doclang/**", "src/doclang/**"]
-sdist.exclude = ["**/__pycache__/**", "**/*.pyc"]
+sdist.include = ["pyproject.toml", "README.md", "LICENSE", "CMakeLists.txt", "doclang/**", "src/doclang/**", "src/pybind/**"]
+sdist.exclude = ["**/__pycache__/**", "**/*.pyc", "**/.#*", "**/#*#"]
+
+[tool.pytest.ini_options]
+markers = ["validation: XSD and Schematron validation tests"]
 
 [tool.ruff]
 target-version = "py310"
@@ -135,7 +137,6 @@ exclude = "(^|/)tests/data/.*"
 module = [
     "docx.*",
     "lxml.*",
-    "saxonche.*",
     "typer.*",
     "yaml.*",
 ]

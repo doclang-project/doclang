@@ -22,17 +22,31 @@ namespace doclang::native
   public:
 
     element_view() = default;
-    explicit element_view(pugi::xml_node value): node_value(value) {}
+    explicit element_view(pugi::xml_node value) : node_value(value)
+    {
+    }
 
-    bool valid() const { return static_cast<bool>(node_value); }
+    bool valid() const
+    {
+      return static_cast<bool>(node_value);
+    }
 
-    std::string name() const { return node_value.name(); }
-    std::string text_content() const { return node_value.child_value(); }
+    std::string name() const
+    {
+      return node_value.name();
+    }
+    std::string text_content() const
+    {
+      return node_value.child_value();
+    }
 
     std::optional<unsigned> heading_level() const;
     std::vector<float> location() const;
 
-    pugi::xml_node node() const { return node_value; }
+    pugi::xml_node node() const
+    {
+      return node_value;
+    }
 
   private:
 
@@ -44,11 +58,14 @@ namespace doclang::native
   public:
 
     document_view() = default;
-    explicit document_view(std::shared_ptr<const dclg_document> doc):
-      doc_ptr(std::move(doc))
-    {}
+    explicit document_view(std::shared_ptr<const dclg_document> doc) : doc_ptr(std::move(doc))
+    {
+    }
 
-    bool valid() const { return doc_ptr!=nullptr and doc_ptr->root(); }
+    bool valid() const
+    {
+      return doc_ptr != nullptr and doc_ptr->root();
+    }
 
     std::vector<element_view> body_elements() const;
     std::vector<element_view> elements_by_name(std::string_view name) const;
@@ -66,7 +83,7 @@ namespace doclang::native
 
   inline std::optional<unsigned> element_view::heading_level() const
   {
-    if(not node_value or std::string_view(node_value.name())!="heading")
+    if(not node_value or std::string_view(node_value.name()) != "heading")
       {
         return std::nullopt;
       }
@@ -89,7 +106,7 @@ namespace doclang::native
         return result;
       }
 
-    for(pugi::xml_node loc:node_value.children("location"))
+    for(pugi::xml_node loc : node_value.children("location"))
       {
         pugi::xml_attribute attr = loc.attribute("value");
         if(attr)
@@ -105,18 +122,9 @@ namespace doclang::native
   {
     const std::string_view name = node.name();
 
-    return (
-      name=="text" or
-      name=="heading" or
-      name=="page_header" or
-      name=="page_footer" or
-      name=="footnote" or
-      name=="caption" or
-      name=="list" or
-      name=="formula" or
-      name=="equation" or
-      name=="code"
-    );
+    return (name == "text" or name == "heading" or name == "page_header" or name == "page_footer"
+            or name == "footnote" or name == "caption" or name == "list" or name == "formula"
+            or name == "equation" or name == "code");
   }
 
   inline std::vector<element_view> document_view::body_elements() const
@@ -128,10 +136,7 @@ namespace doclang::native
         return result;
       }
 
-    doc_ptr->iterate_elements([&](pugi::xml_node node)
-    {
-      result.emplace_back(node);
-    });
+    doc_ptr->iterate_elements([&](pugi::xml_node node) { result.emplace_back(node); });
 
     return result;
   }
@@ -145,10 +150,7 @@ namespace doclang::native
         return result;
       }
 
-    doc_ptr->iterate_elements(name, [&](pugi::xml_node node)
-    {
-      result.emplace_back(node);
-    });
+    doc_ptr->iterate_elements(name, [&](pugi::xml_node node) { result.emplace_back(node); });
 
     return result;
   }
@@ -162,8 +164,7 @@ namespace doclang::native
         return result;
       }
 
-    doc_ptr->iterate_elements([&](pugi::xml_node node)
-    {
+    doc_ptr->iterate_elements([&](pugi::xml_node node) {
       if(is_text_like(node))
         {
           result.emplace_back(node);

@@ -3,24 +3,10 @@
 from pathlib import Path
 from typing import Any, Union
 
-from doclang.schematron_validation import _validate_with_schematron
+from doclang._native import DoclangDocument, _schematron_errors_xml
 from doclang.xsd_validation import _validate_xsd
 
-__all__ = ["ValidationError", "validate"]
-
-_SVRL_NS = "http://purl.oclc.org/dsdl/svrl"
-
-
-def _failed_asserts_to_errors(failed_asserts: list) -> list[dict[str, Any]]:
-    return [
-        {
-            "location": assert_elem.get("location", "unknown"),
-            "message": assert_elem.find(f"{{{_SVRL_NS}}}text").text
-            if assert_elem.find(f"{{{_SVRL_NS}}}text") is not None
-            else "No message",
-        }
-        for assert_elem in failed_asserts
-    ]
+__all__ = ["ValidationError", "validate", "validate_document"]
 
 
 class ValidationError(Exception):
@@ -75,13 +61,7 @@ def validate(
 
     if not xsd_only:
         try:
-            failed_asserts = _validate_with_schematron(
-                path,
-                allow_empty_namespace=allow_empty_namespace,
-                verbose=False,
-            )
-            if failed_asserts:
-                schematron_errors = _failed_asserts_to_errors(failed_asserts)
+            schematron_errors = _schematron_errors_xml(path.read_bytes(), allow_empty_namespace=allow_empty_namespace)
         except Exception as exc:
             schematron_errors = [{"error": str(exc)}]
 
@@ -89,4 +69,32 @@ def validate(
         raise ValidationError(
             xsd_errors=xsd_errors,
             schematron_errors=schematron_errors,
+        )
+
+
+def validate_document(
+    document: DoclangDocument,
+    *,
+    allow_empty_namespace: bool = False,
+    xsd_only: bool = False,
+    schematron_only: bool = False,
+) -> None:
+    """Validate XML held by a native document without writing a temporary file."""
+    if not isinstance(document, DoclangDocument):
+        raise TypeError("document must be a DoclangDocument")
+    if not document.valid():
+        raise ValidationError(
+            xsd_errors=[{"error": document.last_error() or "DocLang document has no valid XML"}],
+            schematron_errors=[],
+        )
+
+    report = document.validate(
+        allow_empty_namespace=allow_empty_namespace,
+        xsd_only=xsd_only,
+        schematron_only=schematron_only,
+    )
+    if not report.ok():
+        raise ValidationError(
+            xsd_errors=report.xsd_errors,
+            schematron_errors=report.schematron_errors,
         )

@@ -12,6 +12,8 @@
 
 #include <pugixml.hpp>
 
+#include <doclang/vocabulary.h>
+
 namespace doclang::native
 {
 
@@ -40,15 +42,15 @@ namespace doclang::native
 
   inline bool is_xml_whitespace(const char* value)
   {
-    if(value==nullptr)
+    if(value == nullptr)
       {
         return true;
       }
 
-    for(const char* ptr=value; *ptr!='\0'; ptr++)
+    for(const char* ptr = value; *ptr != '\0'; ptr++)
       {
         const char c = *ptr;
-        if(c!=' ' and c!='\n' and c!='\r' and c!='\t')
+        if(c != ' ' and c != '\n' and c != '\r' and c != '\t')
           {
             return false;
           }
@@ -76,21 +78,21 @@ namespace doclang::native
   }
 
   inline std::vector<content_node> child_content(pugi::xml_node parent,
-                                                 bool include_whitespace_text=false)
+                                                 bool include_whitespace_text = false)
   {
     std::vector<content_node> result;
 
-    for(pugi::xml_node child:parent.children())
+    for(pugi::xml_node child : parent.children())
       {
         const content_kind kind = to_content_kind(child.type());
 
-        if((kind==content_kind::text or kind==content_kind::cdata) and
-           not include_whitespace_text and is_xml_whitespace(child.value()))
+        if((kind == content_kind::text or kind == content_kind::cdata)
+           and not include_whitespace_text and is_xml_whitespace(child.value()))
           {
             continue;
           }
 
-        result.push_back({kind, child.name(), child.value(), child});
+        result.push_back({ kind, child.name(), child.value(), child });
       }
 
     return result;
@@ -105,7 +107,7 @@ namespace doclang::native
 
   inline std::string serialize_node(pugi::xml_node node)
   {
-    if(node.type()==pugi::node_pcdata or node.type()==pugi::node_cdata)
+    if(node.type() == pugi::node_pcdata or node.type() == pugi::node_cdata)
       {
         return node.value();
       }
@@ -119,9 +121,9 @@ namespace doclang::native
   {
     std::ostringstream oss;
 
-    for(pugi::xml_node child:parent.children())
+    for(pugi::xml_node child : parent.children())
       {
-        if(child.type()==pugi::node_pcdata or child.type()==pugi::node_cdata)
+        if(child.type() == pugi::node_pcdata or child.type() == pugi::node_cdata)
           {
             oss << child.value();
           }
@@ -133,26 +135,24 @@ namespace doclang::native
   inline std::string strip_content(std::string value)
   {
     const auto first = value.find_first_not_of(" \n\r\t");
-    if(first==std::string::npos)
+    if(first == std::string::npos)
       {
         return "";
       }
 
     const auto last = value.find_last_not_of(" \n\r\t");
-    return value.substr(first, last-first+1);
+    return value.substr(first, last - first + 1);
   }
 
-  inline bool parse_indexed_step(std::string_view step,
-                          std::string& name,
-                          std::size_t& index,
-                          bool& is_text_step)
+  inline bool parse_indexed_step(std::string_view step, std::string& name, std::size_t& index,
+                                 bool& is_text_step)
   {
     is_text_step = false;
     name.clear();
     index = 0;
 
     constexpr std::string_view text_prefix = "text()[";
-    if(step.rfind(text_prefix, 0)==0 and step.back()==']')
+    if(step.rfind(text_prefix, 0) == 0 and step.back() == ']')
       {
         is_text_step = true;
         name = "text()";
@@ -162,13 +162,13 @@ namespace doclang::native
     else
       {
         const auto open = step.find('[');
-        if(open==std::string_view::npos or step.back()!=']' or open==0)
+        if(open == std::string_view::npos or step.back() != ']' or open == 0)
           {
             return false;
           }
 
         name = std::string(step.substr(0, open));
-        step.remove_prefix(open+1);
+        step.remove_prefix(open + 1);
         step.remove_suffix(1);
       }
 
@@ -177,21 +177,20 @@ namespace doclang::native
         return false;
       }
 
-    for(char c:step)
+    for(char c : step)
       {
-        if(c<'0' or c>'9')
+        if(c < '0' or c > '9')
           {
             return false;
           }
 
-        index = 10*index + static_cast<std::size_t>(c-'0');
+        index = 10 * index + static_cast<std::size_t>(c - '0');
       }
 
-    return index>0;
+    return index > 0;
   }
 
-  inline path_lookup_result resolve_doclang_path(pugi::xml_node root,
-                                          std::string_view path)
+  inline path_lookup_result resolve_doclang_path(pugi::xml_node root, std::string_view path)
   {
     path_lookup_result result;
 
@@ -201,7 +200,7 @@ namespace doclang::native
         return result;
       }
 
-    if(path.empty() or path.front()!='/')
+    if(path.empty() or path.front() != '/')
       {
         result.error = "DocLang path must be absolute: " + std::string(path);
         return result;
@@ -211,11 +210,11 @@ namespace doclang::native
     std::size_t pos = 1;
     bool first_step = true;
 
-    while(pos<=path.size())
+    while(pos <= path.size())
       {
         const auto next = path.find('/', pos);
-        const std::string_view step =
-          next==std::string_view::npos? path.substr(pos):path.substr(pos, next-pos);
+        const std::string_view step
+            = next == std::string_view::npos ? path.substr(pos) : path.substr(pos, next - pos);
 
         if(step.empty())
           {
@@ -235,13 +234,13 @@ namespace doclang::native
         if(is_text_step)
           {
             std::size_t count = 0;
-            for(pugi::xml_node child:current.children())
+            for(pugi::xml_node child : current.children())
               {
-                if((child.type()==pugi::node_pcdata or child.type()==pugi::node_cdata) and
-                   not is_xml_whitespace(child.value()))
+                if((child.type() == pugi::node_pcdata or child.type() == pugi::node_cdata)
+                   and not is_xml_whitespace(child.value()))
                   {
                     count += 1;
-                    if(count==index)
+                    if(count == index)
                       {
                         current = child;
                         break;
@@ -249,42 +248,42 @@ namespace doclang::native
                   }
               }
 
-            if(count<index)
+            if(count < index)
               {
                 result.error = "DocLang path not found: " + std::string(path);
                 return result;
               }
           }
-        else if(first_step and name==root.name() and index==1)
+        else if(first_step and name == root.name() and index == 1)
           {
             current = root;
           }
         else
           {
             std::size_t count = 0;
-            for(pugi::xml_node child:current.children(name.c_str()))
+            for(pugi::xml_node child : current.children(name.c_str()))
               {
                 count += 1;
-                if(count==index)
+                if(count == index)
                   {
                     current = child;
                     break;
                   }
               }
 
-            if(count<index)
+            if(count < index)
               {
                 result.error = "DocLang path not found: " + std::string(path);
                 return result;
               }
           }
 
-        if(next==std::string_view::npos)
+        if(next == std::string_view::npos)
           {
             break;
           }
 
-        pos = next+1;
+        pos = next + 1;
         first_step = false;
       }
 
@@ -295,49 +294,66 @@ namespace doclang::native
 
   inline bool is_table_cell_marker(std::string_view name)
   {
-    return name=="fcel" or name=="ecel" or name=="ched" or
-      name=="rhed" or name=="corn" or name=="srow" or
-      name=="lcel" or name=="ucel";
+    const auto token = otsl_token_from_string(name);
+    return token.has_value() and token != otsl_token::nl and to_string_view(token.value()) == name;
   }
 
   inline std::optional<std::pair<std::size_t, std::size_t>>
   table_coordinates(pugi::xml_node root, std::string_view xpath)
   {
     const auto lookup = resolve_doclang_path(root, xpath);
-    if(!lookup.found) return std::nullopt;
+    if(!lookup.found)
+      {
+        return std::nullopt;
+      }
 
     pugi::xml_node target = lookup.node;
     pugi::xml_node table = target;
-    while(table and std::string_view(table.name())!="table")
+    while(table and std::string_view(table.name()) != "table")
       {
         table = table.parent();
       }
-    if(!table or target==table) return std::nullopt;
+    if(!table or target == table)
+      {
+        return std::nullopt;
+      }
 
-    while(target.parent()!=table) target = target.parent();
+    while(target.parent() != table)
+      {
+        target = target.parent();
+      }
     std::size_t row = 0;
     std::size_t column = 0;
     bool in_cell = false;
-    for(pugi::xml_node child:table.children())
+    for(pugi::xml_node child : table.children())
       {
         const std::string_view name = child.name();
-        if(name=="nl")
+        if(name == "nl")
           {
-            if(child==target) return std::nullopt;
+            if(child == target)
+              {
+                return std::nullopt;
+              }
             ++row;
             column = 0;
             in_cell = false;
           }
         else if(is_table_cell_marker(name))
           {
-            if(in_cell) ++column;
+            if(in_cell)
+              {
+                ++column;
+              }
             in_cell = true;
           }
 
-        if(child==target)
+        if(child == target)
           {
-            if(!in_cell) return std::nullopt;
-            return std::pair{row, column};
+            if(!in_cell)
+              {
+                return std::nullopt;
+              }
+            return std::pair{ row, column };
           }
       }
     return std::nullopt;
