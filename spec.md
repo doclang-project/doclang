@@ -217,7 +217,7 @@ The DocLang archive format is defined in [DocLang Archive Format](#doclang-archi
 
 Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
 
-Planned extensions are discussed in [Future Extensions](#future-extensions).
+Planned extensions are discussed in [Future extensions](#future-extensions).
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
