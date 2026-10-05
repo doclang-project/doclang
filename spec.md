@@ -229,7 +229,7 @@ The DocLang archive format is defined in [DocLang Archive Format](#doclang-archi
 
 Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
 
-Planned extensions are discussed in [Future Extensions](#future-extensions).
+Planned extensions are discussed in [Future extensions](#future-extensions).
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
@@ -3672,7 +3672,7 @@ The token vocabulary trades off size and inference cost:
 | `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
 | `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
 
-### Annex D <br/> (informative) <br/> Future Extensions
+### Annex D <br/> (informative) <br/> Future extensions
 
 These features are considered for future versions of Doclang.
 
