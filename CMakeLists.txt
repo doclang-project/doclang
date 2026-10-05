@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
 project(doclang LANGUAGES C CXX)
 
+option(DOCLANG_BUILD_PYTHON "Build the Python extension" ON)
+option(DOCLANG_BUILD_CPP_TESTS "Build native C++ tests" OFF)
+option(DOCLANG_BUILD_VALIDATION_TESTS "Build native validation tests" OFF)
+
 include(FetchContent)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS OFF)
@@ -56,8 +60,17 @@ target_include_directories(doclang_native INTERFACE
 target_link_libraries(doclang_native INTERFACE
   pugixml::pugixml ${DOCLANG_MINIZ_TARGET} LibXml2::LibXml2)
 
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(_native src/pybind/doclang_module.cpp)
-target_link_libraries(_native PRIVATE doclang_native)
-install(TARGETS _native LIBRARY DESTINATION doclang RUNTIME DESTINATION doclang)
+if(DOCLANG_BUILD_PYTHON)
+  set(PYBIND11_FINDPYTHON ON)
+  find_package(pybind11 CONFIG REQUIRED)
+  pybind11_add_module(_native src/pybind/doclang_module.cpp)
+  target_link_libraries(_native PRIVATE doclang_native)
+  install(TARGETS _native LIBRARY DESTINATION doclang RUNTIME DESTINATION doclang)
+endif()
+
+if(DOCLANG_BUILD_CPP_TESTS OR DOCLANG_BUILD_VALIDATION_TESTS)
+  include(CTest)
+  if(BUILD_TESTING)
+    add_subdirectory(tests/cpp)
+  endif()
+endif()

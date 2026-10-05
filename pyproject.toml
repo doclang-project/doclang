@@ -64,7 +64,7 @@ default-groups = ["dev"]
 [tool.scikit-build]
 wheel.packages = ["doclang"]
 sdist.inclusion-mode = "explicit"
-sdist.include = ["pyproject.toml", "README.md", "LICENSE", "CMakeLists.txt", "doclang/**", "src/doclang/**", "src/pybind/**"]
+sdist.include = ["pyproject.toml", "README.md", "LICENSE", "CMakeLists.txt", "doclang/**", "src/doclang/**", "src/pybind/**", "tests/cpp/**", "tests/data/**"]
 sdist.exclude = ["**/__pycache__/**", "**/*.pyc", "**/.#*", "**/#*#"]
 
 [tool.pytest.ini_options]

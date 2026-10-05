@@ -1,0 +1,17 @@
+function(doclang_add_native_test name label)
+  add_executable(${name} ${name}.cpp)
+  target_link_libraries(${name} PRIVATE doclang_native)
+  target_compile_definitions(${name} PRIVATE DOCLANG_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+  add_test(NAME ${name} COMMAND ${name})
+  set_tests_properties(${name} PROPERTIES LABELS ${label})
+endfunction()
+
+if(DOCLANG_BUILD_CPP_TESTS)
+  foreach(name IN ITEMS test_document test_node test_elements test_records test_archive test_x_document)
+    doclang_add_native_test(${name} core)
+  endforeach()
+endif()
+
+if(DOCLANG_BUILD_VALIDATION_TESTS)
+  doclang_add_native_test(test_validation validation)
+endif()
