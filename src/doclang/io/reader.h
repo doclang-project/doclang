@@ -32,10 +32,12 @@ namespace doclang::native
 
     static format detect_format(const std::filesystem::path& path);
 
-    static bool read(const std::filesystem::path& path, dclx_document& out);
+    static bool read(const std::filesystem::path& path, dclx_document& out,
+                     const archive::limits& bounds = archive::limits());
 
     static bool read_dclg_buffer(std::string_view xml, dclg_document& out);
-    static bool read_dclx_buffer(std::span<const std::byte> bytes, dclx_document& out);
+    static bool read_dclx_buffer(std::span<const std::byte> bytes, dclx_document& out,
+                                 const archive::limits& bounds = archive::limits());
 
   private:
 
@@ -65,7 +67,8 @@ namespace doclang::native
     return format::unknown;
   }
 
-  inline bool reader::read(const std::filesystem::path& path, dclx_document& out)
+  inline bool reader::read(const std::filesystem::path& path, dclx_document& out,
+                           const archive::limits& bounds)
   {
     out.clear();
 
@@ -73,7 +76,12 @@ namespace doclang::native
 
     std::vector<std::byte> data;
     std::string error;
-    if(not read_file(path, data, error))
+    if(std::filesystem::is_regular_file(path) and detect_format(path) == format::dclx
+       and std::filesystem::file_size(path) > bounds.max_archive_bytes)
+      {
+        out.set_last_error("dclx archive exceeds size limit");
+      }
+    else if(not read_file(path, data, error))
       {
         out.set_last_error(error);
       }
@@ -90,7 +98,8 @@ namespace doclang::native
 
           case format::dclx:
             {
-              success = read_dclx_buffer(std::span<const std::byte>(data.data(), data.size()), out);
+              success = read_dclx_buffer(std::span<const std::byte>(data.data(), data.size()), out,
+                                         bounds);
               break;
             }
 
@@ -114,12 +123,13 @@ namespace doclang::native
     return out.read(xml);
   }
 
-  inline bool reader::read_dclx_buffer(std::span<const std::byte> bytes, dclx_document& out)
+  inline bool reader::read_dclx_buffer(std::span<const std::byte> bytes, dclx_document& out,
+                                       const archive::limits& bounds)
   {
     out.clear();
 
     archive zip;
-    if(not zip.load_from_memory(bytes))
+    if(not zip.load_from_memory(bytes, bounds))
       {
         out.set_last_error(zip.get_last_error());
         return false;

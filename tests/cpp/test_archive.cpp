@@ -47,10 +47,30 @@ namespace
     CHECK(!restored.load_from_memory(buffer));
     CHECK(restored.get_last_error().find("document.xml") != std::string::npos);
   }
+
+  void paths_and_limits()
+  {
+    CHECK(archive::valid_path("context/source.json"));
+    CHECK(!archive::valid_path("../outside"));
+    CHECK(!archive::valid_path("a/../b"));
+    CHECK(!archive::valid_path("a\\b"));
+
+    archive original;
+    original.set_text("document.xml", "<doclang/>");
+    original.set_text("assets/large.txt", "01234567890");
+    archive::bytes_type buffer;
+    CHECK(original.write_to_memory(buffer));
+    archive::limits bounds;
+    bounds.max_entry_bytes = 10;
+    archive restored;
+    CHECK(!restored.load_from_memory(buffer, bounds));
+    CHECK(restored.get_last_error().find("limit") != std::string::npos);
+  }
 }
 
 int main()
 {
   return test_support::run({ { "round trip and preservation", round_trip_and_preservation },
-                             { "bad archive", bad_archive } });
+                             { "bad archive", bad_archive },
+                             { "paths and limits", paths_and_limits } });
 }

@@ -252,3 +252,49 @@ Note that this approach does not cover Schematron validation rules.
 - [XSD 1.0 Specification](https://www.w3.org/TR/xmlschema-1/)
 - [ISO Schematron](http://schematron.com/)
 - [XPath 3.1 Specification](https://www.w3.org/TR/xpath-31/)
+# Native DCLX editing and package access
+
+The feature-branch native API exposes `DoclangDocument` for DocLang XML and
+`DoclangXDocument` (also exported as `DocLangXDocument`) for DCLX packages.
+`DoclangXDocument.read_bytes()` and `write_bytes()` operate on complete DCLX
+archives in memory; `read()` and `write()` operate on files. Both read methods
+accept optional `ArchiveLimits`. The default limits are 256 MiB compressed,
+10,000 entries, 256 MiB per uncompressed entry, 1 GiB total uncompressed,
+and a compression ratio of 200. ZIP entries are checked before extraction;
+parts are decompressed when requested. The compressed archive is retained in
+memory while the document is open.
+
+```python
+from doclang import ArchiveLimits, DoclangDocument, DoclangXDocument
+
+doc = DoclangXDocument()
+assert doc.read_xml('<doclang version="0.7"><text>Hello</text></doclang>')
+doc.set_document_summary('<doclang><text>Short summary</text></doclang>')
+doc.set_part_text("context/source.json", '{"kind":"example"}', "application/json")
+payload = doc.write_bytes()
+
+copy = DoclangXDocument()
+limits = ArchiveLimits()
+assert copy.read_bytes(payload, limits)
+assert copy.get_part_text("context/source.json") == '{"kind":"example"}'
+assert copy.validate_package()["ok"]
+```
+
+`get_part_bytes`, `get_part_text`, `set_part_bytes`, `set_part_text`, and
+`remove_part` use archive-relative paths. Generic setters reject the main
+document, OPC metadata, and DocLang-managed `annotations/` paths. Setters
+require an explicit content type and update `[Content_Types].xml`; `write`
+also supplies declarations for parts carried over from an existing archive.
+Unknown parts survive read/write unless removed. `validate_package()` returns
+`{"ok": bool, "errors": [{"code", "path", "message"}, ...]}` and checks
+the document, TOC targets, staleness, OPC metadata, and part declarations.
+Legacy DCLX files without OPC metadata can still be read; writing them adds
+the missing declarations and document relationship.
+
+The XML-side `iter_nodes(xpath=None, limit=1000)` returns bounded records with
+`xpath`, `parent_xpath`, `name`, `text`, `page`, and `bbox`. XPaths address a
+particular document revision: structural edits can shift them. A document edit
+marks existing annotations and sidecars stale. Writes refuse stale data by
+default; repair or clear it first. The explicit `allow_stale_annotations` and
+`allow_stale_sidecars` flags permit a reviewed override, though unresolved TOC
+targets always block a write.

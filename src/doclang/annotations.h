@@ -97,6 +97,21 @@ namespace doclang::native
     return true;
   }
 
+  inline bool validate_toc_targets(const dclx_document& document, const dclg_document& sidecar,
+                                   std::string& error)
+  {
+    for(const auto entry : sidecar.root().child("toc").children("entry"))
+      {
+        const std::string xpath = entry.attribute("xpath").value();
+        if(not resolve_doclang_path(document.root(), xpath).found)
+          {
+            error = TOC_DCLG + " entry XPath does not resolve: " + xpath;
+            return false;
+          }
+      }
+    return true;
+  }
+
   inline bool validate_concepts_dclg(const dclg_document& sidecar, std::string& error)
   {
     const auto root = sidecar.root();
@@ -139,6 +154,13 @@ namespace doclang::native
     std::shared_ptr<dclg_document> sidecar;
     if(not parse_sidecar_dclg(doc, xml, TOC_DCLG, validate_toc_dclg, sidecar))
       {
+        return false;
+      }
+
+    std::string error;
+    if(not validate_toc_targets(doc, *sidecar, error))
+      {
+        doc.set_last_error(error);
         return false;
       }
 

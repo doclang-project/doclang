@@ -12,6 +12,7 @@
 #include <doclang/annotations.h>
 #include <doclang/content.h>
 #include <doclang/dclx_document.h>
+#include <doclang/opc.h>
 
 namespace doclang::native
 {
@@ -66,11 +67,6 @@ namespace doclang::native
     if(doc.has_archive())
       {
         zip = doc.artifacts();
-      }
-    else
-      {
-        zip.set_text("[Content_Types].xml", "<Types></Types>");
-        zip.set_text("_rels/.rels", "<Relationships></Relationships>");
       }
 
     zip.set_text("document.xml", serialize_xml(doc.xml()));
@@ -142,6 +138,12 @@ namespace doclang::native
         zip.erase(CONCEPTS_DCLG);
       }
 
+    std::string opc_error;
+    if(not prepare_opc(zip, opc_error))
+      {
+        doc.set_last_error(opc_error);
+        return false;
+      }
     if(not zip.write_to_memory(out))
       {
         doc.set_last_error("could not write DocLang archive");

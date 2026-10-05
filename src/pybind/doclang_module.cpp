@@ -282,6 +282,8 @@ PYBIND11_MODULE(_native, module)
       .def("page_number", &DoclangDocument::page_number, py::arg("xpath"))
       .def("iterate_items", &DoclangDocument::iterate_items, py::arg("xpath") = py::none())
       .def("iterate_items_on_page", &DoclangDocument::iterate_items_on_page, py::arg("page_no"))
+      .def("iter_nodes", &DoclangDocument::iter_nodes, py::arg("xpath") = py::none(),
+           py::arg("limit") = 1000, py::arg("max_text_chars") = 65536)
       .def("__iter__", &DoclangDocument::iter)
       .def(
           "schematron_errors",
@@ -296,18 +298,40 @@ PYBIND11_MODULE(_native, module)
           py::arg("allow_empty_namespace") = false);
 
   using doclang::binding::DocLangXDocument;
+  py::class_<doclang::native::archive::limits>(module, "ArchiveLimits")
+      .def(py::init<>())
+      .def_readwrite("max_archive_bytes", &doclang::native::archive::limits::max_archive_bytes)
+      .def_readwrite("max_entries", &doclang::native::archive::limits::max_entries)
+      .def_readwrite("max_entry_bytes", &doclang::native::archive::limits::max_entry_bytes)
+      .def_readwrite("max_total_bytes", &doclang::native::archive::limits::max_total_bytes)
+      .def_readwrite("max_compression_ratio",
+                     &doclang::native::archive::limits::max_compression_ratio);
   py::class_<DocLangXDocument, DoclangDocument>(module, "DocLangXDocument")
       .def(py::init<>())
       .def_static("hash", &DocLangXDocument::hash, py::arg("text"))
-      .def("read", &DocLangXDocument::read, py::arg("path"))
+      .def("read", &DocLangXDocument::read, py::arg("path"),
+           py::arg("limits") = doclang::native::archive::limits{})
+      .def("read_bytes", &DocLangXDocument::read_bytes, py::arg("data"),
+           py::arg("limits") = doclang::native::archive::limits{})
       .def("read_xml", &DocLangXDocument::read_xml, py::arg("xml"))
       .def("write", &DocLangXDocument::write, py::arg("path"),
-           py::arg("allow_stale_annotations") = false)
+           py::arg("allow_stale_annotations") = false, py::arg("allow_stale_sidecars") = false)
+      .def("write_bytes", &DocLangXDocument::write_bytes,
+           py::arg("allow_stale_annotations") = false, py::arg("allow_stale_sidecars") = false)
       .def("annotations_stale", &DocLangXDocument::annotations_stale)
+      .def("sidecars_stale", &DocLangXDocument::sidecars_stale)
       .def("has_archive", &DocLangXDocument::has_archive)
       .def("has_annotations", &DocLangXDocument::has_annotations)
       .def("source_path", &DocLangXDocument::source_path)
       .def("archive_paths", &DocLangXDocument::archive_paths)
+      .def("get_part_bytes", &DocLangXDocument::get_part_bytes, py::arg("path"))
+      .def("get_part_text", &DocLangXDocument::get_part_text, py::arg("path"))
+      .def("set_part_bytes", &DocLangXDocument::set_part_bytes, py::arg("path"), py::arg("data"),
+           py::arg("content_type"))
+      .def("set_part_text", &DocLangXDocument::set_part_text, py::arg("path"), py::arg("data"),
+           py::arg("content_type"))
+      .def("remove_part", &DocLangXDocument::remove_part, py::arg("path"))
+      .def("validate_package", &DocLangXDocument::validate_package)
       .def("annotation_paths", &DocLangXDocument::annotation_paths)
       .def("document_reference", &DocLangXDocument::document_reference)
       .def("references", &DocLangXDocument::references)
@@ -319,6 +343,9 @@ PYBIND11_MODULE(_native, module)
       .def("set_document_summary", &DocLangXDocument::set_document_summary, py::arg("dclg"))
       .def("set_toc", &DocLangXDocument::set_toc, py::arg("dclg"))
       .def("set_concepts", &DocLangXDocument::set_concepts, py::arg("dclg"))
+      .def("set_summary_document", &DocLangXDocument::set_summary_document, py::arg("document"))
+      .def("set_toc_document", &DocLangXDocument::set_toc_document, py::arg("document"))
+      .def("set_concepts_document", &DocLangXDocument::set_concepts_document, py::arg("document"))
       .def("clear_document_reference", &DocLangXDocument::clear_document_reference)
       .def("clear_references", &DocLangXDocument::clear_references)
       .def("clear_document_summary", &DocLangXDocument::clear_document_summary)
