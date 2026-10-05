@@ -213,7 +213,7 @@ DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
 The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#reference).
 
-The DocLang archive format is defined in [DocLang Archive Format](#doclang-archive-format).
+The DocLang archive format is defined in [DocLang archive format](#doclang-archive-format).
 
 Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
 
