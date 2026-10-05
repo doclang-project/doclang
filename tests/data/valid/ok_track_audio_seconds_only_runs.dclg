@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- <audio> requires an end time; start+end may both be seconds-only runs -->
+  <track>
+    <bdiv/>
+    <seconds value="4"/>
+    <seconds value="9"/>
+    <audio><src uri="assets/clips/00-04.opus"/></audio>
+    <voice>Host</voice>
+    Recorded segment.
+  </track>
+</doclang>

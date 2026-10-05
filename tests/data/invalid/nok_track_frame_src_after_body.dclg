@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- inside a frame, src must precede any virtual-text body content -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="1"/>
+    <frame><bold>caption</bold><src uri="frames/x.jpg"/></frame>
+  </track>
+</doclang>

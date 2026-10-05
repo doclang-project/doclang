@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <track>
+    <bdiv/>
+    <minutes value="1"/><seconds value="4"/>
+    <minutes value="1"/><seconds value="9"/>
+    <frame><src uri="assets/frames/00-01-04.jpg"/></frame>
+    <audio><src uri="assets/clips/00-01-04.opus"/></audio>
+    <voice>Narrator</voice>
+    The results are shown on screen.
+  </track>
+</doclang>

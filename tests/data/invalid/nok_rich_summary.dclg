@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <table>
+    <summary><bold>This</bold> should not be possible.</summary>
+    <fcel/>
+    <text>Q1</text>
+    <fcel/>
+    <text>100</text>
+    <nl/>
+  </table>
+
+</doclang>

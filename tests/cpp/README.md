@@ -19,6 +19,6 @@ ctest --test-dir build/native-tests -L core --output-on-failure
 ctest --test-dir build/native-tests -L validation --output-on-failure
 ```
 
-The validation tests cover all 19 native Schematron assertions, plus XSD,
+The validation tests cover all 27 native Schematron assertions, plus XSD,
 namespace, local, and contextual validation. Test fixtures are shared with the
 Python suite under `tests/data/`.

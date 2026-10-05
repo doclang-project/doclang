@@ -4,8 +4,8 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "doclang"
-version = "0.6.0"  # DO NOT EDIT MANUALLY, updated automatically
-description = "DocLang reference validator"
+version = "0.7.3"  # DO NOT EDIT MANUALLY, updated automatically
+description = "DocLang reference toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
@@ -20,13 +20,17 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries",
     "Topic :: Text Processing :: Markup :: XML",
 ]
 dependencies = [
-    "lxml>=6.0.2",
+    "lxml>=4.8.0",
     "typer>=0.15.1",
 ]
+
+[project.optional-dependencies]
+schematron-saxon = ["saxonche>=12.9.0"]
 
 [project.urls]
 Homepage = "https://www.doclang.ai/"
@@ -45,6 +49,7 @@ ci = [
     "ruff>=0.14.11",
     "pytest~=8.3",
     "python-docx>=1.2.0",
+    "saxonche>=12.9.0",
 ]
 dev = [
     { include-group = "ci" },
@@ -137,6 +142,7 @@ exclude = "(^|/)tests/data/.*"
 module = [
     "docx.*",
     "lxml.*",
+    "saxonche.*",
     "typer.*",
     "yaml.*",
 ]

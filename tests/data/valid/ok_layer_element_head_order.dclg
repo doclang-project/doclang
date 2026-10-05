@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doclang xmlns="https://www.doclang.ai/ns/v0">
 
-  <!-- element head order: thread, href, layer, locations, caption, custom -->
+  <!-- element head order: thread, href, layer, locations, caption, description, summary, custom -->
   <text>
     <thread thread_id="1"/>
     <href uri="https://example.com/doc#intro"/>
@@ -9,6 +9,8 @@
     <location value="0"/><location value="0"/>
     <location value="100"/><location value="50"/>
     <caption>Figure context</caption>
+    <description>Derived account of this text block.</description>
+    <summary>Derived gist of this text block.</summary>
     <custom>
       <acme_source system="ocr">scanner-a</acme_source>
     </custom>

@@ -1,43 +1,16 @@
 # DocLang: Universal AI Document Format
 
-Version: 0.6
+Version: 0.7
 
 ## Introduction and Overview
-
-### Foreword
-
-This specification was prepared by
-
-| Name | Company |
-|------|---------|
-| Peter Staar | IBM |
-| Panos Vagenas | IBM |
-| Maksym Lysak | IBM |
-| Nikolaos Livathinos | IBM |
-| Christoph Auer | IBM |
-| Michele Dolfi | IBM |
-| Said Gürbüz | IBM |
-| Santosh Borse | IBM |
-| Yousaf Shah | IBM |
-| Maroun Touma | IBM |
-| Christopher Giblin | IBM |
-| Marlene Wolfgruber | ABBYY |
-| Maxime Vermeir | ABBYY |
-| Morgan Logue | ABBYY |
-| Andrew Pery | ABBYY |
-| Jehlum Vitasta Pandit | RedHat |
-| Ali Maredia | RedHat |
-| Micaela Kaplan | HumanSignal |
-| Ryan Chesler | NVIDIA |
-| Riccardo Maggioni | Forgis |
 
 This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
 
 ### Introduction
 
-The proliferation of digital documents across diverse formats (PDF, HTML, Word, etc.) has created significant challenges in document processing, conversion, and understanding. These were mainly designed for efficient rendering and often result in loss of semantic information, structural relationships, or geometric context during document conversion.
+Digital documents exist in many formats, which makes processing, conversion, and understanding challenging. Moreover, many of these formats have been designed primarily for rendering, so semantic information, structural relationships, and geometric context may be lost during document conversion.
 
-DocLang addresses these challenges by providing a minimalist, unambiguous markup format that:
+DocLang aims to address these challenges by providing a minimalist, unambiguous markup format that:
 
 - Preserves complete document structure and semantics
 - Maintains geometric and layout information when appropriate
@@ -46,11 +19,11 @@ DocLang addresses these challenges by providing a minimalist, unambiguous markup
 - Maintains token efficiency by defining controlled vocabulary of tags and attributes
 - Eliminates ambiguity by enforcing a well defined set of tags with restricted, non generic usage ( and preserves semantic clarity )
 
-This standard builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
+This document builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
 
 ### Scope
 
-This standard specifies:
+This document specifies:
 
 - The syntax and semantics of the DocLang markup language
 - Rules for encoding document structure, content, and metadata
@@ -59,61 +32,61 @@ This standard specifies:
 - Specifications for complex document components (tables, charts, formulas, code, forms)
 - Requirements for conforming implementations
 
-### Motivation
+## Normative references
 
-The motivation for this new markup language is twofold,
+The following documents are referred to in the text in such a way that some or all of their content constitutes requirements of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. It is created from the ground up to be able to represent complex, multimodal content with visual grounding in plain text with markup
-2. It is created with the express purpose to be compatible with LLM tokenizers, i.e. use a markup structure that maps naturally and efficiently between DocLang elements and LLM tokens.
+1. Optimized Table Tokenization for Table Structure Recognition (OTSL), https://doi.org/10.1007/978-3-031-41679-8_3
+2. W3C XML 1.0 Specification (Fifth Edition)
+3. W3C XML Schema Definition Language (XSD) 1.0 (Second Edition): Part 1 (Structures) and Part 2 (Datatypes)
+4. IETF RFC 3629: UTF-8, a transformation format of ISO 10646
+5. IETF RFC 3986: Uniform Resource Identifier (URI): Generic Syntax
+6. IETF RFC 2397: The "data" URL scheme
+7. Semantic Versioning 2.0.0 (semver.org)
 
-As a consequence of point 2, this standard ensures that there is a limited number or tags and attributes. In general, we intend that the number of syntax tokens should not exceed 1000. The latter is not a strong bound, but rather a direction.
+## Terms and definitions
 
-There is an exception for meta-data markup. Meta-data is not intended to be heavily used or produced by LLMs, so it is in general possible to include an expanded set of protected markup tokens. Nevertheless, we do want to normalize as much as possible this representation.
+For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2]; terms adopted from HTML are as defined in the HTML Standard (see Bibliography [1]).
 
-Such requirements preclude us from using existing markup languages such as Markdown (incomplete scope), HTML (not concise enough), LaTeX (ambiguity of representation) etc.
+### Abstract concepts
 
-<figure style="text-align: left">
-    <img src="resources/html_v_otsl.png"
-         alt="HTML vs OTSL" style="width:700px">
-    <figcaption>Example in pure table structure representation, omitting content of cells, when comparing HTML to DocLang (OTSL tags). HTML sequence is both longer and uses more tokens than DocLang</figcaption>
-</figure>
+1. **DocLang instance**
 
-<!-- TODO: update image text for DocLang: replace <section> with <heading>, add CDATA in <code> -->
-<figure style="text-align: left">
-    <img src="resources/doclang_example.png"
-         alt="HTML vs OTSL" style="width:1000px">
-    <figcaption>Examples of real-world document fragments and their DocLang representation</figcaption>
-</figure>
+   Document content (e.g. text, tables, images) expressed in DocLang markup.
 
-A specific class of related formats is the one operating on the OCR level, including [PageXML](https://github.com/PRImA-Research-Lab/PAGE-XML), [ALTO XML](https://github.com/altoxml), and [hOCR](https://github.com/kba/hocr-spec).
+2. **document component**
 
-Beyond certain low-level similarities (e.g. presence of bounding box information), the DocLang format is significantly differentiated as it is designed to be AI-native:
+   A cohesive and meaningful part of document content, e.g. a table, list item with a marker, a bold piece of text, etc.
 
-- The above-mentioned formats focus on OCR processing, e.g. for archives, browser display, or other types of OCR/HTR pipelines, while DocLang is designed for LLM/VLM generation, with token efficiency in mind.
-- Whereas these formats are primarily concerned with the geometric locations of the various spans of text, DocLang also places a strong focus on the semantic meaning and internal structure of the involved complex components, providing various native elements for headings, formulas, code, etc. and also rich table structure support (incl. table headings, spanned cells, etc.), this way capturing richer context for generative AI applications to leverage.
+### Adopted from XML
+
+1. **element**
+
+   An XML element.
+
+2. **attribute**
+
+   An XML attribute.
+
+   Note 1 to entry: When referring to an attribute in prose, this document uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
+
+3. **tag**
+
+   An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
+
+### Adopted from HTML
+
+1. **block-level element**
+
+   An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
+
+2. **inline element**
+
+   An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
+
+   Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
 
 ## Language Design Principles
-
-### Terminology
-
-Abstract concepts:
-
-- **document component**: A cohesive and meaningful part of the document, e.g. a table, list item with a marker, a bold piece of text, etc.
-
-Adopted from XML:
-
-- **element**: An XML element.
-- **attribute**: An XML attribute.
-- **tag**: An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
-
-When referring to an attribute in prose, this specification uses XPath-style notation: `element@attribute` (e.g. `label@value`, `location@resolution`).
-
-Adopted from HTML:
-
-- **block-level element**: An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
-- **inline element**: An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
-
-Note that, whether block-level or inline, an element may contain *explicit* new lines.
 
 ### Property Semantics
 
@@ -124,7 +97,7 @@ This denotes an `elem` element, including its properties (`size` and `color`) an
 For an element with multiple possible property values, the attribute syntax can lead to an increased complexity of the respective possible tokenized representations.
 For instance, the following could all be valid variants of an `elem` start tag: `<elem size="300" color="#aabbcc">`, `<elem size="42">`, `<elem color="#112233">`, `<elem>`.
 
-Aiming at LLM-friendliness, in such cases, the DocLang format often favors an alternative representation of property semantics, namely captured as respective elements leading the content.
+Aiming at LLM-friendliness, in such cases, DocLang often favors an alternative representation of property semantics, namely captured as respective elements leading the content.
 The example above could be represented as `<elem><size>250</size><color>#ffeedd</color>foo</elem>`. Depending on the specific properties, empty elements are used too.
 
 This representation can reduce the number of tokens and streamline how XML is mapped to them, making it easier for language models to learn and predict.
@@ -133,8 +106,8 @@ For elements with a strictly limited set of possible property values, attributes
 
 ### Content Encoding and Whitespace Handling
 
-As DocLang is XML, standard XML encoding rules apply — for example:
-- any provided XML prolog defines the encoding, otherwise UTF-8 is assumed
+As DocLang is XML, standard XML [2] encoding rules apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
 - special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
 
 DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
@@ -152,7 +125,9 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
 - [`<layer>`](#layer) (optional)
 - optional sequence of 4 [`<location>`](#location)s, whereby values are interpreted in alternating axis order, as `x_min, y_min, x_max, y_max` (after resolution normalization), w.r.t. the top-left corner of the page
-- [`<caption>`](#caption) (optional)
+- [`<caption>`](#caption) (optional, may be repeated)
+- [`<description>`](#description) (optional)
+- [`<summary>`](#summary) (optional)
 - [`<custom>`](#custom) (optional)
 
 #### Element Body
@@ -165,7 +140,7 @@ Root element [`<doclang>`](#doclang) begins with an optional *document head*, wh
 
 #### Document Body
 
-The remaining XML content after the optional document head is called the *document body* and contains the effective payload of the document.
+The remaining XML content after the optional document head is called the *document body* and contains the effective payload of the DocLang instance.
 
 #### Head and Body Example
 
@@ -200,7 +175,7 @@ While the details are specified in the sections further below, this snippet show
 
 ### Subclasses
 
-For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Appendix B: Recommendations](#appendix-b-recommendations)), but for extensibility purposes, the label value is not to be validated.
+For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Recommendations](#recommendations)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
 
 In the example further below:
@@ -218,14 +193,14 @@ In the example further below:
 
 ### Version Management and Compatibility
 
-DocLang documents define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the specification version against which the document is intended to be validated.
+DocLang instances define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the version of this document against which the instance is intended to be validated.
 
 #### Semantic Versioning Principles
 
-The XSD schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning principles, i.e. considering X >= 1, and Y < Z:
+The XSD [3] schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
 
-- A document with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a document that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
-- A document with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a document that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
+- A DocLang instance with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a DocLang instance that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
+- A DocLang instance with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a DocLang instance that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
 
 **Example:**
 - A `1.0` document is compatible with a `1.1` schema
@@ -235,8 +210,8 @@ The XSD schema used for validating DocLang XML documents defines the specificati
 
 As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate initial development and always break backward compatibility. Therefore:
 
-- A document of version `0.1` is considered incompatible with a `0.2` schema
-- A document of version `0.2` is considered incompatible with a `0.1` schema
+- A DocLang instance of version `0.1` is considered incompatible with a `0.2` schema
+- A DocLang instance of version `0.2` is considered incompatible with a `0.1` schema
 
 Each minor version increment in the 0.x series represents a breaking change.
 
@@ -246,13 +221,17 @@ The XSD schema itself may additionally capture a patch version and internally de
 
 ## Language Specification
 
-The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Appendix A: Reference](#appendix-a-reference).
+DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
-Non-normative recommendation guidelines are covered in [Appendix B: Recommendations](#appendix-b-recommendations).
+The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#reference).
 
-Planned extensions are discussed in [Appendix C: Future Extensions](#appendix-c-future-extensions).
+The DocLang archive format is defined in [DocLang Archive Format](#doclang-archive-format).
 
-Machine-checkable conformance is defined by the [DocLang reference validator](https://github.com/doclang-project).
+Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
+
+Planned extensions are discussed in [Future Extensions](#future-extensions).
+
+A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
 ## Usage Examples
 
@@ -301,8 +280,8 @@ In case of page-layout information, the coordinates are provided only at the sem
 ### Pictures
 
 Pictures are captured with the `<picture>` element and may be specialized via the `class` attribute, as detailed
-in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI capturing the image
-either by reference (e.g. https URL) or as base64-encoded data (RFC 2397).
+in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI [5] capturing the image
+either by reference (e.g. https URL) or as base64-encoded data (data URI [6]).
 
 Picture by reference URI:
 
@@ -320,7 +299,7 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Bar chart using [recommended label](#appendix-b-recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
+Bar chart using [recommended label](#recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
 
 ```xml
 <picture class="chart">
@@ -334,9 +313,23 @@ Bar chart using [recommended label](#appendix-b-recommendations) and [`<tabular>
 </picture>
 ```
 
+Picture with document [caption](#caption), [description](#description), and [summary](#summary):
+
+```xml
+<picture>
+  <caption>FIG. 2. System architecture</caption>
+  <description>
+    A block diagram with a browser client, an application server, and a database.
+    Arrows show HTTP requests from client to server and SQL queries from server to database.
+  </description>
+  <summary>The system uses a three-tier architecture.</summary>
+  <src uri="fig2.png"/>
+</picture>
+```
+
 ### Code snippets
 
-Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Appendix B: Recommendations](#appendix-b-recommendations)).
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Recommendations](#recommendations)).
 
 Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
 
@@ -601,7 +594,7 @@ Notes
 
 ### Tables
 
-A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL structural elements (e.g., `<fcel/>`, `<ched/>`).
+A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
 This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
 Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
@@ -1527,6 +1520,122 @@ Field region with mixed content:
 
 Detailed examples can be seen here: [Form Examples](/examples/form/form-examples.md)
 
+### Tracks
+
+A `<track>` captures a time-aligned media transcript — subtitles, captions, or diarized speech associated with an audio or video recording. It is a [semantic element](#semantic-elements) and may begin with an [element head](#element-head).
+
+The body of a `<track>` may begin with a single `<cover>` — a representative image for the track as a whole (podcast artwork, a poster, a title card). It has the same shape as `<frame>` (an optional element head followed by an optional [`<src>`](#src)).
+
+The rest of the body is a sequence of *cue blocks*. Each cue block is introduced by a `<bdiv/>` delimiter (analogous to `<ldiv/>` for lists): the first cue block must be a `<bdiv/>`, and a cue block spans everything between two sibling `<bdiv/>` elements (or until `</track>`).
+
+A cue block consists of, in order:
+
+- a **start time** (mandatory): a run of `<hours value="H"/>`, `<minutes value="M"/>`, `<seconds value="S"/>`, `<msecs value="MS"/>` in that order. Only `<seconds>` is required; `<hours>`, `<minutes>` and `<msecs>` each default to `0` when omitted. `<seconds>` anchors the run, so two consecutive runs stay unambiguous.
+- an **end time** (optional): the same run shape, immediately following the start time. A cue block covers the inclusive interval `[start, end]`. When the end time is omitted it is taken to equal the start time, i.e. the cue block is the single instant `[start, start]` — for example, the timestamp of a `<frame>` or a point annotation.
+- an optional `<chapter>` — a chapter or section title (see [Chapters](#chapters) below), handled like [`<text>`](#text): it may carry its own element head and inline [formatting](#formatting).
+- an optional `<frame>` — a still image for the cue block's start time, with an optional element head and an optional [`<src>`](#src). Typically a video frame, but equally a slide, a keyframe, or any representative still for that moment. A point sample; valid on any cue block. (For a track-wide image, use `<cover>` instead.)
+- an optional `<audio>` — the recording over the cue block's interval `[start, end]`, with the same shape as `<frame>`. It is a temporal crop of the track's audio, the way a [`<picture>`](#picture) crop corresponds to its page region; the timestamps are authoritative and the clip is a best-effort fragment. Requires the cue block to carry an end time.
+- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting); it runs until the next `<voice>` or the end of the cue block. An empty `<voice/>` ends the current speaker's turn — the text after it is unattributed. How unattributed text is interpreted — e.g. as an unknown speaker, no speaker (e.g. a sound description), continuation of the last named speaker, etc. — is application-defined.
+
+Minimal cue block (start time and one line of text) — `<hours>`, `<minutes>` and `<msecs>` omitted:
+
+```xml
+<track>
+  <bdiv/>
+  <seconds value="2"/>
+  Hello, and welcome.
+</track>
+```
+
+Start and end time, two attributed turns:
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="0"/><seconds value="2"/><msecs value="500"/>
+  <minutes value="0"/><seconds value="7"/>
+  <voice>John</voice>Hi Mary!
+  <voice><italic>Mary</italic></voice><bold>Hello</bold> John!
+</track>
+```
+
+Cue block with a video frame and an audio clip:
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="1"/><seconds value="4"/>
+  <minutes value="1"/><seconds value="9"/>
+  <frame><src uri="assets/frames/00-01-04.jpg"/></frame>
+  <audio><src uri="assets/clips/00-01-04.opus"/></audio>
+  <voice>Narrator</voice>The results are shown on screen.
+</track>
+```
+
+Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#doclang-archive-format).
+
+Crossing the hour mark, and consecutive turns with no speaker attribution:
+
+```xml
+<track>
+  <label value="lecture"/>
+  <bdiv/>
+  <minutes value="59"/><seconds value="58"/><msecs value="450"/>
+  <hours value="1"/><minutes value="0"/><seconds value="1"/><msecs value="210"/>
+  So that concludes the first part.
+  Take a five minute break.
+</track>
+```
+
+The kind of a track —for example whether it is audio-only or video— is not modelled explicitly. A producer that wants to record it may do so informally with a [`<label>`](#label) in the track's element head (`audio`, `video`, `podcast`, `screencast` etc.); label values are open and not validated. For instance:
+
+```xml
+<track>
+  <label value="audio"/>
+  <bdiv/>
+  <seconds value="0"/>
+  <seconds value="2"/>
+  <voice>Host</voice>
+  Welcome back to the show.
+</track>
+```
+
+#### Chapters
+
+A cue block may carry a `<chapter>` — a chapter or section title — placed just after its timestamps (before any `<frame>`). A `<chapter>` **marks a boundary at its cue block's start time and nothing else**: the chapter runs from that instant until the next cue block that carries a `<chapter>` (or `</track>`). The cue block's own end time bounds its transcript and audio, not the chapter. The stretch before the first `<chapter>` is unchaptered.
+
+Chapters therefore form a **flat partition** of the timeline: no nesting, no overlap, no explicit chapter end. "Which chapter is active at time *T*?" is answered by the last `<chapter>` at or before *T*.
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="0"/><seconds value="0"/>
+  <chapter>Introduction</chapter>
+  Welcome, everyone.
+  <bdiv/>
+  <minutes value="0"/><seconds value="40"/>
+  Still in the introduction; this cue block starts no chapter.
+  <bdiv/>
+  <minutes value="1"/><seconds value="30"/>
+  <chapter><italic>Part 1</italic> — Background</chapter>
+  Let's start with some history.
+</track>
+```
+
+Because only the start time counts, a chapter boundary may fall inside an earlier, still-open cue block. Given a cue block with `<chapter>A</chapter>` starting at `01:00` and one with `<chapter>B</chapter>` starting at `01:15`, chapter A is `[01:00, 01:15)` and B begins at `01:15` — even if A's cue block carries transcript out to `01:30`.
+
+Chapters MUST begin at strictly increasing times — two chapters cannot mark the same instant. A `<chapter>` has no attributes in this version; nesting would be a future `level` attribute.
+
+Notes:
+
+- A `<track>` body may open with one `<cover>` (a track-wide image); the first cue block, and every non-empty `<track>` body, then begins with a `<bdiv/>`. There must be no text before the first cue block, nor between a `<bdiv/>` and its start time.
+- Every timestamp run carries `<seconds>` (the only required component); an end time, when present, must not be earlier than the start time. Cue-block intervals are inclusive of both endpoints; a missing end time means the interval `[start, start]`.
+- Cue blocks appear in non-decreasing order of start time. They may still overlap — for example, two speakers talking at once. When two cue blocks share a start time, their relative order is not further constrained (end times are not used as a tie-breaker).
+- A `<frame>` is the still at the cue block's start time. An `<audio>` clip is the recording over `[start, end]`, so a cue block with an `<audio>` must have an end time. Its duration is expected to correspond to `end − start`, but small differences from codec framing and encoder padding are normal and not significant; the timestamps, not the clip, are authoritative, and DocLang does not decode media to check this.
+- A `<chapter>`, when present, comes after the timestamps and before any `<frame>`. It defines a chapter boundary at the cue block's start time only — see [Chapters](#chapters).
+- `<msecs value="…"/>` accepts any integer in `[0, 999]`.
+- `<cover>`, `<bdiv>`, `<chapter>`, `<frame>`, `<audio>`, `<voice>`, and the timestamp elements are only meaningful inside a `<track>`.
+
 ### Split structure
 
 We can capture content that is split (e.g. across columns or across pages) using the `<thread thread_id="N"/>` element, where `N` is a unique identifier.
@@ -1660,6 +1769,7 @@ The scenario in the above figure is represented as follows:
 </details>
 
 <!-- commented out as h_thread is in planned status
+     note: this is split over several comments because comments cannot be nested in XML and the first comment end tag closes the outer comment.
 
 <details>
   <summary>Split table example</summary>
@@ -1698,6 +1808,7 @@ to be reached to add the thread for "Europe" in the example above.
 
 ```xml
 <!--...-->
+<!--
 <table>
   <thread thread_id="1"/>
   <h_thread h_thread_id="1"/>
@@ -1767,6 +1878,7 @@ to be reached to add the thread for "Europe" in the example above.
 </table>
 <page_break/>
 <!--...-->
+<!--
 ```
 </details>
 
@@ -1918,7 +2030,7 @@ list item is split.
 
 The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in SMILES representation.
 
-For details, see [custom metadata](#custom) and vocabulary guidelines in [Appendix B: Recommendations](#appendix-b-recommendations).
+For details, see [custom metadata](#custom) and vocabulary guidelines in [Recommendations](#recommendations).
 
 For shared/interoperable documents, using a formal XML namespace is recommended:
 
@@ -1944,40 +2056,31 @@ For local/private usage where formal namespaces are not used, a collision-resist
 </picture>
 ```
 
-## Bibliography
+## Appendix
 
-1. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
-2. Optimized Table Tokenization for Table Structure Recognition
-3. DoclingDocument API Specification
-4. W3C XML 1.0 Specification (Fifth Edition)
-5. W3C HTML5 Specification
-6. ISO 32000-2:2020 (PDF 2.0)
-7. ISO 8601
-8. Semantic Versioning 2.0.0 (semver.org)
+<!-- NOTE: do not edit Reference manually; updates to be made using generate_reference.py -->
+### Reference
 
-<!-- NOTE: do not edit Appendix A manually; updates to be made using generate_reference.py -->
-## Appendix A: Reference
-
-### Special Elements
+#### Special Elements
 
 This category comprises elements with specialized document-level function.
 
-#### `<doclang>`
+##### `<doclang>`
 
 The document root element. Starts with an optional [`<head>`](#head) followed by a sequence of applicable elements.
 
-##### Allowed Context
+###### Allowed Context
 
 Exists exactly once, as root element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "0.6" | {"0.6"} | The DocLang specification version the document is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
+| `version` | Optional; default: "0.7" | {"0.7"} | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -1985,7 +2088,7 @@ Exists exactly once, as root element.
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-##### Example
+###### Example
 
 ```xml
 <doclang>
@@ -1993,19 +2096,19 @@ Exists exactly once, as root element.
 </doclang>
 ```
 
-#### `<head>`
+##### `<head>`
 
 Includes doc-level metadata.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be first child of [`<doclang>`](#doclang).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2013,23 +2116,23 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<page_break>`
+##### `<page_break>`
 
-Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang document if wrapped in a `doclang` root element.
+Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang instance if wrapped in a `doclang` root element.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<doclang>`](#doclang).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-##### Example
+###### Example
 
 ```xml
 <doclang>
@@ -2039,23 +2142,23 @@ None (empty element).
 </doclang>
 ```
 
-### Semantic Elements
+#### Semantic Elements
 
-*Semantic elements* capture core components with specific meaning and functional role in the document (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
+*Semantic elements* capture core document components with specific meaning and functional role (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
-#### `<text>`
+##### `<text>`
 
 Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2063,21 +2166,21 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<heading>`
+##### `<heading>`
 
 Captures a document heading.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The heading depth (1 = top-level). |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2085,19 +2188,19 @@ Any context that allows semantic elements.
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<footnote>`
+##### `<footnote>`
 
 Captures footnote content.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2105,19 +2208,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<page_header>`
+##### `<page_header>`
 
 Captures page header content (material repeated at the top of a page).
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2125,19 +2228,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<page_footer>`
+##### `<page_footer>`
 
 Captures page footer content (material repeated at the bottom of a page).
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2145,19 +2248,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<field_region>`
+##### `<field_region>`
 
 Serves for scoping of field items, for example encapsulating a whole form.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2165,21 +2268,21 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<list>`
+##### `<list>`
 
 Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unordered" | {"unordered", "ordered"} | The list type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2187,19 +2290,19 @@ Any context that allows semantic elements.
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<table>`
+##### `<table>`
 
 Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2207,19 +2310,19 @@ None
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<index>`
+##### `<index>`
 
 Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2227,19 +2330,19 @@ None
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<formula>`
+##### `<formula>`
 
 Raw LaTeX formula content, i.e. without any LaTeX-specific wrapping such as `$ ... $`, `$$ ... $$`,  `\( ... \)`, `\[ ... \]`, `\begin{math} ... \end{math}` or `\begin{equation} ... \end{equation}`.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2247,19 +2350,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<code>`
+##### `<code>`
 
-Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Appendix B: Recommendations](#appendix-b-recommendations)).
+Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Recommendations](#recommendations)).
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2267,21 +2370,21 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<picture>`
+##### `<picture>`
 
 The element body begins with a picture-specific sequence, followed by content allowed in any other semantic element body. The picture-specific sequence is:<ul><li>an optional [`<src>`](#src) element</li><li>an optional [`<tabular>`](#tabular) element (only allowed for `<picture class="chart">`)</li></ul>
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "undefined" | {"undefined", "chart"} | The picture type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2289,19 +2392,19 @@ Any context that allows semantic elements.
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<marker>`
+##### `<marker>`
 
 Captures the visible glyph or identifier (e.g. number) of a marker, e.g. in the context of a list item.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2309,19 +2412,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<group>`
+##### `<group>`
 
 Container for encapsulating multiple semantic elements.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows semantic elements.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2329,21 +2432,21 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<field_heading>`
+##### `<field_heading>`
 
 Field heading within a `<field_region>; analogous to [`<heading>`](#heading) but scoped to field structures.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The field heading depth (1 = top-level). |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2351,19 +2454,19 @@ Can only be descendant of [`<field_region>`](#field_region).
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<field_item>`
+##### `<field_item>`
 
 Scoping of a field key (optional) and any corresponding values.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2371,19 +2474,19 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Allowed |
 
-#### `<key>`
+##### `<key>`
 
 The key of a field (may correspond to  0-N field values).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2391,21 +2494,21 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<value>`
+##### `<value>`
 
 A value of a field (may correspond to 0 or 1 field key).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_item>`](#field_item).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "read_only" | {"read_only", "fillable"} | The value type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2413,19 +2516,19 @@ Can only be descendant of [`<field_item>`](#field_item).
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<hint>`
+##### `<hint>`
 
 A hint regarding a field.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be descendant of [`<field_region>`](#field_region).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2433,19 +2536,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-#### `<caption>`
+##### `<caption>`
 
-Optional part of the element head for capturing an associated caption.
+Optional part of the element head for capturing an associated caption. Unlike [`<description>`](#description) or [`<summary>`](#summary), [`<caption>`](#caption) is an actual document component, which can have its own location information etc. For example, a caption shown underneath a chart. An element head may contain multiple captions, e.g. a figure with both a title above and a note below, or the same caption in several languages.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2453,79 +2556,220 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Allowed |
 
-### Property Elements
+##### `<track>`
+
+Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
+
+###### Allowed Context
+
+Any context that allows semantic elements.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Only within a cue block transcript |
+| Primary semantic elements | [`<cover>`](#cover) before the first cue block; within cue blocks, [`<chapter>`](#chapter), [`<frame>`](#frame), [`<audio>`](#audio), and [`<voice>`](#voice) |
+
+###### Example
+
+```xml
+<doclang>
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="2"/><msecs value="500"/>
+    <minutes value="0"/><seconds value="5"/>
+    <voice>Alice</voice>
+    Good morning.
+    <voice>Bob</voice>
+    Morning - did you see the report?
+    <bdiv/>
+    <minutes value="59"/><seconds value="58"/><msecs value="450"/>
+    <hours value="1"/><minutes value="0"/><seconds value="1"/><msecs value="210"/>
+    <frame><src uri="assets/frames/00-59-58.jpg"/></frame>
+    Wrapping up as we pass the hour.
+  </track>
+</doclang>
+```
+
+##### `<cover>`
+
+A representative image for a [`<track>`](#track) as a whole — for example podcast artwork, a poster, or a title card. Appears once, before the first cue block. Same shape as [`<frame>`](#frame): an optional element head followed by an optional [`<src>`](#src).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track), before the first [`<bdiv>`](#bdiv).
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Not allowed |
+| Primary semantic elements | Allowed |
+
+##### `<frame>`
+
+The still image of the recording at a [`<track>`](#track) cue block's start time. Shaped like [`<picture>`](#picture): an optional element head followed by an optional [`<src>`](#src).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Not allowed |
+| Primary semantic elements | Allowed |
+
+##### `<audio>`
+
+The recording over a [`<track>`](#track) cue block's interval `[start, end]` — a temporal crop of the track's audio, as a [`<picture>`](#picture) crop corresponds to its page region. Requires the cue block to carry an end time; the timestamps are authoritative and the clip is a best-effort fragment. Same shape as [`<frame>`](#frame).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Not allowed |
+| Primary semantic elements | Allowed |
+
+##### `<voice>`
+
+Speaker attribution for a transcript turn within a [`<track>`](#track) cue block. Handled like [`<text>`](#text) (may carry its own element head and inline formatting).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Allowed |
+
+##### `<chapter>`
+
+A chapter or section title for a [`<track>`](#track). It marks a chapter boundary at the start time of the cue block that carries it; the chapter runs until the next [`<chapter>`](#chapter) (or `</track>`), and the region before the first [`<chapter>`](#chapter) is unchaptered. Only the start time matters — the cue block's end time bounds its transcript, not the chapter. Chapters form a flat partition (no nesting, no overlap). Handled like [`<text>`](#text) (may carry its own element head and inline formatting).
+
+###### Allowed Context
+
+Can only appear inside a [`<track>`](#track) cue block, after the start (and optional end) timestamp and before any [`<frame>`](#frame).
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Allowed |
+
+#### Property Elements
 
 *Property elements* are non-semantic elements that help define useful traits of a semantic element, forming the main building blocks of the [element head](#element-head). Property elements that can appear on the top level of the element head are called *primary*, while those that can only appear within other property elements are called *secondary*. The various property elements are further specified in the following subsections.
 
-#### `<label>`
+##### `<label>`
 
 Optional part of the element head; serves for providing a detailed label for the respective element.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "undefined" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<thread>`
+##### `<thread>`
 
 Optional part of the element head; serves for establishing a logical document component. This can be useful for capturing fragmented components, e.g. spanning multiple bounding boxes (e.g. cross-column) or pages, or for defining anchors for cross references. To capture a fragmented component, we define separate instances of the respective element and use a [`<thread>`](#thread) with the same `thread_id` attribute for all of them
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` must be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<xref>`
+##### `<xref>`
 
 Optional part of the element head; serves for capturing an outgoing cross-reference from this component.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the document. |
+| `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the DocLang instance. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<href>`
+##### `<href>`
 
 Optional part of the element head; serves for capturing a URI referenced by this component.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The URI of the referenced resource. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2533,19 +2777,59 @@ Can only be part of the [element head](#element-head) of a semantic element.
 | Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<custom>`
+##### `<description>`
 
-Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Appendix B: Recommendations](#appendix-b-recommendations) for naming and namespacing guidance for custom vocabularies.
+Optional part of the element head for capturing a derived textual account of what the host component is or what it shows. Unlike [`<caption>`](#caption), [`<description>`](#description) is meta-information and not an actual document component. For example, a picture description inferred by a model.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Not allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Not allowed |
+
+##### `<summary>`
+
+Optional part of the element head for capturing a derived textual distillation of what the host component conveys. Unlike [`<caption>`](#caption), [`<summary>`](#summary) is meta-information and not part of the original document content.
+
+###### Allowed Context
+
+Can only be part of the [element head](#element-head) of a semantic element.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+| Content Type | Allowed / Not allowed |
+| --- | --- |
+| Element head | Not allowed |
+| Raw text | Allowed |
+| Primary semantic elements | Not allowed |
+
+##### `<custom>`
+
+Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Recommendations](#recommendations) for naming and namespacing guidance for custom vocabularies.
+
+###### Allowed Context
+
+Can only be part of the [element head](#element-head) of a semantic element.
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2553,78 +2837,78 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<location>`
+##### `<location>`
 
 Optional part of the element head; coordinate system is the top-left corner of the page. When present, appears in sequence of 4 [`<location>`](#location) instances, representing x0, y0, x1, y1. The following must then hold: `x0_norm<=x1_norm` and `y0_norm<=y1_norm`(i.e. first top-left point then bottom-right point), whereby `*_norm` is the respective coordinate normalized to its effective resolution.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
 | `value` | Required | Integer within [0, `location@resolution`) | Coordinate w.r.t. top-left corner. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<layer>`
+##### `<layer>`
 
-The conceptual layer of the host element in the document.
+The conceptual layer of the host element in the DocLang instance.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the [element head](#element-head) of a semantic element.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
-| `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the document's main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the document's main content, such as navigation or decorations. |
+| `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the main content, such as navigation or decorations. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-### Payload Elements
+#### Payload Elements
 
 Payload elements are low-level elements that help define the effective content of another element.
 
-#### `<src>`
+##### `<src>`
 
 The image's source.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the picture-specific element body sequence of [`<picture>`](#picture).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. Relative URIs are allowed too, e.g. `uri="assets/chart.svg"`. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<tabular>`
+##### `<tabular>`
 
 Structured tabular data. Uses the same cell model as [`<table>`](#table), but without an element head of its own.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be part of the picture-specific element body sequence of [`<picture class="chart">`](#picture).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2632,37 +2916,37 @@ None
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
 | Primary semantic elements | Allowed |
 
-#### `<checkbox>`
+##### `<checkbox>`
 
 Empty element representing checkbox selection state.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unselected" | {"unselected", "selected"} | The checkbox type. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<content>`
+##### `<content>`
 
 Whitespace-preserving text container. Retains all whitespace within the element (equivalent to `xml:space="preserve"`), enabling use in whitespace-sensitive scenarios such as code blocks. XML special characters may alternatively be conveyed via CDATA.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2670,23 +2954,95 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-### Formatting Elements
+##### `<hours>`
+
+Hours component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Non-negative integer | Hours component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+##### `<minutes>`
+
+Minutes component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, 59] | Minutes component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+##### `<seconds>`
+
+Seconds component of a [`<track>`](#track) cue timestamp.
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, 59] | Seconds component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+##### `<msecs>`
+
+Milliseconds component of a [`<track>`](#track) cue timestamp. Optional within a timestamp run (defaults to 0).
+
+###### Allowed Context
+
+Can only be part of a timestamp run in a [`<track>`](#track) cue block.
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | Integer within [0, 999] | Milliseconds component of a track cue timestamp. |
+
+###### Allowed Content Types
+
+None (empty element).
+
+#### Formatting Elements
 
 Formatting elements modify the styling and presentation within semantic or other formatting elements.
 
-#### `<bold>`
+##### `<bold>`
 
 Indicates bold formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2694,19 +3050,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<italic>`
+##### `<italic>`
 
 Indicates italic formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2714,19 +3070,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<underline>`
+##### `<underline>`
 
 Indicates underlined formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2734,19 +3090,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<strikethrough>`
+##### `<strikethrough>`
 
 Indicates struck-through formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2754,19 +3110,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<superscript>`
+##### `<superscript>`
 
 Indicates superscript formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2774,19 +3130,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<subscript>`
+##### `<subscript>`
 
 Indicates subscript formatting.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2794,19 +3150,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<handwriting>`
+##### `<handwriting>`
 
 Indicates handwritten text.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2814,19 +3170,19 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-#### `<rtl>`
+##### `<rtl>`
 
 Indicates right-to-left direction.
 
-##### Allowed Context
+###### Allowed Context
 
 Any context that allows raw text content.
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -2834,183 +3190,183 @@ None
 | Raw text | Allowed |
 | Primary semantic elements | Not allowed |
 
-### Structural Elements
+#### Structural Elements
 
 Structural elements define boundaries within explicitly structured components like tables and lists.
 
-#### `<fcel>`
+##### `<fcel>`
 
 Indicates the beginning of a full / regular cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ecel>`
+##### `<ecel>`
 
 Indicates the beginning of an empty cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ched>`
+##### `<ched>`
 
 Indicates the beginning of a column header cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<rhed>`
+##### `<rhed>`
 
 Indicates the beginning of a row header cell.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<corn>`
+##### `<corn>`
 
 Indicates the beginning of a corner cell, typically the top-left header intersection.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<srow>`
+##### `<srow>`
 
 Indicates the beginning of a section row header.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<lcel>`
+##### `<lcel>`
 
 Left-merge extension token; extends the previous cell horizontally (colspan continuation).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ucel>`
+##### `<ucel>`
 
 Upward-merge extension token; extends the cell above vertically (rowspan continuation)
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<xcel>`
+##### `<xcel>`
 
 Cross/combined span extension token; used where both horizontal and vertical spanning intersect.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<nl>`
+##### `<nl>`
 
 Denotes the end of a table row.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<table>`](#table), [`<index>`](#index), or [`<tabular>`](#tabular)
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-#### `<ldiv>`
+##### `<ldiv>`
 
 Indicates the beginning of a list item. It can either be empty or contain a [`<marker>`](#marker).
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<list>`](#list).
 
-##### Attributes
+###### Attributes
 
 None
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 | Content Type | Allowed / Not allowed |
 | --- | --- |
@@ -3018,36 +3374,129 @@ None
 | Raw text | Not allowed |
 | Primary semantic elements | Only [`<marker>`](#marker) |
 
-### Document Head Elements
+##### `<bdiv>`
+
+Indicates the beginning of a [`<track>`](#track) cue block.
+
+###### Allowed Context
+
+Can only be a child of [`<track>`](#track).
+
+###### Attributes
+
+None
+
+###### Allowed Content Types
+
+None (empty element).
+
+#### Document Head Elements
 
 This category comprises the document-level metadata elements that are the building blocks of [`<head>`](#head).
 
-#### `<default_resolution>`
+##### `<default_resolution>`
 
-Defines the default resolution for the document.
+Defines the default resolution for the DocLang instance.
 
-##### Allowed Context
+###### Allowed Context
 
 Can only be child of [`<head>`](#head).
 
-##### Attributes
+###### Attributes
 
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `width` | Optional; default "512" | Non-negative integer | Default document width in pixels. |
 | `height` | Optional; default "512" | Non-negative integer | Default document height in pixels. |
 
-##### Allowed Content Types
+###### Allowed Content Types
 
 None (empty element).
 
-## Appendix B: Recommendations
+### DocLang Archive Format
+
+A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
+
+An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part.
+
+#### Layout
+
+```
+[Content_Types].xml    # required — OPC content types
+_rels/
+  .rels                # required — package → main document
+document.xml           # required — valid DocLang instance
+pages/                 # optional — page images, e.g. 1.png, 2.png
+audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
+video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
+assets/                # optional — files referenced from markup
+```
+
+##### `[Content_Types].xml` (required)
+
+Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
+
+Example:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Default Extension="mp3" ContentType="audio/mpeg"/>
+  <Default Extension="mp4" ContentType="video/mp4"/>
+  <Override PartName="/document.xml" ContentType="application/vnd.doclang.document+xml"/>
+</Types>
+```
+
+##### `_rels/.rels` (required)
+
+Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
+
+Example:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://doclang.ai/ns/package/2026/relationships/document"
+    Target="document.xml"/>
+</Relationships>
+```
+
+##### `document.xml` (required)
+
+The main part: a valid DocLang instance. Top-level `<page_break/>` elements separate pages; `<location>` coordinates are page-relative.
+
+##### `pages/` (optional)
+
+Optional raster images for review. Name files `{N}.{png|jpg|jpeg|webp}` with 1-based `N`. Gaps are allowed.
+
+##### `audio/` (optional)
+
+##### `video/` (optional)
+
+Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` MUST NOT exceed the number of `<track>` elements in the DocLang instance.
+
+##### `assets/` (optional)
+
+Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
+
+#### Page alignment
+
+Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* corresponds to page *N*. Page count is determined by markup: the number of `<page_break/>` elements plus one. Page images are optional and individual gaps are allowed, but page files must not exceed this count (e.g. two `<page_break/>` elements define three pages, so `4.png` is out of bounds).
+
+#### Track alignment
+
+The *N*-th [`<track>`](#track) in the DocLang instance aligns with `audio/{N}.*` and/or `video/{N}.*` when present. A cue block's timestamps are then playback offsets into that file, measured from its start (`00:00:00.000`). Per-cue [`<frame>`](#frame) and [`<audio>`](#audio) fragments are independent references (via [`<src>`](#src)) and are not derived from the whole-track files. A track with neither an `audio/` nor a `video/` entry is simply a transcript whose timestamps refer to a recording the archive does not carry.
+
+### Recommendations
 
 This appendix is informative and does not define conformance requirements.
 
-### Recommended labels
+#### Recommended labels
 
-#### Pictures
+##### Pictures
 
 For the `label@value` of `<picture>` elements, we recommend using the values defined below:
 
@@ -3062,7 +3511,7 @@ Additional special cases:
 
 Note: [`picture@class="undefined"`](#picture) (default picture type) and `label@value="undefined"` (unclassified subclass) are independent.
 
-#### Code
+##### Code
 
 For the `label@value` of `<code>` elements, we recommend using the values defined below:
 
@@ -3074,9 +3523,9 @@ Additional special cases:
 - `other`: use when the code was examined but does not match any of the recommended values from above.
 - `undefined`: use when classification has not been performed (default [`label@value`](#label)).
 
-### Custom vocabulary naming and namespacing
+#### Custom vocabulary naming and namespacing
 
-Content inside [`<custom>`](#custom) is implementation-defined and not governed by this standard.
+Content inside [`<custom>`](#custom) is implementation-defined and not governed by this document.
 To improve interoperability and reduce naming collisions, the following recommendations apply:
 
 - Producers of shared custom vocabularies SHOULD use formal XML namespaces with stable namespace URIs.
@@ -3085,7 +3534,7 @@ To improve interoperability and reduce naming collisions, the following recommen
 - Producers SHOULD avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
 - Producers SHOULD document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
 
-### Token vocabulary
+#### Token vocabulary
 
 Below is a list of tokens that can be used for a DocLang-compliant tokenizer.
 
@@ -3152,13 +3601,15 @@ The token vocabulary trades off size and inference cost:
 | `</hint>` | [`hint`](#hint) end |
 | `<caption>` | [`caption`](#caption) start |
 | `</caption>` | [`caption`](#caption) end |
+| `<description>` | [`description`](#description) start |
+| `</description>` | [`description`](#description) end |
+| `<summary>` | [`summary`](#summary) start |
+| `</summary>` | [`summary`](#summary) end |
 | `<thread thread_id="` | [`thread`](#thread) with `thread_id` attribute start |
 | `<xref thread_id="` | [`xref`](#xref) with `thread_id` attribute start |
 | `<href uri="` | [`href`](#href) with `uri` attribute start |
 | `<custom>` | [`custom`](#custom) start |
 | `</custom>` | [`custom`](#custom) end |
-| `<smiles>` | custom SMILES element start (should best be [accordingly namespaced](#custom-vocabulary-naming-and-namespacing)) |
-| `</smiles>` | custom SMILES element end |
 | `<layer value="` | [`layer`](#layer) with `value` attribute start |
 | `<src uri="` | [`src`](#src) with `uri` attribute start |
 | `<tabular>` | [`tabular`](#tabular) start |
@@ -3195,22 +3646,51 @@ The token vocabulary trades off size and inference cost:
 | `<ucel/>` | [`ucel`](#ucel) |
 | `<xcel/>` | [`xcel`](#xcel) |
 | `<nl/>` | [`nl`](#nl) |
-| `<ldiv/>` | [`lddiv`](#ldiv) |
+| `<ldiv/>` | [`ldiv`](#ldiv) |
 | `<ldiv><marker>` | start of [`ldiv`](#ldiv) with [`marker`](#marker) |
 | `</marker></ldiv>` | end of [`ldiv`](#ldiv) with [`marker`](#marker) |
+| `<track>` | [`track`](#track) start |
+| `</track>` | [`track`](#track) end |
+| `<bdiv/>` | [`bdiv`](#bdiv) cue-block delimiter |
+| `<cover>` | [`cover`](#cover) start |
+| `</cover>` | [`cover`](#cover) end |
+| `<frame>` | [`frame`](#frame) start |
+| `</frame>` | [`frame`](#frame) end |
+| `<audio>` | [`audio`](#audio) start |
+| `</audio>` | [`audio`](#audio) end |
+| `<voice>` | [`voice`](#voice) start |
+| `</voice>` | [`voice`](#voice) end |
+| `<chapter>` | [`chapter`](#chapter) start |
+| `</chapter>` | [`chapter`](#chapter) end |
+| `<hours value="` | [`hours`](#hours) with `value` attribute start (out-of-range values) |
+| `<minutes value="` | [`minutes`](#minutes) with `value` attribute start (out-of-range values) |
+| `<seconds value="` | [`seconds`](#seconds) with `value` attribute start (out-of-range values) |
+| `<msecs value="` | [`msecs`](#msecs) with `value` attribute start (out-of-range values) |
 | `<location value="0"/>`, `<location value="1"/>`, ..., `<location value="511"/>` | [`location`](#location) tokens with values from 0 to 511 |
+| `<hours value="0"/>`, `<hours value="1"/>`, ..., `<hours value="23"/>` | [`hours`](#hours) tokens with values from 0 to 23 |
+| `<minutes value="0"/>`, `<minutes value="1"/>`, ..., `<minutes value="59"/>` | [`minutes`](#minutes) tokens with values from 0 to 59 |
+| `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
+| `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
 
-## Appendix C: Future Extensions
+### Future Extensions
 
-These features are considered for future versions of the standard.
+These features are considered for future versions of Doclang.
 
-### Horizontal Threading
+#### Horizontal Threading
 
 Horizontal threading enables linking related content across the horizontal axis in page or table layouts. The `h_thread` element supports this by explicitly connecting content (like table rows or columns) that spans multiple pages, ensuring these threads remain structured and traceable.
 
-### Metadata
+#### Explicitly wrapped repetitive items
 
-#### `<head>`
+Repetitive structures currently rely on a bare delimiter plus unwrapped content: `<ldiv/>` for [list](#list) items, cell tokens for [table](#table) cells, and `<bdiv/>` for [track](#track) cue blocks. A future revision may allow each item to alternatively be written as an explicit wrapper element carrying its own element head, in a way that stays backward compatible with the delimiter form and remains consistent across all three modalities.
+
+#### Multi-part track media
+
+The [archive format](#doclang-archive-format) carries at most one whole-track file per [`<track>`](#track) per modality (`audio/{N}.*`, `video/{N}.*`). A future revision may add a backward-compatible form for media split into ordered segments (e.g. an `audio/{N}/` directory plus a small manifest giving each segment's start offset), for very long recordings or capture that was paused and resumed.
+
+#### Metadata
+
+##### `<head>`
 
 Document-level metadata is contained in the optional `<head>` element.
 
@@ -3223,8 +3703,8 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
 - `generated_by`, upstream pipeline information, e.g. VLM ID
 - `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
-- `summary`, a summary of the document
-- `document_hash`, Hash of the document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
+- `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
+- `document_hash`, Hash of the source document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
 
 Here is an example:
 
@@ -3262,7 +3742,7 @@ Here is an example:
 </doclang>
 ```
 
-##### Governance and compliance metadata
+###### Governance and compliance metadata
 
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
 These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
@@ -3277,7 +3757,7 @@ They are **informative**, not normative, unless explicitly stated otherwise.
 These references are intended to:
 - Clarify regulatory or industry concepts reflected by the metadata elements
 - Assist implementers in mapping DocLang governance signals to existing compliance programs
-- Avoid re-defining legal or regulatory obligations within this standard
+- Avoid re-defining legal or regulatory obligations within this document
 
 DocLang governance metadata does **not** claim conformance to any listed framework by itself.
 Rather, it provides structured, machine-readable signals that downstream systems MAY use to support compliance, risk management, and audit workflows.
@@ -3300,7 +3780,7 @@ Implementers SHOULD consult authoritative sources and legal counsel to determine
 
 ###### Governance narrative and flow
 
-Governance metadata is intended to travel with the document and provide downstream systems with machine-readable constraints.
+Governance metadata is intended to travel with the DocLang instance and provide downstream systems with machine-readable constraints.
 The diagram below illustrates how the four governance areas map to common document-to-AI workflows.
 
 ```mermaid
@@ -3343,7 +3823,7 @@ This section uses the following terminology consistently:
 - **RAG** refers to retrieval-augmented generation workflows that embed/index content and retrieve it at inference time.
 - **Extraction** refers to producing structured outputs (fields/records) derived from document content.
 - **Training** refers to using content for model training, fine-tuning, evaluation, or benchmarking.
-- **Artifacts** refers to derived outputs created by processing the document (e.g., extracted datasets, embeddings/indexes, caches, training datasets).
+- **Artifacts** refers to derived outputs created by processing the DocLang instance (e.g., extracted datasets, embeddings/indexes, caches, training datasets).
 
 Where an element carries an enumerated value (e.g., `pii_status`, `rag_embedding_scope`), implementations SHOULD use a controlled vocabulary.
 Where an element carries a boolean, implementations SHOULD use explicit `true` / `false` values.
@@ -3354,7 +3834,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 ###### Licensing and rights
 
-- `licenses` Indicate one or more licenses covering use of the document.
+- `licenses` Indicate one or more licenses covering use of the DocLang instance.
 
 ###### Data classification and privacy posture
 
@@ -3368,7 +3848,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 ###### Stewardship and contact
 
-- `stewardship` Provides the name of a person and/or organization with governance responsibility at the document owning organization.
+- `stewardship` Provides the name of a person and/or organization with governance responsibility at the owning organization.
 
 ###### Access control policy
 
@@ -3378,7 +3858,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 ###### Retention and deletion
 
-- `retention_policy` Allows organizations to state retention objectives for the document data.
+- `retention_policy` Allows organizations to state retention objectives.
 
 ###### Compliance frameworks
 
@@ -3394,7 +3874,7 @@ Unless otherwise required by an implementation, these elements are intended to b
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
-| `pii_status` | Indicates whether the document contains PII. | ISO 27701; ISO 27001 A.5/A.8; GDPR Art. 4(1), 5(1) |
+| `pii_status` | Indicates whether the DocLang instance contains PII. | ISO 27701; ISO 27001 A.5/A.8; GDPR Art. 4(1), 5(1) |
 | `pii_sensitivity_level` | Classifies the sensitivity level of detected PII. | ISO 27701; GDPR Art. 9–10 |
 | `pii_source_type` | Identifies the origin/source of PII (e.g., provided by user, derived, third-party). | GDPR Art. 13–14 |
 | `controller_processor_role` | Defines the organizational role for processing (controller/processor or equivalent). | GDPR Art. 24–28 |
@@ -3404,11 +3884,11 @@ Unless otherwise required by an implementation, these elements are intended to b
 | `pii_minimisation_status` | Indicates whether minimisation has been applied (data minimisation / privacy by design). | GDPR Art. 5(1)(c), Art. 25 |
 | `pii_transformation_level` | Indicates transformation applied to PII (e.g., redacted, masked, pseudonymized). | GDPR Recital 26; GDPR Art. 4(5) |
 | `reidentification_risk` | Expresses assessed risk of re-identification where transformations are used. | ISO 27701; GDPR Recital 26 |
-| `access_control_level` | Required access tier/controls for handling this document. | ISO 27001 A.9; GDPR Art. 32 |
-| `ai_use_restriction` | Indicates allowed AI uses or prohibitions for this document’s content. | GDPR Art. 5(1)(b–c) |
+| `access_control_level` | Required access tier/controls for handling this DocLang instance. | ISO 27001 A.9; GDPR Art. 32 |
+| `ai_use_restriction` | Indicates allowed AI uses or prohibitions for the content of this DocLang instance. | GDPR Art. 5(1)(b–c) |
 | `cross_border_transfer_status` | Indicates whether cross-border transfers occur/are allowed. | GDPR Art. 44–49 |
 | `transfer_mechanism` | Indicates transfer mechanism where applicable (e.g., adequacy, SCCs). | GDPR Art. 45–47 |
-| `retention_category` | Indicates retention category for personal data contained in the document. | GDPR Art. 5(1)(e) |
+| `retention_category` | Indicates retention category for personal data contained in the DocLang instance. | GDPR Art. 5(1)(e) |
 | `dsr_impact_flag` | Signals potential impact on data subject rights (DSR handling implications). | GDPR Art. 12–23 |
 | `dpia_required` | Indicates whether a DPIA is required for intended processing. | GDPR Art. 35–36 |
 | `children_pii_present` | Flags whether children’s data is present. | GDPR Art. 8 |
@@ -3423,14 +3903,14 @@ If an organization already has established internal taxonomies for classificatio
 This subsection defines governance signals that constrain automated extraction, transformation, and downstream use of extracted fields.
 Implementations SHOULD use these elements to ensure purpose limitation and auditability of extraction.
 
-The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the document.
+The following optional elements MAY be provided to express constraints and obligations related to automated or manual data extraction from the DocLang instance.
 These elements are intended to guide downstream systems that perform field extraction, transformation, enrichment, or export.
 Unless otherwise required by an implementation, these elements SHOULD be expressed at the document level inside `<head>`, and MAY be overridden at component level for finer-grained control.
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
 | `extraction_permitted` | Indicates whether automated data extraction is permitted at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
-| `extraction_scope` | Defines which parts or components of the document may be extracted (e.g., full document, tables only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `extraction_scope` | Defines which parts or components of the DocLang instance may be extracted (e.g., full document, tables only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `extraction_purpose` | Specifies the allowed purpose(s) for extracted data. | GDPR Art. 5(1)(b); ISO 27701 |
 | `extraction_granularity` | Indicates permitted level of granularity (e.g., aggregate only, field-level, record-level). | GDPR Art. 5(1)(c) |
 | `pii_extraction_allowed` | Indicates whether PII may be included in extracted outputs. | GDPR Art. 6; ISO 27701 |
@@ -3458,9 +3938,9 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
-| `rag_permitted` | Indicates whether the document may be used in RAG workflows at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `rag_permitted` | Indicates whether the DocLang instance may be used in RAG workflows at all. | GDPR Art. 5(1)(a,b); ISO 27701 |
 | `rag_indexing_allowed` | Indicates whether the document content may be indexed or embedded for retrieval. | GDPR Art. 5(1)(b,c); ISO 27001 A.8 |
-| `rag_embedding_scope` | Defines which parts or components of the document may be embedded (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `rag_embedding_scope` | Defines which parts or components of the DocLang instance may be embedded (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `rag_chunking_constraints` | Specifies constraints on chunking strategy (e.g., max size, boundaries, semantic-only). | ISO 23894; privacy-by-design principles |
 | `rag_query_restrictions` | Defines restrictions on the types of queries that may retrieve this content. | GDPR Art. 5(1)(b) |
 | `rag_output_attribution_required` | Indicates whether attribution or citation is required when content is retrieved or surfaced. | ISO 27001 A.18; copyright best practice |
@@ -3488,11 +3968,11 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 
 | Element | Purpose | Standards alignment (non-exhaustive) |
 |---|---|---|
-| `training_permitted` | Indicates whether the document may be used for any form of model training or fine-tuning. | GDPR Art. 5(1)(a,b); ISO 27701 |
-| `training_scope` | Defines which parts or components of the document may be used for training (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
+| `training_permitted` | Indicates whether the DocLang instance may be used for any form of model training or fine-tuning. | GDPR Art. 5(1)(a,b); ISO 27701 |
+| `training_scope` | Defines which parts or components of the DocLang instance may be used for training (e.g., full document, summaries only, specific sections). | GDPR Art. 5(1)(b,c) |
 | `training_purpose` | Specifies the intended purpose of training (e.g., general models, domain-specific models, evaluation only). | GDPR Art. 5(1)(b) |
 | `training_model_type` | Restricts the types or classes of models that may be trained using this content. | ISO 23894; internal governance |
-| `training_data_retention` | Specifies retention period for training datasets derived from this document. | GDPR Art. 5(1)(e) |
+| `training_data_retention` | Specifies retention period for training datasets derived from this DocLang instance. | GDPR Art. 5(1)(e) |
 | `training_dataset_reuse_allowed` | Indicates whether derived training datasets may be reused beyond the initial training purpose. | GDPR Art. 5(1)(b) |
 | `training_derivative_sharing_permitted` | Indicates whether trained models or derivatives may be shared with third parties. | GDPR Art. 28; licensing obligations |
 | `training_pii_included` | Indicates whether training data may include PII. | GDPR Art. 6; ISO 27701 |
@@ -3610,7 +4090,7 @@ Example use of the governance and compliance elements is shown below:
 ###### Consolidated example (PII + extraction + RAG + training)
 
 The following example illustrates a single `<head>` that combines Privacy and PII controls, Data extraction controls, RAG and retrieval controls, and Document training controls.
-Implementations MAY choose to interpret these as organization-wide defaults for the document, and MAY override at component level for finer-grained control.
+Implementations MAY choose to interpret these as organization-wide defaults for the DocLang instance, and MAY override at component level for finer-grained control.
 
 ```xml
 <doclang>
@@ -3719,16 +4199,24 @@ Notes:
 
 <!--
 
-#### Component-level metadata
+##### Component-level metadata
 
 Metadata elements are meant to capture information that is not directly part of the document *content*, but rather:
 
 - deriveable from the document
   - either directly, e.g. a summary of a certain component
   - or in combination with other context, e.g. from external knowledge sources
-- or reflects properties of the upstream pipeline, e.g. the VLM that generated the document.
+- or reflects properties of the upstream pipeline, e.g. the VLM that generated the DocLang instance.
 
-As applications can have varying requirements, this standard defines a set of reserved metadata elements for common use
+As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
 -->
+
+## Bibliography
+
+The following lists the documents which are cited informatively in this document, as well as other information resources. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
+
+1. W3C HTML5 Specification
+2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
+3. DoclingDocument API Specification

@@ -65,8 +65,8 @@ def test_versions_compare_numerically_and_dclx_inherits_the_api():
     assert newer.version() >= DoclangVersion.parse("0.10")
     assert DoclangVersion(1, 0) > newer.version()
     assert str(newer.version()) == "0.10"
-    assert DoclangDocument.empty().version() == DoclangVersion(0, 6)
-    assert DoclangDocument("<doclang/>").version() == DoclangVersion(0, 6)
+    assert DoclangDocument.empty().version() == DoclangVersion(0, 7)
+    assert DoclangDocument("<doclang/>").version() == DoclangVersion(0, 7)
     assert DoclangDocument().version() is None
 
     archive = DoclangXDocument()

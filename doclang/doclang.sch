@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ============================================ -->
+<!-- This schema is meant to enable validation of DocLang documents in line with the DocLang specification. -->
+<!-- In case of discrepancies, the authoritative source is the specification. -->
+<!-- ============================================ -->
+
 <sch:schema xmlns:sch="http://purl.oclc.org/dsdl/schematron"
             xmlns:dl="https://www.doclang.ai/ns/v0"
             queryBinding="xslt3">
 
-  <sch:title>Doclang Schematron Validation Rules (XSLT 3.0)</sch:title>
+  <sch:title>DocLang Schematron Validation Rules (XSLT 3.0)</sch:title>
 
   <sch:ns prefix="dl" uri="https://www.doclang.ai/ns/v0"/>
 
@@ -18,11 +24,32 @@
 
   <sch:pattern id="list-structure">
     <sch:rule context="dl:list[*]">
-      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
+      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom)][1]"/>
 
-      <sch:assert id="list-structure" test="not($first-non-header) or $first-non-header[self::dl:ldiv]">
-        List must have ldiv as first element after optional element head (property elements: label, thread, xref, href, layer, location, caption, custom).
+      <sch:assert test="not($first-non-header) or $first-non-header[self::dl:ldiv]">
+        List must have ldiv as first element after optional element head (property elements: label, thread, xref, href, layer, location, caption, description, summary, custom).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK: Must start with bdiv (after optional element head) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-structure">
+    <sch:rule context="dl:track[*]">
+      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom)][1]"/>
+      <sch:let name="text-before-first-bdiv" value="text()[following-sibling::dl:bdiv and not(preceding-sibling::dl:bdiv)][normalize-space(.) != '']"/>
+
+      <sch:assert test="not($first-non-header) or $first-non-header[self::dl:cover or self::dl:bdiv]">
+        Track must have bdiv (optionally preceded by a single cover) as first element after the optional element head (property elements: label, thread, xref, href, layer, location, caption, description, summary, custom).
+        Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
+      </sch:assert>
+
+      <sch:assert test="empty($text-before-first-bdiv)">
+        Track must not contain non-whitespace text before its first cue block (bdiv).
+        Found: '<sch:value-of select="normalize-space(string-join($text-before-first-bdiv, ''))"/>'
       </sch:assert>
     </sch:rule>
   </sch:pattern>
@@ -33,13 +60,13 @@
 
   <sch:pattern id="table-structure">
     <sch:rule context="dl:table[*] | dl:index[*]">
-      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
+      <sch:let name="first-non-header" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom)][1]"/>
 
-      <sch:assert id="table-structure" test="not($first-non-header) or
+      <sch:assert test="not($first-non-header) or
                         $first-non-header[self::dl:fcel or self::dl:ecel or self::dl:ched or
                                          self::dl:rhed or self::dl:corn or self::dl:srow or
                                          self::dl:lcel or self::dl:ucel or self::dl:xcel]">
-        Table and index must have cell-starting token as first element after optional element head (property elements: label, thread, xref, href, layer, location, caption, custom).
+        Table and index must have cell-starting token as first element after optional element head (property elements: label, thread, xref, href, layer, location, caption, description, summary, custom).
         Found: <sch:value-of select="if ($first-non-header) then name($first-non-header) else 'nothing'"/>
       </sch:assert>
     </sch:rule>
@@ -56,10 +83,11 @@
       <sch:let name="cell-tokens" value="dl:fcel | dl:ecel | dl:ched | dl:rhed | dl:corn | dl:srow | dl:lcel | dl:ucel | dl:xcel"/>
 
       <!-- Count cells in first row (before first nl) -->
-      <sch:let name="first-row-cells" value="count($cell-tokens[following-sibling::dl:nl[1] is current()/dl:nl[1]])"/>
+      <sch:let name="first-nl" value="dl:nl[1]"/>
+      <sch:let name="first-row-cells" value="count($cell-tokens[following-sibling::dl:nl[1] is $first-nl])"/>
 
       <!-- Check that all subsequent rows have the same number of cells -->
-      <sch:assert id="table-rectangular-grid" test="every $nl in dl:nl[position() > 1] satisfies
+      <sch:assert test="every $nl in dl:nl[position() > 1] satisfies
                         count($cell-tokens[preceding-sibling::dl:nl[1] is $nl/preceding-sibling::dl:nl[1] and
                                           following-sibling::dl:nl[1] is $nl]) = $first-row-cells">
         Table and index must follow the rectangular rule: all rows must have the same number of cells.
@@ -71,30 +99,21 @@
 
   <!-- ============================================ -->
   <!-- ELEMENT HEAD: Text must not precede property elements -->
-  <!-- Property elements: label, thread, xref, href, layer, location, caption, custom (per XSD element_head group) -->
-  <!-- List items and table cells have their own virtual-text rules below. -->
+  <!-- Property elements: label, thread, xref, href, layer, location, caption, description, summary, custom (per XSD element_head group) -->
+  <!-- This rule applies to regular semantic elements AND virtual <text> in lists/tables -->
   <!-- ============================================ -->
 
   <sch:pattern id="element-head-placement">
-    <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption |
+    <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption | dl:description | dl:summary |
                        dl:page_header | dl:page_footer | dl:footnote | dl:picture | dl:marker |
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
-                       dl:list | dl:table | dl:index | dl:group">
-      <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:layer | dl:location | dl:caption | dl:custom"/>
-      <sch:let name="first-structure" value="if (self::dl:list) then dl:ldiv[1]
-                                             else if (self::dl:table or self::dl:index)
-                                             then *[self::dl:fcel or self::dl:ecel or self::dl:ched or
-                                                    self::dl:rhed or self::dl:corn or self::dl:srow or
-                                                    self::dl:lcel or self::dl:ucel or self::dl:xcel][1]
-                                             else ()"/>
+                       dl:list | dl:table | dl:index | dl:group | dl:track | dl:voice | dl:chapter | dl:cover | dl:frame | dl:audio">
+      <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:layer | dl:location | dl:caption | dl:description | dl:summary | dl:custom"/>
 
-      <sch:let name="text-before-header" value="text()[(not($first-structure) or . &lt;&lt; $first-structure) and
-        following-sibling::*[(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or
-                              self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom) and
-                             (not($first-structure) or . &lt;&lt; $first-structure)]]"/>
+      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]]"/>
 
-      <sch:assert id="element-head-placement" test="every $t in $text-before-header satisfies normalize-space($t) = ''">
-        Property elements in the element head (label, thread, xref, href, layer, location, caption, custom) must appear before any non-whitespace text content.
+      <sch:assert test="every $t in $text-before-header satisfies normalize-space($t) = ''">
+        Property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
@@ -106,7 +125,7 @@
 
   <sch:pattern id="xref-href-mutual-exclusivity">
     <sch:rule context="*[dl:xref and dl:href]">
-      <sch:assert id="xref-href-mutual-exclusivity" test="false()">
+      <sch:assert test="false()">
         Element head must not contain both xref and href elements; they are mutually exclusive.
       </sch:assert>
     </sch:rule>
@@ -118,7 +137,8 @@
 
   <sch:pattern id="xref-thread-defined">
     <sch:rule context="dl:xref">
-      <sch:assert id="xref-thread-defined" test="exists(//dl:thread[@thread_id = current()/@thread_id])">
+      <sch:let name="thread-id" value="@thread_id"/>
+      <sch:assert test="exists(//dl:thread[@thread_id = $thread-id])">
         Element xref references thread_id="<sch:value-of select="@thread_id"/>" but no thread element defines that id.
       </sch:assert>
     </sch:rule>
@@ -145,7 +165,7 @@
                                        then $doc-default-width
                                        else $doc-default-height"/>
 
-      <sch:assert id="location-value-range" test="number(@value) ge 0 and number(@value) lt $axis-limit">
+      <sch:assert test="number(@value) ge 0 and number(@value) lt $axis-limit">
         Location value must satisfy 0 &lt;= value &lt; axis_limit.
         Found value=<sch:value-of select="@value"/>, axis_limit=<sch:value-of select="$axis-limit"/>,
         axis=<sch:value-of select="if ($is-x-axis) then 'x' else 'y'"/>,
@@ -191,7 +211,7 @@
       <sch:let name="x1-norm" value="$x1 div $x1-res"/>
       <sch:let name="y1-norm" value="$y1 div $y1-res"/>
 
-      <sch:assert id="location-block-order" test="$x0-norm le $x1-norm and $y0-norm le $y1-norm">
+      <sch:assert test="$x0-norm le $x1-norm and $y0-norm le $y1-norm">
         Location block must satisfy x0_norm &lt;= x1_norm and y0_norm &lt;= y1_norm,
         where *_norm is each coordinate normalized by its effective resolution.
         Found:
@@ -213,7 +233,7 @@
       <sch:let name="threads" value="//dl:thread"/>
       <sch:let name="thread-ids" value="distinct-values($threads/@thread_id)"/>
       <sch:let name="cell-token-names" value="('fcel','ecel','ched','rhed','corn','srow','lcel','ucel','xcel')"/>
-      <sch:assert id="thread-host-type-consistency" test="every $tid in $thread-ids satisfies
+      <sch:assert test="every $tid in $thread-ids satisfies
                         count(distinct-values(
                           for $t in $threads[@thread_id = $tid]
                           return
@@ -243,7 +263,7 @@
                                           then following-sibling::node()[following-sibling::dl:ldiv[1] is $next-ldiv]
                                           else following-sibling::node()"/>
 
-      <sch:let name="header-elements" value="$item-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom]"/>
+      <sch:let name="header-elements" value="$item-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]"/>
 
       <sch:let name="first-header-index" value="if ($header-elements)
                                                  then index-of($item-content, $header-elements[1])[1]
@@ -254,8 +274,8 @@
                                                       return $item-content[$i][self::text()][normalize-space(.) != '']
                                                  else ()"/>
 
-      <sch:assert id="list-virtual-text-element-head" test="empty($text-before-header)">
-        In list items (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, custom) must appear before any non-whitespace text content.
+      <sch:assert test="empty($text-before-header)">
+        In list items (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
@@ -283,7 +303,7 @@
                                           then following-sibling::node()[following-sibling::*[. is $next-token]]
                                           else following-sibling::node()[not(following-sibling::dl:nl)]"/>
 
-      <sch:let name="header-elements" value="$cell-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom]"/>
+      <sch:let name="header-elements" value="$cell-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]"/>
 
       <sch:let name="first-header-index" value="if ($header-elements)
                                                  then index-of($cell-content, $header-elements[1])[1]
@@ -294,8 +314,8 @@
                                                       return $cell-content[$i][self::text()][normalize-space(.) != '']
                                                  else ()"/>
 
-      <sch:assert id="table-virtual-text-element-head" test="empty($text-before-header)">
-        In table and index cells (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, custom) must appear before any non-whitespace text content.
+      <sch:assert test="empty($text-before-header)">
+        In table and index cells (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>
@@ -307,32 +327,32 @@
   <!-- ============================================ -->
   <sch:pattern id="field-structure-placement">
     <sch:rule context="dl:field_heading">
-      <sch:assert id="field-heading-region" test="exists(ancestor::dl:field_region)">
+      <sch:assert test="exists(ancestor::dl:field_region)">
         field_heading and field_item must be descendants of field_region.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:field_item">
-      <sch:assert id="field-item-region" test="exists(ancestor::dl:field_region)">
+      <sch:assert test="exists(ancestor::dl:field_region)">
         field_heading and field_item must be descendants of field_region.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:key">
-      <sch:assert id="key-field-item" test="exists(ancestor::dl:field_item)">
+      <sch:assert test="exists(ancestor::dl:field_item)">
         key and value must be descendants of field_item.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:value">
-      <sch:assert id="value-field-item" test="exists(ancestor::dl:field_item)">
+      <sch:assert test="exists(ancestor::dl:field_item)">
         key and value must be descendants of field_item.
       </sch:assert>
     </sch:rule>
 
     <sch:rule context="dl:field_item">
       <sch:let name="own-key-count" value="count(.//dl:key[count(ancestor::dl:field_item) = 1])"/>
-      <sch:assert id="field-item-own-key" test="$own-key-count le 1">
+      <sch:assert test="$own-key-count le 1">
         A field_item may contain at most one own descendant key.
         Keys that belong to nested field_item descendants are excluded from this count.
         Found own-key-count=<sch:value-of select="$own-key-count"/>.
@@ -346,18 +366,172 @@
 
   <sch:pattern id="picture-body">
     <sch:rule context="dl:picture">
-      <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:custom)][1]"/>
+      <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom)][1]"/>
 
-      <sch:assert id="picture-tabular-chart" test="empty(dl:tabular) or @class = 'chart'">
+      <sch:assert test="empty(dl:tabular) or @class = 'chart'">
         Element tabular is only allowed in picture with class="chart".
       </sch:assert>
 
-      <sch:assert id="picture-src-first" test="empty(dl:src) or dl:src[1] is $first-body">
+      <sch:assert test="empty(dl:src) or dl:src[1] is $first-body">
         Element src must be the first element of the picture body when present.
       </sch:assert>
 
-      <sch:assert id="picture-tabular-after-src" test="empty(dl:tabular) or (not(dl:src) and dl:tabular[1] is $first-body) or (dl:src and dl:tabular[1] is dl:src/following-sibling::*[1])">
+      <sch:assert test="empty(dl:tabular) or (not(dl:src) and dl:tabular[1] is $first-body) or (dl:src and dl:tabular[1] is dl:src/following-sibling::*[1])">
         Element tabular must immediately follow src when src is present, otherwise it may be the first body element.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: must open with a start timestamp; no text before it -->
+  <!-- The cue block is the run of siblings after a <bdiv/> up to the next <bdiv/> -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-cue-block">
+    <sch:rule context="dl:track/dl:bdiv">
+      <sch:let name="next-bdiv" value="following-sibling::dl:bdiv[1]"/>
+      <sch:let name="cue-content" value="if ($next-bdiv)
+                                         then following-sibling::node()[following-sibling::dl:bdiv[1] is $next-bdiv]
+                                         else following-sibling::node()"/>
+      <sch:let name="first-elem" value="$cue-content[self::*][1]"/>
+      <sch:let name="first-elem-index" value="if ($first-elem)
+                                              then index-of($cue-content, $first-elem)[1]
+                                              else 0"/>
+      <sch:let name="text-before-first-elem" value="if ($first-elem-index > 0)
+                                                    then for $i in 1 to ($first-elem-index - 1)
+                                                         return $cue-content[$i][self::text()][normalize-space(.) != '']
+                                                    else $cue-content[self::text()][normalize-space(.) != '']"/>
+
+      <sch:assert test="not($first-elem) or $first-elem[self::dl:hours or self::dl:minutes or self::dl:seconds]">
+        A track cue block must begin with a start timestamp: its first element must be hours, minutes or seconds.
+        Found: <sch:value-of select="if ($first-elem) then name($first-elem) else 'nothing'"/>
+      </sch:assert>
+
+      <sch:assert test="empty($text-before-first-elem)">
+        A track cue block must not contain non-whitespace text before its start timestamp.
+        Found: '<sch:value-of select="normalize-space(string-join($text-before-first-elem, ''))"/>'
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: end timestamp must not precede the start timestamp -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-cue-block-timestamp-order">
+    <sch:rule context="dl:track/dl:bdiv">
+      <sch:let name="next-bdiv" value="following-sibling::dl:bdiv[1]"/>
+      <sch:let name="cue" value="if ($next-bdiv)
+                                 then following-sibling::*[following-sibling::dl:bdiv[1] is $next-bdiv]
+                                 else following-sibling::*"/>
+      <!-- <seconds> is the per-run anchor (the only mandatory component) -->
+      <sch:let name="secs" value="$cue[self::dl:seconds]"/>
+
+      <sch:let name="s1" value="$secs[1]"/>
+      <sch:let name="m1" value="$s1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h1" value="if ($m1) then $m1/preceding-sibling::*[1][self::dl:hours] else $s1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms1" value="$s1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="start-ms" value="3600000 * (if ($h1) then number($h1/@value) else 0)
+                                      + 60000 * (if ($m1) then number($m1/@value) else 0)
+                                      + 1000 * number($s1/@value)
+                                      + (if ($ms1) then number($ms1/@value) else 0)"/>
+
+      <sch:let name="s2" value="$secs[2]"/>
+      <sch:let name="m2" value="$s2/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h2" value="if ($m2) then $m2/preceding-sibling::*[1][self::dl:hours] else $s2/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms2" value="$s2/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="end-ms" value="3600000 * (if ($h2) then number($h2/@value) else 0)
+                                    + 60000 * (if ($m2) then number($m2/@value) else 0)
+                                    + 1000 * number($s2/@value)
+                                    + (if ($ms2) then number($ms2/@value) else 0)"/>
+
+      <sch:assert test="count($secs) != 2 or $end-ms ge $start-ms">
+        A track cue block end timestamp must not be earlier than its start timestamp.
+        Found start=<sch:value-of select="$start-ms"/>ms, end=<sch:value-of select="$end-ms"/>ms.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: cue blocks appear in non-decreasing order of start time -->
+  <!-- (blocks may still overlap, e.g. simultaneous speakers) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-cue-block-sequence">
+    <sch:rule context="dl:track/dl:bdiv[preceding-sibling::dl:bdiv]">
+      <sch:let name="prev-bdiv" value="preceding-sibling::dl:bdiv[1]"/>
+
+      <sch:let name="s1" value="following-sibling::dl:seconds[1]"/>
+      <sch:let name="m1" value="$s1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h1" value="if ($m1) then $m1/preceding-sibling::*[1][self::dl:hours] else $s1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms1" value="$s1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="start-ms" value="3600000 * (if ($h1) then number($h1/@value) else 0)
+                                      + 60000 * (if ($m1) then number($m1/@value) else 0)
+                                      + 1000 * number($s1/@value)
+                                      + (if ($ms1) then number($ms1/@value) else 0)"/>
+
+      <sch:let name="ps1" value="$prev-bdiv/following-sibling::dl:seconds[1]"/>
+      <sch:let name="pm1" value="$ps1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="ph1" value="if ($pm1) then $pm1/preceding-sibling::*[1][self::dl:hours] else $ps1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="pms1" value="$ps1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="prev-start-ms" value="3600000 * (if ($ph1) then number($ph1/@value) else 0)
+                                           + 60000 * (if ($pm1) then number($pm1/@value) else 0)
+                                           + 1000 * number($ps1/@value)
+                                           + (if ($pms1) then number($pms1/@value) else 0)"/>
+
+      <sch:assert test="$start-ms ge $prev-start-ms">
+        Track cue blocks must appear in non-decreasing order of start time.
+        Found this cue block start=<sch:value-of select="$start-ms"/>ms, previous cue block start=<sch:value-of select="$prev-start-ms"/>ms.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CHAPTER: a <chapter> marks a boundary at its cue block's start time; -->
+  <!-- consecutive chapter boundaries must be strictly increasing (no two chapters at one instant) -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-chapter-strictly-increasing">
+    <sch:rule context="dl:track/dl:chapter[preceding-sibling::dl:chapter]">
+      <!-- start time of the cue block this <chapter> belongs to (first timestamp run after its <bdiv>) -->
+      <sch:let name="s1" value="preceding-sibling::dl:bdiv[1]/following-sibling::dl:seconds[1]"/>
+      <sch:let name="m1" value="$s1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="h1" value="if ($m1) then $m1/preceding-sibling::*[1][self::dl:hours] else $s1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="ms1" value="$s1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="start-ms" value="3600000 * (if ($h1) then number($h1/@value) else 0)
+                                      + 60000 * (if ($m1) then number($m1/@value) else 0)
+                                      + 1000 * number($s1/@value)
+                                      + (if ($ms1) then number($ms1/@value) else 0)"/>
+
+      <sch:let name="ps1" value="preceding-sibling::dl:chapter[1]/preceding-sibling::dl:bdiv[1]/following-sibling::dl:seconds[1]"/>
+      <sch:let name="pm1" value="$ps1/preceding-sibling::*[1][self::dl:minutes]"/>
+      <sch:let name="ph1" value="if ($pm1) then $pm1/preceding-sibling::*[1][self::dl:hours] else $ps1/preceding-sibling::*[1][self::dl:hours]"/>
+      <sch:let name="pms1" value="$ps1/following-sibling::*[1][self::dl:msecs]"/>
+      <sch:let name="prev-start-ms" value="3600000 * (if ($ph1) then number($ph1/@value) else 0)
+                                           + 60000 * (if ($pm1) then number($pm1/@value) else 0)
+                                           + 1000 * number($ps1/@value)
+                                           + (if ($pms1) then number($pms1/@value) else 0)"/>
+
+      <sch:assert test="$start-ms gt $prev-start-ms">
+        Each chapter must begin strictly later than the previous chapter; two chapters cannot mark the same instant.
+        Found this chapter start=<sch:value-of select="$start-ms"/>ms, previous chapter start=<sch:value-of select="$prev-start-ms"/>ms.
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- TRACK CUE BLOCK: an <audio> clip spans [start, end], so its cue block needs an end time -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-audio-requires-end">
+    <sch:rule context="dl:track/dl:bdiv">
+      <sch:let name="next-bdiv" value="following-sibling::dl:bdiv[1]"/>
+      <sch:let name="cue" value="if ($next-bdiv)
+                                 then following-sibling::*[following-sibling::dl:bdiv[1] is $next-bdiv]
+                                 else following-sibling::*"/>
+
+      <sch:assert test="not($cue[self::dl:audio]) or count($cue[self::dl:seconds]) = 2">
+        A track cue block with an audio clip must carry an end time; the clip spans the cue block's interval [start, end].
       </sch:assert>
     </sch:rule>
   </sch:pattern>

@@ -22,7 +22,7 @@ namespace doclang::native
     auto operator<=>(const doclang_version&) const = default;
   };
 
-  inline constexpr doclang_version default_doclang_version{ 0, 6 };
+  inline constexpr doclang_version default_doclang_version{ 0, 7 };
 
   inline doclang_version doclang_version::parse(std::string_view value)
   {

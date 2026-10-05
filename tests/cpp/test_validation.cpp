@@ -87,8 +87,28 @@ namespace
       { "picture-src-first", "<picture><src/></picture>", "<picture><text/><src/></picture>" },
       { "picture-tabular-after-src", "<picture class=\"chart\"><src/><tabular/></picture>",
         "<picture class=\"chart\"><src/><text/><tabular/></picture>" },
+      { "track-structure", R"(<track><bdiv/><seconds value="0"/></track>)",
+        R"(<track><seconds value="0"/></track>)" },
+      { "track-structure", R"(<track><bdiv/><seconds value="0"/></track>)",
+        R"(<track>stray<bdiv/><seconds value="0"/></track>)" },
+      { "track-cue-block", R"(<track><bdiv/><seconds value="0"/></track>)",
+        R"(<track><bdiv/><frame/><seconds value="0"/></track>)" },
+      { "track-cue-block", R"(<track><bdiv/><seconds value="0"/></track>)",
+        R"(<track><bdiv/>stray<seconds value="0"/></track>)" },
+      { "track-cue-block-timestamp-order",
+        R"(<track><bdiv/><seconds value="1"/><seconds value="2"/></track>)",
+        R"(<track><bdiv/><seconds value="2"/><seconds value="1"/></track>)" },
+      { "track-cue-block-sequence",
+        R"(<track><bdiv/><seconds value="1"/><bdiv/><seconds value="2"/></track>)",
+        R"(<track><bdiv/><seconds value="2"/><bdiv/><seconds value="1"/></track>)" },
+      { "track-chapter-strictly-increasing",
+        R"(<track><bdiv/><seconds value="1"/><chapter>A</chapter><bdiv/><seconds value="2"/><chapter>B</chapter></track>)",
+        R"(<track><bdiv/><seconds value="1"/><chapter>A</chapter><bdiv/><seconds value="1"/><chapter>B</chapter></track>)" },
+      { "track-audio-requires-end",
+        R"(<track><bdiv/><seconds value="1"/><seconds value="2"/><audio/></track>)",
+        R"(<track><bdiv/><seconds value="1"/><audio/></track>)" },
     };
-    CHECK(std::size(cases) == 19);
+    CHECK(std::size(cases) == 27);
     for(const auto& item : cases)
       {
         CHECK(!has_assertion(validate_schematron_xml(xml(item.valid)), item.id));
@@ -135,12 +155,28 @@ namespace
     CHECK(validate_schematron_xml(no_namespace).empty());
     CHECK(has_assertion(validate_schematron_xml(no_namespace, true), "element-head-placement"));
 
-    const auto path = test_support::fixture("valid/ok_comprehensive.dclg.xml");
+    const auto path = test_support::fixture("valid/ok_comprehensive.dclg");
     std::ifstream stream(path);
     CHECK(stream.good());
     const std::string content(std::istreambuf_iterator<char>{ stream },
                               std::istreambuf_iterator<char>{});
     CHECK(validate_schematron_xml(content).empty());
+  }
+
+  void dtd_and_entities_are_rejected()
+  {
+    for(const std::string_view declaration :
+        { "<!DOCTYPE doclang>", "<!DOCTYPE doclang [<!ENTITY probe \"expanded\">]>" })
+      {
+        dclg_document document;
+        const auto input = std::string(declaration) + xml("<text>Body</text>");
+        CHECK(document.read(input));
+        const auto report = document.validate();
+        CHECK(!report.ok());
+        CHECK(report.first_error().find("DTD declarations and entity references")
+              != std::string::npos);
+        CHECK(!document.validate({ .schematron_only = true }).ok());
+      }
   }
 }
 
@@ -148,5 +184,6 @@ int main()
 {
   return test_support::run({ { "every Schematron assertion", every_schematron_assertion },
                              { "full and scoped validation", full_and_scoped_validation },
-                             { "namespace and fixture", namespace_and_fixture } });
+                             { "namespace and fixture", namespace_and_fixture },
+                             { "DTD and entities are rejected", dtd_and_entities_are_rejected } });
 }

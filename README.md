@@ -16,7 +16,9 @@
 
 **[DocLang](https://www.doclang.ai/) is the AI-native markup format for unstructured content** — including documents, images, and more. It maps cleanly to LLM tokens while preserving structure, semantics, layout, and geometry in a single, unambiguous representation.
 
-This repository is the home of the normative specification and the reference validator for DocLang. If you build with LLMs and VLMs on real-world content, this is where the standard lives.
+This repository is the home of the normative specification and the reference toolkit for DocLang. If you build with LLMs and VLMs on real-world content, this is where the standard lives.
+
+For additional background information see [MOTIVATION.md](https://github.com/doclang-project/doclang/blob/main/MOTIVATION.md).
 
 ## Specification
 
@@ -24,21 +26,31 @@ The source of the specification is available in [spec.md](https://github.com/doc
 and exports to different formats can be found in the [exports/](https://github.com/doclang-project/doclang/tree/main/exports)
 directory.
 
-## Reference Validator
+In case of discrepancies, the authoritative version of the specification is the original Markdown document.
 
-You can install the validator from PyPI:
+## Reference Toolkit
+
+The commands below illustrate basic scenarios. For advanced installation and usage options
+(minimal install, platform notes, custom Schematron backends, Python API), see the
+[toolkit README](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).
+
+### Installation
 
 ```bash
-pip install doclang
+pip install "doclang[schematron-saxon]"
 ```
 
-You can then validate a DocLang document as follows:
+### Validation
 
 ```bash
-doclang validate -n my_document.dclg.xml
+doclang validate -n my_document.dclg
 ```
 
-For more details, see the [doclang/README.md](https://github.com/doclang-project/doclang/blob/main/doclang/README.md).
+### Packaging
+
+```bash
+doclang pack my_document.dclg
+```
 
 ## Citation
 
@@ -61,6 +73,33 @@ To work on this repository — setup, tests, reference generation, releases — 
 ## We ❤️ Open Source AI
 
 DocLang is developed in the open and supported by the [LF AI & Data Foundation](https://lfaidata.foundation/projects/). Learn more about the project at [doclang-project](https://github.com/doclang-project).
+
+## Acknowledgements
+
+The following people have contributed to the DocLang specification.
+
+| Name | Company |
+|------|---------|
+| Peter Staar | IBM |
+| Panos Vagenas | IBM |
+| Maksym Lysak | IBM |
+| Nikolaos Livathinos | IBM |
+| Christoph Auer | IBM |
+| Michele Dolfi | IBM |
+| Said Gürbüz | IBM |
+| Santosh Borse | IBM |
+| Yousaf Shah | IBM |
+| Maroun Touma | IBM |
+| Christopher Giblin | IBM |
+| Marlene Wolfgruber | ABBYY |
+| Maxime Vermeir | ABBYY |
+| Morgan Logue | ABBYY |
+| Andrew Pery | ABBYY |
+| Jehlum Vitasta Pandit | RedHat |
+| Ali Maredia | RedHat |
+| Micaela Kaplan | HumanSignal |
+| Ryan Chesler | NVIDIA |
+| Riccardo Maggioni | Forgis |
 
 ## License
 

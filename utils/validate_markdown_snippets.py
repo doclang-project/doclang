@@ -29,6 +29,11 @@ from doclang import ValidationError, validate
 _XML_FENCE_RE = re.compile(r"^```xml\n(.*?)^```", re.MULTILINE | re.DOTALL)
 _TOP_LEVEL_ELLIPSIS_RE = re.compile(r"^(\s*)\.\.\.(\s*)$")
 _UNCLOSED_NL_RE = re.compile(r"<nl>(?!/)")
+_XML_DECL_RE = re.compile(r"^\s*<\?xml[^?]*\?\>\s*", re.IGNORECASE)
+_NON_DOCLANG_ROOT_RE = re.compile(
+    r"^\s*(?:<\?xml[^?]*\?\>\s*)?<(Types|Relationships)\b",
+    re.IGNORECASE,
+)
 
 _DEFAULT_MARKDOWN_FILES = (
     Path("spec.md"),
@@ -91,12 +96,18 @@ def _replace_top_level_ellipsis(content: str) -> str:
     return "\n".join(lines)
 
 
+def _is_skippable_snippet(content: str) -> bool:
+    """Return True for XML examples that are not DocLang document fragments."""
+    return bool(_NON_DOCLANG_ROOT_RE.match(content))
+
+
 def _prepare_snippet_for_validation(content: str) -> str:
     content = _replace_top_level_ellipsis(content)
     content = _UNCLOSED_NL_RE.sub("<nl/>", content)
+    content = _XML_DECL_RE.sub("", content, count=1)
     stripped = content.strip()
     if not stripped.lower().startswith("<doclang"):
-        content = f"<doclang>\n{content}\n</doclang>"
+        content = f"<doclang>\n{stripped}\n</doclang>"
     return content
 
 
@@ -111,6 +122,8 @@ def _validate_snippet_content(content: str, *, label: str) -> None:
 def _validate_snippets(snippets: list[_MarkdownSnippet]) -> list[_SnippetValidationResult]:
     results: list[_SnippetValidationResult] = []
     for snippet in snippets:
+        if _is_skippable_snippet(snippet.content):
+            continue
         try:
             _validate_snippet_content(snippet.content, label=str(snippet.source))
             results.append(_SnippetValidationResult(snippet=snippet))

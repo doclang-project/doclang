@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- no end time: the cue block is the single instant [start, start], pinning a frame -->
+  <track>
+    <bdiv/>
+    <minutes value="0"/><seconds value="12"/><msecs value="400"/>
+    <frame><src uri="assets/frames/00-12-400.jpg"/></frame>
+  </track>
+</doclang>

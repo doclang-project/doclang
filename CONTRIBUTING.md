@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve the DocLang standard and reference validator.
+Thanks for helping improve the DocLang standard and reference toolkit.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ CI installs only the `ci` group (`uv sync --frozen --no-default-groups --group c
 ## Repository layout
 
 - **`spec.md`** — normative specification
-- **`doclang/`** — reference validator (XSD, Schematron, CLI); see [doclang/README.md](./doclang/README.md) for package usage
+- **`doclang/`** — reference toolkit (Python package, CLI); see [doclang/README.md](./doclang/README.md) for usage
 - **`reference/`** — source data for Appendix A (Excel, examples)
 - **`exports/`** — generated Word exports from `spec.md`
 - **`utils/`** — maintenance scripts (version sync, reference generation, DOCX export, release preparation)
@@ -89,3 +89,20 @@ For maintainers preparing a release:
    (syncs version across artifacts, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
    - Make any manual changes needed (e.g. ToC regeneration on DOCX file, export to PDF etc.)
 3. **Commit & tag** — once committed to `main`, create and push the tag.
+
+## Working with DocLang files
+
+To streamline working with the recommended file extensions, custom mappings can be provided to both the operating system and the IDE.
+
+For example, in IDEs based on VS Code, you can add the following to your `settings.json` (or accordingly extend the `"files.associations"` key if already present):
+
+```json
+{
+  "files.associations": {
+    "*.dclg": "xml"
+  }
+}
+```
+
+On the OS level, e.g. on Mac, you can choose which app opens a certain file type (e.g. `.dclg` files) as described
+[here](https://support.apple.com/guide/mac-help/choose-an-app-to-open-a-file-on-mac-mh35597/mac).

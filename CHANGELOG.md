@@ -1,3 +1,27 @@
+## [v0.7.3](https://github.com/doclang-project/doclang/releases/tag/v0.7.3)
+
+* refuse symbolic links when packing pages and assets (#171)
+* reject DTD and entity references in DocLang validation (#170)
+
+## [v0.7.2](https://github.com/doclang-project/doclang/releases/tag/v0.7.2)
+
+* expand lxml version support (#158)
+
+## [v0.7.1](https://github.com/doclang-project/doclang/releases/tag/v0.7.1)
+
+* extend version sync to versioned fixture (#156)
+* add pluggable Schematron validation backends (#155)
+  * **BREAKING CHANGE**: `saxonche` is no longer installed by default; install `doclang[schematron-saxon]` (or pass a custom `schematron=` backend) for Schematron validation.
+
+## [v0.7.0](https://github.com/doclang-project/doclang/releases/tag/v0.7.0)
+
+* add archive packaging (#151)
+* add `<description>` and `<summary>` (#150)
+* update recommended file extensions (#148)
+* introduce archive format (#147)
+* report all XSD & Schematron errors in one run, simplify validation API (#95)
+  * **BREAKING CHANGE**: `ValidationError` no longer exposes `file`, `xsd_valid`, or `schematron_valid`; use `xsd_errors` and `schematron_errors` instead. CLI JSON output no longer includes a top-level `file` field.
+
 ## [v0.6.0](https://github.com/doclang-project/doclang/releases/tag/v0.6.0)
 
 * improve spec export, minor test renaming (#91)

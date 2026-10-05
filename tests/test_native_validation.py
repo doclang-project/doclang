@@ -88,15 +88,63 @@ _ASSERTIONS = [
         '<picture class="chart"><src/><tabular/></picture>',
         '<picture class="chart"><src/><text/><tabular/></picture>',
     ),
+    ("track-structure", '<track><bdiv/><seconds value="0"/></track>', '<track><seconds value="0"/></track>'),
+    (
+        "track-structure",
+        '<track><bdiv/><seconds value="0"/></track>',
+        '<track>stray<bdiv/><seconds value="0"/></track>',
+    ),
+    (
+        "track-cue-block",
+        '<track><bdiv/><seconds value="0"/></track>',
+        '<track><bdiv/><frame/><seconds value="0"/></track>',
+    ),
+    (
+        "track-cue-block",
+        '<track><bdiv/><seconds value="0"/></track>',
+        '<track><bdiv/>stray<seconds value="0"/></track>',
+    ),
+    (
+        "track-cue-block-timestamp-order",
+        '<track><bdiv/><seconds value="1"/><seconds value="2"/></track>',
+        '<track><bdiv/><seconds value="2"/><seconds value="1"/></track>',
+    ),
+    (
+        "track-cue-block-sequence",
+        '<track><bdiv/><seconds value="1"/><bdiv/><seconds value="2"/></track>',
+        '<track><bdiv/><seconds value="2"/><bdiv/><seconds value="1"/></track>',
+    ),
+    (
+        "track-chapter-strictly-increasing",
+        '<track><bdiv/><seconds value="1"/><chapter>A</chapter><bdiv/><seconds value="2"/><chapter>B</chapter></track>',
+        '<track><bdiv/><seconds value="1"/><chapter>A</chapter><bdiv/><seconds value="1"/><chapter>B</chapter></track>',
+    ),
+    (
+        "track-audio-requires-end",
+        '<track><bdiv/><seconds value="1"/><seconds value="2"/><audio/></track>',
+        '<track><bdiv/><seconds value="1"/><audio/></track>',
+    ),
 ]
 
 
 def test_native_matrix_covers_every_schema_assertion():
     schema = ElementTree.parse(_SCHEMA)
     assertions = schema.findall(".//{http://purl.oclc.org/dsdl/schematron}assert")
-    ids = [assertion.get("id") for assertion in assertions]
-    assert len(ids) == len(set(ids)) == 19
-    assert set(ids) == {assertion for assertion, _, _ in _ASSERTIONS}
+    patterns = schema.findall(".//{http://purl.oclc.org/dsdl/schematron}pattern")
+    grouped = {
+        "field-heading-region": "field-structure-placement",
+        "field-item-region": "field-structure-placement",
+        "key-field-item": "field-structure-placement",
+        "value-field-item": "field-structure-placement",
+        "field-item-own-key": "field-structure-placement",
+        "picture-tabular-chart": "picture-body",
+        "picture-src-first": "picture-body",
+        "picture-tabular-after-src": "picture-body",
+    }
+    assert len(assertions) == len(_ASSERTIONS) == 27
+    assert {pattern.get("id") for pattern in patterns} == {
+        grouped.get(assertion, assertion) for assertion, _, _ in _ASSERTIONS
+    }
 
 
 @pytest.mark.parametrize(("assertion", "valid_body", "invalid_body"), _ASSERTIONS)
@@ -107,9 +155,9 @@ def test_native_assertion_has_passing_and_failing_case(assertion, valid_body, in
     assert all(issue["location"] and issue["message"] for issue in issues)
 
 
-@pytest.mark.parametrize("path", sorted(_VALID_DIR.glob("*.dclg.xml")), ids=lambda path: path.stem)
+@pytest.mark.parametrize("path", sorted(_VALID_DIR.glob("*.dclg")), ids=lambda path: path.stem)
 def test_existing_valid_fixtures_pass_native_rules(path):
-    allow_empty = path.stem in {"ok_no_namespace.dclg", "doclang_example.dclg"}
+    allow_empty = path.stem in {"ok_no_namespace", "doclang_example"}
     assert _schematron_errors_xml(path.read_text(), allow_empty) == []
 
 
@@ -119,6 +167,20 @@ def test_native_rules_resolve_prefixed_and_optional_empty_namespaces():
     assert [issue["assertion"] for issue in _schematron_errors_xml(prefixed)] == ["element-head-placement"]
     assert _schematron_errors_xml(empty) == []
     assert [issue["assertion"] for issue in _schematron_errors_xml(empty, True)] == ["element-head-placement"]
+
+
+@pytest.mark.parametrize(
+    "declaration",
+    ["<!DOCTYPE doclang>", '<!DOCTYPE doclang [<!ENTITY probe "expanded">]>'],
+)
+def test_native_validation_rejects_dtd_and_entities(declaration):
+    document = DoclangDocument(
+        f'{declaration}<doclang xmlns="https://www.doclang.ai/ns/v0"><text>Body</text></doclang>'
+    )
+    assert document.valid()
+    assert document.is_valid()[0] is False
+    assert document.is_valid(schematron_only=True)[0] is False
+    assert "DTD declarations and entity references" in document.is_valid()[1]
 
 
 @pytest.mark.parametrize("document_type", [DoclangDocument, DocLangXDocument])

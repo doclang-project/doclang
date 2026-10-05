@@ -65,6 +65,29 @@ namespace doclang::native
 
   namespace validation_detail
   {
+    inline bool contains_entity_reference(xmlNodePtr node)
+    {
+      for(; node; node = node->next)
+        {
+          if(node->type == XML_ENTITY_REF_NODE or contains_entity_reference(node->children))
+            {
+              return true;
+            }
+        }
+      return false;
+    }
+
+    inline bool has_forbidden_dtd_or_entities(std::string_view xml)
+    {
+      auto document = std::unique_ptr<xmlDoc, decltype(&xmlFreeDoc)>(
+          xmlReadMemory(xml.data(), static_cast<int>(xml.size()), "doclang.xml", nullptr,
+                        XML_PARSE_NONET | XML_PARSE_NOERROR | XML_PARSE_NOWARNING),
+          &xmlFreeDoc);
+      return document
+             and (document->intSubset or document->extSubset
+                  or contains_entity_reference(document->children));
+    }
+
     inline void collect_xsd_error(void* context, xmlErrorPtr error)
     {
       if(not context or not error)
@@ -139,6 +162,13 @@ namespace doclang::native
       {
         report.xsd_errors.push_back(
             { 0, std::string("could not parse DocLang XML: ") + status.description() });
+        return report;
+      }
+
+    if(validation_detail::has_forbidden_dtd_or_entities(xml))
+      {
+        report.xsd_errors.push_back(
+            { 0, "DTD declarations and entity references are not allowed in DocLang documents" });
         return report;
       }
 

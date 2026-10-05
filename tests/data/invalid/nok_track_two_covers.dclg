@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- at most one <cover> per track -->
+  <track>
+    <cover><src uri="a.png"/></cover>
+    <cover><src uri="b.png"/></cover>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    x
+  </track>
+</doclang>

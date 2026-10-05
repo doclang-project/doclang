@@ -64,8 +64,8 @@ namespace doclang::native
 
     inline bool is_head(pugi::xml_node node, bool accept_empty_namespace)
     {
-      for(const std::string_view name :
-          { "label", "thread", "xref", "href", "layer", "location", "caption", "custom" })
+      for(const std::string_view name : { "label", "thread", "xref", "href", "layer", "location",
+                                          "caption", "description", "summary", "custom" })
         {
           if(named(node, name, accept_empty_namespace))
             {
@@ -272,6 +272,181 @@ namespace doclang::native
         }
       return std::string(local_name(parent));
     }
+
+    inline pugi::xml_node previous_element(pugi::xml_node node)
+    {
+      for(node = node.previous_sibling(); node; node = node.previous_sibling())
+        {
+          if(node.type() == pugi::node_element)
+            {
+              return node;
+            }
+        }
+      return {};
+    }
+
+    inline pugi::xml_node next_element(pugi::xml_node node)
+    {
+      for(node = node.next_sibling(); node; node = node.next_sibling())
+        {
+          if(node.type() == pugi::node_element)
+            {
+              return node;
+            }
+        }
+      return {};
+    }
+
+    inline double timestamp_ms(pugi::xml_node seconds, bool accept_empty_namespace)
+    {
+      if(not seconds)
+        {
+          return std::numeric_limits<double>::quiet_NaN();
+        }
+      double hours = 0;
+      double minutes = 0;
+      double msecs = 0;
+      auto before = previous_element(seconds);
+      if(named(before, "minutes", accept_empty_namespace))
+        {
+          minutes = number(before.attribute("value").value());
+          before = previous_element(before);
+        }
+      if(named(before, "hours", accept_empty_namespace))
+        {
+          hours = number(before.attribute("value").value());
+        }
+      const auto after = next_element(seconds);
+      if(named(after, "msecs", accept_empty_namespace))
+        {
+          msecs = number(after.attribute("value").value());
+        }
+      return 3600000 * hours + 60000 * minutes + 1000 * number(seconds.attribute("value").value())
+             + msecs;
+    }
+
+    inline void validate_track(pugi::xml_node track, bool accept_empty_namespace,
+                               std::vector<validation_issue>& issues)
+    {
+      const auto first_body = first_body_element(track, accept_empty_namespace);
+      if(first_body and not named(first_body, "cover", accept_empty_namespace)
+         and not named(first_body, "bdiv", accept_empty_namespace))
+        {
+          add(issues, "track-structure", track,
+              "Track must begin with a cue block, optionally preceded by a cover.");
+        }
+
+      pugi::xml_node first_bdiv;
+      for(const auto child : track.children())
+        {
+          if(named(child, "bdiv", accept_empty_namespace))
+            {
+              first_bdiv = child;
+              break;
+            }
+        }
+      if(first_bdiv)
+        {
+          for(auto child = track.first_child(); child and child != first_bdiv;
+              child = child.next_sibling())
+            {
+              if((child.type() == pugi::node_pcdata or child.type() == pugi::node_cdata)
+                 and not is_xml_whitespace(child.value()))
+                {
+                  add(issues, "track-structure", track,
+                      "Track must not contain text before its first cue block.");
+                  break;
+                }
+            }
+        }
+
+      bool have_previous_start = false;
+      bool have_previous_chapter = false;
+      double previous_start = 0;
+      double previous_chapter = 0;
+      for(auto bdiv = first_bdiv; bdiv;)
+        {
+          pugi::xml_node next_bdiv;
+          std::vector<pugi::xml_node> seconds;
+          std::vector<pugi::xml_node> chapters;
+          bool audio = false;
+          bool seen_element = false;
+          bool text_before_element = false;
+          pugi::xml_node first_element;
+          for(auto child = bdiv.next_sibling(); child; child = child.next_sibling())
+            {
+              if(named(child, "bdiv", accept_empty_namespace))
+                {
+                  next_bdiv = child;
+                  break;
+                }
+              if(child.type() == pugi::node_element)
+                {
+                  if(not seen_element)
+                    {
+                      first_element = child;
+                      seen_element = true;
+                    }
+                  if(named(child, "seconds", accept_empty_namespace))
+                    {
+                      seconds.push_back(child);
+                    }
+                  if(named(child, "chapter", accept_empty_namespace))
+                    {
+                      chapters.push_back(child);
+                    }
+                  audio = audio or named(child, "audio", accept_empty_namespace);
+                }
+              else if((child.type() == pugi::node_pcdata or child.type() == pugi::node_cdata)
+                      and not seen_element and not is_xml_whitespace(child.value()))
+                {
+                  text_before_element = true;
+                }
+            }
+          if(first_element and not named(first_element, "hours", accept_empty_namespace)
+             and not named(first_element, "minutes", accept_empty_namespace)
+             and not named(first_element, "seconds", accept_empty_namespace))
+            {
+              add(issues, "track-cue-block", bdiv,
+                  "A track cue block must begin with a start timestamp.");
+            }
+          if(text_before_element)
+            {
+              add(issues, "track-cue-block", bdiv,
+                  "A track cue block must not contain text before its start timestamp.");
+            }
+          const double start = timestamp_ms(seconds.empty() ? pugi::xml_node{} : seconds[0],
+                                            accept_empty_namespace);
+          if(seconds.size() == 2 and not(timestamp_ms(seconds[1], accept_empty_namespace) >= start))
+            {
+              add(issues, "track-cue-block-timestamp-order", bdiv,
+                  "A track cue block end time must not be earlier than its start time.");
+            }
+          if(have_previous_start and not(start >= previous_start))
+            {
+              add(issues, "track-cue-block-sequence", bdiv,
+                  "Track cue blocks must appear in non-decreasing start-time order.");
+            }
+          if(audio and seconds.size() != 2)
+            {
+              add(issues, "track-audio-requires-end", bdiv,
+                  "A track cue block with audio must have an end time.");
+            }
+          for(const auto chapter : chapters)
+            {
+              if(have_previous_chapter and not(start > previous_chapter))
+                {
+                  add(issues, "track-chapter-strictly-increasing", chapter,
+                      "Chapter boundaries must have strictly increasing start times.");
+                }
+              previous_chapter = start;
+              have_previous_chapter = true;
+            }
+          previous_start = start;
+          have_previous_start = true;
+          bdiv = next_bdiv;
+        }
+    }
   }
 
   inline std::vector<validation_issue> validate_schematron(const pugi::xml_document& document,
@@ -288,7 +463,7 @@ namespace doclang::native
         = allow_empty_namespace and detail::namespace_uri(root).empty();
     const auto nodes = detail::descendants(root);
 
-    // list-structure and table-structure
+    // list-structure, track-structure, and table-structure
     for(const auto node : nodes)
       {
         if(detail::named(node, "list", accept_empty_namespace))
@@ -299,6 +474,10 @@ namespace doclang::native
                 detail::add(issues, "list-structure", node,
                             "List must have ldiv as first element after optional element head.");
               }
+          }
+        if(detail::named(node, "track", accept_empty_namespace))
+          {
+            detail::validate_track(node, accept_empty_namespace, issues);
           }
       }
     for(const auto node : nodes)
@@ -358,10 +537,11 @@ namespace doclang::native
 
     // element-head-placement
     const std::set<std::string_view> head_hosts
-        = { "text",         "heading",       "code",       "formula", "caption",
-            "page_header",  "page_footer",   "footnote",   "picture", "marker",
-            "field_region", "field_heading", "field_item", "key",     "value",
-            "list",         "table",         "index",      "group" };
+        = { "text",         "heading",       "code",        "formula",  "caption", "description",
+            "summary",      "page_header",   "page_footer", "footnote", "picture", "marker",
+            "field_region", "field_heading", "field_item",  "key",      "value",   "list",
+            "table",        "index",         "group",       "track",    "voice",   "chapter",
+            "cover",        "frame",         "audio" };
     for(const auto node : nodes)
       {
         if(detail::namespace_uri(node) != detail::doclang_namespace

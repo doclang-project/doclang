@@ -5,12 +5,16 @@ Tests both valid and invalid XML documents against XSD and Schematron rules
 via the public ``validate()`` API.
 """
 
+import builtins
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 import doclang
-from doclang import ValidationError, validate
+from doclang import SchematronBackendNotFound, SchematronViolation, ValidationError, validate
+from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
 
 pytestmark = pytest.mark.validation
 
@@ -21,13 +25,12 @@ SCHEMA_DIR = Path(doclang.__file__).resolve().parent
 
 
 # Collect test files
-valid_files = list(VALID_DIR.glob("*.dclg.xml")) if VALID_DIR.exists() else []
-invalid_files = list(INVALID_DIR.glob("*.dclg.xml")) if INVALID_DIR.exists() else []
+valid_files = list(VALID_DIR.glob("*.dclg")) if VALID_DIR.exists() else []
+invalid_files = list(INVALID_DIR.glob("*.dclg")) if INVALID_DIR.exists() else []
 
 
 def _allow_empty_namespace(xml_file: Path) -> bool:
-    base_name = xml_file.name.replace(".dclg.xml", "")
-    return base_name in ["ok_no_namespace", "doclang_example"]
+    return xml_file.stem in ["ok_no_namespace", "doclang_example"]
 
 
 @pytest.mark.parametrize("xml_file", valid_files, ids=lambda f: f.stem)
@@ -53,13 +56,85 @@ def test_invalid(xml_file):
 
 def test_invalid_reports_both_xsd_and_schematron_errors():
     """A document may fail both XSD and Schematron validation in a single run."""
-    xml_file = INVALID_DIR / "nok_xsd_and_schematron.dclg.xml"
+    xml_file = INVALID_DIR / "nok_xsd_and_schematron.dclg"
     with pytest.raises(ValidationError) as exc_info:
         validate(xml_file, allow_empty_namespace=False)
 
     exc = exc_info.value
     assert len(exc.xsd_errors) == 1
     assert len(exc.schematron_errors) == 1
+
+
+def test_dtd_and_entity_payloads_are_rejected(tmp_path: Path):
+    """DTD / entity payloads are rejected with a clear error (no expansion)."""
+    bomb = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doclang [
+  <!ENTITY a "aaaaaaaaaa">
+  <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+  <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+  <!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">
+  <!ENTITY e "&d;&d;&d;&d;&d;&d;&d;&d;&d;&d;">
+]>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <text>&e;</text>
+</doclang>
+"""
+    xml_file = tmp_path / "entity_bomb.dclg"
+    xml_file.write_text(bomb, encoding="utf-8")
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, xsd_only=True)
+
+    assert any(_DTD_REJECTED_MESSAGE in (err.get("error") or "") for err in exc_info.value.xsd_errors)
+
+
+def test_doctype_without_entities_is_rejected(tmp_path: Path):
+    """A DOCTYPE alone is enough to reject — DocLang does not use DTDs."""
+    xml_file = tmp_path / "with_doctype.dclg"
+    xml_file.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doclang>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <text>Hello</text>
+</doclang>
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, xsd_only=True)
+
+    assert any(_DTD_REJECTED_MESSAGE in (err.get("error") or "") for err in exc_info.value.xsd_errors)
+
+
+def test_schematron_temp_serialization_omits_doctype(tmp_path: Path):
+    """Saxon input must not re-emit a DOCTYPE even if parse somehow retained one."""
+    # Build a tree via the safe parser without going through the reject helper,
+    # then ensure the Schematron rewrite path strips DOCTYPE.
+    from doclang.utils import _parse_xml
+
+    xml_file = tmp_path / "doctype.dclg"
+    xml_file.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doclang [
+  <!ENTITY x "secret">
+]>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <text>&x;</text>
+</doclang>
+""",
+        encoding="utf-8",
+    )
+    doc = _parse_xml(xml_file)
+    assert (doc.docinfo.doctype or "").strip()
+
+    out = tmp_path / "rewritten.xml"
+    with out.open("wb") as handle:
+        _write_xml_without_dtd(doc, handle)
+
+    rewritten = out.read_text(encoding="utf-8")
+    assert "<!DOCTYPE" not in rewritten
+    assert "<!ENTITY" not in rewritten
 
 
 def test_schema_files_exist():
@@ -74,3 +149,44 @@ def test_test_directories_exist():
     assert INVALID_DIR.exists(), f"Invalid test directory not found: {INVALID_DIR}"
     assert len(valid_files) > 0, "No valid test files found"
     assert len(invalid_files) > 0, "No invalid test files found"
+
+
+class _AlwaysFailingSchematronValidator:
+    def validate(self, xml_path: Path, *, schema_path: Path, allow_empty_namespace: bool = False):
+        return [SchematronViolation(location="/doclang", message="custom backend failure")]
+
+
+def test_custom_schematron_validator():
+    """A caller-provided Schematron backend is used instead of the default."""
+    xml_file = valid_files[0]
+    with pytest.raises(ValidationError) as exc_info:
+        validate(xml_file, schematron=_AlwaysFailingSchematronValidator())
+
+    assert exc_info.value.schematron_errors == [{"location": "/doclang", "message": "custom backend failure"}]
+
+
+def test_schematron_backend_not_found():
+    """Missing default backend raises SchematronBackendNotFound."""
+    xml_file = valid_files[0]
+    with patch("doclang.validation._default_schematron_validator", side_effect=SchematronBackendNotFound):
+        with pytest.raises(SchematronBackendNotFound):
+            validate(xml_file, schematron_only=True)
+
+
+def test_schematron_backend_not_found_when_saxonche_missing():
+    """Missing saxonche extra raises SchematronBackendNotFound, not ValidationError."""
+    xml_file = valid_files[0]
+    real_import = builtins.__import__
+    saxonche_modules = [name for name in sys.modules if name == "saxonche" or name.startswith("saxonche.")]
+
+    def import_without_saxonche(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "saxonche" or name.startswith("saxonche."):
+            raise ModuleNotFoundError("No module named 'saxonche'")
+        return real_import(name, globals, locals, fromlist, level)
+
+    with (
+        patch.dict(sys.modules, dict.fromkeys(saxonche_modules)),
+        patch("builtins.__import__", side_effect=import_without_saxonche),
+    ):
+        with pytest.raises(SchematronBackendNotFound):
+            validate(xml_file, schematron_only=True)

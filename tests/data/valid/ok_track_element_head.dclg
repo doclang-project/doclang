@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <!-- track-level element head, plus a frame carrying its own element head; two cue blocks -->
+  <track>
+    <label value="lecture"/>
+    <location value="10"/><location value="20"/><location value="300"/><location value="60"/>
+    <caption>Opening remarks</caption>
+    <bdiv/>
+    <minutes value="0"/><seconds value="0"/>
+    <minutes value="0"/><seconds value="4"/>
+    <voice>Speaker</voice>
+    Welcome everyone.
+    <bdiv/>
+    <minutes value="0"/><seconds value="4"/>
+    <frame>
+      <location value="0"/><location value="0"/><location value="320"/><location value="240"/>
+      <src uri="assets/frames/00-04.jpg"/>
+    </frame>
+    Let's begin.
+  </track>
+</doclang>

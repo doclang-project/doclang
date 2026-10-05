@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <track>
+    <bdiv/>
+    <minutes value="60"/><seconds value="1"/>
+    Minutes must be within [0, 59].
+  </track>
+</doclang>

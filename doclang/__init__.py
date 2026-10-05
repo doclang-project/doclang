@@ -1,4 +1,4 @@
-"""DocLang reference validator."""
+"""DocLang reference toolkit."""
 
 from doclang._native import (
     AttributeName,
@@ -24,6 +24,9 @@ from doclang._native import (
     otsl_token_from_string,
     xml_name,
 )
+from doclang.packaging import PackagingError, pack
+from doclang.schematron import SchematronBackendNotFound, SchematronValidator, SchematronViolation
+from doclang.tokenization import get_special_tokens
 from doclang.validation import ValidationError, validate, validate_document
 
 DoclangXDocument = DocLangXDocument
@@ -47,11 +50,17 @@ __all__ = [
     "ElementTag",
     "InsertionSite",
     "OtslToken",
+    "PackagingError",
+    "SchematronBackendNotFound",
+    "SchematronValidator",
+    "SchematronViolation",
     "ValidationError",
     "ValidationReport",
     "attribute_name_from_string",
     "element_tag_from_string",
+    "get_special_tokens",
     "otsl_token_from_string",
+    "pack",
     "validate",
     "validate_document",
     "xml_name",
