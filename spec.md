@@ -217,7 +217,7 @@ The DocLang archive format is defined in [DocLang Archive Format](#doclang-archi
 
 Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
 
-Planned extensions are discussed in [Future Extensions](#future-extensions).
+Planned extensions are discussed in [Future extensions](#future-extensions).
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
@@ -2044,10 +2044,10 @@ For local/private usage where formal namespaces are not used, a collision-resist
 </picture>
 ```
 
-## Appendix
+## Annexes
 
 <!-- NOTE: do not edit Reference manually; updates to be made using generate_reference.py -->
-### Reference
+### Annex A <br/> (normative) <br/> Reference
 
 #### Special Elements
 
@@ -3401,7 +3401,7 @@ Can only be child of [`<head>`](#head).
 
 None (empty element).
 
-### DocLang Archive Format
+### Annex B <br/> (normative) <br/> DocLang archive format
 
 A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
@@ -3478,7 +3478,7 @@ Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* c
 
 The *N*-th [`<track>`](#track) in the DocLang instance aligns with `audio/{N}.*` and/or `video/{N}.*` when present. A cue block's timestamps are then playback offsets into that file, measured from its start (`00:00:00.000`). Per-cue [`<frame>`](#frame) and [`<audio>`](#audio) fragments are independent references (via [`<src>`](#src)) and are not derived from the whole-track files. A track with neither an `audio/` nor a `video/` entry is simply a transcript whose timestamps refer to a recording the archive does not carry.
 
-### Recommendations
+### Annex C <br/> (informative) <br/> Recommendations
 
 This appendix is informative and does not define conformance requirements.
 
@@ -3660,7 +3660,7 @@ The token vocabulary trades off size and inference cost:
 | `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
 | `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
 
-### Future Extensions
+### Annex D <br/> (informative) <br/> Future extensions
 
 These features are considered for future versions of Doclang.
 
