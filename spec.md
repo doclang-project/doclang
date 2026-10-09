@@ -3783,38 +3783,7 @@ Implementers SHOULD consult authoritative sources and legal counsel to determine
 Governance metadata is intended to travel with the DocLang instance and provide downstream systems with machine-readable constraints.
 The diagram below illustrates how the four governance areas map to common document-to-AI workflows.
 
-```mermaid
-flowchart LR
-  D["Document content<br/>(DocLang body)"] --> H["<head><br/>Governance metadata"]
-
-  H --> PII["Privacy & PII controls<br/>(pii_*)"]
-  H --> EXT["Extraction controls<br/>(extraction_*)"]
-  H --> RAG["RAG controls<br/>(rag_*)"]
-  H --> TRN["Training controls<br/>(training_*)"]
-
-  D --> X["Extraction pipeline"]
-  EXT --> X
-  PII --> X
-  X --> XD["Extracted dataset / fields"]
-
-  D --> I["Index/Embed pipeline"]
-  RAG --> I
-  PII --> I
-  I --> E["Embeddings / index"]
-
-  E --> Q["Retrieve"]
-  RAG --> Q
-  Q --> M["Model inference"]
-  M --> O["Output"]
-  RAG --> O
-  PII --> O
-
-  D --> T["Training / fine-tuning pipeline"]
-  TRN --> T
-  PII --> T
-  T --> TD["Training dataset"]
-  T --> TM["Trained model"]
-```
+<img src="resources/governance_workflow.png">
 
 ###### Naming and terminology conventions
 
