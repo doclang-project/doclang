@@ -375,7 +375,7 @@ def generate_reference_content(
                 output_lines.append("###### Attributes\n\n")
 
                 # Write table header
-                output_lines.append("| Attribute | Required / Optional | Allowed Values | Description |\n")
+                output_lines.append("| Attribute | Required / Optional | Allowed values | Description |\n")
                 output_lines.append("|-----------|----------|----------------|-------------|\n")
 
                 # Write table rows (with linkified element references in description)
@@ -393,7 +393,7 @@ def generate_reference_content(
             # Write content types table if they exist
             if content_types_by_element.get(element):
                 content_types = content_types_by_element[element]
-                output_lines.append("###### Allowed Content Types\n\n")
+                output_lines.append("###### Allowed content types\n\n")
 
                 # If XML content is not allowed, the element is empty:
                 # omit the table and render a note. Otherwise, create a vertical
@@ -405,7 +405,7 @@ def generate_reference_content(
                     output_lines.append("None (empty element).\n\n")
                 else:
                     # Write table header (vertical format)
-                    output_lines.append("| Content Type | Allowed / Not allowed |\n")
+                    output_lines.append("| Content type | Allowed / Not allowed |\n")
                     output_lines.append("| --- | --- |\n")
 
                     # Write one row per content type
@@ -459,7 +459,7 @@ def update_spec_appendix(reference_content, spec_file):
 
         # Reference content sits between ### Reference and ### DocLang Archive Format
         reference_pattern = r"(### Reference\n\n)"
-        next_section_pattern = r"(### DocLang Archive Format)"
+        next_section_pattern = r"(### DocLang archive rormat)"
 
         match_reference = re.search(reference_pattern, spec_content)
         match_next = re.search(next_section_pattern, spec_content)
@@ -469,7 +469,7 @@ def update_spec_appendix(reference_content, spec_file):
             return False
 
         if not match_next:
-            print("Error: Could not find '### DocLang Archive Format' marker in spec.md")
+            print("Error: Could not find '### DocLang archive format' marker in spec.md")
             return False
 
         # Reconstruct: through Reference header + new content + from next appendix section on
