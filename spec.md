@@ -206,15 +206,6 @@ The XSD [3] schema used for validating DocLang XML documents defines the specifi
 - A `1.0` document is compatible with a `1.1` schema
 - A `1.1` document is considered incompatible with a `1.0` schema
 
-#### Version 0.x Behavior
-
-As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate initial development and always break backward compatibility. Therefore:
-
-- A DocLang instance of version `0.1` is considered incompatible with a `0.2` schema
-- A DocLang instance of version `0.2` is considered incompatible with a `0.1` schema
-
-Each minor version increment in the 0.x series represents a breaking change.
-
 #### XSD Schema Versioning
 
 The XSD schema itself may additionally capture a patch version and internally define a full Semantic Versioning (SemVer) version string (e.g., `1.0.0`, `1.0.1`) to track schema-level changes that do not affect document compatibility.
