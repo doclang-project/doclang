@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Any, Union
 
+from doclang._native import DoclangDocument
 from doclang._schemas import _bundled_sch_path
 from doclang.schematron import (
     SchematronBackendNotFound,
@@ -12,7 +13,7 @@ from doclang.schematron import (
 )
 from doclang.xsd_validation import _validate_xsd
 
-__all__ = ["SchematronBackendNotFound", "ValidationError", "validate"]
+__all__ = ["SchematronBackendNotFound", "ValidationError", "validate", "validate_document"]
 
 
 def _violations_to_errors(violations: list[SchematronViolation]) -> list[dict[str, Any]]:
@@ -101,4 +102,32 @@ def validate(
         raise ValidationError(
             xsd_errors=xsd_errors,
             schematron_errors=schematron_errors,
+        )
+
+
+def validate_document(
+    document: DoclangDocument,
+    *,
+    allow_empty_namespace: bool = False,
+    xsd_only: bool = False,
+    schematron_only: bool = False,
+) -> None:
+    """Validate XML held by a native document without writing a temporary file."""
+    if not isinstance(document, DoclangDocument):
+        raise TypeError("document must be a DoclangDocument")
+    if not document.valid():
+        raise ValidationError(
+            xsd_errors=[{"error": document.last_error() or "DocLang document has no valid XML"}],
+            schematron_errors=[],
+        )
+
+    report = document.validate(
+        allow_empty_namespace=allow_empty_namespace,
+        xsd_only=xsd_only,
+        schematron_only=schematron_only,
+    )
+    if not report.ok():
+        raise ValidationError(
+            xsd_errors=report.xsd_errors,
+            schematron_errors=report.schematron_errors,
         )
