@@ -32,6 +32,7 @@ This document was prepared by the Joint Development Foundation (JDF) (as Doclang
 Any feedback or questions on this document should be directed to the user's national standards body. A complete listing of these bodies can be found at [www.iso.org/members.html](www.iso.org/members.html) and [www.iec.ch/national-committees](www.iec.ch/national-committees).\
 """
 
+
 def update_foreword(foreword_content, spec_file):
     """Update the Foreword section in spec.md with ISO foreword"""
     print(f"\nUpdating Foreword in {spec_file}...")
@@ -69,6 +70,7 @@ def update_foreword(foreword_content, spec_file):
         print(f"Error updating spec.md: {e}")
         return False
 
+
 def generate_foreword() -> None:
     """Generate reference content from Excel input and update spec.md Reference section."""
 
@@ -81,6 +83,7 @@ def generate_foreword() -> None:
     print("\nTask completed successfully!")
     print(f"- Updated: {spec_path}")
 
+
 def main():
     if len(sys.argv) > 1:
         print("Error: No argument expected.")
@@ -92,6 +95,7 @@ def main():
     except (FileNotFoundError, NotADirectoryError, ValueError, RuntimeError) as exc:
         print(f"Error: {exc}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
