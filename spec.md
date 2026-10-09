@@ -19,7 +19,7 @@ This document builds upon research in document understanding and is intended to 
 
 ## Scope
 
-This document defines the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
+This document defines DocLang, a markup language for representing structured document content, including its semantic, geometric, and formatting information.
 
 It covers the following aspects:
 
@@ -28,7 +28,7 @@ It covers the following aspects:
 - Primitives for representing geometric layout and pagination
 - Methods for expressing formatting and text direction
 - Specifications for complex document components (tables, charts, formulas, code, forms)
-- Requirements for conforming implementations producing or processing Doclang documents.
+- Requirements for conforming implementations producing or processing DocLang instances
 
 ## Normative references
 
