@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=80"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.12,<2", "pybind11>=3,<4"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "doclang"
@@ -14,7 +14,7 @@ authors = [{ name = "DocLang Project" }]
 keywords = ["doclang", "xml", "validation", "xsd", "schematron", "documents", "llm"]
 classifiers = [
     "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
+    "Programming Language :: C++",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -42,9 +42,6 @@ Issues = "https://github.com/doclang-project/doclang/issues"
 [project.scripts]
 doclang = "doclang.cli:app"
 
-[tool.setuptools.package-data]
-doclang = ["*.xsd", "*.sch"]
-
 [dependency-groups]
 ci = [
     "pre-commit~=3.7",
@@ -61,13 +58,22 @@ dev = [
     "openpyxl>=3.1.0",
     "docling>=2.0.0",
 ]
+docling = [
+    "docling>=2.89.0",
+]
 
 [tool.uv]
 package = true
 default-groups = ["dev"]
 
-[tool.setuptools]
-packages = ["doclang", "doclang.backends"]
+[tool.scikit-build]
+wheel.packages = ["doclang"]
+sdist.inclusion-mode = "explicit"
+sdist.include = ["pyproject.toml", "README.md", "LICENSE", "CMakeLists.txt", "doclang/**", "src/doclang/**", "src/pybind/**", "tests/cpp/**", "tests/data/**"]
+sdist.exclude = ["**/__pycache__/**", "**/*.pyc", "**/.#*", "**/#*#"]
+
+[tool.pytest.ini_options]
+markers = ["validation: XSD and Schematron validation tests"]
 
 [tool.ruff]
 target-version = "py310"

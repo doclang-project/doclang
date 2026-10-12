@@ -31,3 +31,18 @@ jobs:
         run: uv sync --frozen --no-default-groups --group ci
       - name: Check style and run tests
         run: pre-commit run --all-files
+
+  native-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxml2-dev ninja-build
+      - name: Configure native tests
+        run: cmake -S . -B build/native-tests -G Ninja -DDOCLANG_BUILD_PYTHON=OFF -DDOCLANG_BUILD_CPP_TESTS=ON -DDOCLANG_BUILD_VALIDATION_TESTS=ON
+      - name: Build native tests
+        run: cmake --build build/native-tests --parallel
+      - name: Run core native tests
+        run: ctest --test-dir build/native-tests -L core --output-on-failure
+      - name: Run native validation tests
+        run: ctest --test-dir build/native-tests -L validation --output-on-failure

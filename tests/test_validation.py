@@ -16,6 +16,8 @@ import doclang
 from doclang import SchematronBackendNotFound, SchematronViolation, ValidationError, validate
 from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
 
+pytestmark = pytest.mark.validation
+
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
 INVALID_DIR = TEST_DATA_DIR / "invalid"
