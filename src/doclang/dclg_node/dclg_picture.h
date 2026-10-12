@@ -18,9 +18,11 @@ namespace doclang::native
   public:
 
     explicit dclg_picture(std::string_view src = "");
+    /* editing */
     void set_src(std::string_view uri);
     void set_caption(std::string_view text);
     void set_tabular(const dclg_node& table);
+    /* validation */
     validation_report validate_local() const;
     std::tuple<bool, std::string> is_valid() const;
     validation_report validate_in(const dclg_document& doc, const insertion_site& site) const;

@@ -30,8 +30,10 @@ namespace doclang::native
   {
   public:
 
+    /* format detection */
     static format detect_format(const std::filesystem::path& path);
 
+    /* reading */
     static bool read(const std::filesystem::path& path, dclx_document& out,
                      const archive::limits& bounds = archive::limits());
 
@@ -41,6 +43,7 @@ namespace doclang::native
 
   private:
 
+    /* file input */
     static bool read_file(const std::filesystem::path& path, std::vector<std::byte>& data,
                           std::string& error);
   };

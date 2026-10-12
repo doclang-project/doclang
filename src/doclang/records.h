@@ -37,41 +37,53 @@ namespace doclang::native
     inline static const std::vector<std::string> HEADERS
         = { "type", "xpath", "label", "confidence" };
 
-    base_property() = default;
-    base_property(std::string type, std::string xpath, std::string label, float confidence)
-        : values_(std::move(type), std::move(xpath), std::move(label), confidence)
-    {
-    }
+    base_property();
+    base_property(std::string type, std::string xpath, std::string label, float confidence);
 
-    const tuple_type& values() const
-    {
-      return values_;
-    }
-    const std::string& get_type() const
-    {
-      return std::get<0>(values_);
-    }
-    const std::string& get_xpath() const
-    {
-      return std::get<1>(values_);
-    }
-    const std::string& get_label() const
-    {
-      return std::get<2>(values_);
-    }
-    float get_conf() const
-    {
-      return std::get<3>(values_);
-    }
-    std::vector<std::string> to_row() const
-    {
-      return { get_type(), get_xpath(), get_label(), decimal(get_conf()) };
-    }
+    /* reading */
+    const tuple_type& values() const;
+    const std::string& get_type() const;
+    const std::string& get_xpath() const;
+    const std::string& get_label() const;
+    float get_conf() const;
+    std::vector<std::string> to_row() const;
 
   private:
 
+    /* state */
     tuple_type values_;
   };
+
+  inline base_property::base_property() = default;
+
+  inline base_property::base_property(std::string type, std::string xpath, std::string label, float confidence)
+      : values_(std::move(type), std::move(xpath), std::move(label), confidence)
+  {
+  }
+  inline const base_property::tuple_type& base_property::values() const
+  {
+    return values_;
+  }
+  inline const std::string& base_property::get_type() const
+  {
+    return std::get<0>(values_);
+  }
+  inline const std::string& base_property::get_xpath() const
+  {
+    return std::get<1>(values_);
+  }
+  inline const std::string& base_property::get_label() const
+  {
+    return std::get<2>(values_);
+  }
+  inline float base_property::get_conf() const
+  {
+    return std::get<3>(values_);
+  }
+  inline std::vector<std::string> base_property::to_row() const
+  {
+    return { get_type(), get_xpath(), get_label(), decimal(get_conf()) };
+  }
 
   class base_instance : public base_types
   {
@@ -83,77 +95,97 @@ namespace doclang::native
         = { "type",  "subtype", "xpath",  "conf", "ehash",
             "ihash", "char_i",  "char_j", "name", "original" };
 
-    base_instance() = default;
+    base_instance();
     base_instance(std::string type, std::string subtype, std::string xpath, float confidence,
                   hash_type ehash, hash_type ihash, ind_type char_i, ind_type char_j,
-                  std::string name, std::string original)
-        : values_(std::move(type), std::move(subtype), std::move(xpath), confidence, ehash, ihash,
-                  char_i, char_j, std::move(name), std::move(original))
-    {
-    }
+                  std::string name, std::string original);
 
-    const tuple_type& values() const
-    {
-      return values_;
-    }
-    const std::string& get_type() const
-    {
-      return std::get<0>(values_);
-    }
-    const std::string& get_subtype() const
-    {
-      return std::get<1>(values_);
-    }
-    const std::string& get_xpath() const
-    {
-      return std::get<2>(values_);
-    }
-    float get_conf() const
-    {
-      return std::get<3>(values_);
-    }
-    hash_type get_ehash() const
-    {
-      return std::get<4>(values_);
-    }
-    hash_type get_ihash() const
-    {
-      return std::get<5>(values_);
-    }
-    ind_type get_char_i() const
-    {
-      return std::get<6>(values_);
-    }
-    ind_type get_char_j() const
-    {
-      return std::get<7>(values_);
-    }
-    const std::string& get_name() const
-    {
-      return std::get<8>(values_);
-    }
-    const std::string& get_original() const
-    {
-      return std::get<9>(values_);
-    }
-    std::vector<std::string> to_row() const
-    {
-      return { get_type(),
-               get_subtype(),
-               get_xpath(),
-               decimal(get_conf()),
-               std::to_string(get_ehash()),
-               std::to_string(get_ihash()),
-               std::to_string(get_char_i()),
-               std::to_string(get_char_j()),
-               get_name(),
-               get_original() };
-    }
+    /* reading */
+    const tuple_type& values() const;
+    const std::string& get_type() const;
+    const std::string& get_subtype() const;
+    const std::string& get_xpath() const;
+    float get_conf() const;
+    hash_type get_ehash() const;
+    hash_type get_ihash() const;
+    ind_type get_char_i() const;
+    ind_type get_char_j() const;
+    const std::string& get_name() const;
+    const std::string& get_original() const;
+    std::vector<std::string> to_row() const;
 
   private:
 
+    /* state */
     tuple_type values_;
   };
+
+  inline base_instance::base_instance() = default;
+
+  inline base_instance::base_instance(std::string type, std::string subtype, std::string xpath, float confidence,
+                hash_type ehash, hash_type ihash, ind_type char_i, ind_type char_j,
+                std::string name, std::string original)
+      : values_(std::move(type), std::move(subtype), std::move(xpath), confidence, ehash, ihash,
+                char_i, char_j, std::move(name), std::move(original))
+  {
+  }
+  inline const base_instance::tuple_type& base_instance::values() const
+  {
+    return values_;
+  }
+  inline const std::string& base_instance::get_type() const
+  {
+    return std::get<0>(values_);
+  }
+  inline const std::string& base_instance::get_subtype() const
+  {
+    return std::get<1>(values_);
+  }
+  inline const std::string& base_instance::get_xpath() const
+  {
+    return std::get<2>(values_);
+  }
+  inline float base_instance::get_conf() const
+  {
+    return std::get<3>(values_);
+  }
+  inline base_instance::hash_type base_instance::get_ehash() const
+  {
+    return std::get<4>(values_);
+  }
+  inline base_instance::hash_type base_instance::get_ihash() const
+  {
+    return std::get<5>(values_);
+  }
+  inline base_instance::ind_type base_instance::get_char_i() const
+  {
+    return std::get<6>(values_);
+  }
+  inline base_instance::ind_type base_instance::get_char_j() const
+  {
+    return std::get<7>(values_);
+  }
+  inline const std::string& base_instance::get_name() const
+  {
+    return std::get<8>(values_);
+  }
+  inline const std::string& base_instance::get_original() const
+  {
+    return std::get<9>(values_);
+  }
+  inline std::vector<std::string> base_instance::to_row() const
+  {
+    return { get_type(),
+             get_subtype(),
+             get_xpath(),
+             decimal(get_conf()),
+             std::to_string(get_ehash()),
+             std::to_string(get_ihash()),
+             std::to_string(get_char_i()),
+             std::to_string(get_char_j()),
+             get_name(),
+             get_original() };
+  }
 
   class base_entity : public base_types
   {
@@ -163,47 +195,61 @@ namespace doclang::native
     inline static const std::vector<std::string> HEADERS
         = { "type", "subtype", "name", "ehash", "count" };
 
-    base_entity() = default;
+    base_entity();
     base_entity(std::string type, std::string subtype, std::string name, hash_type ehash,
-                cnt_type count)
-        : values_(std::move(type), std::move(subtype), std::move(name), ehash, count)
-    {
-    }
+                cnt_type count);
 
-    const tuple_type& values() const
-    {
-      return values_;
-    }
-    const std::string& get_type() const
-    {
-      return std::get<0>(values_);
-    }
-    const std::string& get_subtype() const
-    {
-      return std::get<1>(values_);
-    }
-    const std::string& get_name() const
-    {
-      return std::get<2>(values_);
-    }
-    hash_type get_ehash() const
-    {
-      return std::get<3>(values_);
-    }
-    cnt_type get_count() const
-    {
-      return std::get<4>(values_);
-    }
-    std::vector<std::string> to_row() const
-    {
-      return { get_type(), get_subtype(), get_name(), std::to_string(get_ehash()),
-               std::to_string(get_count()) };
-    }
+    /* reading */
+    const tuple_type& values() const;
+    const std::string& get_type() const;
+    const std::string& get_subtype() const;
+    const std::string& get_name() const;
+    hash_type get_ehash() const;
+    cnt_type get_count() const;
+    std::vector<std::string> to_row() const;
 
   private:
 
+    /* state */
     tuple_type values_;
   };
+
+  inline base_entity::base_entity() = default;
+
+  inline base_entity::base_entity(std::string type, std::string subtype, std::string name, hash_type ehash,
+              cnt_type count)
+      : values_(std::move(type), std::move(subtype), std::move(name), ehash, count)
+  {
+  }
+  inline const base_entity::tuple_type& base_entity::values() const
+  {
+    return values_;
+  }
+  inline const std::string& base_entity::get_type() const
+  {
+    return std::get<0>(values_);
+  }
+  inline const std::string& base_entity::get_subtype() const
+  {
+    return std::get<1>(values_);
+  }
+  inline const std::string& base_entity::get_name() const
+  {
+    return std::get<2>(values_);
+  }
+  inline base_entity::hash_type base_entity::get_ehash() const
+  {
+    return std::get<3>(values_);
+  }
+  inline base_entity::cnt_type base_entity::get_count() const
+  {
+    return std::get<4>(values_);
+  }
+  inline std::vector<std::string> base_entity::to_row() const
+  {
+    return { get_type(), get_subtype(), get_name(), std::to_string(get_ehash()),
+             std::to_string(get_count()) };
+  }
 
   inline std::vector<base_entity>
   compute_entities_from_instances(const std::vector<base_instance>& instances)
@@ -250,46 +296,59 @@ namespace doclang::native
     using tuple_type = std::tuple<std::string, float, hash_type, hash_type>;
     inline static const std::vector<std::string> HEADERS = { "name", "conf", "hash_i", "hash_j" };
 
-    base_relation() = default;
-    base_relation(std::string name, float confidence, hash_type hash_i, hash_type hash_j)
-        : values_(std::move(name), confidence, hash_i, hash_j)
-    {
-    }
+    base_relation();
+    base_relation(std::string name, float confidence, hash_type hash_i, hash_type hash_j);
 
-    static const std::vector<std::string>& headers()
-    {
-      return HEADERS;
-    }
-    const tuple_type& values() const
-    {
-      return values_;
-    }
-    const std::string& get_name() const
-    {
-      return std::get<0>(values_);
-    }
-    float get_conf() const
-    {
-      return std::get<1>(values_);
-    }
-    hash_type get_hash_i() const
-    {
-      return std::get<2>(values_);
-    }
-    hash_type get_hash_j() const
-    {
-      return std::get<3>(values_);
-    }
-    std::vector<std::string> to_row() const
-    {
-      return { get_name(), decimal(get_conf()), std::to_string(get_hash_i()),
-               std::to_string(get_hash_j()) };
-    }
+    /* reading */
+    static const std::vector<std::string>& headers();
+    const tuple_type& values() const;
+    const std::string& get_name() const;
+    float get_conf() const;
+    hash_type get_hash_i() const;
+    hash_type get_hash_j() const;
+    std::vector<std::string> to_row() const;
 
   private:
 
+    /* state */
     tuple_type values_;
   };
+
+  inline base_relation::base_relation() = default;
+
+  inline base_relation::base_relation(std::string name, float confidence, hash_type hash_i, hash_type hash_j)
+      : values_(std::move(name), confidence, hash_i, hash_j)
+  {
+  }
+  inline const std::vector<std::string>& base_relation::headers()
+  {
+    return HEADERS;
+  }
+  inline const base_relation::tuple_type& base_relation::values() const
+  {
+    return values_;
+  }
+  inline const std::string& base_relation::get_name() const
+  {
+    return std::get<0>(values_);
+  }
+  inline float base_relation::get_conf() const
+  {
+    return std::get<1>(values_);
+  }
+  inline base_relation::hash_type base_relation::get_hash_i() const
+  {
+    return std::get<2>(values_);
+  }
+  inline base_relation::hash_type base_relation::get_hash_j() const
+  {
+    return std::get<3>(values_);
+  }
+  inline std::vector<std::string> base_relation::to_row() const
+  {
+    return { get_name(), decimal(get_conf()), std::to_string(get_hash_i()),
+             std::to_string(get_hash_j()) };
+  }
 }
 
 #endif

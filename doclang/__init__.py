@@ -3,6 +3,7 @@
 from doclang._native import (
     ArchiveLimits,
     AttributeName,
+    DocLangXDocumentRole,
     DoclangDocument,
     DoclangFieldItemNode,
     DoclangFieldRegionNode,
@@ -36,6 +37,7 @@ DoclangXDocument = DocLangXDocument
 __all__ = [
     "ArchiveLimits",
     "AttributeName",
+    "DocLangXDocumentRole",
     "DocLangXDocument",
     "DoclangDocument",
     "DoclangFieldItemNode",

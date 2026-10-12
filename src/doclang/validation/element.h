@@ -20,26 +20,36 @@ namespace doclang::native
 
   struct insertion_site
   {
+    /* construction */
+    static insertion_site append_child(std::string path);
+    static insertion_site prepend_child(std::string path);
+    static insertion_site before(std::string path);
+    static insertion_site after(std::string path);
+
+    /* state */
     insertion_kind kind;
     std::string xpath;
-
-    static insertion_site append_child(std::string path)
-    {
-      return { insertion_kind::append_child, std::move(path) };
-    }
-    static insertion_site prepend_child(std::string path)
-    {
-      return { insertion_kind::prepend_child, std::move(path) };
-    }
-    static insertion_site before(std::string path)
-    {
-      return { insertion_kind::before, std::move(path) };
-    }
-    static insertion_site after(std::string path)
-    {
-      return { insertion_kind::after, std::move(path) };
-    }
   };
+
+  inline insertion_site insertion_site::append_child(std::string path)
+  {
+    return { insertion_kind::append_child, std::move(path) };
+  }
+
+  inline insertion_site insertion_site::prepend_child(std::string path)
+  {
+    return { insertion_kind::prepend_child, std::move(path) };
+  }
+
+  inline insertion_site insertion_site::before(std::string path)
+  {
+    return { insertion_kind::before, std::move(path) };
+  }
+
+  inline insertion_site insertion_site::after(std::string path)
+  {
+    return { insertion_kind::after, std::move(path) };
+  }
 
   inline validation_report validate_local_element(const dclg_node& node)
   {

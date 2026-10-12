@@ -23,12 +23,16 @@ namespace doclang::native
     dclg_node(dclg_node&&);
     dclg_node& operator=(dclg_node&&);
     virtual ~dclg_node();
+
+    /* construction and reading */
     static dclg_node element(std::string_view name);
     static dclg_node element(element_tag tag);
     static dclg_node from_xml(std::string_view fragment);
     pugi::xml_node root() const;
     std::string name() const;
     std::string to_xml() const;
+
+    /* editing */
     void set_attribute(std::string_view name, std::string_view value);
     void set_attribute(attribute_name name, std::string_view value);
     void remove_attribute(std::string_view name);
@@ -41,10 +45,12 @@ namespace doclang::native
 
   protected:
 
+    /* XML storage for derived nodes */
     pugi::xml_document document;
 
   private:
 
+    /* editing helpers */
     void insert_relative(std::string_view path, const dclg_node& sibling, bool before);
   };
 

@@ -41,8 +41,12 @@ namespace doclang::binding
 
     private:
 
+      /* iteration helpers */
       pybind11::object next_list_item();
 
+    private:
+
+      /* iteration state */
       std::shared_ptr<doclang::native::dclg_document> doc;
       pugi::xml_node current;
       std::string parent_xpath;
@@ -64,25 +68,27 @@ namespace doclang::binding
 
     virtual ~DoclangDocument();
 
+    /* reading */
     virtual bool read_xml(const std::string& dclg);
 
-    const native::dclg_document& native_document() const
-    {
-      return *dclg_doc;
-    }
+    const native::dclg_document& native_document() const;
 
+    /* editing */
     static DoclangDocument empty();
     std::string append_child(const std::string& parent_xpath, const native::dclg_node& node);
     std::string prepend_child(const std::string& parent_xpath, const native::dclg_node& node);
     std::string insert_before(const std::string& sibling_xpath, const native::dclg_node& node);
     std::string insert_after(const std::string& sibling_xpath, const native::dclg_node& node);
     void delete_at(const std::string& xpath);
+
+    /* validation */
     native::validation_report validate(bool allow_empty_namespace = false, bool xsd_only = false,
                                        bool schematron_only = false) const;
     std::tuple<bool, std::string> is_valid(bool allow_empty_namespace = false,
                                            bool xsd_only = false,
                                            bool schematron_only = false) const;
 
+    /* reading and navigation */
     bool valid() const;
     std::optional<native::doclang_version> version() const;
     std::string xml() const;
@@ -98,8 +104,14 @@ namespace doclang::binding
 
   private:
 
+    /* state */
     std::shared_ptr<doclang::native::dclg_document> dclg_doc;
   };
+
+  inline const native::dclg_document& DoclangDocument::native_document() const
+  {
+    return *dclg_doc;
+  }
 
   namespace detail
   {

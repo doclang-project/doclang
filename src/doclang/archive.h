@@ -36,47 +36,51 @@ namespace doclang::native
       std::size_t max_compression_ratio = 200;
     };
 
-  public:
+    archive();
 
-    archive() = default;
-
+    /* reading */
     void clear();
 
     bool load_from_memory(std::span<const std::byte> data);
     bool load_from_memory(std::span<const std::byte> data, const limits& bounds);
-    bool write_to_memory(bytes_type& data) const;
-    bool write_to_file(const std::filesystem::path& path) const;
-
     bool has(std::string_view path) const;
-
     std::optional<std::string_view> text(std::string_view path) const;
     std::optional<std::span<const std::byte>> bytes(std::string_view path) const;
+    std::vector<std::string> paths() const;
+    const std::string& get_last_error() const;
 
+    /* writing */
     void set_text(std::string_view path, std::string_view text);
     void set_bytes(std::string_view path, std::span<const std::byte> data);
     void erase(std::string_view path);
+    bool write_to_memory(bytes_type& data) const;
+    bool write_to_file(const std::filesystem::path& path) const;
 
-    std::vector<std::string> paths() const;
+    /* validation */
     static bool valid_path(std::string_view path);
-
-    const std::string& get_last_error() const
-    {
-      return last_error;
-    }
 
   private:
 
+    /* helpers */
     void set_error(std::string msg);
     std::optional<bytes_type> extract(std::string_view path) const;
 
   private:
 
+    /* state */
     mutable std::map<std::string, bytes_type> entries;
     std::map<std::string, mz_uint> source_entries;
     bytes_type source_data;
     limits active_limits;
     std::string last_error;
   };
+
+  inline archive::archive() = default;
+
+  inline const std::string& archive::get_last_error() const
+  {
+    return last_error;
+  }
 
   inline void archive::clear()
   {

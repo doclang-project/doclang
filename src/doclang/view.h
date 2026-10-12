@@ -21,51 +21,57 @@ namespace doclang::native
   {
   public:
 
-    element_view() = default;
-    explicit element_view(pugi::xml_node value) : node_value(value)
-    {
-    }
+    element_view();
+    explicit element_view(pugi::xml_node value);
 
-    bool valid() const
-    {
-      return static_cast<bool>(node_value);
-    }
+    /* reading */
+    bool valid() const;
 
-    std::string name() const
-    {
-      return node_value.name();
-    }
-    std::string text_content() const
-    {
-      return node_value.child_value();
-    }
+    std::string name() const;
+    std::string text_content() const;
 
     std::optional<unsigned> heading_level() const;
     std::vector<float> location() const;
 
-    pugi::xml_node node() const
-    {
-      return node_value;
-    }
+    pugi::xml_node node() const;
 
   private:
 
+    /* state */
     pugi::xml_node node_value;
   };
+
+  inline element_view::element_view() = default;
+
+  inline element_view::element_view(pugi::xml_node value) : node_value(value)
+  {
+  }
+  inline bool element_view::valid() const
+  {
+    return static_cast<bool>(node_value);
+  }
+  inline std::string element_view::name() const
+  {
+    return node_value.name();
+  }
+  inline std::string element_view::text_content() const
+  {
+    return node_value.child_value();
+  }
+  inline pugi::xml_node element_view::node() const
+  {
+    return node_value;
+  }
 
   class document_view
   {
   public:
 
-    document_view() = default;
-    explicit document_view(std::shared_ptr<const dclg_document> doc) : doc_ptr(std::move(doc))
-    {
-    }
+    document_view();
+    explicit document_view(std::shared_ptr<const dclg_document> doc);
 
-    bool valid() const
-    {
-      return doc_ptr != nullptr and doc_ptr->root();
-    }
+    /* reading */
+    bool valid() const;
 
     std::vector<element_view> body_elements() const;
     std::vector<element_view> elements_by_name(std::string_view name) const;
@@ -74,12 +80,24 @@ namespace doclang::native
 
   private:
 
+    /* helpers */
     bool is_text_like(pugi::xml_node node) const;
 
   private:
 
+    /* state */
     std::shared_ptr<const dclg_document> doc_ptr;
   };
+
+  inline document_view::document_view() = default;
+
+  inline document_view::document_view(std::shared_ptr<const dclg_document> doc) : doc_ptr(std::move(doc))
+  {
+  }
+  inline bool document_view::valid() const
+  {
+    return doc_ptr != nullptr and doc_ptr->root();
+  }
 
   inline std::optional<unsigned> element_view::heading_level() const
   {

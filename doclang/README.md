@@ -265,11 +265,12 @@ parts are decompressed when requested. The compressed archive is retained in
 memory while the document is open.
 
 ```python
-from doclang import ArchiveLimits, DoclangDocument, DoclangXDocument
+from doclang import ArchiveLimits, DocLangXDocumentRole, DoclangDocument, DoclangXDocument
 
 doc = DoclangXDocument()
 assert doc.read_xml('<doclang version="0.7"><text>Hello</text></doclang>')
-doc.set_document_summary('<doclang><text>Short summary</text></doclang>')
+summary = DoclangDocument('<doclang><text>Short summary</text></doclang>')
+assert doc.set(DocLangXDocumentRole.SUMMARY, summary)
 doc.set_part_text("context/source.json", '{"kind":"example"}', "application/json")
 payload = doc.write_bytes()
 
@@ -277,8 +278,17 @@ copy = DoclangXDocument()
 limits = ArchiveLimits()
 assert copy.read_bytes(payload, limits)
 assert copy.get_part_text("context/source.json") == '{"kind":"example"}'
+assert copy.get(DocLangXDocumentRole.SUMMARY).at("/doclang[1]/text[1]") == "Short summary"
 assert copy.validate_package()["ok"]
 ```
+
+`DocLangXDocumentRole` also provides `TABLE_OF_CONTENTS`, `CONCEPTS`, and
+`REFERENCES`. These are all DCLG documents, and `set(role, document)` validates
+their XML against DocLang's bundled XSD and Schematron rules. Use
+`get(role)` and `clear(role)` for the same roles. The main document stays on
+`read_xml()` and the inherited `DoclangDocument` API because replacing it
+affects the package's archive and annotations. Table of contents entries are
+DocLang headings with percent-encoded source XPaths in `href` fragments.
 
 `get_part_bytes`, `get_part_text`, `set_part_bytes`, `set_part_text`, and
 `remove_part` use archive-relative paths. Generic setters reject the main

@@ -30,48 +30,28 @@ namespace doclang::native
   {
   public:
 
-    dclg_document() = default;
+    dclg_document();
 
+    /* construction and state */
     static dclg_document create_empty();
-
     static std::uint64_t hash(std::string_view text);
-
     void clear();
 
+    /* reading */
     bool read(std::string_view dclg);
 
-    bool valid() const
-    {
-      return static_cast<bool>(root());
-    }
+    bool valid() const;
     std::optional<doclang_version> version() const;
-    std::string raw() const
-    {
-      return dirty ? serialize_xml(xml_doc) : raw_dclg;
-    }
-    std::size_t generation() const
-    {
-      return edit_generation;
-    }
+    std::string raw() const;
+    std::size_t generation() const;
 
-    pugi::xml_document& xml()
-    {
-      return xml_doc;
-    }
-    const pugi::xml_document& xml() const
-    {
-      return xml_doc;
-    }
+    pugi::xml_document& xml();
+    const pugi::xml_document& xml() const;
 
-    pugi::xml_node root()
-    {
-      return xml_doc.child(xml_name(element_tag::doclang));
-    }
-    pugi::xml_node root() const
-    {
-      return xml_doc.child(xml_name(element_tag::doclang));
-    }
+    pugi::xml_node root();
+    pugi::xml_node root() const;
 
+    /* traversal */
     template <typename callback_type> void iterate_elements(callback_type&& callback) const;
 
     template <typename callback_type>
@@ -89,34 +69,76 @@ namespace doclang::native
 
     std::string at(std::string_view xpath, std::string_view mode = "auto");
 
+    /* editing */
     std::string append_child(std::string_view parent_path, const dclg_node& node);
     std::string prepend_child(std::string_view parent_path, const dclg_node& node);
     std::string insert_before(std::string_view sibling_path, const dclg_node& node);
     std::string insert_after(std::string_view sibling_path, const dclg_node& node);
     void erase(std::string_view element_path);
+
+    /* validation */
     validation_report validate(validation_options options = {}) const;
     std::tuple<bool, std::string> is_valid(validation_options options = {}) const;
 
-    const std::string& get_last_error() const
-    {
-      return last_error;
-    }
-    void set_last_error(std::string msg)
-    {
-      last_error = std::move(msg);
-    }
+    /* diagnostics */
+    const std::string& get_last_error() const;
+    void set_last_error(std::string msg);
 
   private:
 
+    /* path helpers */
+    pugi::xml_node require_element(std::string_view path) const;
+    static std::string path_of(pugi::xml_node node);
+
+  private:
+
+    /* state */
     std::string raw_dclg;
     pugi::xml_document xml_doc;
     std::string last_error;
     bool dirty = false;
     std::size_t edit_generation = 0;
 
-    pugi::xml_node require_element(std::string_view path) const;
-    static std::string path_of(pugi::xml_node node);
   };
+
+  inline dclg_document::dclg_document() = default;
+
+  inline bool dclg_document::valid() const
+  {
+    return static_cast<bool>(root());
+  }
+  inline std::string dclg_document::raw() const
+  {
+    return dirty ? serialize_xml(xml_doc) : raw_dclg;
+  }
+  inline std::size_t dclg_document::generation() const
+  {
+    return edit_generation;
+  }
+  inline pugi::xml_document& dclg_document::xml()
+  {
+    return xml_doc;
+  }
+  inline const pugi::xml_document& dclg_document::xml() const
+  {
+    return xml_doc;
+  }
+  inline pugi::xml_node dclg_document::root()
+  {
+    return xml_doc.child(xml_name(element_tag::doclang));
+  }
+  inline pugi::xml_node dclg_document::root() const
+  {
+    return xml_doc.child(xml_name(element_tag::doclang));
+  }
+  inline const std::string& dclg_document::get_last_error() const
+  {
+    return last_error;
+  }
+  inline void dclg_document::set_last_error(std::string msg)
+  {
+    last_error = std::move(msg);
+  }
 
   inline dclg_document dclg_document::create_empty()
   {

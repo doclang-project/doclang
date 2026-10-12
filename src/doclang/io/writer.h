@@ -26,6 +26,7 @@ namespace doclang::native
   {
   public:
 
+    /* writing */
     static bool write_dclx(const std::filesystem::path& path, dclx_document& doc,
                            const writer_options& options = writer_options());
 
@@ -84,21 +85,13 @@ namespace doclang::native
         zip.set_text(ENTITIES_CSV, to_entities_csv(doc.mutable_entities()));
         zip.set_text(RELATIONS_CSV, to_relations_csv(doc.mutable_relations()));
 
-        if(doc.has_document_reference())
-          {
-            zip.set_text(DOCUMENT_REFERENCE_BIB, doc.get_document_reference().value());
-          }
-        else
-          {
-            zip.erase(DOCUMENT_REFERENCE_BIB);
-          }
         if(doc.has_references())
           {
-            zip.set_text(REFERENCES_BIB, doc.get_references().value());
+            zip.set_text(REFERENCES_DCLG, doc.get_references().value()->raw());
           }
         else
           {
-            zip.erase(REFERENCES_BIB);
+            zip.erase(REFERENCES_DCLG);
           }
         if(doc.has_summary())
           {
@@ -131,8 +124,7 @@ namespace doclang::native
         zip.erase(INSTANCES_CSV);
         zip.erase(ENTITIES_CSV);
         zip.erase(RELATIONS_CSV);
-        zip.erase(DOCUMENT_REFERENCE_BIB);
-        zip.erase(REFERENCES_BIB);
+        zip.erase(REFERENCES_DCLG);
         zip.erase(SUMMARY_DCLG);
         zip.erase(TOC_DCLG);
         zip.erase(CONCEPTS_DCLG);

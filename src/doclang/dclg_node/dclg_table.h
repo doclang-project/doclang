@@ -18,9 +18,11 @@ namespace doclang::native
   public:
 
     dclg_table(std::size_t rows, std::size_t columns);
-    void set_caption(std::string_view text);
+    /* reading */
     std::size_t row_count() const;
     std::size_t column_count() const;
+    /* editing */
+    void set_caption(std::string_view text);
     void insert_row(std::size_t index);
     void delete_row(std::size_t index);
     void insert_column(std::size_t index);
@@ -28,6 +30,7 @@ namespace doclang::native
     void append_to_cell(std::size_t row, std::size_t column, const dclg_node& content);
     void clear_cell(std::size_t row, std::size_t column);
     void set_cell(std::size_t row, std::size_t column, const dclg_node& content);
+    /* validation */
     validation_report validate_local() const;
     std::tuple<bool, std::string> is_valid() const;
     validation_report validate_in(const dclg_document& doc, const insertion_site& site) const;
@@ -36,6 +39,7 @@ namespace doclang::native
 
   private:
 
+    /* grid helpers */
     pugi::xml_node row_separator(std::size_t row) const;
     std::size_t require_simple_grid() const;
     pugi::xml_node cell_marker(std::size_t row, std::size_t column) const;

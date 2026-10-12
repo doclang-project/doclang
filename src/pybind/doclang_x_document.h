@@ -25,24 +25,40 @@ namespace doclang::binding
 {
   namespace py = pybind11;
 
+  enum class DocLangXDocumentRole
+  {
+    SUMMARY,
+    TABLE_OF_CONTENTS,
+    CONCEPTS,
+    REFERENCES
+  };
+
   class DocLangXDocument : public DoclangDocument
   {
   public:
 
     DocLangXDocument();
 
+    /* reading */
     static std::uint64_t hash(const std::string& text);
     bool read(const std::string& path, const native::archive::limits& bounds = {});
     bool read_bytes(py::bytes data, const native::archive::limits& bounds = {});
     bool read_xml(const std::string& xml) override;
+
+    /* writing */
     bool write(const std::string& path, bool allow_stale_annotations = false,
                bool allow_stale_sidecars = false);
     py::bytes write_bytes(bool allow_stale_annotations = false, bool allow_stale_sidecars = false);
+
+    /* state and validation */
     bool annotations_stale() const;
     bool sidecars_stale() const;
     bool has_archive() const;
     bool has_annotations() const;
     std::string source_path() const;
+    py::dict validate_package() const;
+
+    /* archive parts */
     std::vector<std::string> archive_paths() const;
     std::optional<py::bytes> get_part_bytes(const std::string& path) const;
     std::optional<std::string> get_part_text(const std::string& path) const;
@@ -50,26 +66,14 @@ namespace doclang::binding
     void set_part_text(const std::string& path, const std::string& data,
                        const std::string& content_type);
     void remove_part(const std::string& path);
-    py::dict validate_package() const;
+
+    /* annotations and companion documents */
     std::vector<std::string> annotation_paths() const;
-    std::optional<std::string> document_reference() const;
-    std::optional<std::string> references() const;
-    std::optional<DoclangDocument> summary() const;
-    std::optional<DoclangDocument> toc() const;
-    std::optional<DoclangDocument> concepts() const;
-    void set_document_reference(const std::string& bibtex);
-    void set_references(const std::string& bibtex);
-    bool set_document_summary(const std::string& dclg);
-    bool set_toc(const std::string& dclg);
-    bool set_concepts(const std::string& dclg);
-    bool set_summary_document(const DoclangDocument& value);
-    bool set_toc_document(const DoclangDocument& value);
-    bool set_concepts_document(const DoclangDocument& value);
-    void clear_document_reference();
-    void clear_references();
-    void clear_document_summary();
-    void clear_toc();
-    void clear_concepts();
+    bool set(DocLangXDocumentRole role, const DoclangDocument& value);
+    std::optional<DoclangDocument> get(DocLangXDocumentRole role) const;
+    void clear(DocLangXDocumentRole role);
+
+    /* annotation queries */
     py::dict overview() const;
     py::object properties() const;
     py::object entities() const;
@@ -92,18 +96,25 @@ namespace doclang::binding
 
   private:
 
+    /* construction and companion documents */
     explicit DocLangXDocument(std::shared_ptr<native::dclx_document> value);
     static std::optional<DoclangDocument>
     sidecar_wrapper(const native::dclx_document::sidecar_type& sidecar);
 
+    /* write checks and state */
+    bool can_write(bool allow_stale_annotations, bool allow_stale_sidecars);
+    void reset_generations();
+    static bool protected_part(const std::string& path);
+
+  private:
+
+    /* state */
     std::shared_ptr<native::dclx_document> doc;
     std::size_t annotation_generation = 0;
     std::size_t summary_generation = 0;
     std::size_t toc_generation = 0;
     std::size_t concepts_generation = 0;
-    bool can_write(bool allow_stale_annotations, bool allow_stale_sidecars);
-    void reset_generations();
-    static bool protected_part(const std::string& path);
+    std::size_t references_generation = 0;
   };
 
   namespace detail
@@ -169,6 +180,7 @@ namespace doclang::binding
     summary_generation = doc->generation();
     toc_generation = doc->generation();
     concepts_generation = doc->generation();
+    references_generation = doc->generation();
   }
 
   inline bool DocLangXDocument::read(const std::string& path, const native::archive::limits& bounds)
@@ -217,7 +229,8 @@ namespace doclang::binding
   {
     return (doc->has_summary() and summary_generation != doc->generation())
            or (doc->has_toc() and toc_generation != doc->generation())
-           or (doc->has_concepts() and concepts_generation != doc->generation());
+           or (doc->has_concepts() and concepts_generation != doc->generation())
+           or (doc->has_references() and references_generation != doc->generation());
   }
 
   inline bool DocLangXDocument::can_write(bool allow_stale_annotations, bool allow_stale_sidecars)
@@ -625,116 +638,59 @@ namespace doclang::binding
 
   inline std::vector<std::string> DocLangXDocument::annotation_paths() const
   {
-    return { native::PROPERTIES_CSV,         native::INSTANCES_CSV,
-             native::ENTITIES_CSV,           native::RELATIONS_CSV,
-             native::DOCUMENT_REFERENCE_BIB, native::REFERENCES_BIB,
-             native::SUMMARY_DCLG,           native::TOC_DCLG,
-             native::CONCEPTS_DCLG };
+    return { native::PROPERTIES_CSV, native::INSTANCES_CSV, native::ENTITIES_CSV,
+             native::RELATIONS_CSV,  native::REFERENCES_DCLG, native::SUMMARY_DCLG,
+             native::TOC_DCLG,      native::CONCEPTS_DCLG };
   }
 
-  inline std::optional<std::string> DocLangXDocument::document_reference() const
+  inline bool DocLangXDocument::set(DocLangXDocumentRole role, const DoclangDocument& value)
   {
-    return doc->get_document_reference();
-  }
-
-  inline std::optional<std::string> DocLangXDocument::references() const
-  {
-    return doc->get_references();
-  }
-
-  inline std::optional<DoclangDocument> DocLangXDocument::summary() const
-  {
-    return sidecar_wrapper(doc->get_summary());
-  }
-
-  inline std::optional<DoclangDocument> DocLangXDocument::toc() const
-  {
-    return sidecar_wrapper(doc->get_toc());
-  }
-
-  inline std::optional<DoclangDocument> DocLangXDocument::concepts() const
-  {
-    return sidecar_wrapper(doc->get_concepts());
-  }
-
-  inline void DocLangXDocument::set_document_reference(const std::string& bibtex)
-  {
-    doc->set_document_reference(bibtex);
-  }
-
-  inline void DocLangXDocument::set_references(const std::string& bibtex)
-  {
-    doc->set_references(bibtex);
-  }
-
-  inline bool DocLangXDocument::set_document_summary(const std::string& dclg)
-  {
-    const bool result = native::set_summary_dclg(*doc, dclg);
-    if(result)
+    bool result = false;
+    switch(role)
       {
-        summary_generation = doc->generation();
+      case DocLangXDocumentRole::SUMMARY:
+        result = native::set_summary_dclg(*doc, value.xml());
+        if(result) summary_generation = doc->generation();
+        break;
+      case DocLangXDocumentRole::TABLE_OF_CONTENTS:
+        result = native::set_toc_dclg(*doc, value.xml());
+        if(result) toc_generation = doc->generation();
+        break;
+      case DocLangXDocumentRole::CONCEPTS:
+        result = native::set_concepts_dclg(*doc, value.xml());
+        if(result) concepts_generation = doc->generation();
+        break;
+      case DocLangXDocumentRole::REFERENCES:
+        result = native::set_references_dclg(*doc, value.xml());
+        if(result) references_generation = doc->generation();
+        break;
+      default: throw py::value_error("invalid DCLX document role");
       }
     return result;
   }
 
-  inline bool DocLangXDocument::set_toc(const std::string& dclg)
+  inline std::optional<DoclangDocument> DocLangXDocument::get(DocLangXDocumentRole role) const
   {
-    const bool result = native::set_toc_dclg(*doc, dclg);
-    if(result)
+    switch(role)
       {
-        toc_generation = doc->generation();
+      case DocLangXDocumentRole::SUMMARY: return sidecar_wrapper(doc->get_summary());
+      case DocLangXDocumentRole::TABLE_OF_CONTENTS: return sidecar_wrapper(doc->get_toc());
+      case DocLangXDocumentRole::CONCEPTS: return sidecar_wrapper(doc->get_concepts());
+      case DocLangXDocumentRole::REFERENCES: return sidecar_wrapper(doc->get_references());
+      default: throw py::value_error("invalid DCLX document role");
       }
-    return result;
   }
 
-  inline bool DocLangXDocument::set_concepts(const std::string& dclg)
+  inline void DocLangXDocument::clear(DocLangXDocumentRole role)
   {
-    const bool result = native::set_concepts_dclg(*doc, dclg);
-    if(result)
+    switch(role)
       {
-        concepts_generation = doc->generation();
+      case DocLangXDocumentRole::SUMMARY: doc->clear_summary(); break;
+      case DocLangXDocumentRole::TABLE_OF_CONTENTS: doc->clear_toc(); break;
+      case DocLangXDocumentRole::CONCEPTS: doc->clear_concepts(); break;
+      case DocLangXDocumentRole::REFERENCES: doc->clear_references(); break;
+      default: throw py::value_error("invalid DCLX document role");
       }
-    return result;
-  }
-
-  inline bool DocLangXDocument::set_summary_document(const DoclangDocument& value)
-  {
-    return set_document_summary(value.xml());
-  }
-
-  inline bool DocLangXDocument::set_toc_document(const DoclangDocument& value)
-  {
-    return set_toc(value.xml());
-  }
-
-  inline bool DocLangXDocument::set_concepts_document(const DoclangDocument& value)
-  {
-    return set_concepts(value.xml());
-  }
-
-  inline void DocLangXDocument::clear_document_reference()
-  {
-    doc->clear_document_reference();
-  }
-
-  inline void DocLangXDocument::clear_references()
-  {
-    doc->clear_references();
-  }
-
-  inline void DocLangXDocument::clear_document_summary()
-  {
-    doc->clear_summary();
-  }
-
-  inline void DocLangXDocument::clear_toc()
-  {
-    doc->clear_toc();
-  }
-
-  inline void DocLangXDocument::clear_concepts()
-  {
-    doc->clear_concepts();
   }
 
   inline py::dict DocLangXDocument::overview() const
@@ -748,7 +704,6 @@ namespace doclang::binding
     result["instances"] = doc->get_instances().size();
     result["entities"] = doc->get_entities().size();
     result["relations"] = doc->get_relations().size();
-    result["has_document_reference"] = doc->has_document_reference();
     result["has_references"] = doc->has_references();
     result["has_summary"] = doc->has_summary();
     result["has_toc"] = doc->has_toc();
@@ -889,7 +844,12 @@ namespace doclang::binding
       {
         return std::nullopt;
       }
-    return DoclangDocument(sidecar.value());
+    auto copy = std::make_shared<native::dclg_document>();
+    if(not copy->read(sidecar.value()->raw()))
+      {
+        throw py::value_error(copy->get_last_error());
+      }
+    return DoclangDocument(std::move(copy));
   }
 }
 
