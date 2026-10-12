@@ -56,7 +56,8 @@ namespace doclang::native
 
   inline base_property::base_property() = default;
 
-  inline base_property::base_property(std::string type, std::string xpath, std::string label, float confidence)
+  inline base_property::base_property(std::string type, std::string xpath, std::string label,
+                                      float confidence)
       : values_(std::move(type), std::move(xpath), std::move(label), confidence)
   {
   }
@@ -122,9 +123,10 @@ namespace doclang::native
 
   inline base_instance::base_instance() = default;
 
-  inline base_instance::base_instance(std::string type, std::string subtype, std::string xpath, float confidence,
-                hash_type ehash, hash_type ihash, ind_type char_i, ind_type char_j,
-                std::string name, std::string original)
+  inline base_instance::base_instance(std::string type, std::string subtype, std::string xpath,
+                                      float confidence, hash_type ehash, hash_type ihash,
+                                      ind_type char_i, ind_type char_j, std::string name,
+                                      std::string original)
       : values_(std::move(type), std::move(subtype), std::move(xpath), confidence, ehash, ihash,
                 char_i, char_j, std::move(name), std::move(original))
   {
@@ -216,8 +218,8 @@ namespace doclang::native
 
   inline base_entity::base_entity() = default;
 
-  inline base_entity::base_entity(std::string type, std::string subtype, std::string name, hash_type ehash,
-              cnt_type count)
+  inline base_entity::base_entity(std::string type, std::string subtype, std::string name,
+                                  hash_type ehash, cnt_type count)
       : values_(std::move(type), std::move(subtype), std::move(name), ehash, count)
   {
   }
@@ -316,7 +318,8 @@ namespace doclang::native
 
   inline base_relation::base_relation() = default;
 
-  inline base_relation::base_relation(std::string name, float confidence, hash_type hash_i, hash_type hash_j)
+  inline base_relation::base_relation(std::string name, float confidence, hash_type hash_i,
+                                      hash_type hash_j)
       : values_(std::move(name), confidence, hash_i, hash_j)
   {
   }

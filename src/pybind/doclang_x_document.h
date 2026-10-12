@@ -638,9 +638,9 @@ namespace doclang::binding
 
   inline std::vector<std::string> DocLangXDocument::annotation_paths() const
   {
-    return { native::PROPERTIES_CSV, native::INSTANCES_CSV, native::ENTITIES_CSV,
+    return { native::PROPERTIES_CSV, native::INSTANCES_CSV,   native::ENTITIES_CSV,
              native::RELATIONS_CSV,  native::REFERENCES_DCLG, native::SUMMARY_DCLG,
-             native::TOC_DCLG,      native::CONCEPTS_DCLG };
+             native::TOC_DCLG,       native::CONCEPTS_DCLG };
   }
 
   inline bool DocLangXDocument::set(DocLangXDocumentRole role, const DoclangDocument& value)
@@ -650,21 +650,34 @@ namespace doclang::binding
       {
       case DocLangXDocumentRole::SUMMARY:
         result = native::set_summary_dclg(*doc, value.xml());
-        if(result) summary_generation = doc->generation();
+        if(result)
+          {
+            summary_generation = doc->generation();
+          }
         break;
       case DocLangXDocumentRole::TABLE_OF_CONTENTS:
         result = native::set_toc_dclg(*doc, value.xml());
-        if(result) toc_generation = doc->generation();
+        if(result)
+          {
+            toc_generation = doc->generation();
+          }
         break;
       case DocLangXDocumentRole::CONCEPTS:
         result = native::set_concepts_dclg(*doc, value.xml());
-        if(result) concepts_generation = doc->generation();
+        if(result)
+          {
+            concepts_generation = doc->generation();
+          }
         break;
       case DocLangXDocumentRole::REFERENCES:
         result = native::set_references_dclg(*doc, value.xml());
-        if(result) references_generation = doc->generation();
+        if(result)
+          {
+            references_generation = doc->generation();
+          }
         break;
-      default: throw py::value_error("invalid DCLX document role");
+      default:
+        throw py::value_error("invalid DCLX document role");
       }
     return result;
   }
@@ -673,11 +686,16 @@ namespace doclang::binding
   {
     switch(role)
       {
-      case DocLangXDocumentRole::SUMMARY: return sidecar_wrapper(doc->get_summary());
-      case DocLangXDocumentRole::TABLE_OF_CONTENTS: return sidecar_wrapper(doc->get_toc());
-      case DocLangXDocumentRole::CONCEPTS: return sidecar_wrapper(doc->get_concepts());
-      case DocLangXDocumentRole::REFERENCES: return sidecar_wrapper(doc->get_references());
-      default: throw py::value_error("invalid DCLX document role");
+      case DocLangXDocumentRole::SUMMARY:
+        return sidecar_wrapper(doc->get_summary());
+      case DocLangXDocumentRole::TABLE_OF_CONTENTS:
+        return sidecar_wrapper(doc->get_toc());
+      case DocLangXDocumentRole::CONCEPTS:
+        return sidecar_wrapper(doc->get_concepts());
+      case DocLangXDocumentRole::REFERENCES:
+        return sidecar_wrapper(doc->get_references());
+      default:
+        throw py::value_error("invalid DCLX document role");
       }
   }
 
@@ -685,11 +703,20 @@ namespace doclang::binding
   {
     switch(role)
       {
-      case DocLangXDocumentRole::SUMMARY: doc->clear_summary(); break;
-      case DocLangXDocumentRole::TABLE_OF_CONTENTS: doc->clear_toc(); break;
-      case DocLangXDocumentRole::CONCEPTS: doc->clear_concepts(); break;
-      case DocLangXDocumentRole::REFERENCES: doc->clear_references(); break;
-      default: throw py::value_error("invalid DCLX document role");
+      case DocLangXDocumentRole::SUMMARY:
+        doc->clear_summary();
+        break;
+      case DocLangXDocumentRole::TABLE_OF_CONTENTS:
+        doc->clear_toc();
+        break;
+      case DocLangXDocumentRole::CONCEPTS:
+        doc->clear_concepts();
+        break;
+      case DocLangXDocumentRole::REFERENCES:
+        doc->clear_references();
+        break;
+      default:
+        throw py::value_error("invalid DCLX document role");
       }
   }
 

@@ -98,7 +98,6 @@ namespace doclang::native
     std::string last_error;
     bool dirty = false;
     std::size_t edit_generation = 0;
-
   };
 
   inline dclg_document::dclg_document() = default;

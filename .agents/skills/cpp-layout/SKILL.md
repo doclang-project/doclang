@@ -38,3 +38,5 @@ inline void archive::set_error(std::string message)
 ```
 
 Prefer a short exception only when an in-class body is required by the language (for example, a local class), and explain it in a comment. Run the relevant C++ build and tests after moving definitions.
+
+Follow the repository's `.clang-format` settings for edited C++ files. The pre-commit hook uses clang-format 19.1.7 in check mode; compiling and passing tests do not establish formatting compliance. Format changed files, then run `uv run pre-commit run clang-format --all-files` before finishing.

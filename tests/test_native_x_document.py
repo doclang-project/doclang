@@ -9,11 +9,11 @@ import pytest
 
 from doclang import (
     ArchiveLimits,
-    DocLangXDocumentRole,
     DoclangDocument,
     DoclangTextNode,
     DocLangXDocument,
     DoclangXDocument,
+    DocLangXDocumentRole,
     pack,
 )
 

@@ -73,7 +73,10 @@ namespace doclang::native
     const auto root = sidecar.root();
     for(const auto child : root.children())
       {
-        if(std::string_view(child.name()) == "head") continue;
+        if(std::string_view(child.name()) == "head")
+          {
+            continue;
+          }
         if(std::string_view(child.name()) != "heading" or not child.child("href")
            or std::string_view(child.child("href").attribute("uri").value()).empty())
           {
@@ -104,7 +107,7 @@ namespace doclang::native
                and std::isxdigit(static_cast<unsigned char>(uri[i + 2])))
               {
                 const auto digit = [](char value) {
-                  return value >= '0' and value <= '9' ? value - '0'
+                  return value >= '0' and value <= '9'   ? value - '0'
                          : value >= 'A' and value <= 'F' ? value - 'A' + 10
                                                          : value - 'a' + 10;
                 };
@@ -503,12 +506,14 @@ namespace doclang::native
       }
     if(doc.artifacts().has("annotations/references.bib"))
       {
-        doc.set_last_error("unsupported annotations/references.bib; use annotations/references.dclg");
+        doc.set_last_error(
+            "unsupported annotations/references.bib; use annotations/references.dclg");
         return false;
       }
     if(doc.artifacts().has("annotations/document_reference.bib"))
       {
-        doc.set_last_error("unsupported annotations/document_reference.bib; use annotations/references.dclg");
+        doc.set_last_error(
+            "unsupported annotations/document_reference.bib; use annotations/references.dclg");
         return false;
       }
     const auto summary = doc.artifacts().text(SUMMARY_DCLG);
@@ -517,9 +522,15 @@ namespace doclang::native
         return false;
       }
     const auto toc = doc.artifacts().text(TOC_DCLG);
-    if(toc and not set_toc_dclg(doc, *toc)) return false;
+    if(toc and not set_toc_dclg(doc, *toc))
+      {
+        return false;
+      }
     const auto concepts = doc.artifacts().text(CONCEPTS_DCLG);
-    if(concepts and not set_concepts_dclg(doc, *concepts)) return false;
+    if(concepts and not set_concepts_dclg(doc, *concepts))
+      {
+        return false;
+      }
     if(!has_entities and not doc.get_instances().empty())
       {
         doc.compute_entities();

@@ -91,7 +91,8 @@ namespace doclang::native
 
   inline document_view::document_view() = default;
 
-  inline document_view::document_view(std::shared_ptr<const dclg_document> doc) : doc_ptr(std::move(doc))
+  inline document_view::document_view(std::shared_ptr<const dclg_document> doc)
+      : doc_ptr(std::move(doc))
   {
   }
   inline bool document_view::valid() const

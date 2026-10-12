@@ -270,8 +270,8 @@ namespace doclang::native
   inline bool dclx_document::has_annotations() const
   {
     return (not properties->empty()) or (not instances->empty()) or (not entities->empty())
-           or (not relations->empty()) or has_references()
-           or has_summary() or has_toc() or has_concepts();
+           or (not relations->empty()) or has_references() or has_summary() or has_toc()
+           or has_concepts();
   }
 
   inline void dclx_document::clear_annotations()
