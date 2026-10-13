@@ -52,29 +52,8 @@ def sync_version_in_xsd(file_path: Path, version: str) -> None:
     """Update version in doclang.xsd"""
     content = file_path.read_text(encoding="utf-8")
 
-    # Extract MAJOR.MINOR for most places
-    major_minor = ".".join(version.split(".")[:2])
-
-    # Pattern 1: schema version attribute (line 8) in <xs:schema>
-    # version="0.2.0" - full MAJOR.MINOR.PATCH
-    # Match only the xs:schema element's version attribute
+    # Schema version attribute in <xs:schema>: full MAJOR.MINOR.PATCH
     content = re.sub(r'(<xs:schema[^>]*\s+version=")[\d.]+(")', rf"\g<1>{version}\g<2>", content, flags=re.DOTALL)
-
-    # Pattern 2: enumeration values
-    # ALWAYS remove all previous v0.x enumerations and add only the new version
-
-    # Remove all enumeration lines (including any trailing whitespace before closing tag)
-    content = re.sub(r'\s*<xs:enumeration value="[\d.]+"/>\s*', "", content)
-
-    # Add only the new version with proper formatting (MAJOR.MINOR only)
-    # Find the comment and the closing </xs:restriction> tag
-    insert_pattern = r"(<!-- enumeration set up for v1 and above.*?-->)\s*(</xs:restriction>)"
-    content = re.sub(
-        insert_pattern,
-        rf'\g<1>\n            <xs:enumeration value="{major_minor}"/>\n          \g<2>',
-        content,
-        flags=re.DOTALL,
-    )
     file_path.write_text(content, encoding="utf-8")
 
 

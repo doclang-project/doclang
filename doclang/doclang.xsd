@@ -844,13 +844,12 @@
           <xs:element ref="dl:page_break"/>
         </xs:choice>
       </xs:sequence>
+      <!-- Only the format is constrained here; selecting the schema matching an instance's
+           version is up to the validator. -->
       <xs:attribute name="version" use="optional">
         <xs:simpleType>
           <xs:restriction base="xs:string">
-            <!-- enumeration set up for v1 and above, where all individual minor versions
-             within major (up to and including current)
-             will have to be listed for backwards compatibility. -->
-            <xs:enumeration value="0.7"/>
+            <xs:pattern value="[0-9]+\.[0-9]+"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

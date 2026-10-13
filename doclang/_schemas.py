@@ -14,7 +14,7 @@ from lxml import etree
 
 _SCHEMA_DIR = Path(__file__).resolve().parent
 _VERSION_RE = re.compile(r"^(\d+)\.(\d+)$")
-_ENUM_RE = re.compile(r'<xs:enumeration value="(\d+\.\d+)"/>')
+_SCHEMA_VERSION_RE = re.compile(r'<xs:schema[^>]*\sversion="(\d+)\.(\d+)\.\d+"', re.DOTALL)
 
 
 class UnsupportedVersionError(ValueError):
@@ -55,12 +55,17 @@ def _version_key(version: str) -> tuple[int, int]:
     return int(match.group(1)), int(match.group(2))
 
 
+def _schema_version(xsd: Path) -> str:
+    """The ``MAJOR.MINOR`` spec version of an XSD, from its ``xs:schema`` version attribute."""
+    match = _SCHEMA_VERSION_RE.search(xsd.read_text(encoding="utf-8"))
+    if match is None:
+        raise FileNotFoundError(f"No schema version found in {xsd}")
+    return f"{match.group(1)}.{match.group(2)}"
+
+
 def _current_version() -> str:
-    """The spec version of the top-level (latest) schemas, from the XSD version enumeration."""
-    versions = _ENUM_RE.findall(_bundled_xsd_path().read_text(encoding="utf-8"))
-    if not versions:
-        raise FileNotFoundError(f"No spec version found in {_bundled_xsd_path()}")
-    return max(versions, key=_version_key)
+    """The spec version of the top-level (latest) schemas."""
+    return _schema_version(_bundled_xsd_path())
 
 
 def _supported_versions() -> list[str]:

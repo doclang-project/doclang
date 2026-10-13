@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 from typing import Any, Union
 
-from doclang._schemas import UnsupportedVersionError, _select_schemas
+from doclang._schemas import UnsupportedVersionError, _declared_version, _select_schemas
 from doclang.schematron import (
     SchematronBackendNotFound,
     SchematronValidator,
@@ -93,7 +93,15 @@ def validate(
         if spec_version is not None:
             raise
         raise ValidationError(xsd_errors=[{"error": str(exc)}], schematron_errors=[]) from exc
-    if not selection.declared:
+    if spec_version is not None:
+        declared = _declared_version(path)
+        if declared is not None and declared != spec_version:
+            warnings.warn(
+                f"Document declares version {declared}; validating as {selection.version} as requested.",
+                UserWarning,
+                stacklevel=2,
+            )
+    elif not selection.declared:
         warnings.warn(
             f"No DocLang version declared; validating against the latest supported version ({selection.version}).",
             UserWarning,

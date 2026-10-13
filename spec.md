@@ -194,7 +194,7 @@ DocLang instances define a version in `MAJOR.MINOR` format through the `version`
 
 #### Semantic Versioning Principles
 
-The XSD [3] schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
+Validation of DocLang XML documents against the XSD [3] schema is based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
 
 - A DocLang instance with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a DocLang instance that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
 - A DocLang instance with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a DocLang instance that is valid against schema `X.Z` need not successfully validate against `X.Y`.
@@ -214,6 +214,8 @@ The `version` attribute is optional. If it is omitted, the version of the DocLan
 #### XSD Schema Versioning
 
 The XSD schema itself may additionally capture a patch version and internally define a full Semantic Versioning (SemVer) version string (e.g., `1.0.0`, `1.0.1`) to track schema-level changes that do not affect document compatibility.
+
+The XSD constrains the `version` attribute of the root `<doclang>` element only to the `MAJOR.MINOR` format; selecting the schema that corresponds to an instance's version is the responsibility of the validator.
 
 ## Language Specification
 

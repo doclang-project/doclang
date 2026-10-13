@@ -222,9 +222,9 @@ def schema_dir(tmp_path, monkeypatch):
     for name in ("0.7", "1.0"):
         folder = root / "schemas" / name
         folder.mkdir(parents=True)
-        (folder / "doclang.xsd").write_text(xsd.replace(f'value="{current}"', f'value="{name}"'), encoding="utf-8")
+        (folder / "doclang.xsd").write_text(xsd.replace(f'version="{current}.', f'version="{name}.'), encoding="utf-8")
         shutil.copy(SCHEMA_DIR / "doclang.sch", folder / "doclang.sch")
-    (root / "doclang.xsd").write_text(xsd.replace(f'value="{current}"', 'value="1.2"'), encoding="utf-8")
+    (root / "doclang.xsd").write_text(xsd.replace(f'version="{current}.', 'version="1.2.'), encoding="utf-8")
     shutil.copy(SCHEMA_DIR / "doclang.sch", root / "doclang.sch")
     monkeypatch.setattr(_schemas, "_SCHEMA_DIR", root)
     return root
@@ -264,3 +264,16 @@ def test_validate_explicit_spec_version(schema_dir, tmp_path):
 def test_validate_unsupported_declared_version_is_validation_error(tmp_path):
     with pytest.raises(ValidationError, match=r"Unsupported DocLang spec version '0\.1'"):
         validate(_doc(tmp_path, "0.1"), xsd_only=True)
+
+
+def test_version_attribute_only_constrained_to_format(tmp_path):
+    """The XSD does not tie the declared version to the schema: a 0.8-declared doc validates as 0.7."""
+    with pytest.warns(UserWarning):
+        assert validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7") is None
+        with pytest.raises(ValidationError):
+            validate(_doc(tmp_path, "v1"), xsd_only=True, spec_version="0.7")  # not MAJOR.MINOR
+
+
+def test_validate_notes_override_differing_from_declared(tmp_path):
+    with pytest.warns(UserWarning, match="declares version 0.8; validating as 0.7"):
+        validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7")
