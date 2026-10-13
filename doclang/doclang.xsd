@@ -844,11 +844,11 @@
           <xs:element ref="dl:page_break"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="version" use="optional" default="0.7">
+      <xs:attribute name="version" use="optional">
         <xs:simpleType>
           <xs:restriction base="xs:string">
             <!-- enumeration set up for v1 and above, where all individual minor versions
-             within major (up to and including current, i.e. `default` above)
+             within major (up to and including current)
              will have to be listed for backwards compatibility. -->
             <xs:enumeration value="0.7"/>
           </xs:restriction>
