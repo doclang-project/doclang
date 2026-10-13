@@ -277,3 +277,18 @@ def test_version_attribute_only_constrained_to_format(tmp_path):
 def test_validate_notes_override_differing_from_declared(tmp_path):
     with pytest.warns(UserWarning, match="declares version 0.8; validating as 0.7"):
         validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7")
+
+
+def test_declared_version_normalized_for_schemas_with_version_enumeration(schema_dir, tmp_path):
+    """Older schemas restrict `version` to their own value; a differing declared version is not an error."""
+    folder = schema_dir / "schemas" / "0.6"
+    folder.mkdir(parents=True)
+    xsd = (schema_dir / "doclang.xsd").read_text(encoding="utf-8")
+    xsd = xsd.replace('version="1.2.', 'version="0.6.').replace(
+        '<xs:pattern value="[0-9]+\\.[0-9]+"/>', '<xs:enumeration value="0.6"/>'
+    )
+    (folder / "doclang.xsd").write_text(xsd, encoding="utf-8")
+    (folder / "doclang.sch").write_text((schema_dir / "doclang.sch").read_text(encoding="utf-8"), encoding="utf-8")
+
+    with pytest.warns(UserWarning, match="declares version 1.2; validating as 0.6"):
+        assert validate(_doc(tmp_path, "1.2"), xsd_only=True, spec_version="0.6") is None

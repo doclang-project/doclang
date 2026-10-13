@@ -109,7 +109,12 @@ def validate(
         )
 
     if not schematron_only:
-        xsd_errors = _validate_xsd(path, allow_empty_namespace=allow_empty_namespace, xsd_file=selection.xsd)
+        xsd_errors = _validate_xsd(
+            path,
+            allow_empty_namespace=allow_empty_namespace,
+            xsd_file=selection.xsd,
+            schema_version=selection.version,
+        )
 
     if not xsd_only:
         validator = schematron or _default_schematron_validator()
