@@ -5,13 +5,14 @@ Provides a user-friendly CLI using Typer for working with DocLang documents.
 """
 
 import json
+import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import typer
 
-from doclang._schemas import _bundled_schema_paths
+from doclang._schemas import UnsupportedVersionError, _select_schemas
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
 from doclang.schematron import SchematronBackendNotFound
@@ -48,6 +49,11 @@ def validate(
         "-n",
         help="Allow documents without namespace (auto-inject DocLang namespace)",
     ),
+    spec_version: Optional[str] = typer.Option(
+        None,
+        "--spec-version",
+        help="DocLang spec version (MAJOR.MINOR) to validate against, overriding the document's version",
+    ),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
@@ -59,25 +65,42 @@ def validate(
 
         doclang validate document.xml
         doclang validate document.xml --xsd-only
+        doclang validate document.xml --spec-version 0.7
         doclang validate document.xml --format json
     """
     try:
-        bundled_xsd, bundled_sch = _bundled_schema_paths()
+        selection = _select_schemas(xml_file, spec_version)
+    except UnsupportedVersionError as exc:
+        # An unsupported declared version is reported as a validation failure below.
+        if spec_version is not None:
+            typer.echo(f"Error: {exc}", err=True)
+            raise typer.Exit(1)
+        selection = None
     except FileNotFoundError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
+    bundled_xsd = selection.xsd if selection else None
+    bundled_sch = selection.sch if selection else None
 
     if not quiet and format == OutputFormat.text:
         typer.echo(f"Validating: {xml_file}")
         typer.echo("-" * 60)
 
     try:
-        validate_document(
-            xml_file,
-            allow_empty_namespace=allow_empty_namespace,
-            xsd_only=xsd_only,
-            schematron_only=schematron_only,
-        )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                validate_document(
+                    xml_file,
+                    allow_empty_namespace=allow_empty_namespace,
+                    xsd_only=xsd_only,
+                    schematron_only=schematron_only,
+                    spec_version=spec_version,
+                )
+            finally:
+                if not quiet:
+                    for w in caught:
+                        typer.echo(f"Warning: {w.message}", err=True)
     except SchematronBackendNotFound as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
@@ -91,7 +114,7 @@ def validate(
             if not schematron_only:
                 if verbose:
                     typer.echo("XSD Validation")
-                    typer.echo(f"Schema: {bundled_xsd}")
+                    typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
                 if not exc.xsd_errors:
                     typer.echo("XSD validation passed")
                 else:
@@ -105,7 +128,7 @@ def validate(
             if not xsd_only:
                 if verbose:
                     typer.echo("Schematron Validation")
-                    typer.echo(f"Schema: {bundled_sch}")
+                    typer.echo(f"Schema: {bundled_sch or 'n/a'}")
                 if not exc.schematron_errors:
                     typer.echo("Schematron validation passed")
                 else:
@@ -126,13 +149,13 @@ def validate(
         if not schematron_only:
             if verbose:
                 typer.echo("XSD Validation")
-                typer.echo(f"Schema: {bundled_xsd}")
+                typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
             typer.echo("XSD validation passed")
 
         if not xsd_only:
             if verbose:
                 typer.echo("Schematron Validation")
-                typer.echo(f"Schema: {bundled_sch}")
+                typer.echo(f"Schema: {bundled_sch or 'n/a'}")
             typer.echo("Schematron validation passed")
 
     if format == OutputFormat.json:

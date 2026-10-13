@@ -47,6 +47,10 @@ def _validate_xsd_at(
         return [{"error": str(e)}]
 
 
-def _validate_xsd(xml_file: Union[str, Path], allow_empty_namespace: bool = False) -> list[dict[str, Any]]:
-    """Validate XML against the bundled DocLang XSD schema."""
-    return _validate_xsd_at(xml_file, _bundled_xsd_path(), allow_empty_namespace=allow_empty_namespace)
+def _validate_xsd(
+    xml_file: Union[str, Path],
+    allow_empty_namespace: bool = False,
+    xsd_file: Union[str, Path, None] = None,
+) -> list[dict[str, Any]]:
+    """Validate XML against the given DocLang XSD schema (default: the bundled, latest one)."""
+    return _validate_xsd_at(xml_file, xsd_file or _bundled_xsd_path(), allow_empty_namespace=allow_empty_namespace)

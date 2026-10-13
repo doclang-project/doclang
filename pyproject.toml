@@ -43,7 +43,7 @@ Issues = "https://github.com/doclang-project/doclang/issues"
 doclang = "doclang.cli:app"
 
 [tool.setuptools.package-data]
-doclang = ["*.xsd", "*.sch"]
+doclang = ["*.xsd", "*.sch", "schemas/*/*.xsd", "schemas/*/*.sch"]
 
 [dependency-groups]
 ci = [
@@ -145,3 +145,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore:No DocLang version declared:UserWarning"]

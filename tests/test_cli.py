@@ -42,3 +42,21 @@ def test_validate_invalid_document():
     xml_file = Path("tests/data/invalid/nok_href_in_body.dclg")
     result = runner.invoke(app, ["validate", str(xml_file)])
     assert result.exit_code == 1
+
+
+def test_cli_spec_version_override_and_unsupported(tmp_path):
+    doc = tmp_path / "doc.dclg"
+    doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0"><text>hi</text></doclang>', encoding="utf-8")
+    ok = runner.invoke(app, ["validate", str(doc), "--xsd-only", "--spec-version", "0.7"])
+    assert ok.exit_code == 0, ok.output
+    bad = runner.invoke(app, ["validate", str(doc), "--xsd-only", "--spec-version", "9.9"])
+    assert bad.exit_code == 1
+    assert "Unsupported DocLang spec version '9.9'" in bad.output
+
+
+def test_cli_warns_when_version_undeclared(tmp_path):
+    doc = tmp_path / "doc.dclg"
+    doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0"><text>hi</text></doclang>', encoding="utf-8")
+    result = runner.invoke(app, ["validate", str(doc), "--xsd-only"])
+    assert result.exit_code == 0, result.output
+    assert "No DocLang version declared" in result.output

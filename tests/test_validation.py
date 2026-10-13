@@ -13,7 +13,13 @@ from unittest.mock import patch
 import pytest
 
 import doclang
-from doclang import SchematronBackendNotFound, SchematronViolation, ValidationError, validate
+from doclang import (
+    SchematronBackendNotFound,
+    SchematronViolation,
+    UnsupportedVersionError,
+    ValidationError,
+    validate,
+)
 from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
@@ -188,3 +194,73 @@ def test_schematron_backend_not_found_when_saxonche_missing():
     ):
         with pytest.raises(SchematronBackendNotFound):
             validate(xml_file, schematron_only=True)
+
+
+# --- spec version selection ---------------------------------------------------
+
+VALID_DOC = (VALID_DIR / "ok_namespaced_and_versioned.dclg").read_text(encoding="utf-8")
+
+
+def _doc(tmp_path: Path, version: str | None) -> Path:
+    attr = f' version="{version}"' if version is not None else ""
+    path = tmp_path / "doc.dclg"
+    path.write_text(f'<doclang xmlns="https://www.doclang.ai/ns/v0"{attr}><text>hi</text></doclang>', encoding="utf-8")
+    return path
+
+
+@pytest.fixture
+def schema_dir(tmp_path, monkeypatch):
+    """A package-like schema dir: latest schemas at 1.2, plus older ones at 0.7 and 1.0."""
+    import shutil
+
+    from doclang import _schemas
+
+    root = tmp_path / "pkg"
+    root.mkdir()
+    xsd = (SCHEMA_DIR / "doclang.xsd").read_text(encoding="utf-8")
+    current = _schemas._current_version()
+    for name in ("0.7", "1.0"):
+        folder = root / "schemas" / name
+        folder.mkdir(parents=True)
+        (folder / "doclang.xsd").write_text(xsd.replace(f'value="{current}"', f'value="{name}"'), encoding="utf-8")
+        shutil.copy(SCHEMA_DIR / "doclang.sch", folder / "doclang.sch")
+    (root / "doclang.xsd").write_text(xsd.replace(f'value="{current}"', 'value="1.2"'), encoding="utf-8")
+    shutil.copy(SCHEMA_DIR / "doclang.sch", root / "doclang.sch")
+    monkeypatch.setattr(_schemas, "_SCHEMA_DIR", root)
+    return root
+
+
+def test_select_schemas_precedence(schema_dir, tmp_path):
+    from doclang._schemas import _select_schemas
+
+    assert _select_schemas(_doc(tmp_path, "0.7")).version == "0.7"
+    assert _select_schemas(_doc(tmp_path, "0.7"), "1.2").version == "1.2"  # explicit override wins
+    unversioned = _select_schemas(_doc(tmp_path, None))
+    assert (unversioned.version, unversioned.declared) == ("1.2", False)
+
+
+def test_select_schemas_major_one_falls_back_to_newer_minor(schema_dir, tmp_path):
+    from doclang._schemas import UnsupportedVersionError, _select_schemas
+
+    assert _select_schemas(_doc(tmp_path, "1.1")).version == "1.2"  # 1.1 instance, 1.2 schema
+    with pytest.raises(UnsupportedVersionError):
+        _select_schemas(_doc(tmp_path, "1.3"))  # newer than supported
+    with pytest.raises(UnsupportedVersionError):
+        _select_schemas(_doc(tmp_path, "0.8"))  # no fallback within 0.x
+
+
+def test_validate_unversioned_warns():
+    path = VALID_DIR / "ok_no_namespace.dclg"
+    with pytest.warns(UserWarning, match="No DocLang version declared"):
+        validate(path, allow_empty_namespace=True)
+
+
+def test_validate_explicit_spec_version(schema_dir, tmp_path):
+    validate(_doc(tmp_path, "1.2"), xsd_only=True, spec_version="1.2")
+    with pytest.raises(UnsupportedVersionError, match="supported versions"):
+        validate(_doc(tmp_path, "1.2"), xsd_only=True, spec_version="9.9")
+
+
+def test_validate_unsupported_declared_version_is_validation_error(tmp_path):
+    with pytest.raises(ValidationError, match=r"Unsupported DocLang spec version '0\.1'"):
+        validate(_doc(tmp_path, "0.1"), xsd_only=True)

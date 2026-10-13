@@ -31,6 +31,10 @@ On a minimal install, pass `xsd_only=True` for XSD-only validation, or supply a 
 doclang validate my_document.dclg
 ```
 
+By default a document is validated against the spec version in the `version` attribute of its root
+element. If it has none, the version is unspecified: the latest supported version is used and a warning
+is issued. `--spec-version` (or `validate(..., spec_version="0.7")` in Python) overrides the declared version.
+
 #### More validation scenarios
 
 ```bash
@@ -45,6 +49,9 @@ doclang validate my_document.dclg --schematron-only
 
 # JSON output
 doclang validate my_document.dclg --format json
+
+# Validate against a specific spec version (overrides the document's `version`)
+doclang validate my_document.dclg --spec-version 0.7
 
 # Quiet mode (exit code only)
 doclang validate my_document.dclg --quiet

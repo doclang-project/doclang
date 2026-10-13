@@ -1,9 +1,10 @@
 """Public validation API for DocLang XML documents."""
 
+import warnings
 from pathlib import Path
 from typing import Any, Union
 
-from doclang._schemas import _bundled_sch_path
+from doclang._schemas import UnsupportedVersionError, _select_schemas
 from doclang.schematron import (
     SchematronBackendNotFound,
     SchematronValidator,
@@ -12,7 +13,7 @@ from doclang.schematron import (
 )
 from doclang.xsd_validation import _validate_xsd
 
-__all__ = ["SchematronBackendNotFound", "ValidationError", "validate"]
+__all__ = ["SchematronBackendNotFound", "UnsupportedVersionError", "ValidationError", "validate"]
 
 
 def _violations_to_errors(violations: list[SchematronViolation]) -> list[dict[str, Any]]:
@@ -64,14 +65,21 @@ def validate(
     xsd_only: bool = False,
     schematron_only: bool = False,
     schematron: SchematronValidator | None = None,
+    spec_version: str | None = None,
 ) -> None:
     """Validate a DocLang XML file using the bundled reference XSD and Schematron rules.
+
+    The spec version to validate against is ``spec_version`` if given, else the ``version``
+    attribute of the root element. If neither is set the version is unspecified: the latest
+    supported version is used and a :class:`UserWarning` is issued.
 
     By default both XSD and Schematron validation run. Pass ``schematron`` to use a
     custom Schematron backend; when omitted, the default Saxon/C backend is used
     (requires ``doclang[schematron-saxon]``).
 
-    Raises :class:`ValidationError` on failure.
+    Raises :class:`ValidationError` on failure, including when the document declares a
+    version that is not supported.
+    Raises :class:`UnsupportedVersionError` when ``spec_version`` is not supported.
     Raises :class:`SchematronBackendNotFound` when Schematron validation is requested
     but no backend is available.
     """
@@ -79,15 +87,28 @@ def validate(
     xsd_errors: list[dict[str, Any]] = []
     schematron_errors: list[dict[str, Any]] = []
 
+    try:
+        selection = _select_schemas(path, spec_version)
+    except UnsupportedVersionError as exc:
+        if spec_version is not None:
+            raise
+        raise ValidationError(xsd_errors=[{"error": str(exc)}], schematron_errors=[]) from exc
+    if not selection.declared:
+        warnings.warn(
+            f"No DocLang version declared; validating against the latest supported version ({selection.version}).",
+            UserWarning,
+            stacklevel=2,
+        )
+
     if not schematron_only:
-        xsd_errors = _validate_xsd(path, allow_empty_namespace=allow_empty_namespace)
+        xsd_errors = _validate_xsd(path, allow_empty_namespace=allow_empty_namespace, xsd_file=selection.xsd)
 
     if not xsd_only:
         validator = schematron or _default_schematron_validator()
         try:
             violations = validator.validate(
                 path,
-                schema_path=_bundled_sch_path(),
+                schema_path=selection.sch,
                 allow_empty_namespace=allow_empty_namespace,
             )
             if violations:
