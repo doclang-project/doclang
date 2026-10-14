@@ -367,3 +367,54 @@ def test_strict_xsd_version_attr_applies_xsd_check_as_is(tmp_path):
 def test_strict_xsd_version_attr_has_no_effect_for_format_only_schemas(schema_dir, tmp_path):
     with pytest.warns(UserWarning, match="declares version 1.0; validating as 1.2 as requested"):
         validate(_doc(tmp_path, "1.0"), xsd_only=True, spec_version="1.2", strict_xsd_version_attr=True)
+
+
+# --- validating against 0.7: one scenario matrix, same content throughout --------------------------
+
+
+def _versioned_doc(tmp_path: Path, version: str, body: str = "<text>hi</text>") -> Path:
+    path = tmp_path / f"doc_{version}.dclg"
+    path.write_text(
+        f'<doclang xmlns="https://www.doclang.ai/ns/v0" version="{version}">{body}</doclang>', encoding="utf-8"
+    )
+    return path
+
+
+_TRACK_BODY = '<track><bdiv/><minutes value="0"/><seconds value="2"/>Hello.</track>'
+
+
+def test_07_document_against_07_passes_without_warning(tmp_path):
+    import warnings
+
+    doc = _versioned_doc(tmp_path, "0.7")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # any warning fails the test
+        assert validate(doc, spec_version="0.7") is None
+        assert validate(doc) is None  # declared version alone selects 0.7
+
+
+def test_08_document_with_07_content_against_07_passes_with_warning(tmp_path):
+    doc = _versioned_doc(tmp_path, "0.8")
+    with pytest.warns(UserWarning) as record:
+        assert validate(doc, spec_version="0.7") is None
+    messages = [str(w.message) for w in record]
+    assert any("declares version 0.8; validating as 0.7 as requested" in m for m in messages)
+    assert any(issubclass(w.category, VersionNote) for w in record)
+
+
+def test_08_document_with_07_content_against_07_fails_when_strict(tmp_path):
+    doc = _versioned_doc(tmp_path, "0.8")
+    with pytest.warns(UserWarning, match="declares version 0.8; validating as 0.7 as requested"):
+        with pytest.raises(ValidationError) as excinfo:
+            validate(doc, spec_version="0.7", strict_xsd_version_attr=True)
+    assert "version" in str(excinfo.value)
+    assert "track" not in str(excinfo.value)  # fails on the version attribute only
+
+
+@pytest.mark.parametrize("strict", [False, True])
+def test_08_document_with_track_against_07_fails_on_content(tmp_path, strict):
+    doc = _versioned_doc(tmp_path, "0.8", _TRACK_BODY)
+    with pytest.warns(UserWarning):
+        with pytest.raises(ValidationError) as excinfo:
+            validate(doc, spec_version="0.7", strict_xsd_version_attr=strict)
+    assert "track" in str(excinfo.value)
