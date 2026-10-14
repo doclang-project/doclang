@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.prepare_release import snapshot_schemas  # noqa: E402
+from utils.snapshot_schemas import snapshot_schemas  # noqa: E402
 
 
 def test_snapshot_schemas_copies_head_to_minor_folder(tmp_path):

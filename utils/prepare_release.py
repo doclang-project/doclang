@@ -14,7 +14,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -27,23 +26,12 @@ if str(ROOT) not in sys.path:
 
 from utils.export_docx import export_docx
 from utils.generate_reference import generate_reference
+from utils.snapshot_schemas import snapshot_schemas
 from utils.sync_version import sync_version
 
 DEFAULT_CHANGELOG = ROOT / "CHANGELOG.md"
 DEFAULT_REFERENCE_INPUT = "reference/input"
 GITHUB_REPO = "https://github.com/doclang-project/doclang"
-
-
-def snapshot_schemas(version: str, project_root: Path) -> Path:
-    """Copy the development-head schemas to doclang/schemas/<MAJOR.MINOR>/ (latest release of that minor)."""
-    major_minor = ".".join(version.split(".")[:2])
-    package_dir = project_root / "doclang"
-    target = package_dir / "schemas" / major_minor
-    target.mkdir(parents=True, exist_ok=True)
-    for name in ("doclang.xsd", "doclang.sch"):
-        shutil.copyfile(package_dir / name, target / name)
-    print(f"Snapshot schemas to {target}")
-    return target
 
 
 def get_latest_tag(project_root: Path) -> str | None:
