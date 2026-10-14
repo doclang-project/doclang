@@ -19,6 +19,9 @@ _VERSION_RE = re.compile(r"^(\d+)\.(\d+)$")
 _SCHEMA_VERSION_RE = re.compile(r'<xs:schema[^>]*\sversion="(\d+)\.(\d+)\.\d+"', re.DOTALL)
 
 
+_XS_NS = "http://www.w3.org/2001/XMLSchema"
+
+
 class UnsupportedVersionError(ValueError):
     """Raised when a requested DocLang spec version is not supported by this toolkit."""
 
@@ -118,6 +121,14 @@ def _schema_paths_for(version: str) -> tuple[Path, Path]:
         folder = _versioned_dir(version)
         return folder / "doclang.xsd", folder / "doclang.sch"
     return _bundled_schema_paths()
+
+
+def _enumerated_versions(xsd: Path) -> set[str]:
+    """Versions the XSD enumerates for the root ``version`` attribute (empty if only format-constrained)."""
+    parser = etree.XMLParser(resolve_entities=False, no_network=True)
+    tree = etree.parse(str(xsd), parser)
+    values = tree.xpath("//xs:attribute[@name='version']//xs:enumeration/@value", namespaces={"xs": _XS_NS})
+    return {str(v) for v in values}  # type: ignore[union-attr]
 
 
 def _declared_version(xml_file: str | Path) -> str | None:

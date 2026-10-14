@@ -4,7 +4,7 @@ import warnings
 from pathlib import Path
 from typing import Any, Union
 
-from doclang._schemas import UnsupportedVersionError, _declared_version, _select_schemas
+from doclang._schemas import UnsupportedVersionError, _declared_version, _enumerated_versions, _select_schemas
 from doclang.schematron import (
     SchematronBackendNotFound,
     SchematronValidator,
@@ -93,14 +93,20 @@ def validate(
         if spec_version is not None:
             raise
         raise ValidationError(xsd_errors=[{"error": str(exc)}], schematron_errors=[]) from exc
-    if spec_version is not None:
-        declared = _declared_version(path)
-        if declared is not None and declared != spec_version:
-            warnings.warn(
-                f"Document declares version {declared}; validating as {selection.version} as requested.",
-                UserWarning,
-                stacklevel=2,
-            )
+    declared_version = _declared_version(path)
+    # Schemas that enumerate the allowed `version` values (0.7) would reject a differing declared
+    # version on that attribute alone; for those the declared version is replaced in memory.
+    enumerated_versions = _enumerated_versions(selection.xsd)
+    rewrite_declared_version = (
+        declared_version is not None and bool(enumerated_versions) and declared_version not in enumerated_versions
+    )
+    if spec_version is not None and declared_version is not None and declared_version != spec_version:
+        suffix = " (the declared version itself is not checked)" if rewrite_declared_version else ""
+        warnings.warn(
+            f"Document declares version {declared_version}; validating as {selection.version} as requested{suffix}.",
+            UserWarning,
+            stacklevel=2,
+        )
     elif not selection.declared:
         warnings.warn(
             f"No DocLang version declared; validating against the latest supported version ({selection.version}).",
@@ -113,7 +119,7 @@ def validate(
             path,
             allow_empty_namespace=allow_empty_namespace,
             xsd_file=selection.xsd,
-            schema_version=selection.version,
+            schema_version=selection.version if rewrite_declared_version else None,
         )
 
     if not xsd_only:

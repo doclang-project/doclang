@@ -27,8 +27,8 @@ def _validate_xsd_at(
         xml_file: Path to XML file to validate
         xsd_file: Path to XSD schema file
         allow_empty_namespace: If True, automatically add DocLang namespace if missing
-        schema_version: MAJOR.MINOR version of the schema. If given and the document declares a
-            version, the declared version is replaced by it in memory before validating.
+        schema_version: MAJOR.MINOR version to put in place of the document's declared version, in
+            memory, before validating. Only passed for schemas that enumerate the allowed versions.
             NOTE: The bundled 0.7 schema restricts the root ``version`` attribute to
             their own version, so a document declaring any other version would otherwise be
             rejected on that attribute alone, rather than on its content.
@@ -50,9 +50,9 @@ def _validate_xsd_at(
 
         if schema_version is not None:
             root = xml_doc.getroot()
-            declared = root.get("version")
+            declared_version = root.get("version")
             # Only well-formed versions are replaced; malformed ones are left for the schema to report.
-            if declared is not None and re.fullmatch(r"[0-9]+\.[0-9]+", declared):
+            if declared_version is not None and re.fullmatch(r"[0-9]+\.[0-9]+", declared_version):
                 root.set("version", schema_version)
 
         if schema.validate(xml_doc):

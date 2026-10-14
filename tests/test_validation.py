@@ -319,3 +319,31 @@ def test_versioned_folder_shadows_head_for_same_version(schema_dir, tmp_path):
     declared = _select_schemas(_doc(tmp_path, "1.2"))
     assert declared.xsd == schema_dir / "schemas" / "1.2" / "doclang.xsd"
     assert _select_schemas(_doc(tmp_path, None)).xsd == schema_dir / "doclang.xsd"  # head when unspecified
+
+
+def test_enumerated_versions_only_for_released_07_schema():
+    from doclang._schemas import _enumerated_versions
+
+    assert _enumerated_versions(SCHEMA_DIR / "schemas" / "0.7" / "doclang.xsd") == {"0.7"}
+    assert _enumerated_versions(SCHEMA_DIR / "doclang.xsd") == set()  # head: format only
+
+
+def test_declared_version_not_rewritten_for_format_only_schemas(schema_dir, tmp_path):
+    """Targets that don't pin `version` get the document as is, and no 'not checked' remark."""
+    from unittest.mock import patch as mock_patch
+
+    from doclang import xsd_validation
+
+    with (
+        mock_patch.object(xsd_validation, "_validate_xsd_at", wraps=xsd_validation._validate_xsd_at) as spy,
+        pytest.warns(UserWarning, match=r"declares version 1\.0; validating as 1\.2 as requested\.$"),
+    ):
+        validate(_doc(tmp_path, "1.0"), xsd_only=True, spec_version="1.2")
+    assert spy.call_args.kwargs["schema_version"] is None
+
+
+def test_note_mentions_unchecked_version_when_enumerating_schema_used(tmp_path):
+    with pytest.warns(
+        UserWarning, match=r"validating as 0\.7 as requested \(the declared version itself is not checked\)\."
+    ):
+        validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7")
