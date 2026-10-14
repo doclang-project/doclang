@@ -63,6 +63,14 @@ def validate(
             "for XSD validation. Has no effect for XSDs that accept any MAJOR.MINOR, or with --schematron-only."
         ),
     ),
+    strict_declared_version: bool = typer.Option(
+        False,
+        "--strict-declared-version",
+        help=(
+            "Fail if no schema is bundled for the document's declared version. By default the latest schema "
+            "is used instead, with a warning."
+        ),
+    ),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
@@ -79,7 +87,7 @@ def validate(
         doclang validate document.xml --format json
     """
     try:
-        selection = _select_schemas(xml_file, spec_version)
+        selection = _select_schemas(xml_file, spec_version, strict_declared_version=strict_declared_version)
     except UnsupportedVersionError as exc:
         # An unsupported declared version is reported as a validation failure below.
         if spec_version is not None:
@@ -108,6 +116,7 @@ def validate(
                     schematron_only=schematron_only,
                     spec_version=spec_version,
                     strict_xsd_version_attr=strict_xsd_version_attr,
+                    strict_declared_version=strict_declared_version,
                 )
             finally:
                 for w in caught:

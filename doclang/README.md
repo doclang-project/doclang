@@ -31,12 +31,17 @@ On a minimal install, pass `xsd_only=True` for XSD-only validation, or supply a 
 doclang validate my_document.dclg
 ```
 
-By default a document is validated against the spec version in the `version` attribute of its root
-element. If it has none, the version is unspecified: the latest supported version is used and a warning
-is issued. `--spec-version` (or `validate(..., spec_version="0.7")` in Python) overrides the declared version.
+The schema is chosen as follows:
 
-The latest released schemas of each spec minor version are bundled in `doclang/schemas/<MAJOR.MINOR>/`.
-The schemas directly in `doclang/` are the development head, used when no version is specified.
+1. `--spec-version X.Y` (Python: `spec_version="X.Y"`) uses the bundled schema of that version, overriding the
+   document's own. It is an error if there is none.
+2. Otherwise the spec version in the `version` attribute of the document's root element is used.
+3. Otherwise the latest schema (the development head) is used, with a warning. This covers documents that
+   declare no version, and (with a warning naming the version) documents whose declared version has no bundled
+   schema. Pass `--strict-declared-version` (Python: `strict_declared_version=True`) to fail in the latter case.
+
+The latest released schema of each spec minor version is bundled in `doclang/schemas/<MAJOR.MINOR>/`.
+The schema directly in `doclang/` is the development head.
 
 > **Note on 0.7:** the 0.7 XSD only accepts `0.7` in the root `version` attribute (later versions only
 > require the `MAJOR.MINOR` format). So that a document declaring another version (e.g. `0.8`) can be

@@ -71,12 +71,15 @@ def validate(
     schematron: SchematronValidator | None = None,
     spec_version: str | None = None,
     strict_xsd_version_attr: bool = False,
+    strict_declared_version: bool = False,
 ) -> None:
     """Validate a DocLang XML file using the bundled reference XSD and Schematron rules.
 
     The spec version to validate against is ``spec_version`` if given, else the ``version``
-    attribute of the root element. If neither is set the version is unspecified: the latest
-    supported version is used and a :class:`UserWarning` is issued.
+    attribute of the root element. If neither is set the version is unspecified: the latest schema
+    (the development head) is used and a :class:`UserWarning` is issued. The same happens, with a
+    warning, for a declared version that has no bundled schema; pass ``strict_declared_version=True``
+    to fail instead.
 
     Some XSDs (currently 0.7) only accept their own version in the root ``version`` attribute. If the
     declared version differs, it is by default replaced by the schema's version in memory for XSD
@@ -98,7 +101,7 @@ def validate(
     schematron_errors: list[dict[str, Any]] = []
 
     try:
-        selection = _select_schemas(path, spec_version)
+        selection = _select_schemas(path, spec_version, strict_declared_version=strict_declared_version)
     except UnsupportedVersionError as exc:
         if spec_version is not None:
             raise
@@ -132,7 +135,14 @@ def validate(
             )
     elif not selection.declared:
         warnings.warn(
-            f"No DocLang version declared; validating against the latest supported version ({selection.version}).",
+            f"No DocLang version declared; validating against the latest schema ({selection.version}).",
+            UserWarning,
+            stacklevel=2,
+        )
+    elif selection.head_fallback_for is not None:
+        warnings.warn(
+            f"No schema for declared DocLang version {selection.head_fallback_for}; "
+            f"validating against the latest schema ({selection.version}).",
             UserWarning,
             stacklevel=2,
         )

@@ -2,8 +2,8 @@
 
 ``schemas/<MAJOR.MINOR>/`` holds the latest released schemas of each spec minor version.
 The schemas directly in the package directory are the development head: they are used when no
-version is specified, and for a version that has no ``schemas/`` folder yet. At release, the head
-is copied to ``schemas/<MAJOR.MINOR>/`` (see ``utils/prepare_release.py``).
+version is specified, and as a fallback for a declared version that has no ``schemas/`` folder.
+At release, the head is copied to ``schemas/<MAJOR.MINOR>/`` (see ``utils/prepare_release.py``).
 """
 
 from __future__ import annotations
@@ -23,17 +23,18 @@ _XS_NS = "http://www.w3.org/2001/XMLSchema"
 
 
 class UnsupportedVersionError(ValueError):
-    """Raised when a requested DocLang spec version is not supported by this toolkit."""
+    """Raised when there are no schemas for a requested or declared DocLang spec version."""
 
 
 @dataclass(frozen=True)
 class SchemaSelection:
     """The schemas chosen for a document."""
 
-    version: str
+    version: str  # version of the chosen schemas (for the head: its label)
     xsd: Path
     sch: Path
-    declared: bool  # False when no version was requested or declared (latest assumed)
+    declared: bool  # False when no version was requested or declared (head used)
+    head_fallback_for: str | None = None  # declared version without schemas, for which the head was used
 
 
 def _bundled_xsd_path() -> Path:
@@ -82,45 +83,37 @@ def _has_versioned_schemas(version: str) -> bool:
     return (folder / "doclang.xsd").exists() and (folder / "doclang.sch").exists()
 
 
-def _supported_versions() -> list[str]:
-    """All supported spec versions, oldest first."""
-    versions = {_current_version()}
+def _available_versions() -> list[str]:
+    """Versions with bundled ``schemas/`` folders, oldest first."""
     versioned_dir = _SCHEMA_DIR / "schemas"
-    if versioned_dir.is_dir():
-        versions.update(
-            entry.name
-            for entry in versioned_dir.iterdir()
-            if _VERSION_RE.match(entry.name) and _has_versioned_schemas(entry.name)
-        )
+    if not versioned_dir.is_dir():
+        return []
+    versions = [e.name for e in versioned_dir.iterdir() if _VERSION_RE.match(e.name) and _has_versioned_schemas(e.name)]
     return sorted(versions, key=_version_key)
 
 
-def _resolve_version(requested: str) -> str:
-    """Map a requested ``MAJOR.MINOR`` to a supported version, or raise UnsupportedVersionError.
+def _resolve_in_folders(requested: str) -> str | None:
+    """Map a requested ``MAJOR.MINOR`` to a version with bundled schemas, or None.
 
     An exact match wins. From major version 1, an instance is compatible with any later minor
-    of the same major, so the nearest newer supported minor is used.
+    of the same major, so the nearest newer minor with schemas is used.
     """
-    supported = _supported_versions()
-    if _VERSION_RE.match(requested):
-        if requested in supported:
-            return requested
-        major, minor = _version_key(requested)
-        if major >= 1:
-            for candidate in supported:
-                if _version_key(candidate)[0] == major and _version_key(candidate)[1] > minor:
-                    return candidate
-    raise UnsupportedVersionError(
-        f"Unsupported DocLang spec version '{requested}'; supported versions: {', '.join(supported)}"
-    )
+    if not _VERSION_RE.match(requested):
+        return None
+    available = _available_versions()
+    if requested in available:
+        return requested
+    major, minor = _version_key(requested)
+    if major >= 1:
+        for candidate in available:
+            if _version_key(candidate)[0] == major and _version_key(candidate)[1] > minor:
+                return candidate
+    return None
 
 
-def _schema_paths_for(version: str) -> tuple[Path, Path]:
-    """Released schemas of ``version`` if bundled, else the development head (if it is that version)."""
-    if _has_versioned_schemas(version):
-        folder = _versioned_dir(version)
-        return folder / "doclang.xsd", folder / "doclang.sch"
-    return _bundled_schema_paths()
+def _versioned_paths(version: str) -> tuple[Path, Path]:
+    folder = _versioned_dir(version)
+    return folder / "doclang.xsd", folder / "doclang.sch"
 
 
 def _enumerated_versions(xsd: Path) -> set[str]:
@@ -143,13 +136,48 @@ def _declared_version(xml_file: str | Path) -> str | None:
         return None
 
 
-def _select_schemas(xml_file: str | Path, spec_version: str | None = None) -> SchemaSelection:
-    """Pick schemas: explicit ``spec_version``, else the document's ``version``, else the latest."""
-    requested = spec_version if spec_version is not None else _declared_version(xml_file)
-    if requested is None:
-        version = _current_version()
-        xsd, sch = _bundled_schema_paths()
-        return SchemaSelection(version=version, xsd=xsd, sch=sch, declared=False)
-    version = _resolve_version(requested)
-    xsd, sch = _schema_paths_for(version)
-    return SchemaSelection(version=version, xsd=xsd, sch=sch, declared=True)
+def _select_schemas(
+    xml_file: str | Path,
+    spec_version: str | None = None,
+    *,
+    strict_declared_version: bool = False,
+) -> SchemaSelection:
+    """Pick schemas for a document.
+
+    1. An explicit ``spec_version`` uses the bundled schemas of that version (else UnsupportedVersionError).
+    2. Otherwise the document's declared ``version`` uses the bundled schemas of that version.
+    3. Otherwise the development head is used. For a declared version without schemas this is a
+       fallback, unless ``strict_declared_version`` is set (then UnsupportedVersionError).
+    """
+    if spec_version is not None:
+        version = _resolve_in_folders(spec_version)
+        if version is None:
+            available = ", ".join(_available_versions()) or "none"
+            raise UnsupportedVersionError(
+                f"No schema for DocLang spec version '{spec_version}'; available versions: {available}"
+            )
+        xsd, sch = _versioned_paths(version)
+        return SchemaSelection(version=version, xsd=xsd, sch=sch, declared=True)
+
+    declared_version = _declared_version(xml_file)
+    head_xsd, head_sch = _bundled_schema_paths()
+    if declared_version is None:
+        return SchemaSelection(version=_current_version(), xsd=head_xsd, sch=head_sch, declared=False)
+
+    version = _resolve_in_folders(declared_version)
+    if version is not None:
+        xsd, sch = _versioned_paths(version)
+        return SchemaSelection(version=version, xsd=xsd, sch=sch, declared=True)
+
+    if strict_declared_version:
+        available = ", ".join(_available_versions()) or "none"
+        raise UnsupportedVersionError(
+            f"No schema for declared DocLang version '{declared_version}'; available versions: {available}"
+        )
+    return SchemaSelection(
+        version=_current_version(),
+        xsd=head_xsd,
+        sch=head_sch,
+        declared=True,
+        head_fallback_for=declared_version,
+    )

@@ -51,7 +51,7 @@ def test_cli_spec_version_override_and_unsupported(tmp_path):
     assert ok.exit_code == 0, ok.output
     bad = runner.invoke(app, ["validate", str(doc), "--xsd-only", "--spec-version", "9.9"])
     assert bad.exit_code == 1
-    assert "Unsupported DocLang spec version '9.9'" in bad.output
+    assert "No schema for DocLang spec version '9.9'" in bad.output
 
 
 def test_cli_warns_when_version_undeclared(tmp_path):
@@ -91,3 +91,14 @@ def test_cli_json_output_includes_notes(tmp_path):
     payload = json.loads(result.stdout)
     assert len(payload["notes"]) == 2
     assert payload["notes"][0].startswith("Document declares version 0.8")
+
+
+def test_cli_strict_declared_version(tmp_path):
+    doc = _doc_with_version(tmp_path, "0.1")
+    lenient = runner.invoke(app, ["validate", str(doc), "--xsd-only"])
+    assert lenient.exit_code == 0, lenient.output
+    assert "No schema for declared DocLang version 0.1" in lenient.output
+
+    strict = runner.invoke(app, ["validate", str(doc), "--xsd-only", "--strict-declared-version"])
+    assert strict.exit_code == 1
+    assert "No schema for declared DocLang version '0.1'" in strict.output
