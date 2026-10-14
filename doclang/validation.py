@@ -4,7 +4,13 @@ import warnings
 from pathlib import Path
 from typing import Any, Union
 
-from doclang._schemas import UnsupportedVersionError, _declared_version, _enumerated_versions, _select_schemas
+from doclang._schemas import (
+    UnsupportedVersionError,
+    _declared_version,
+    _enumerated_versions,
+    _head_description,
+    _select_schemas,
+)
 from doclang.schematron import (
     SchematronBackendNotFound,
     SchematronValidator,
@@ -135,14 +141,14 @@ def validate(
             )
     elif not selection.declared:
         warnings.warn(
-            f"No DocLang version declared; validating against the latest schema ({selection.version}).",
+            f"No DocLang version declared; validating against the latest schema ({_head_description()}).",
             UserWarning,
             stacklevel=2,
         )
     elif selection.head_fallback_for is not None:
         warnings.warn(
             f"No schema for declared DocLang version {selection.head_fallback_for}; "
-            f"validating against the latest schema ({selection.version}).",
+            f"validating against the latest schema ({_head_description()}).",
             UserWarning,
             stacklevel=2,
         )

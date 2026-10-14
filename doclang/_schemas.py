@@ -116,6 +116,18 @@ def _versioned_paths(version: str) -> tuple[Path, Path]:
     return folder / "doclang.xsd", folder / "doclang.sch"
 
 
+def _head_description() -> str:
+    """How to refer to the head in messages: its version if identical to the released schema of that
+    version, else "unreleased development version" (the head's label is then not reliable)."""
+    label = _current_version()
+    if _has_versioned_schemas(label):
+        released_xsd, released_sch = _versioned_paths(label)
+        head_xsd, head_sch = _bundled_schema_paths()
+        if released_xsd.read_bytes() == head_xsd.read_bytes() and released_sch.read_bytes() == head_sch.read_bytes():
+            return label
+    return "unreleased development version"
+
+
 def _enumerated_versions(xsd: Path) -> set[str]:
     """Versions the XSD enumerates for the root ``version`` attribute (empty if only format-constrained)."""
     parser = etree.XMLParser(resolve_entities=False, no_network=True)

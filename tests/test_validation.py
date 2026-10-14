@@ -433,3 +433,30 @@ def test_08_document_with_track_against_07_fails_on_content(tmp_path, strict):
         with pytest.raises(ValidationError) as excinfo:
             validate(doc, spec_version="0.7", strict_xsd_version_attr=strict)
     assert "track" in str(excinfo.value)
+
+
+def test_head_described_by_label_only_when_identical_to_released_schema(schema_dir):
+    import shutil
+
+    from doclang._schemas import _head_description
+
+    # fixture head is labeled 1.3 and has no released 1.3 schemas
+    assert _head_description() == "unreleased development version"
+
+    folder = schema_dir / "schemas" / "1.3"
+    folder.mkdir()
+    for name in ("doclang.xsd", "doclang.sch"):
+        shutil.copy(schema_dir / name, folder / name)
+    assert _head_description() == "1.3"  # identical: the label is reliable
+
+    (folder / "doclang.sch").write_text((folder / "doclang.sch").read_text(encoding="utf-8") + "\n<!-- changed -->")
+    assert _head_description() == "unreleased development version"
+
+
+def test_fallback_warnings_describe_the_head(schema_dir, tmp_path):
+    with pytest.warns(UserWarning, match=r"latest schema \(unreleased development version\)\.$"):
+        validate(_doc(tmp_path, None), xsd_only=True)
+    with pytest.warns(
+        UserWarning, match=r"No schema for declared DocLang version 1\.4; .*\(unreleased development version\)"
+    ):
+        validate(_doc(tmp_path, "1.4"), xsd_only=True)
