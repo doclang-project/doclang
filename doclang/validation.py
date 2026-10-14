@@ -13,7 +13,7 @@ from doclang.schematron import (
 )
 from doclang.xsd_validation import _validate_xsd
 
-__all__ = ["SchematronBackendNotFound", "UnsupportedVersionError", "ValidationError", "validate"]
+__all__ = ["SchematronBackendNotFound", "UnsupportedVersionError", "ValidationError", "VersionNote", "validate"]
 
 
 def _violations_to_errors(violations: list[SchematronViolation]) -> list[dict[str, Any]]:
@@ -24,6 +24,10 @@ def _violations_to_errors(violations: list[SchematronViolation]) -> list[dict[st
         }
         for violation in violations
     ]
+
+
+class VersionNote(UserWarning):
+    """Explains a version-related adjustment made during validation (see ``validate()``)."""
 
 
 class ValidationError(Exception):
@@ -66,12 +70,18 @@ def validate(
     schematron_only: bool = False,
     schematron: SchematronValidator | None = None,
     spec_version: str | None = None,
+    strict_xsd_version_attr: bool = False,
 ) -> None:
     """Validate a DocLang XML file using the bundled reference XSD and Schematron rules.
 
     The spec version to validate against is ``spec_version`` if given, else the ``version``
     attribute of the root element. If neither is set the version is unspecified: the latest
     supported version is used and a :class:`UserWarning` is issued.
+
+    Some XSDs (currently 0.7) only accept their own version in the root ``version`` attribute. If the
+    declared version differs, it is by default replaced by the schema's version in memory for XSD
+    validation (the file is not modified) and a :class:`VersionNote` is issued. Pass
+    ``strict_xsd_version_attr=True`` to apply the XSD's own check as is, i.e. fail in that case.
 
     By default both XSD and Schematron validation run. Pass ``schematron`` to use a
     custom Schematron backend; when omitted, the default Saxon/C backend is used
@@ -98,15 +108,28 @@ def validate(
     # version on that attribute alone; for those the declared version is replaced in memory.
     enumerated_versions = _enumerated_versions(selection.xsd)
     rewrite_declared_version = (
-        declared_version is not None and bool(enumerated_versions) and declared_version not in enumerated_versions
+        not strict_xsd_version_attr
+        and declared_version is not None
+        and bool(enumerated_versions)
+        and declared_version not in enumerated_versions
     )
     if spec_version is not None and declared_version is not None and declared_version != spec_version:
-        suffix = " (the declared version itself is not checked)" if rewrite_declared_version else ""
         warnings.warn(
-            f"Document declares version {declared_version}; validating as {selection.version} as requested{suffix}.",
+            f"Document declares version {declared_version}; validating as {selection.version} as requested.",
             UserWarning,
             stacklevel=2,
         )
+        if rewrite_declared_version:
+            warnings.warn(
+                f'The {selection.version} XSD only accepts version "{selection.version}". Under strict validation, '
+                f"a {declared_version} document would therefore fail on the version attribute alone. "
+                f'To validate all other rules, the declared version is replaced with "{selection.version}" in memory '
+                "(the file is not modified). The declared version itself is not checked. "
+                "Use --strict-xsd-version-attr (strict_xsd_version_attr=True in Python) to apply the XSD's "
+                "version check as is.",
+                VersionNote,
+                stacklevel=2,
+            )
     elif not selection.declared:
         warnings.warn(
             f"No DocLang version declared; validating against the latest supported version ({selection.version}).",

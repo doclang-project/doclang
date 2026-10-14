@@ -22,6 +22,7 @@ from doclang import (
 )
 from doclang._schemas import _supported_versions
 from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
+from doclang.validation import VersionNote
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
@@ -277,7 +278,8 @@ def test_version_attribute_only_constrained_to_format(tmp_path):
 
 def test_validate_notes_override_differing_from_declared(tmp_path):
     with pytest.warns(UserWarning, match="declares version 0.8; validating as 0.7"):
-        validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7")
+        with pytest.warns(VersionNote):
+            validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7")
 
 
 def test_declared_version_normalized_for_schemas_with_version_enumeration(schema_dir, tmp_path):
@@ -292,7 +294,8 @@ def test_declared_version_normalized_for_schemas_with_version_enumeration(schema
     (folder / "doclang.sch").write_text((schema_dir / "doclang.sch").read_text(encoding="utf-8"), encoding="utf-8")
 
     with pytest.warns(UserWarning, match="declares version 1.2; validating as 0.6"):
-        assert validate(_doc(tmp_path, "1.2"), xsd_only=True, spec_version="0.6") is None
+        with pytest.warns(VersionNote):
+            assert validate(_doc(tmp_path, "1.2"), xsd_only=True, spec_version="0.6") is None
 
 
 def test_bundled_07_schemas_are_the_released_ones():
@@ -342,8 +345,25 @@ def test_declared_version_not_rewritten_for_format_only_schemas(schema_dir, tmp_
     assert spy.call_args.kwargs["schema_version"] is None
 
 
-def test_note_mentions_unchecked_version_when_enumerating_schema_used(tmp_path):
-    with pytest.warns(
-        UserWarning, match=r"validating as 0\.7 as requested \(the declared version itself is not checked\)\."
-    ):
+def test_rewrite_is_explained_by_separate_note_when_enumerating_schema_used(tmp_path):
+    with pytest.warns(UserWarning) as record:
         validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7")
+    plain = [str(w.message) for w in record if not issubclass(w.category, VersionNote)]
+    notes = [str(w.message) for w in record if issubclass(w.category, VersionNote)]
+    assert plain == ["Document declares version 0.8; validating as 0.7 as requested."]
+    assert len(notes) == 1
+    assert 'replaced with "0.7" in memory' in notes[0]
+    assert "not modified" in notes[0]
+    assert "--strict-xsd-version-attr" in notes[0]
+
+
+def test_strict_xsd_version_attr_applies_xsd_check_as_is(tmp_path):
+    with pytest.warns(UserWarning, match="declares version 0.8; validating as 0.7 as requested") as record:
+        with pytest.raises(ValidationError, match="version"):
+            validate(_doc(tmp_path, "0.8"), xsd_only=True, spec_version="0.7", strict_xsd_version_attr=True)
+    assert not any(issubclass(w.category, VersionNote) for w in record)  # nothing was rewritten
+
+
+def test_strict_xsd_version_attr_has_no_effect_for_format_only_schemas(schema_dir, tmp_path):
+    with pytest.warns(UserWarning, match="declares version 1.0; validating as 1.2 as requested"):
+        validate(_doc(tmp_path, "1.0"), xsd_only=True, spec_version="1.2", strict_xsd_version_attr=True)

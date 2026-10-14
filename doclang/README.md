@@ -38,12 +38,12 @@ is issued. `--spec-version` (or `validate(..., spec_version="0.7")` in Python) o
 The latest released schemas of each spec minor version are bundled in `doclang/schemas/<MAJOR.MINOR>/`.
 The schemas directly in `doclang/` are the development head, used when no version is specified.
 
-> **Note on 0.7:** the 0.7 XSD restricts the root `version` attribute to `0.7` (later versions only
-> require the `MAJOR.MINOR` format). To let a document declaring another version (e.g. `0.8`) be checked
-> against the 0.7 schema, the toolkit replaces the declared `version` by `0.7` in memory before XSD
-> validation (the file is not modified). The only effect is that the `version` attribute itself is not
-> checked; all other 0.7 rules apply as usual. A warning "Document declares version X; validating as Y" is
-> issued in this case.
+> **Note on 0.7:** the 0.7 XSD only accepts `0.7` in the root `version` attribute (later versions only
+> require the `MAJOR.MINOR` format). So that a document declaring another version (e.g. `0.8`) can be
+> checked against the 0.7 rules, the toolkit by default replaces the declared `version` with `0.7` in
+> memory for XSD validation (the file is not modified), and says so in a note. The declared version itself
+> is then not checked; all other 0.7 rules are still checked. Use `--strict-xsd-version-attr` (Python:
+> `strict_xsd_version_attr=True`) to apply the XSD's version check as is, in which case such a document fails.
 
 #### More validation scenarios
 
@@ -62,6 +62,9 @@ doclang validate my_document.dclg --format json
 
 # Validate against a specific spec version (overrides the document's `version`)
 doclang validate my_document.dclg --spec-version 0.7
+
+# ... and apply the XSD's own `version` attribute check as is
+doclang validate my_document.dclg --spec-version 0.7 --strict-xsd-version-attr
 
 # Quiet mode (exit code only)
 doclang validate my_document.dclg --quiet

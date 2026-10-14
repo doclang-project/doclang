@@ -17,7 +17,7 @@ from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
 from doclang.schematron import SchematronBackendNotFound
 from doclang.utils import _VERSION
-from doclang.validation import ValidationError
+from doclang.validation import ValidationError, VersionNote
 from doclang.validation import validate as validate_document
 
 app = typer.Typer(
@@ -54,6 +54,15 @@ def validate(
         "--spec-version",
         help="DocLang spec version (MAJOR.MINOR) to validate against, overriding the document's version",
     ),
+    strict_xsd_version_attr: bool = typer.Option(
+        False,
+        "--strict-xsd-version-attr",
+        help=(
+            "Apply the XSD's own check of the root `version` attribute as is. By default, if the XSD only accepts "
+            "its own version (0.7) and the document declares another, the declared version is replaced in memory "
+            "for XSD validation. Has no effect for XSDs that accept any MAJOR.MINOR, or with --schematron-only."
+        ),
+    ),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
@@ -66,6 +75,7 @@ def validate(
         doclang validate document.xml
         doclang validate document.xml --xsd-only
         doclang validate document.xml --spec-version 0.7
+        doclang validate document.xml --spec-version 0.7 --strict-xsd-version-attr
         doclang validate document.xml --format json
     """
     try:
@@ -86,6 +96,7 @@ def validate(
         typer.echo(f"Validating: {xml_file}")
         typer.echo("-" * 60)
 
+    notes: list[str] = []
     try:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
@@ -96,11 +107,14 @@ def validate(
                     xsd_only=xsd_only,
                     schematron_only=schematron_only,
                     spec_version=spec_version,
+                    strict_xsd_version_attr=strict_xsd_version_attr,
                 )
             finally:
-                if not quiet:
-                    for w in caught:
-                        typer.echo(f"Warning: {w.message}", err=True)
+                for w in caught:
+                    notes.append(str(w.message))
+                    if not quiet:
+                        label = "Note" if issubclass(w.category, VersionNote) else "Warning"
+                        typer.echo(f"{label}: {w.message}", err=True)
     except SchematronBackendNotFound as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
@@ -108,6 +122,7 @@ def validate(
         results: dict[str, Any] = {
             "xsd": {"valid": not exc.xsd_errors, "errors": exc.xsd_errors},
             "schematron": {"valid": not exc.schematron_errors, "errors": exc.schematron_errors},
+            "notes": notes,
         }
 
         if not quiet and format == OutputFormat.text:
@@ -164,6 +179,7 @@ def validate(
                 {
                     "xsd": {"valid": True, "errors": []},
                     "schematron": {"valid": True, "errors": []},
+                    "notes": notes,
                 },
                 indent=2,
             )
