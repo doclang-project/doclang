@@ -50,7 +50,7 @@ uv run pre-commit install
 ## Version syncing
 
 Release preparation derives the target version from git tags (`vMAJOR.MINOR.PATCH`, e.g. `v0.3.0`)
-and writes the release triple to `pyproject.toml`, the XSD, and the reference Excel.
+and writes the release triple to `pyproject.toml`, `spec.md`, the XSD, and a test fixture.
 
 `doclang --version` reads from **`pyproject.toml`** in a checkout, or from installed package
 metadata on PyPI (where git tags are not available).
