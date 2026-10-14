@@ -20,6 +20,7 @@ from doclang import (
     ValidationError,
     validate,
 )
+from doclang._schemas import _supported_versions
 from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
 
 TEST_DATA_DIR = Path(__file__).parent / "data"
@@ -292,3 +293,29 @@ def test_declared_version_normalized_for_schemas_with_version_enumeration(schema
 
     with pytest.warns(UserWarning, match="declares version 1.2; validating as 0.6"):
         assert validate(_doc(tmp_path, "1.2"), xsd_only=True, spec_version="0.6") is None
+
+
+def test_bundled_07_schemas_are_the_released_ones():
+    """schemas/0.7 is the unmodified v0.7.3 snapshot: it knows nothing of later constructs like <track>."""
+    assert "0.7" in _supported_versions()
+    xsd = (SCHEMA_DIR / "schemas" / "0.7" / "doclang.xsd").read_text(encoding="utf-8")
+    assert 'name="track"' not in xsd
+
+
+def test_track_document_fails_as_07_and_passes_against_head():
+    track_doc = VALID_DIR / "ok_track_minimal.dclg"
+    with pytest.raises(ValidationError):
+        validate(track_doc, spec_version="0.7")
+    with pytest.warns(UserWarning, match="No DocLang version declared"):
+        assert validate(track_doc) is None  # unspecified: development head
+
+
+def test_versioned_folder_shadows_head_for_same_version(schema_dir, tmp_path):
+    from doclang._schemas import _select_schemas
+
+    (schema_dir / "schemas" / "1.2").mkdir()
+    for name in ("doclang.xsd", "doclang.sch"):
+        (schema_dir / "schemas" / "1.2" / name).write_text((schema_dir / name).read_text(encoding="utf-8"))
+    declared = _select_schemas(_doc(tmp_path, "1.2"))
+    assert declared.xsd == schema_dir / "schemas" / "1.2" / "doclang.xsd"
+    assert _select_schemas(_doc(tmp_path, None)).xsd == schema_dir / "doclang.xsd"  # head when unspecified

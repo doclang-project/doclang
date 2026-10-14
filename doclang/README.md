@@ -35,6 +35,9 @@ By default a document is validated against the spec version in the `version` att
 element. If it has none, the version is unspecified: the latest supported version is used and a warning
 is issued. `--spec-version` (or `validate(..., spec_version="0.7")` in Python) overrides the declared version.
 
+The latest released schemas of each spec minor version are bundled in `doclang/schemas/<MAJOR.MINOR>/`.
+The schemas directly in `doclang/` are the development head, used when no version is specified.
+
 > **Note on 0.7:** the 0.7 XSD restricts the root `version` attribute to `0.7` (later versions only
 > require the `MAJOR.MINOR` format). To let a document declaring another version (e.g. `0.8`) be checked
 > against the 0.7 schema, the toolkit replaces the declared `version` by `0.7` in memory before XSD

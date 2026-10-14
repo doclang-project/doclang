@@ -1,7 +1,9 @@
 """Bundled DocLang schema paths and spec-version selection (internal).
 
-The schemas for the current spec version live directly in the package directory.
-Schemas for other supported ``MAJOR.MINOR`` versions live in ``schemas/<MAJOR.MINOR>/``.
+``schemas/<MAJOR.MINOR>/`` holds the latest released schemas of each spec minor version.
+The schemas directly in the package directory are the development head: they are used when no
+version is specified, and for a version that has no ``schemas/`` folder yet. At release, the head
+is copied to ``schemas/<MAJOR.MINOR>/`` (see ``utils/prepare_release.py``).
 """
 
 from __future__ import annotations
@@ -68,14 +70,25 @@ def _current_version() -> str:
     return _schema_version(_bundled_xsd_path())
 
 
+def _versioned_dir(version: str) -> Path:
+    return _SCHEMA_DIR / "schemas" / version
+
+
+def _has_versioned_schemas(version: str) -> bool:
+    folder = _versioned_dir(version)
+    return (folder / "doclang.xsd").exists() and (folder / "doclang.sch").exists()
+
+
 def _supported_versions() -> list[str]:
     """All supported spec versions, oldest first."""
     versions = {_current_version()}
     versioned_dir = _SCHEMA_DIR / "schemas"
     if versioned_dir.is_dir():
-        for entry in versioned_dir.iterdir():
-            if _VERSION_RE.match(entry.name) and (entry / "doclang.xsd").exists() and (entry / "doclang.sch").exists():
-                versions.add(entry.name)
+        versions.update(
+            entry.name
+            for entry in versioned_dir.iterdir()
+            if _VERSION_RE.match(entry.name) and _has_versioned_schemas(entry.name)
+        )
     return sorted(versions, key=_version_key)
 
 
@@ -100,10 +113,11 @@ def _resolve_version(requested: str) -> str:
 
 
 def _schema_paths_for(version: str) -> tuple[Path, Path]:
-    if version == _current_version():
-        return _bundled_schema_paths()
-    folder = _SCHEMA_DIR / "schemas" / version
-    return folder / "doclang.xsd", folder / "doclang.sch"
+    """Released schemas of ``version`` if bundled, else the development head (if it is that version)."""
+    if _has_versioned_schemas(version):
+        folder = _versioned_dir(version)
+        return folder / "doclang.xsd", folder / "doclang.sch"
+    return _bundled_schema_paths()
 
 
 def _declared_version(xml_file: str | Path) -> str | None:
