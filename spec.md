@@ -55,6 +55,22 @@ For the purposes of this document, the following terms and definitions apply. Te
 
    A cohesive and meaningful part of document content, e.g. a table, list item with a marker, a bold piece of text, etc.
 
+### Roles
+
+An implementation may act in one or more of the following roles.
+
+1. **producer**
+
+   An implementation that creates DocLang instances.
+
+2. **processor**
+
+   An implementation that reads, transforms or renders DocLang instances.
+
+3. **validator**
+
+   A processor that checks DocLang instances against this document.
+
 ### Adopted from XML
 
 1. **element**
@@ -86,6 +102,8 @@ For the purposes of this document, the following terms and definitions apply. Te
 ## Conformance
 
 A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD [3] schema and Schematron rules) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
+
+Requirements addressed to a producer, processor or validator apply to implementations acting in that role. A producer SHOULD ensure that the instances it produces conform, for example by validating its output and rejecting or repairing non-conforming results.
 
 ### Version
 
