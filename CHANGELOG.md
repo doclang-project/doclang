@@ -2,6 +2,7 @@
 
 * add version migration (#196)
 * enable version-specific validation (#195)
+  * **BREAKING CHANGE**: XSD no longer restricts `version` attribute to one value nor does it give it a default; selection of version to validate against now defined in spec and implemented by reference toolkit.
 * reformat appendix into annexes (#187)
 * add conformance clause, move versioning rules into it, define roles (#193)
 * fix `<src>` reference entry for `<frame>`, `<cover>` and `<audio>` (#199)
