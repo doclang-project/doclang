@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import sys
+import zipfile
 from pathlib import Path
+
+import pytest
+from lxml import etree
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.export_docx import _strip_html_comments_outside_code  # noqa: E402
+from utils.export_docx import _strip_html_comments_outside_code, build_document, markdown_anchor  # noqa: E402
 
 
 def test_strip_prose_comments() -> None:
@@ -49,3 +53,45 @@ def test_strip_appendix_note_comment_from_spec() -> None:
 def test_malformed_unclosed_inline_backtick_does_not_block_later_comment_stripping() -> None:
     md = "See `<element>; analogous to [`<other>`](#anchor)\n<!-- prose comment -->\nAfter\n"
     assert _strip_html_comments_outside_code(md) == ("See `<element>; analogous to [`<other>`](#anchor)\n\nAfter\n")
+
+
+@pytest.mark.parametrize(
+    ("heading", "anchor"),
+    [
+        ("`<audio>`", "audio"),
+        ("`<field_heading>`", "field_heading"),
+        ("DocLang archive format", "doclang-archive-format"),
+        ("Annex A (normative): Reference", "annex-a-normative-reference"),
+        ("Annex D (informative): Future extensions", "annex-d-informative-future-extensions"),
+        ("Annex A <br/> (normative) <br/> Reference", "annex-a--normative--reference"),  # as GitHub does
+        ("A **bold** heading, with punctuation!", "a-bold-heading-with-punctuation"),
+    ],
+)
+def test_markdown_anchor_follows_github_heading_slugs(heading: str, anchor: str) -> None:
+    assert markdown_anchor(heading) == anchor
+
+
+def _unresolved_internal_links(docx_path: Path) -> list[str]:
+    word = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    root = etree.fromstring(zipfile.ZipFile(docx_path).read("word/document.xml"))
+    bookmarks = {b.get(word + "name") for b in root.iter(word + "bookmarkStart")}
+    anchors = {h.get(word + "anchor") for h in root.iter(word + "hyperlink") if h.get(word + "anchor")}
+    return sorted(a for a in anchors if a not in bookmarks)
+
+
+def test_links_to_headings_with_punctuation_resolve_in_the_export(tmp_path: Path) -> None:
+    md = tmp_path / "doc.md"
+    md.write_text(
+        "# Title\n\n## Annexes\n\n### Annex A (normative): Reference\n\nText.\n\n"
+        "### Other\n\nSee [Reference](#annex-a-normative-reference) and [Annexes](#annexes).\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "doc.docx"
+    build_document(md, out, apply_template_style=False)
+    assert _unresolved_internal_links(out) == []
+
+
+def test_every_internal_link_in_the_exported_spec_resolves(tmp_path: Path) -> None:
+    out = tmp_path / "spec.docx"
+    build_document(ROOT / "spec.md", out, apply_template_style=False)
+    assert _unresolved_internal_links(out) == []
