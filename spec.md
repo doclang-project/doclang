@@ -2878,11 +2878,11 @@ Payload elements are low-level elements that help define the effective content o
 
 ##### `<src>`
 
-The image's source.
+The source of the element's media: an image in [`<picture>`](#picture), [`<frame>`](#frame) and [`<cover>`](#cover), or an audio clip in [`<audio>`](#audio).
 
 ###### Allowed Context
 
-Can only be part of the picture-specific element body sequence of [`<picture>`](#picture).
+Can only be part of the picture-specific element body sequence of [`<picture>`](#picture), or come right after the element head of [`<frame>`](#frame), [`<cover>`](#cover) or [`<audio>`](#audio).
 
 ###### Attributes
 
