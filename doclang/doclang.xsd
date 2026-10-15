@@ -244,7 +244,7 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- SRC ELEMENT: image source (child of picture) -->
+  <!-- SRC ELEMENT: image or audio source (child of picture, frame, cover or audio) -->
   <!-- ============================================ -->
 
   <xs:element name="src">
