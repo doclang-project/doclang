@@ -95,6 +95,35 @@ doclang pack markup.dclg --assets payload/
 doclang pack markup.dclg --validate
 ```
 
+### Migration
+
+Migrate a document to another spec version. Currently only older versions are supported (documents are forward
+compatible, so a newer target needs no migration):
+
+```bash
+doclang migrate document.dclg --to 0.7
+```
+
+The migrated document goes to stdout (or `-o FILE`); what was changed goes to stderr. The migration is best effort:
+content that has an equivalent in the target version is mapped (e.g. additional captions become `<text>`), the rest
+is dropped (e.g. `<track>`), and every change is reported with its location.
+
+#### More migration scenarios
+
+```bash
+doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
+doclang migrate document.dclg --to 0.7 --strict        # fail instead of changing anything
+doclang migrate document.dclg --to 0.7 --format json   # versions, changes and the document as JSON
+doclang migrate document.dclg --to 0.7 --input-validation xsd --output-validation xsd   # without Schematron
+doclang migrate document.dclg --to 0.7 --input-validation none                          # skip validating the input
+```
+
+By default the document is validated before the migration (against its own version) and the result afterwards
+(against the target version), in full, XSD and Schematron. `--input-validation` and `--output-validation` take
+`all`, `xsd`, `schematron` or `none`; `xsd` and `schematron` mean the same as `--xsd-only` and `--schematron-only`
+of `doclang validate`. As there, Schematron needs a backend (see [Installation](#installation)): without one,
+`doclang migrate` fails and tells you so, and you opt out explicitly, e.g. with the `xsd` scope for both.
+
 ## Python API
 
 ### Validation
@@ -167,6 +196,30 @@ path = pack(
 )
 print(f"Created {path}")
 ```
+
+### Migration
+
+```python
+from doclang import migrate, MigrationError
+
+try:
+    result = migrate("document.dclg", to="0.7")
+except MigrationError as exc:
+    print(exc)
+else:
+    print(result.xml)  # the migrated document
+    for change in result.changes:  # {"kind": "mapped" | "dropped", "location": ..., "line": ..., "message": ...}
+        print(change["kind"], change["location"])
+```
+
+`migrate(..., strict=True)` raises `MigrationError` (carrying `changes`) if anything would be changed. The source
+version is the document's `version` attribute; without one the document is treated as the latest version, with a
+warning.
+
+The input is validated before and the result after the migration; `input_validation` and `output_validation`
+(`"all"` by default, or `"xsd"`, `"schematron"`, `"none"`) select what runs. As with `validate()`, a missing
+Schematron backend raises `SchematronBackendNotFound`. An invalid input raises `MigrationError`; so does an invalid
+result, which indicates a bug in a migration step (or an invalid input that was not validated).
 
 ## Validation Rules
 

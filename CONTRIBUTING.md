@@ -80,6 +80,14 @@ uv run python utils/export_docx.py
 
 Outputs are written under [exports/](./exports/) (`doclang.docx`, and `doclang-styled.docx` when `exports/templates/word.dotx` is present).
 
+## Schema changes and migration steps
+
+Schemas of earlier spec versions are bundled in `doclang/schemas/<MAJOR.MINOR>/`; `doclang/doclang.{xsd,sch}` are
+the development head. When a change to the head schema cannot be expressed in the previous version (a new element,
+a relaxed cardinality, ...), the same pull request adds a rule to `doclang/migration/_steps/next.py` that maps or drops it
+for `doclang migrate`, plus a valid test fixture using it. `tests/test_migration.py` migrates every valid fixture
+to the newest released version and validates the result, so a change without a rule fails the tests.
+
 ## Release workflow
 
 For maintainers preparing a release:

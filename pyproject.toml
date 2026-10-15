@@ -66,8 +66,8 @@ dev = [
 package = true
 default-groups = ["dev"]
 
-[tool.setuptools]
-packages = ["doclang", "doclang.backends"]
+[tool.setuptools.packages.find]
+include = ["doclang", "doclang.*"]
 
 [tool.ruff]
 target-version = "py310"

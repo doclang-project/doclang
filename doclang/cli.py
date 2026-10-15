@@ -13,6 +13,8 @@ from typing import Any, Optional
 import typer
 
 from doclang._schemas import UnsupportedVersionError, _select_schemas
+from doclang.migration import MigrationError
+from doclang.migration import migrate as migrate_document
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
 from doclang.schematron import SchematronBackendNotFound
@@ -26,6 +28,15 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+
+
+class ValidationScope(str, Enum):
+    """What part of the validation to run."""
+
+    all = "all"
+    xsd = "xsd"
+    schematron = "schematron"
+    none = "none"
 
 
 class OutputFormat(str, Enum):
@@ -358,6 +369,109 @@ def pack(
 
     if not quiet:
         typer.echo(f"Created {created}")
+
+
+@app.command(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
+)
+def migrate(
+    document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …)", exists=True),
+    to: str = typer.Option(
+        ..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to; currently only older versions"
+    ),
+    output: Path | None = typer.Option(
+        None, "-o", "--output", help="Write the migrated document here (default: stdout)"
+    ),
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help="Fail if anything would be mapped or dropped (default: best effort, reporting what changed)",
+    ),
+    input_validation: ValidationScope = typer.Option(
+        ValidationScope.all,
+        "--input-validation",
+        help="Validation of the document before migrating, against its own version",
+    ),
+    output_validation: ValidationScope = typer.Option(
+        ValidationScope.all,
+        "--output-validation",
+        help="Validation of the migrated document against the target version",
+    ),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Do not report changes and warnings"),
+    format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
+):
+    """
+    Migrate a DocLang document to another spec version (currently only older versions are supported).
+
+    The migrated document goes to stdout (or --output); changes and warnings go to stderr. With
+    --format json, stdout holds a JSON object with the versions, the changes and the document.
+
+    Examples:
+
+        doclang migrate document.dclg --to 0.7
+        doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
+        doclang migrate document.dclg --to 0.7 --strict --format json
+    """
+    warning_messages: list[str] = []
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                result = migrate_document(
+                    document,
+                    to=to,
+                    strict=strict,
+                    input_validation=input_validation.value,
+                    output_validation=output_validation.value,
+                )
+            finally:
+                warning_messages = [str(w.message) for w in caught]
+    except (MigrationError, UnsupportedVersionError, SchematronBackendNotFound) as exc:
+        changes = exc.changes if isinstance(exc, MigrationError) else []
+        if format == OutputFormat.json:
+            typer.echo(json.dumps({"error": str(exc), "changes": changes, "notes": warning_messages}, indent=2))
+        elif not quiet:
+            for message in warning_messages:
+                typer.echo(f"Warning: {message}", err=True)
+            typer.echo(f"Error: {exc}", err=True)
+            for change in changes:
+                typer.echo(_format_change(change), err=True)
+        else:
+            typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except (OSError, ValueError) as exc:  # unreadable, malformed or DTD-bearing input
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    if output is not None:
+        output.write_text(result.xml, encoding="utf-8")
+
+    if format == OutputFormat.json:
+        payload: dict[str, Any] = {
+            "source_version": result.source_version,
+            "target_version": result.target_version,
+            "changes": result.changes,
+            "notes": warning_messages,
+        }
+        if output is None:
+            payload["xml"] = result.xml
+        typer.echo(json.dumps(payload, indent=2))
+        return
+
+    if output is None:
+        typer.echo(result.xml)
+    if not quiet:
+        for message in warning_messages:
+            typer.echo(f"Warning: {message}", err=True)
+        for change in result.changes:
+            typer.echo(_format_change(change), err=True)
+        if output is not None:
+            typer.echo(f"Migrated to {result.target_version}: {output}", err=True)
+
+
+def _format_change(change: dict[str, Any]) -> str:
+    return f"  {change['kind'].capitalize()}: {change['location']} (line {change['line']}): {change['message']}"
 
 
 def _version_callback(value: bool):
