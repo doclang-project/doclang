@@ -285,13 +285,24 @@ def test_strict_declared_version_allows_versions_with_schemas(tmp_path):
     assert validate(_doc(tmp_path, "0.7"), xsd_only=True, strict_declared_version=True) is None
 
 
-def test_08_declared_document_uses_head_before_release(tmp_path):
-    """Before the 0.8 release there are no 0.8 schemas yet: a declared 0.8 document is checked by the head."""
+def test_08_document_validates_against_the_released_08_schema(tmp_path):
+    import warnings
+
     track_08 = _versioned_doc(tmp_path, "0.8", _TRACK_BODY)
-    with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 0\.8"):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # a released version needs no fallback, so no warning
         assert validate(track_08) is None
-    with pytest.raises(ValidationError, match=r"No schema for declared DocLang version '0\.8'"):
-        validate(track_08, strict_declared_version=True)
+        assert validate(track_08, strict_declared_version=True) is None
+        assert validate(track_08, spec_version="0.8") is None
+
+
+def test_newer_declared_version_falls_back_to_the_released_head(tmp_path):
+    """The head is identical to the released 0.8 schema, so the fallback message may name it."""
+    newer = _versioned_doc(tmp_path, "0.9", _TRACK_BODY)
+    with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 0\.9; .*latest schema \(0\.8\)\."):
+        assert validate(newer) is None
+    with pytest.raises(ValidationError, match=r"No schema for declared DocLang version '0\.9'"):
+        validate(newer, strict_declared_version=True)
 
 
 def test_version_attribute_only_constrained_to_format(tmp_path):
