@@ -85,22 +85,26 @@ For the purposes of this document, the following terms and definitions apply. Te
 
 ## Conformance
 
-DocLang instances define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the version of this document the instance is intended to conform to.
+A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD [3] schema and Schematron rules) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
 
-### Semantic Versioning Principles
+### Version
 
-The XSD [3] schema used for validating DocLang XML documents defines the versions of this document it conforms to, based on Semantic Versioning [7] principles (i.e. considering X >= 1, and Y < Z):
+A DocLang instance states the version of this document it is intended to conform to, in `MAJOR.MINOR` format, through the `version` attribute of the root `<doclang>` element.
 
-- A DocLang instance with version `X.Y` conforms with an XSD schema with version `X.Z`, i.e. a DocLang instance that conforms with schema `X.Y` will also be conformant with schema `X.Z`.
-- A DocLang instance with version `X.Z` is not considered conformant with an XSD schema with version `X.Y`, i.e. a DocLang instance that conforms with schema `X.Z` need not be successfully validated against `X.Y`.
+### Compatibility
+
+The versions of this document follow the principles of Semantic Versioning [7] (considering X >= 1, and Y < Z):
+
+- A DocLang instance that conforms to version `X.Y` also conforms to version `X.Z`.
+- A DocLang instance that conforms to version `X.Z` need not conform to version `X.Y`.
 
 **Example:**
-- A `1.0` document is conformant with a `1.1` schema
-- A `1.1` document is not considered conformant with a `1.0` schema
+- A `1.0` instance conforms to version `1.1`
+- A `1.1` instance need not conform to version `1.0`
 
-### XSD Schema Versioning
+### Schema versions
 
-The XSD schema itself may additionally capture a patch version and internally define a full Semantic Versioning (SemVer) version string (e.g., `1.0.0`, `1.0.1`) to track schema-level changes that do not affect document compatibility.
+A schema may additionally carry a patch version, i.e. a full Semantic Versioning string (e.g., `1.0.0`, `1.0.1`), to track schema-level changes that do not affect document compatibility.
 
 ## Language Design Principles
 
