@@ -3,8 +3,8 @@
 Prepare a DocLang release.
 
 Runs version sync (including pyproject.toml and ok_namespaced_and_versioned.dclg),
-snapshot of the schemas into doclang/schemas/<MAJOR.MINOR>/, reference generation,
-DOCX export, and CHANGELOG update.
+rotation of the migration steps, snapshot of the schemas into doclang/schemas/<MAJOR.MINOR>/,
+reference generation, DOCX export, and CHANGELOG update.
 
 Usage:
     uv run python utils/prepare_release.py 0.4.0
@@ -26,6 +26,7 @@ if str(ROOT) not in sys.path:
 
 from utils.export_docx import export_docx
 from utils.generate_reference import generate_reference
+from utils.rotate_migration_steps import rotate_migration_steps
 from utils.snapshot_schemas import snapshot_schemas
 from utils.sync_version import sync_version
 
@@ -128,6 +129,7 @@ def prepare_release(
     print(f"Preparing release {normalized}...")
 
     sync_version(normalized, project_root=project_root)
+    rotate_migration_steps(normalized, project_root)
     snapshot_schemas(normalized, project_root)
 
     reference_dir = Path(reference_input)

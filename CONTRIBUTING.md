@@ -94,7 +94,7 @@ For maintainers preparing a release:
 
 1. **Test** — `uv run pytest`
 2. **Prepare release** — `uv run python utils/prepare_release.py TARGET_VERSION`
-   (syncs version across artifacts, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
+   (syncs version across artifacts, turns `next.py` into the released migration step when the release starts a new minor version, snapshots the schemas into `doclang/schemas/`, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
    - Make any manual changes needed (e.g. ToC regeneration on DOCX file, export to PDF etc.)
 3. **Commit & tag** — once committed to `main`, create and push the tag.
 
