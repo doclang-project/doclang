@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- layer must precede writing_mode in the element head -->
+  <text>
+    <writing_mode value="vertical_rl"/>
+    <layer value="body"/>
+    Writing mode before layer.
+  </text>
+
+</doclang>

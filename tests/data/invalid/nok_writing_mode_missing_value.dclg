@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- writing_mode has no default value -->
+  <text>
+    <writing_mode/>
+    Missing writing mode value.
+  </text>
+
+</doclang>

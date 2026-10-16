@@ -62,6 +62,25 @@ def test_single_caption_and_plain_documents_are_unchanged(tmp_path):
     assert "<caption>FIG. 1</caption>" in result.xml
 
 
+@pytest.mark.filterwarnings("ignore:No DocLang version declared")
+def test_writing_mode_is_dropped_from_document_and_element_heads(tmp_path):
+    body = (
+        '<head><writing_mode value="vertical_rl"/></head>'
+        '<text><layer value="body"/><writing_mode value="vertical_rl"/>縦書き</text>'
+        '<table><fcel/><writing_mode value="horizontal_tb"/>a<nl/></table>'
+    )
+    result = migrate(_doc(tmp_path, body, version=None), to="0.8")
+
+    assert "writing_mode" not in result.xml
+    assert '<text><layer value="body"/>縦書き</text>' in result.xml
+    assert "<table><fcel/>a<nl/></table>" in result.xml
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("dropped", "/doclang/head/writing_mode"),
+        ("dropped", "/doclang/text/writing_mode"),
+        ("dropped", "/doclang/table/writing_mode"),
+    ]
+
+
 def test_document_without_namespace(tmp_path):
     doc = _doc(tmp_path, f"<text>x</text>{TRACK}", namespace=False)
     result = migrate(doc, to="0.7")

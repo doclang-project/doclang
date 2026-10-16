@@ -223,7 +223,25 @@
   </xs:element>
 
   <!-- ============================================ -->
-  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, location_block, zero or more captions, description, summary, custom -->
+  <!-- WRITING_MODE ELEMENT: empty element with required value (property element / element head, or child of head) -->
+  <!-- ============================================ -->
+
+  <xs:element name="writing_mode">
+    <xs:complexType>
+      <xs:attribute name="value" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="horizontal_tb"/>
+            <xs:enumeration value="vertical_rl"/>
+            <xs:enumeration value="vertical_lr"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============================================ -->
+  <!-- ELEMENT HEAD (element_head): optional label, thread, xref or href, layer, writing_mode, location_block, zero or more captions, description, summary, custom -->
   <!-- ============================================ -->
 
   <xs:group name="element_head">
@@ -235,6 +253,7 @@
         <xs:element ref="dl:href"/>
       </xs:choice>
       <xs:element ref="dl:layer" minOccurs="0"/>
+      <xs:element ref="dl:writing_mode" minOccurs="0"/>
       <xs:group ref="dl:location_block" minOccurs="0"/>
       <xs:element ref="dl:caption" minOccurs="0" maxOccurs="unbounded"/>
       <xs:element ref="dl:description" minOccurs="0"/>

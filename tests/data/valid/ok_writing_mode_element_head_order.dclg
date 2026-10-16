@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- element head order: thread, href, layer, writing_mode, locations, caption, description, summary, custom -->
+  <text>
+    <thread thread_id="1"/>
+    <href uri="https://example.com/doc#intro"/>
+    <layer value="body"/>
+    <writing_mode value="vertical_rl"/>
+    <location value="300"/><location value="40"/>
+    <location value="330"/><location value="470"/>
+    <caption>Figure context</caption>
+    <description>Derived account of this text block.</description>
+    <summary>Derived gist of this text block.</summary>
+    <custom>
+      <acme_source system="ocr">scanner-a</acme_source>
+    </custom>
+    どこで生れたかとんと見当がつかぬ。
+  </text>
+
+  <!-- label comes first -->
+  <code>
+    <label value="Python"/>
+    <writing_mode value="horizontal_tb"/>
+    print("hello")
+  </code>
+
+</doclang>

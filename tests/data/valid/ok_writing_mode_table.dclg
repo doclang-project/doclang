@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- vertical table: the first row is the rightmost column on the page, cells are read top to bottom -->
+  <table>
+    <writing_mode value="vertical_rl"/>
+    <ched/>品名<ched/>価格<nl/>
+    <fcel/>りんご<fcel/>百円<nl/>
+    <fcel/><writing_mode value="horizontal_tb"/>Orange<fcel/>80<nl/>
+  </table>
+
+  <!-- list head and list item (virtual text) heads -->
+  <list>
+    <writing_mode value="vertical_rl"/>
+    <ldiv/>一つ目
+    <ldiv/><writing_mode value="horizontal_tb"/>second
+  </list>
+
+</doclang>

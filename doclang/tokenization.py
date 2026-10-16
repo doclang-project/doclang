@@ -67,6 +67,7 @@ _FIXED_TOKENS: tuple[str, ...] = (
     "<custom>",
     "</custom>",
     '<layer value="',
+    '<writing_mode value="',
     '<src uri="',
     "<tabular>",
     "</tabular>",

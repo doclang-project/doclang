@@ -172,6 +172,7 @@ The XML content of a semantic element begins with an *element head*, which is a 
 - [`<thread>`](#thread) (optional)
 - [`<xref>`](#xref) or [`<href>`](#href) (mutually exclusive, optional)
 - [`<layer>`](#layer) (optional)
+- [`<writing_mode>`](#writing_mode) (optional)
 - optional sequence of 4 [`<location>`](#location)s, whereby values are interpreted in alternating axis order, as `x_min, y_min, x_max, y_max` (after resolution normalization), w.r.t. the top-left corner of the page
 - [`<caption>`](#caption) (optional, may be repeated)
 - [`<description>`](#description) (optional)
@@ -1997,6 +1998,54 @@ Superscript and subscript:
 </text>
 ```
 
+### Writing Mode
+
+By default, lines are horizontal and follow each other from top to bottom. For other layouts, e.g. traditional Japanese or Chinese text in vertical lines that follow each other from right to left, [`<writing_mode>`](#writing_mode) declares the writing mode:
+- in the document head, for the whole DocLang instance
+- in an element head, for that element and its descendants
+
+The content is always given in reading order, whatever the writing mode, and [`<location>`](#location) values are always relative to the top-left corner of the page.
+In a table, the cells of a row follow each other in the direction of the lines, and the rows follow each other in the direction in which lines follow each other. The items of a list follow each other in the direction in which lines follow each other.
+The writing mode is independent of [`<rtl>`](#rtl), which marks right-to-left text within a line.
+
+Vertical text with a horizontal page number:
+
+```xml
+<doclang>
+  <head>
+    <writing_mode value="vertical_rl"/>
+  </head>
+  <heading>第一章</heading>
+  <text>吾輩は猫である。名前はまだ無い。</text>
+  <page_footer>
+    <writing_mode value="horizontal_tb"/>
+    12
+  </page_footer>
+</doclang>
+```
+
+Order within the element head, with a vertical text column on the page:
+
+```xml
+<text>
+  <layer value="body"/>
+  <writing_mode value="vertical_rl"/>
+  <location value="300"/><location value="40"/><location value="330"/><location value="470"/>
+  どこで生れたかとんと見当がつかぬ。
+</text>
+```
+
+Vertical table: the first row is the rightmost column of the table on the page, and the cells of each row are read from top to bottom:
+
+```xml
+<table>
+  <writing_mode value="vertical_rl"/>
+  <ched/>品名<ched/>価格<nl/>
+  <fcel/>りんご<fcel/>百円<nl/>
+  <fcel/>みかん<fcel/>八十円<nl/>
+</table>
+```
+
 ### Page Break with Continuation
 
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
@@ -2894,6 +2943,24 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 None (empty element).
 
+##### `<writing_mode>`
+
+Optional part of the element head, or of the document head; declares the writing mode, i.e. whether lines are horizontal or vertical, and the direction in which lines follow each other. In [`<head>`](#head), it sets the default writing mode of the DocLang instance. In an element head, it sets the writing mode of the host element and of its descendants. An element without [`<writing_mode>`](#writing_mode) takes the writing mode of its nearest ancestor that declares one, otherwise the default of the DocLang instance, otherwise "horizontal_tb". The writing mode does not change the order of the content, which is always the reading order, nor the coordinate system of [`<location>`](#location).
+
+###### Allowed Context
+
+Can only be part of the [element head](#element-head) of a semantic element, or child of [`<head>`](#head).
+
+###### Attributes
+
+| Attribute | Required / Optional | Allowed Values | Description |
+|-----------|----------|----------------|-------------|
+| `value` | Required | {"horizontal_tb", "vertical_rl", "vertical_lr"} | The writing mode: "horizontal_tb" for horizontal lines that follow each other from top to bottom; "vertical_rl" for vertical lines, read from top to bottom, that follow each other from right to left (e.g. traditional Japanese or Chinese); "vertical_lr" for vertical lines, read from top to bottom, that follow each other from left to right (e.g. traditional Mongolian). The values correspond to the CSS `writing-mode` values "horizontal-tb", "vertical-rl" and "vertical-lr" (see Bibliography [4]). |
+
+###### Allowed Content Types
+
+None (empty element).
+
 #### Payload Elements
 
 Payload elements are low-level elements that help define the effective content of another element.
@@ -3631,6 +3698,7 @@ The token vocabulary trades off size and inference cost:
 | `<custom>` | [`custom`](#custom) start |
 | `</custom>` | [`custom`](#custom) end |
 | `<layer value="` | [`layer`](#layer) with `value` attribute start |
+| `<writing_mode value="` | [`writing_mode`](#writing_mode) with `value` attribute start |
 | `<src uri="` | [`src`](#src) with `uri` attribute start |
 | `<tabular>` | [`tabular`](#tabular) start |
 | `</tabular>` | [`tabular`](#tabular) end |
@@ -3707,6 +3775,10 @@ Repetitive structures currently rely on a bare delimiter plus unwrapped content:
 #### Multi-part track media
 
 The [archive format](#annex-b-normative-doclang-archive-format) carries at most one whole-track file per [`<track>`](#track) per modality (`audio/{N}.*`, `video/{N}.*`). A future revision may add a backward-compatible form for media split into ordered segments (e.g. an `audio/{N}/` directory plus a small manifest giving each segment's start offset), for very long recordings or capture that was paused and resumed.
+
+#### Vertical text details
+
+[`<writing_mode>`](#writing_mode) declares whether lines are horizontal or vertical. A future revision may add finer typographic properties of vertical text, e.g. the orientation of Latin characters within a vertical line (upright or rotated), short horizontal runs within a vertical line (tate-chū-yoko), and ruby annotations.
 
 #### Metadata
 
@@ -4209,3 +4281,4 @@ The following lists the documents which are cited informatively in this document
 1. W3C HTML5 Specification
 2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
 3. DoclingDocument API Specification
+4. W3C CSS Writing Modes Level 3

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- the document default goes in head, not directly in doclang -->
+  <writing_mode value="vertical_rl"/>
+  <text>縦書き</text>
+
+</doclang>

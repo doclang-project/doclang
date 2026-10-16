@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- document default in the head, overridden in an element head -->
+  <head>
+    <writing_mode value="vertical_rl"/>
+  </head>
+
+  <heading>第一章</heading>
+
+  <text>吾輩は猫である。名前はまだ無い。</text>
+
+  <group>
+    <writing_mode value="vertical_lr"/>
+    <text>Text in vertical lines that follow each other from left to right.</text>
+  </group>
+
+  <page_footer>
+    <writing_mode value="horizontal_tb"/>
+    <text>12</text>
+  </page_footer>
+
+</doclang>

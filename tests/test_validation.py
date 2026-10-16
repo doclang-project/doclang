@@ -296,10 +296,13 @@ def test_08_document_validates_against_the_released_08_schema(tmp_path):
         assert validate(track_08, spec_version="0.8") is None
 
 
-def test_newer_declared_version_falls_back_to_the_released_head(tmp_path):
-    """The head is identical to the released 0.8 schema, so the fallback message may name it."""
+def test_newer_declared_version_falls_back_to_the_head(tmp_path):
+    """The head differs from the released 0.8 schema, so the fallback message does not name a version."""
     newer = _versioned_doc(tmp_path, "0.9", _TRACK_BODY)
-    with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 0\.9; .*latest schema \(0\.8\)\."):
+    with pytest.warns(
+        UserWarning,
+        match=r"No schema for declared DocLang version 0\.9; .*latest schema \(unreleased development version\)\.",
+    ):
         assert validate(newer) is None
     with pytest.raises(ValidationError, match=r"No schema for declared DocLang version '0\.9'"):
         validate(newer, strict_declared_version=True)

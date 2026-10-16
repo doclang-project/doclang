@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+
+  <!-- the document default must also use a known value -->
+  <head>
+    <writing_mode value="tb-rl"/>
+  </head>
+  <text>縦書き</text>
+
+</doclang>
