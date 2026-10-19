@@ -5,18 +5,21 @@ Provides a user-friendly CLI using Typer for working with DocLang documents.
 """
 
 import json
+import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import typer
 
-from doclang._schemas import _bundled_schema_paths
+from doclang._schemas import UnsupportedVersionError, _select_schemas
+from doclang.migration import MigrationError
+from doclang.migration import migrate as migrate_document
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
 from doclang.schematron import SchematronBackendNotFound
 from doclang.utils import _VERSION
-from doclang.validation import ValidationError
+from doclang.validation import ValidationError, VersionNote
 from doclang.validation import validate as validate_document
 
 app = typer.Typer(
@@ -25,6 +28,15 @@ app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
 )
+
+
+class ValidationScope(str, Enum):
+    """What part of the validation to run."""
+
+    all = "all"
+    xsd = "xsd"
+    schematron = "schematron"
+    none = "none"
 
 
 class OutputFormat(str, Enum):
@@ -48,6 +60,28 @@ def validate(
         "-n",
         help="Allow documents without namespace (auto-inject DocLang namespace)",
     ),
+    spec_version: Optional[str] = typer.Option(
+        None,
+        "--spec-version",
+        help="DocLang spec version (MAJOR.MINOR) to validate against, overriding the document's version",
+    ),
+    strict_xsd_version_attr: bool = typer.Option(
+        False,
+        "--strict-xsd-version-attr",
+        help=(
+            "Apply the XSD's own check of the root `version` attribute as is. By default, if the XSD only accepts "
+            "its own version (0.7) and the document declares another, the declared version is replaced in memory "
+            "for XSD validation. Has no effect for XSDs that accept any MAJOR.MINOR, or with --schematron-only."
+        ),
+    ),
+    strict_declared_version: bool = typer.Option(
+        False,
+        "--strict-declared-version",
+        help=(
+            "Fail if no schema is bundled for the document's declared version. By default the latest schema "
+            "is used instead, with a warning."
+        ),
+    ),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
@@ -59,25 +93,48 @@ def validate(
 
         doclang validate document.xml
         doclang validate document.xml --xsd-only
+        doclang validate document.xml --spec-version 0.7
+        doclang validate document.xml --spec-version 0.7 --strict-xsd-version-attr
         doclang validate document.xml --format json
     """
     try:
-        bundled_xsd, bundled_sch = _bundled_schema_paths()
+        selection = _select_schemas(xml_file, spec_version, strict_declared_version=strict_declared_version)
+    except UnsupportedVersionError as exc:
+        # An unsupported declared version is reported as a validation failure below.
+        if spec_version is not None:
+            typer.echo(f"Error: {exc}", err=True)
+            raise typer.Exit(1)
+        selection = None
     except FileNotFoundError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
+    bundled_xsd = selection.xsd if selection else None
+    bundled_sch = selection.sch if selection else None
 
     if not quiet and format == OutputFormat.text:
         typer.echo(f"Validating: {xml_file}")
         typer.echo("-" * 60)
 
+    notes: list[str] = []
     try:
-        validate_document(
-            xml_file,
-            allow_empty_namespace=allow_empty_namespace,
-            xsd_only=xsd_only,
-            schematron_only=schematron_only,
-        )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                validate_document(
+                    xml_file,
+                    allow_empty_namespace=allow_empty_namespace,
+                    xsd_only=xsd_only,
+                    schematron_only=schematron_only,
+                    spec_version=spec_version,
+                    strict_xsd_version_attr=strict_xsd_version_attr,
+                    strict_declared_version=strict_declared_version,
+                )
+            finally:
+                for w in caught:
+                    notes.append(str(w.message))
+                    if not quiet:
+                        label = "Note" if issubclass(w.category, VersionNote) else "Warning"
+                        typer.echo(f"{label}: {w.message}", err=True)
     except SchematronBackendNotFound as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
@@ -85,13 +142,14 @@ def validate(
         results: dict[str, Any] = {
             "xsd": {"valid": not exc.xsd_errors, "errors": exc.xsd_errors},
             "schematron": {"valid": not exc.schematron_errors, "errors": exc.schematron_errors},
+            "notes": notes,
         }
 
         if not quiet and format == OutputFormat.text:
             if not schematron_only:
                 if verbose:
                     typer.echo("XSD Validation")
-                    typer.echo(f"Schema: {bundled_xsd}")
+                    typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
                 if not exc.xsd_errors:
                     typer.echo("XSD validation passed")
                 else:
@@ -105,7 +163,7 @@ def validate(
             if not xsd_only:
                 if verbose:
                     typer.echo("Schematron Validation")
-                    typer.echo(f"Schema: {bundled_sch}")
+                    typer.echo(f"Schema: {bundled_sch or 'n/a'}")
                 if not exc.schematron_errors:
                     typer.echo("Schematron validation passed")
                 else:
@@ -126,13 +184,13 @@ def validate(
         if not schematron_only:
             if verbose:
                 typer.echo("XSD Validation")
-                typer.echo(f"Schema: {bundled_xsd}")
+                typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
             typer.echo("XSD validation passed")
 
         if not xsd_only:
             if verbose:
                 typer.echo("Schematron Validation")
-                typer.echo(f"Schema: {bundled_sch}")
+                typer.echo(f"Schema: {bundled_sch or 'n/a'}")
             typer.echo("Schematron validation passed")
 
     if format == OutputFormat.json:
@@ -141,6 +199,7 @@ def validate(
                 {
                     "xsd": {"valid": True, "errors": []},
                     "schematron": {"valid": True, "errors": []},
+                    "notes": notes,
                 },
                 indent=2,
             )
@@ -310,6 +369,109 @@ def pack(
 
     if not quiet:
         typer.echo(f"Created {created}")
+
+
+@app.command(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
+)
+def migrate(
+    document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …)", exists=True),
+    to: str = typer.Option(
+        ..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to; currently only older versions"
+    ),
+    output: Path | None = typer.Option(
+        None, "-o", "--output", help="Write the migrated document here (default: stdout)"
+    ),
+    strict: bool = typer.Option(
+        False,
+        "--strict",
+        help="Fail if anything would be mapped or dropped (default: best effort, reporting what changed)",
+    ),
+    input_validation: ValidationScope = typer.Option(
+        ValidationScope.all,
+        "--input-validation",
+        help="Validation of the document before migrating, against its own version",
+    ),
+    output_validation: ValidationScope = typer.Option(
+        ValidationScope.all,
+        "--output-validation",
+        help="Validation of the migrated document against the target version",
+    ),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Do not report changes and warnings"),
+    format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
+):
+    """
+    Migrate a DocLang document to another spec version (currently only older versions are supported).
+
+    The migrated document goes to stdout (or --output); changes and warnings go to stderr. With
+    --format json, stdout holds a JSON object with the versions, the changes and the document.
+
+    Examples:
+
+        doclang migrate document.dclg --to 0.7
+        doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
+        doclang migrate document.dclg --to 0.7 --strict --format json
+    """
+    warning_messages: list[str] = []
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                result = migrate_document(
+                    document,
+                    to=to,
+                    strict=strict,
+                    input_validation=input_validation.value,
+                    output_validation=output_validation.value,
+                )
+            finally:
+                warning_messages = [str(w.message) for w in caught]
+    except (MigrationError, UnsupportedVersionError, SchematronBackendNotFound) as exc:
+        changes = exc.changes if isinstance(exc, MigrationError) else []
+        if format == OutputFormat.json:
+            typer.echo(json.dumps({"error": str(exc), "changes": changes, "notes": warning_messages}, indent=2))
+        elif not quiet:
+            for message in warning_messages:
+                typer.echo(f"Warning: {message}", err=True)
+            typer.echo(f"Error: {exc}", err=True)
+            for change in changes:
+                typer.echo(_format_change(change), err=True)
+        else:
+            typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except (OSError, ValueError) as exc:  # unreadable, malformed or DTD-bearing input
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    if output is not None:
+        output.write_text(result.xml, encoding="utf-8")
+
+    if format == OutputFormat.json:
+        payload: dict[str, Any] = {
+            "source_version": result.source_version,
+            "target_version": result.target_version,
+            "changes": result.changes,
+            "notes": warning_messages,
+        }
+        if output is None:
+            payload["xml"] = result.xml
+        typer.echo(json.dumps(payload, indent=2))
+        return
+
+    if output is None:
+        typer.echo(result.xml)
+    if not quiet:
+        for message in warning_messages:
+            typer.echo(f"Warning: {message}", err=True)
+        for change in result.changes:
+            typer.echo(_format_change(change), err=True)
+        if output is not None:
+            typer.echo(f"Migrated to {result.target_version}: {output}", err=True)
+
+
+def _format_change(change: dict[str, Any]) -> str:
+    return f"  {change['kind'].capitalize()}: {change['location']} (line {change['line']}): {change['message']}"
 
 
 def _version_callback(value: bool):

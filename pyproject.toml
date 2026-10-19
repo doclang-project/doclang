@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "doclang"
-version = "0.7.3"  # DO NOT EDIT MANUALLY, updated automatically
+version = "0.8.0"  # DO NOT EDIT MANUALLY, updated automatically
 description = "DocLang reference toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -43,7 +43,7 @@ Issues = "https://github.com/doclang-project/doclang/issues"
 doclang = "doclang.cli:app"
 
 [tool.setuptools.package-data]
-doclang = ["*.xsd", "*.sch"]
+doclang = ["*.xsd", "*.sch", "schemas/*/*.xsd", "schemas/*/*.sch"]
 
 [dependency-groups]
 ci = [
@@ -66,8 +66,8 @@ dev = [
 package = true
 default-groups = ["dev"]
 
-[tool.setuptools]
-packages = ["doclang", "doclang.backends"]
+[tool.setuptools.packages.find]
+include = ["doclang", "doclang.*"]
 
 [tool.ruff]
 target-version = "py310"
@@ -145,3 +145,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore:No DocLang version declared:UserWarning"]
