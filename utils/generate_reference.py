@@ -457,19 +457,19 @@ def update_spec_appendix(reference_content, spec_file):
     try:
         spec_content = Path(spec_file).read_text(encoding="utf-8")
 
-        # Reference content sits between ### Reference and ### DocLang Archive Format
-        reference_pattern = r"(### Reference\n\n)"
-        next_section_pattern = r"(### DocLang Archive Format)"
+        # Reference content sits between ### Annex A Reference and ### Annex B Doclang archive Format
+        reference_pattern = r"(### Annex A .*\n\n)"
+        next_section_pattern = r"(### Annex B .*)"
 
         match_reference = re.search(reference_pattern, spec_content)
         match_next = re.search(next_section_pattern, spec_content)
 
         if not match_reference:
-            print("Error: Could not find '### Reference' marker in spec.md")
+            print("Error: Could not find '### Annex A' marker in spec.md")
             return False
 
         if not match_next:
-            print("Error: Could not find '### DocLang Archive Format' marker in spec.md")
+            print("Error: Could not find '### Annex B' marker in spec.md")
             return False
 
         # Reconstruct: through Reference header + new content + from next appendix section on

@@ -50,7 +50,7 @@ uv run pre-commit install
 ## Version syncing
 
 Release preparation derives the target version from git tags (`vMAJOR.MINOR.PATCH`, e.g. `v0.3.0`)
-and writes the release triple to `pyproject.toml`, the XSD, and the reference Excel.
+and writes the release triple to `pyproject.toml`, `spec.md`, the XSD, and a test fixture.
 
 `doclang --version` reads from **`pyproject.toml`** in a checkout, or from installed package
 metadata on PyPI (where git tags are not available).
@@ -80,13 +80,21 @@ uv run python utils/export_docx.py
 
 Outputs are written under [exports/](./exports/) (`doclang.docx`, and `doclang-styled.docx` when `exports/templates/word.dotx` is present).
 
+## Schema changes and migration steps
+
+Schemas of earlier spec versions are bundled in `doclang/schemas/<MAJOR.MINOR>/`; `doclang/doclang.{xsd,sch}` are
+the development head. When a change to the head schema cannot be expressed in the previous version (a new element,
+a relaxed cardinality, ...), the same pull request adds a rule to `doclang/migration/_steps/next.py` that maps or drops it
+for `doclang migrate`, plus a valid test fixture using it. `tests/test_migration.py` migrates every valid fixture
+to the newest released version and validates the result, so a change without a rule fails the tests.
+
 ## Release workflow
 
 For maintainers preparing a release:
 
 1. **Test** — `uv run pytest`
 2. **Prepare release** — `uv run python utils/prepare_release.py TARGET_VERSION`
-   (syncs version across artifacts, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
+   (syncs version across artifacts, turns `next.py` into the released migration step when the release starts a new minor version, snapshots the schemas into `doclang/schemas/`, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
    - Make any manual changes needed (e.g. ToC regeneration on DOCX file, export to PDF etc.)
 3. **Commit & tag** — once committed to `main`, create and push the tag.
 

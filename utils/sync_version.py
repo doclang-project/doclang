@@ -7,7 +7,6 @@ When no target version is given, the release triple is derived from git tags
 - pyproject.toml
 - spec.md
 - doclang/doclang.xsd
-- reference/input/reference.xlsx
 - tests/data/valid/ok_namespaced_and_versioned.dclg
 
 `doclang --version` reads the installed package metadata (see doclang.version).
@@ -22,8 +21,6 @@ import argparse
 import re
 import sys
 from pathlib import Path
-
-from openpyxl import load_workbook
 
 from doclang.version import (
     _normalize_version,
@@ -55,36 +52,8 @@ def sync_version_in_xsd(file_path: Path, version: str) -> None:
     """Update version in doclang.xsd"""
     content = file_path.read_text(encoding="utf-8")
 
-    # Extract MAJOR.MINOR for most places
-    major_minor = ".".join(version.split(".")[:2])
-
-    # Pattern 1: schema version attribute (line 8) in <xs:schema>
-    # version="0.2.0" - full MAJOR.MINOR.PATCH
-    # Match only the xs:schema element's version attribute
+    # Schema version attribute in <xs:schema>: full MAJOR.MINOR.PATCH
     content = re.sub(r'(<xs:schema[^>]*\s+version=")[\d.]+(")', rf"\g<1>{version}\g<2>", content, flags=re.DOTALL)
-
-    # Pattern 2: doclang element default version (line 621)
-    # <xs:attribute name="version" use="optional" default="0.2">
-    # Uses MAJOR.MINOR only
-    content = re.sub(
-        r'(<xs:attribute name="version" use="optional" default=")[\d.]+(")', rf"\g<1>{major_minor}\g<2>", content
-    )
-
-    # Pattern 3: enumeration values (line 627)
-    # ALWAYS remove all previous v0.x enumerations and add only the new version
-
-    # Remove all enumeration lines (including any trailing whitespace before closing tag)
-    content = re.sub(r'\s*<xs:enumeration value="[\d.]+"/>\s*', "", content)
-
-    # Add only the new version with proper formatting (MAJOR.MINOR only)
-    # Find the comment and the closing </xs:restriction> tag
-    insert_pattern = r"(<!-- enumeration set up for v1 and above.*?-->)\s*(</xs:restriction>)"
-    content = re.sub(
-        insert_pattern,
-        rf'\g<1>\n            <xs:enumeration value="{major_minor}"/>\n          \g<2>',
-        content,
-        flags=re.DOTALL,
-    )
     file_path.write_text(content, encoding="utf-8")
 
 
@@ -112,57 +81,6 @@ def sync_version_in_spec(file_path: Path, version: str) -> None:
         )
 
     file_path.write_text(content, encoding="utf-8")
-
-
-def sync_version_in_excel(file_path: Path, version: str) -> None:
-    """Update version in reference Excel file"""
-    if not file_path.exists():
-        print(f"⚠ Skipping {file_path} (file not found)")
-        return
-
-    # Extract MAJOR.MINOR for Excel
-    major_minor = ".".join(version.split(".")[:2])
-
-    try:
-        wb = load_workbook(file_path)
-
-        # Update the 'attributes' sheet
-        if "attributes" in wb.sheetnames:
-            ws = wb["attributes"]
-
-            # Find the row with `<doclang>` version attribute
-            updated = False
-            for row in ws.iter_rows(min_row=2):  # Skip header row
-                element_cell = row[0]
-                attribute_cell = row[1]
-                required_cell = row[2]
-                values_cell = row[3]
-
-                if element_cell.value == "`<doclang>`" and attribute_cell.value == "`version`":
-                    # Update "Optional; default: "0.2"" to new version
-                    if required_cell.value:
-                        required_cell.value = re.sub(
-                            r'(Optional; default: ")\d+\.\d+(")', rf"\g<1>{major_minor}\g<2>", str(required_cell.value)
-                        )
-
-                    # Update {"0.2"} to new version
-                    if values_cell.value:
-                        values_cell.value = re.sub(
-                            r'(\{")\d+\.\d+("\})', rf"\g<1>{major_minor}\g<2>", str(values_cell.value)
-                        )
-
-                    updated = True
-                    break
-
-            if updated:
-                wb.save(file_path)
-            else:
-                print(f"⚠ Could not find version attribute row in {file_path}")
-        else:
-            print(f"⚠ 'attributes' sheet not found in {file_path}")
-
-    except Exception as e:
-        print(f"⚠ Error updating {file_path}: {e}")
 
 
 def sync_version_in_pyproject(file_path: Path, version: str) -> None:
@@ -209,14 +127,13 @@ def sync_version_in_valid_fixture(file_path: Path, version: str) -> None:
 
 
 def sync_version(version_arg: str | None = None, project_root: Path | None = None) -> str:
-    """Sync version across pyproject.toml, spec.md, doclang.xsd, reference.xlsx, and test fixtures."""
+    """Sync version across pyproject.toml, spec.md, doclang.xsd, and test fixtures."""
     if project_root is None:
         project_root = Path(__file__).resolve().parent.parent
 
     pyproject_path = project_root / "pyproject.toml"
     spec_path = project_root / "spec.md"
     xsd_path = project_root / "doclang" / "doclang.xsd"
-    excel_path = project_root / "reference" / "input" / "reference.xlsx"
     fixture_path = project_root / "tests" / "data" / "valid" / "ok_namespaced_and_versioned.dclg"
 
     version = resolve_sync_version(version_arg)
@@ -231,7 +148,6 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
     sync_version_in_pyproject(pyproject_path, version)
     sync_version_in_spec(spec_path, version)
     sync_version_in_xsd(xsd_path, version)
-    sync_version_in_excel(excel_path, version)
     if fixture_path.exists():
         sync_version_in_valid_fixture(fixture_path, version)
 
@@ -241,7 +157,7 @@ def sync_version(version_arg: str | None = None, project_root: Path | None = Non
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Sync DocLang version across pyproject.toml, spec.md, doclang.xsd, reference.xlsx, and test fixtures",
+        description="Sync DocLang version across pyproject.toml, spec.md, doclang.xsd, and test fixtures",
     )
     parser.add_argument(
         "version",

@@ -10,7 +10,7 @@
   xmlns:dl="https://www.doclang.ai/ns/v0"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
-  version="0.7.3"
+  version="0.8.0"
 >
 
   <!-- ============================================ -->
@@ -244,7 +244,7 @@
   </xs:group>
 
   <!-- ============================================ -->
-  <!-- SRC ELEMENT: image source (child of picture) -->
+  <!-- SRC ELEMENT: image or audio source (child of picture, frame, cover or audio) -->
   <!-- ============================================ -->
 
   <xs:element name="src">
@@ -844,13 +844,12 @@
           <xs:element ref="dl:page_break"/>
         </xs:choice>
       </xs:sequence>
-      <xs:attribute name="version" use="optional" default="0.7">
+      <!-- Only the format is constrained here; selecting the schema matching an instance's
+           version is up to the validator. -->
+      <xs:attribute name="version" use="optional">
         <xs:simpleType>
           <xs:restriction base="xs:string">
-            <!-- enumeration set up for v1 and above, where all individual minor versions
-             within major (up to and including current, i.e. `default` above)
-             will have to be listed for backwards compatibility. -->
-            <xs:enumeration value="0.7"/>
+            <xs:pattern value="[0-9]+\.[0-9]+"/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>

@@ -516,8 +516,16 @@ HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
 def markdown_anchor(text: str) -> str:
-    """Slug for in-document cross-references (aligned with generate_reference.py)."""
-    return text.replace("`", "").replace("<", "").replace(">", "").lower().replace(" ", "-")
+    """Bookmark name for a heading, so that in-document links ``[text](#anchor)`` resolve to it.
+
+    Follows GitHub's rule for heading anchors, which the links in spec.md use: lowercase, punctuation
+    dropped, spaces turned into hyphens. Text in code spans is kept (e.g. ``<audio>`` gives ``audio``),
+    HTML tags elsewhere render as nothing. For headings without punctuation this equals the rule in
+    generate_reference.py for element headings.
+    """
+    parts = re.split(r"(`[^`]*`)", text)
+    plain = "".join(p[1:-1] if p.startswith("`") else re.sub(r"<[^>]+>", "", p) for p in parts)
+    return re.sub(r"[^\w\- ]", "", plain.strip().lower()).replace(" ", "-")
 
 
 def add_bookmark(paragraph, name: str, bookmark_id: int) -> None:
