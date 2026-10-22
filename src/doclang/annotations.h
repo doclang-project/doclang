@@ -26,24 +26,10 @@ namespace doclang::native
   const static inline std::string INSTANCES_CSV = ANNOTATIONS_DIR + "/instances.csv";
   const static inline std::string ENTITIES_CSV = ANNOTATIONS_DIR + "/entities.csv";
   const static inline std::string RELATIONS_CSV = ANNOTATIONS_DIR + "/relations.csv";
-  const static inline std::string DOCUMENT_REFERENCE_BIB
-      = ANNOTATIONS_DIR + "/document_reference.bib";
-  const static inline std::string REFERENCES_BIB = ANNOTATIONS_DIR + "/references.bib";
+  const static inline std::string REFERENCES_DCLG = ANNOTATIONS_DIR + "/references.dclg";
   const static inline std::string SUMMARY_DCLG = ANNOTATIONS_DIR + "/summary.dclg";
   const static inline std::string TOC_DCLG = ANNOTATIONS_DIR + "/toc.dclg";
   const static inline std::string CONCEPTS_DCLG = ANNOTATIONS_DIR + "/concepts.dclg";
-
-  inline std::size_t element_count(pugi::xml_node parent, std::string_view name)
-  {
-    const std::string name_value(name);
-    std::size_t count = 0;
-    for(const auto child : parent.children(name_value.c_str()))
-      {
-        (void)child;
-        count += 1;
-      }
-    return count;
-  }
 
   // parses one DCLG sidecar, forwards parse errors to the owning DCLX
   // document, then applies the sidecar-specific validation
@@ -55,6 +41,13 @@ namespace doclang::native
     if(not sidecar->read(xml))
       {
         doc.set_last_error(path + ": " + sidecar->get_last_error());
+        return false;
+      }
+
+    const auto report = sidecar->validate({ .allow_empty_namespace = true });
+    if(not report.ok())
+      {
+        doc.set_last_error(path + ": " + report.first_error());
         return false;
       }
 
@@ -78,18 +71,16 @@ namespace doclang::native
   inline bool validate_toc_dclg(const dclg_document& sidecar, std::string& error)
   {
     const auto root = sidecar.root();
-    if(element_count(root, "toc") != 1)
+    for(const auto child : root.children())
       {
-        error = TOC_DCLG + " must contain one <toc> element";
-        return false;
-      }
-
-    for(const auto entry : root.child("toc").children("entry"))
-      {
-        if(std::string_view(entry.attribute("xpath").value()).empty()
-           or element_count(entry, "description") != 1)
+        if(std::string_view(child.name()) == "head")
           {
-            error = TOC_DCLG + " entries require xpath and one <description>";
+            continue;
+          }
+        if(std::string_view(child.name()) != "heading" or not child.child("href")
+           or std::string_view(child.child("href").attribute("uri").value()).empty())
+          {
+            error = TOC_DCLG + " must contain headings with source hrefs";
             return false;
           }
       }
@@ -97,28 +88,53 @@ namespace doclang::native
     return true;
   }
 
-  inline bool validate_concepts_dclg(const dclg_document& sidecar, std::string& error)
+  inline bool validate_toc_targets(const dclx_document& document, const dclg_document& sidecar,
+                                   std::string& error)
   {
-    const auto root = sidecar.root();
-    if(element_count(root, "concepts") != 1)
+    for(const auto heading : sidecar.root().children("heading"))
       {
-        error = CONCEPTS_DCLG + " must contain one <concepts> element";
-        return false;
-      }
-
-    for(const auto concept_node : root.child("concepts").children("concept"))
-      {
-        if(element_count(concept_node, "header") != 1
-           or element_count(concept_node, "abbreviation") > 1
-           or element_count(concept_node, "description") > 1
-           or element_count(concept_node, "table") > 1)
+        const std::string uri = heading.child("href").attribute("uri").value();
+        if(uri.empty() or uri.front() != '#')
           {
-            error = CONCEPTS_DCLG
-                    + " concepts require one <header> and allow at most one optional child";
+            error = TOC_DCLG + " heading href must be an encoded XPath fragment";
+            return false;
+          }
+        std::string xpath;
+        for(std::size_t i = 1; i < uri.size(); ++i)
+          {
+            if(uri[i] == '%' and i + 2 < uri.size()
+               and std::isxdigit(static_cast<unsigned char>(uri[i + 1]))
+               and std::isxdigit(static_cast<unsigned char>(uri[i + 2])))
+              {
+                const auto digit = [](char value) {
+                  return value >= '0' and value <= '9'   ? value - '0'
+                         : value >= 'A' and value <= 'F' ? value - 'A' + 10
+                                                         : value - 'a' + 10;
+                };
+                xpath += static_cast<char>(digit(uri[i + 1]) * 16 + digit(uri[i + 2]));
+                i += 2;
+              }
+            else
+              {
+                xpath += uri[i];
+              }
+          }
+        if(not resolve_doclang_path(document.root(), xpath).found)
+          {
+            error = TOC_DCLG + " heading XPath does not resolve: " + xpath;
             return false;
           }
       }
+    return true;
+  }
 
+  inline bool validate_concepts_dclg(const dclg_document&, std::string&)
+  {
+    return true;
+  }
+
+  inline bool validate_references_dclg(const dclg_document&, std::string&)
+  {
     return true;
   }
 
@@ -142,6 +158,13 @@ namespace doclang::native
         return false;
       }
 
+    std::string error;
+    if(not validate_toc_targets(doc, *sidecar, error))
+      {
+        doc.set_last_error(error);
+        return false;
+      }
+
     doc.set_toc(std::move(sidecar));
     return true;
   }
@@ -155,6 +178,17 @@ namespace doclang::native
       }
 
     doc.set_concepts(std::move(sidecar));
+    return true;
+  }
+
+  inline bool set_references_dclg(dclx_document& doc, std::string_view xml)
+  {
+    std::shared_ptr<dclg_document> sidecar;
+    if(not parse_sidecar_dclg(doc, xml, REFERENCES_DCLG, validate_references_dclg, sidecar))
+      {
+        return false;
+      }
+    doc.set_references(std::move(sidecar));
     return true;
   }
 
@@ -465,15 +499,22 @@ namespace doclang::native
         return false;
       }
 
-    const auto document_reference = doc.artifacts().text(DOCUMENT_REFERENCE_BIB);
-    if(document_reference)
+    const auto references = doc.artifacts().text(REFERENCES_DCLG);
+    if(references and not set_references_dclg(doc, *references))
       {
-        doc.set_document_reference(std::string(*document_reference));
+        return false;
       }
-    const auto references = doc.artifacts().text(REFERENCES_BIB);
-    if(references)
+    if(doc.artifacts().has("annotations/references.bib"))
       {
-        doc.set_references(std::string(*references));
+        doc.set_last_error(
+            "unsupported annotations/references.bib; use annotations/references.dclg");
+        return false;
+      }
+    if(doc.artifacts().has("annotations/document_reference.bib"))
+      {
+        doc.set_last_error(
+            "unsupported annotations/document_reference.bib; use annotations/references.dclg");
+        return false;
       }
     const auto summary = doc.artifacts().text(SUMMARY_DCLG);
     if(summary && !set_summary_dclg(doc, *summary))
@@ -481,12 +522,12 @@ namespace doclang::native
         return false;
       }
     const auto toc = doc.artifacts().text(TOC_DCLG);
-    if(toc && !set_toc_dclg(doc, *toc))
+    if(toc and not set_toc_dclg(doc, *toc))
       {
         return false;
       }
     const auto concepts = doc.artifacts().text(CONCEPTS_DCLG);
-    if(concepts && !set_concepts_dclg(doc, *concepts))
+    if(concepts and not set_concepts_dclg(doc, *concepts))
       {
         return false;
       }

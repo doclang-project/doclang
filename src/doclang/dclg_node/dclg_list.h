@@ -17,13 +17,16 @@ namespace doclang::native
   public:
 
     explicit dclg_list(std::string_view kind = "unordered");
+    /* reading */
     std::size_t item_count() const;
+    /* editing */
     void append_item(const dclg_node& content);
     void insert_item(std::size_t index, const dclg_node& content);
     void append_item_text(std::string_view text);
     void insert_item_text(std::size_t index, std::string_view text);
     void append_to_item(std::size_t index, const dclg_node& content);
     void delete_item(std::size_t index);
+    /* validation */
     validation_report validate_local() const;
     std::tuple<bool, std::string> is_valid() const;
     validation_report validate_in(const dclg_document& doc, const insertion_site& site) const;
@@ -32,6 +35,7 @@ namespace doclang::native
 
   private:
 
+    /* lookup helpers */
     pugi::xml_node item_marker(std::size_t index) const;
   };
 

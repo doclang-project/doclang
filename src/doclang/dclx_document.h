@@ -25,186 +25,74 @@ namespace doclang::native
   {
   public:
 
-    // summary, ToC and concepts are DCLG sidecars: parsed, never raw strings
+    // Named companion documents are parsed DCLG, never raw strings.
     typedef std::optional<std::shared_ptr<dclg_document>> sidecar_type;
 
-    dclx_document() = default;
+    dclx_document();
 
+    /* state */
     void clear();
 
-    void set_source_path(std::filesystem::path path)
-    {
-      source_path = std::move(path);
-    }
-    const std::filesystem::path& get_source_path() const
-    {
-      return source_path;
-    }
+    void set_source_path(std::filesystem::path path);
+    const std::filesystem::path& get_source_path() const;
 
-    bool has_archive() const
-    {
-      return artifact_archive.has_value();
-    }
+    /* archive parts */
+    bool has_archive() const;
 
-    archive& artifacts()
-    {
-      return artifact_archive.value();
-    }
-    const archive& artifacts() const
-    {
-      return artifact_archive.value();
-    }
+    archive& artifacts();
+    const archive& artifacts() const;
 
-    void set_archive(archive value)
-    {
-      artifact_archive = std::move(value);
-    }
-    void clear_archive()
-    {
-      artifact_archive.reset();
-    }
+    void set_archive(archive value);
+    void clear_archive();
 
-    std::shared_ptr<std::vector<base_property>> shared_properties()
-    {
-      return properties;
-    }
-    std::shared_ptr<std::vector<base_instance>> shared_instances()
-    {
-      return instances;
-    }
-    std::shared_ptr<std::vector<base_entity>> shared_entities()
-    {
-      return entities;
-    }
-    std::shared_ptr<std::vector<base_relation>> shared_relations()
-    {
-      return relations;
-    }
+    /* graph annotations */
+    std::shared_ptr<std::vector<base_property>> shared_properties();
+    std::shared_ptr<std::vector<base_instance>> shared_instances();
+    std::shared_ptr<std::vector<base_entity>> shared_entities();
+    std::shared_ptr<std::vector<base_relation>> shared_relations();
 
-    std::vector<base_property>& mutable_properties()
-    {
-      return *properties;
-    }
-    std::vector<base_instance>& mutable_instances()
-    {
-      return *instances;
-    }
-    std::vector<base_entity>& mutable_entities()
-    {
-      return *entities;
-    }
-    std::vector<base_relation>& mutable_relations()
-    {
-      return *relations;
-    }
+    /* graph annotations: writing */
+    std::vector<base_property>& mutable_properties();
+    std::vector<base_instance>& mutable_instances();
+    std::vector<base_entity>& mutable_entities();
+    std::vector<base_relation>& mutable_relations();
 
-    const std::vector<base_property>& get_properties() const
-    {
-      return *properties;
-    }
-    const std::vector<base_instance>& get_instances() const
-    {
-      return *instances;
-    }
-    const std::vector<base_entity>& get_entities() const
-    {
-      return *entities;
-    }
-    const std::vector<base_relation>& get_relations() const
-    {
-      return *relations;
-    }
+    /* graph annotations: reading */
+    const std::vector<base_property>& get_properties() const;
+    const std::vector<base_instance>& get_instances() const;
+    const std::vector<base_entity>& get_entities() const;
+    const std::vector<base_relation>& get_relations() const;
 
+    /* graph annotations: maintenance */
     bool has_annotations() const;
     void clear_annotations();
     void compute_entities();
 
-    bool has_document_reference() const
-    {
-      return document_reference.has_value();
-    }
-    bool has_references() const
-    {
-      return references.has_value();
-    }
-    bool has_summary() const
-    {
-      return summary.has_value();
-    }
-    bool has_toc() const
-    {
-      return toc.has_value();
-    }
-    bool has_concepts() const
-    {
-      return concepts.has_value();
-    }
+    /* companion documents: reading */
+    bool has_references() const;
+    bool has_summary() const;
+    bool has_toc() const;
+    bool has_concepts() const;
 
-    const std::optional<std::string>& get_document_reference() const
-    {
-      return document_reference;
-    }
-    const std::optional<std::string>& get_references() const
-    {
-      return references;
-    }
-    const sidecar_type& get_summary() const
-    {
-      return summary;
-    }
-    const sidecar_type& get_toc() const
-    {
-      return toc;
-    }
-    const sidecar_type& get_concepts() const
-    {
-      return concepts;
-    }
+    const sidecar_type& get_references() const;
+    const sidecar_type& get_summary() const;
+    const sidecar_type& get_toc() const;
+    const sidecar_type& get_concepts() const;
 
-    void set_document_reference(std::string value)
-    {
-      document_reference = std::move(value);
-    }
-    void set_references(std::string value)
-    {
-      references = std::move(value);
-    }
-    void set_summary(std::shared_ptr<dclg_document> value)
-    {
-      summary = std::move(value);
-    }
-    void set_toc(std::shared_ptr<dclg_document> value)
-    {
-      toc = std::move(value);
-    }
-    void set_concepts(std::shared_ptr<dclg_document> value)
-    {
-      concepts = std::move(value);
-    }
+    /* companion documents: writing */
+    void set_references(std::shared_ptr<dclg_document> value);
+    void set_summary(std::shared_ptr<dclg_document> value);
+    void set_toc(std::shared_ptr<dclg_document> value);
+    void set_concepts(std::shared_ptr<dclg_document> value);
 
-    void clear_document_reference()
-    {
-      document_reference.reset();
-    }
-    void clear_references()
-    {
-      references.reset();
-    }
-    void clear_summary()
-    {
-      summary.reset();
-    }
-    void clear_toc()
-    {
-      toc.reset();
-    }
-    void clear_concepts()
-    {
-      concepts.reset();
-    }
+    void clear_references();
+    void clear_summary();
+    void clear_toc();
+    void clear_concepts();
 
   private:
 
+    /* state */
     std::shared_ptr<std::vector<base_property>> properties
         = std::make_shared<std::vector<base_property>>();
     std::shared_ptr<std::vector<base_instance>> instances
@@ -214,8 +102,7 @@ namespace doclang::native
     std::shared_ptr<std::vector<base_relation>> relations
         = std::make_shared<std::vector<base_relation>>();
 
-    std::optional<std::string> document_reference;
-    std::optional<std::string> references;
+    sidecar_type references;
     sidecar_type summary;
     sidecar_type toc;
     sidecar_type concepts;
@@ -224,12 +111,154 @@ namespace doclang::native
     std::filesystem::path source_path;
   };
 
+  inline dclx_document::dclx_document() = default;
+
+  inline void dclx_document::set_source_path(std::filesystem::path path)
+  {
+    source_path = std::move(path);
+  }
+  inline const std::filesystem::path& dclx_document::get_source_path() const
+  {
+    return source_path;
+  }
+  inline bool dclx_document::has_archive() const
+  {
+    return artifact_archive.has_value();
+  }
+  inline archive& dclx_document::artifacts()
+  {
+    return artifact_archive.value();
+  }
+  inline const archive& dclx_document::artifacts() const
+  {
+    return artifact_archive.value();
+  }
+  inline void dclx_document::set_archive(archive value)
+  {
+    artifact_archive = std::move(value);
+  }
+  inline void dclx_document::clear_archive()
+  {
+    artifact_archive.reset();
+  }
+  inline std::shared_ptr<std::vector<base_property>> dclx_document::shared_properties()
+  {
+    return properties;
+  }
+  inline std::shared_ptr<std::vector<base_instance>> dclx_document::shared_instances()
+  {
+    return instances;
+  }
+  inline std::shared_ptr<std::vector<base_entity>> dclx_document::shared_entities()
+  {
+    return entities;
+  }
+  inline std::shared_ptr<std::vector<base_relation>> dclx_document::shared_relations()
+  {
+    return relations;
+  }
+  inline std::vector<base_property>& dclx_document::mutable_properties()
+  {
+    return *properties;
+  }
+  inline std::vector<base_instance>& dclx_document::mutable_instances()
+  {
+    return *instances;
+  }
+  inline std::vector<base_entity>& dclx_document::mutable_entities()
+  {
+    return *entities;
+  }
+  inline std::vector<base_relation>& dclx_document::mutable_relations()
+  {
+    return *relations;
+  }
+  inline const std::vector<base_property>& dclx_document::get_properties() const
+  {
+    return *properties;
+  }
+  inline const std::vector<base_instance>& dclx_document::get_instances() const
+  {
+    return *instances;
+  }
+  inline const std::vector<base_entity>& dclx_document::get_entities() const
+  {
+    return *entities;
+  }
+  inline const std::vector<base_relation>& dclx_document::get_relations() const
+  {
+    return *relations;
+  }
+  inline bool dclx_document::has_references() const
+  {
+    return references.has_value();
+  }
+  inline bool dclx_document::has_summary() const
+  {
+    return summary.has_value();
+  }
+  inline bool dclx_document::has_toc() const
+  {
+    return toc.has_value();
+  }
+  inline bool dclx_document::has_concepts() const
+  {
+    return concepts.has_value();
+  }
+  inline const dclx_document::sidecar_type& dclx_document::get_references() const
+  {
+    return references;
+  }
+  inline const dclx_document::sidecar_type& dclx_document::get_summary() const
+  {
+    return summary;
+  }
+  inline const dclx_document::sidecar_type& dclx_document::get_toc() const
+  {
+    return toc;
+  }
+  inline const dclx_document::sidecar_type& dclx_document::get_concepts() const
+  {
+    return concepts;
+  }
+  inline void dclx_document::set_references(std::shared_ptr<dclg_document> value)
+  {
+    references = std::move(value);
+  }
+  inline void dclx_document::set_summary(std::shared_ptr<dclg_document> value)
+  {
+    summary = std::move(value);
+  }
+  inline void dclx_document::set_toc(std::shared_ptr<dclg_document> value)
+  {
+    toc = std::move(value);
+  }
+  inline void dclx_document::set_concepts(std::shared_ptr<dclg_document> value)
+  {
+    concepts = std::move(value);
+  }
+  inline void dclx_document::clear_references()
+  {
+    references.reset();
+  }
+  inline void dclx_document::clear_summary()
+  {
+    summary.reset();
+  }
+  inline void dclx_document::clear_toc()
+  {
+    toc.reset();
+  }
+  inline void dclx_document::clear_concepts()
+  {
+    concepts.reset();
+  }
+
   inline void dclx_document::clear()
   {
     dclg_document::clear();
 
     clear_annotations();
-    clear_document_reference();
     clear_references();
     clear_summary();
     clear_toc();
@@ -241,8 +270,8 @@ namespace doclang::native
   inline bool dclx_document::has_annotations() const
   {
     return (not properties->empty()) or (not instances->empty()) or (not entities->empty())
-           or (not relations->empty()) or has_document_reference() or has_references()
-           or has_summary() or has_toc() or has_concepts();
+           or (not relations->empty()) or has_references() or has_summary() or has_toc()
+           or has_concepts();
   }
 
   inline void dclx_document::clear_annotations()

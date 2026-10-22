@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstddef>
 #include <exception>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -40,8 +41,12 @@ namespace doclang::binding
 
     private:
 
+      /* iteration helpers */
       pybind11::object next_list_item();
 
+    private:
+
+      /* iteration state */
       std::shared_ptr<doclang::native::dclg_document> doc;
       pugi::xml_node current;
       std::string parent_xpath;
@@ -63,25 +68,27 @@ namespace doclang::binding
 
     virtual ~DoclangDocument();
 
+    /* reading */
     virtual bool read_xml(const std::string& dclg);
 
-    const native::dclg_document& native_document() const
-    {
-      return *dclg_doc;
-    }
+    const native::dclg_document& native_document() const;
 
+    /* editing */
     static DoclangDocument empty();
     std::string append_child(const std::string& parent_xpath, const native::dclg_node& node);
     std::string prepend_child(const std::string& parent_xpath, const native::dclg_node& node);
     std::string insert_before(const std::string& sibling_xpath, const native::dclg_node& node);
     std::string insert_after(const std::string& sibling_xpath, const native::dclg_node& node);
     void delete_at(const std::string& xpath);
+
+    /* validation */
     native::validation_report validate(bool allow_empty_namespace = false, bool xsd_only = false,
                                        bool schematron_only = false) const;
     std::tuple<bool, std::string> is_valid(bool allow_empty_namespace = false,
                                            bool xsd_only = false,
                                            bool schematron_only = false) const;
 
+    /* reading and navigation */
     bool valid() const;
     std::optional<native::doclang_version> version() const;
     std::string xml() const;
@@ -91,12 +98,20 @@ namespace doclang::binding
     std::optional<std::size_t> page_number(const std::string& xpath) const;
     Iterator iterate_items(const std::optional<std::string>& xpath = std::nullopt) const;
     Iterator iterate_items_on_page(int page_no) const;
+    pybind11::list iter_nodes(const std::optional<std::string>& xpath = std::nullopt,
+                              std::size_t limit = 1000, std::size_t max_text_chars = 65536) const;
     Iterator iter() const;
 
   private:
 
+    /* state */
     std::shared_ptr<doclang::native::dclg_document> dclg_doc;
   };
+
+  inline const native::dclg_document& DoclangDocument::native_document() const
+  {
+    return *dclg_doc;
+  }
 
   namespace detail
   {
@@ -525,6 +540,70 @@ namespace doclang::binding
   {
     const pugi::xml_node root = dclg_doc->root();
     return Iterator(dclg_doc, root, detail::doclang_node_xpath(root), 1, false);
+  }
+
+  inline pybind11::list DoclangDocument::iter_nodes(const std::optional<std::string>& xpath,
+                                                    std::size_t limit,
+                                                    std::size_t max_text_chars) const
+  {
+    if(limit == 0 or limit > 100000)
+      {
+        throw pybind11::value_error("limit must be between 1 and 100000");
+      }
+    if(max_text_chars == 0 or max_text_chars > 1048576)
+      {
+        throw pybind11::value_error("max_text_chars must be between 1 and 1048576");
+      }
+    const pugi::xml_node root = dclg_doc->root();
+    pugi::xml_node start = root;
+    if(xpath)
+      {
+        const auto lookup = native::resolve_doclang_path(root, *xpath);
+        if(not lookup.found)
+          {
+            throw pybind11::value_error(lookup.error);
+          }
+        start = lookup.node;
+      }
+    pybind11::list result;
+    std::function<void(pugi::xml_node)> visit = [&](pugi::xml_node node) {
+      if(pybind11::len(result) >= limit or node.type() != pugi::node_element)
+        {
+          return;
+        }
+      const std::string path = detail::doclang_node_xpath(node);
+      pybind11::dict item;
+      item["xpath"] = path;
+      item["parent_xpath"] = node == root ? "" : detail::doclang_node_xpath(node.parent());
+      item["name"] = node.name();
+      std::string value;
+      if(std::string_view(node.name()) != "doclang" and std::string_view(node.name()) != "head"
+         and std::string_view(node.name()) != "group")
+        {
+          value = native::node_text_content(*dclg_doc, node);
+        }
+      const bool truncated = value.size() > max_text_chars;
+      if(truncated)
+        {
+          value.resize(max_text_chars);
+        }
+      item["text"] = value;
+      item["truncated"] = truncated;
+      item["page"] = detail::doclang_page_for_node(root, node);
+      const auto bbox = bounding_box(path);
+      item["bbox"] = bbox ? pybind11::cast(*bbox) : pybind11::none();
+      result.append(item);
+      for(pugi::xml_node child : node.children())
+        {
+          if(pybind11::len(result) >= limit)
+            {
+              break;
+            }
+          visit(child);
+        }
+    };
+    visit(start);
+    return result;
   }
 
 }

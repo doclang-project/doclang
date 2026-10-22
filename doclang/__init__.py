@@ -1,6 +1,7 @@
 """DocLang reference toolkit."""
 
 from doclang._native import (
+    ArchiveLimits,
     AttributeName,
     DoclangDocument,
     DoclangFieldItemNode,
@@ -15,6 +16,7 @@ from doclang._native import (
     DoclangTextNode,
     DoclangVersion,
     DocLangXDocument,
+    DocLangXDocumentRole,
     ElementTag,
     InsertionSite,
     OtslToken,
@@ -28,13 +30,16 @@ from doclang.migration import MigrationError, MigrationResult, migrate
 from doclang.packaging import PackagingError, pack
 from doclang.schematron import SchematronBackendNotFound, SchematronValidator, SchematronViolation
 from doclang.tokenization import get_special_tokens
+from doclang.types import DoclangNodeRecord, PackageIssue, PackageReport
 from doclang.validation import UnsupportedVersionError, ValidationError, validate, validate_document
 
 DoclangXDocument = DocLangXDocument
 
 __all__ = [
+    "ArchiveLimits",
     "AttributeName",
     "DocLangXDocument",
+    "DocLangXDocumentRole",
     "DoclangDocument",
     "DoclangFieldItemNode",
     "DoclangFieldRegionNode",
@@ -43,6 +48,7 @@ __all__ = [
     "DoclangHeadingNode",
     "DoclangListNode",
     "DoclangNode",
+    "DoclangNodeRecord",
     "DoclangPictureNode",
     "DoclangTableNode",
     "DoclangTextNode",
@@ -53,6 +59,8 @@ __all__ = [
     "MigrationError",
     "MigrationResult",
     "OtslToken",
+    "PackageIssue",
+    "PackageReport",
     "PackagingError",
     "SchematronBackendNotFound",
     "SchematronValidator",

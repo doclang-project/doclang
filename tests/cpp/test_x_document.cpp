@@ -28,7 +28,6 @@ namespace
     document.mutable_instances().emplace_back("term", "", "/doclang[1]/text[1]", 1.0f, 42, 7, 0, 4,
                                               "FeSe", "FeSe");
     document.mutable_relations().emplace_back("contains", 0.8f, 42, 9);
-    document.set_document_reference("@article{document}\n");
 
     auto summary = std::make_shared<dclg_document>();
     CHECK(summary->read("<doclang><text>Summary</text></doclang>"));
@@ -53,7 +52,6 @@ namespace
     CHECK(restored.get_entities().size() == 1);
     CHECK(restored.get_relations().size() == 1);
     CHECK(restored.get_entities()[0].get_name() == "FeSe");
-    CHECK(restored.get_document_reference() == "@article{document}\n");
     CHECK(restored.has_summary());
     CHECK(restored.get_summary().value()->at("/doclang[1]/text[1]") == "Summary");
     CHECK(restored.at("/doclang[1]/text[2]") == "Added");

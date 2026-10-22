@@ -2,11 +2,30 @@
 
 import csv
 import io
+from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import pytest
 
-from doclang import DoclangDocument, DocLangXDocument, DoclangXDocument
+from doclang import (
+    ArchiveLimits,
+    DoclangDocument,
+    DoclangTextNode,
+    DocLangXDocument,
+    DoclangXDocument,
+    DocLangXDocumentRole,
+    pack,
+)
+
+R = DocLangXDocumentRole
+ROLES = (R.SUMMARY, R.TABLE_OF_CONTENTS, R.CONCEPTS, R.REFERENCES)
+
+
+def _document(xml: str) -> DoclangDocument:
+    return DoclangDocument(xml)
+
+
+TOC = '<doclang><heading><href uri="#%2Fdoclang%5B1%5D%2Fheading%5B1%5D"/>Title</heading></doclang>'
 
 
 def _csv(*rows):
@@ -122,44 +141,170 @@ def test_sidecars_clear_and_plain_xml_replaces_dclx_state(tmp_path):
     output = tmp_path / "sidecars.dclx"
     doc = DocLangXDocument()
     assert doc.read_xml('<doclang version="0.7"><text>Body</text></doclang>')
-    doc.set_document_reference("@article{document}\n")
-    doc.set_references("@article{reference}\n")
-    assert doc.set_document_summary("<doclang><text>Summary</text></doclang>")
-    assert doc.set_toc(
-        '<doclang><toc><entry xpath="/doclang[1]/text[1]"><description>Body</description></entry></toc></doclang>'
+    assert doc.set(R.REFERENCES, _document("<doclang><text>Reference</text></doclang>"))
+    assert doc.set(R.SUMMARY, _document("<doclang><text>Summary</text></doclang>"))
+    assert doc.set(
+        R.TABLE_OF_CONTENTS,
+        _document('<doclang><heading><href uri="#%2Fdoclang%5B1%5D%2Ftext%5B1%5D"/>Body</heading></doclang>'),
     )
-    assert doc.set_concepts("<doclang><concepts><concept><header>FeSe</header></concept></concepts></doclang>")
+    assert doc.set(R.CONCEPTS, _document("<doclang><heading>FeSe</heading></doclang>"))
     assert doc.write(str(output))
 
     restored = DocLangXDocument()
     assert restored.read(str(output))
-    assert restored.document_reference() == "@article{document}\n"
-    assert restored.references() == "@article{reference}\n"
-    assert isinstance(restored.summary(), DoclangDocument)
-    assert restored.summary().at(xpath="/doclang[1]/text[1]") == "Summary"
-    assert "<toc>" in restored.toc().xml()
-    assert "<header>FeSe</header>" in restored.concepts().xml()
+    assert restored.get(R.REFERENCES).at(xpath="/doclang[1]/text[1]") == "Reference"
+    assert isinstance(restored.get(R.SUMMARY), DoclangDocument)
+    assert restored.get(R.SUMMARY).at(xpath="/doclang[1]/text[1]") == "Summary"
+    detached = restored.get(R.SUMMARY)
+    assert detached.read_xml("<doclang><text>Changed locally</text></doclang>")
+    assert restored.get(R.SUMMARY).at(xpath="/doclang[1]/text[1]") == "Summary"
+    assert "<heading>" in restored.get(R.TABLE_OF_CONTENTS).xml()
+    assert "<heading>FeSe</heading>" in restored.get(R.CONCEPTS).xml()
 
-    assert not restored.set_toc("<doclang><toc><entry /></toc></doclang>")
-    assert "entries require xpath" in restored.last_error()
-    assert restored.toc() is not None
-    restored.clear_document_reference()
-    restored.clear_references()
-    restored.clear_document_summary()
-    restored.clear_toc()
-    restored.clear_concepts()
-    assert all(
-        value is None
-        for value in (
-            restored.document_reference(),
-            restored.references(),
-            restored.summary(),
-            restored.toc(),
-            restored.concepts(),
-        )
-    )
+    assert not restored.set(R.TABLE_OF_CONTENTS, _document("<doclang><text>Bad</text></doclang>"))
+    assert "must contain headings" in restored.last_error()
+    assert restored.get(R.TABLE_OF_CONTENTS) is not None
+    for role in ROLES:
+        restored.clear(role)
+    assert all(restored.get(role) is None for role in ROLES)
 
     assert restored.read_xml("<doclang><text>Replacement</text></doclang>")
     assert restored.valid() and not restored.has_archive() and not restored.has_annotations()
     assert restored.source_path() == ""
     assert restored.overview()["instances"] == 0
+
+
+def test_typed_roles_reject_invalid_doclang_and_obsolete_parts():
+    doc = DocLangXDocument()
+    assert doc.read_xml("<doclang><text>Body</text></doclang>")
+    assert not doc.set(R.SUMMARY, _document("<doclang><toc/></doclang>"))
+    assert "summary.dclg" in doc.last_error()
+
+    for path, xml in (
+        ("annotations/references.bib", "@article{old}"),
+        ("annotations/document_reference.bib", "@article{old}"),
+        ("annotations/toc.dclg", "<doclang><toc/></doclang>"),
+        ("annotations/concepts.dclg", "<doclang><concepts/></doclang>"),
+    ):
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
+            archive.writestr("document.xml", "<doclang><heading>Title</heading></doclang>")
+            archive.writestr(path, xml)
+        restored = DocLangXDocument()
+        assert not restored.read_bytes(buffer.getvalue())
+        assert path in restored.last_error()
+
+
+def test_byte_round_trip_custom_parts_and_opc():
+    doc = DocLangXDocument()
+    assert doc.read_xml('<doclang version="0.7"><heading>Title</heading><text>Body</text></doclang>')
+    doc.set_part_bytes("context/provenance.json", b'{"source":"test"}', "application/json")
+    doc.set_part_text("assets/note.txt", "caf\u00e9", "text/plain")
+    assert doc.set(R.SUMMARY, _document("<doclang><text>Summary</text></doclang>"))
+    assert doc.set(R.TABLE_OF_CONTENTS, _document(TOC))
+    data = doc.write_bytes()
+    with ZipFile(io.BytesIO(data)) as archive:
+        assert archive.read("context/provenance.json") == b'{"source":"test"}'
+        assert b"application/json" in archive.read("[Content_Types].xml")
+        assert b"document.xml" in archive.read("_rels/.rels")
+
+    restored = DocLangXDocument()
+    assert restored.read_bytes(data)
+    assert restored.get_part_text("assets/note.txt") == "caf\u00e9"
+    assert restored.get_part_bytes("context/provenance.json") == b'{"source":"test"}'
+    assert restored.validate_package()["ok"]
+    restored.remove_part("assets/note.txt")
+    assert restored.get_part_text("assets/note.txt") is None
+    with pytest.raises(ValueError, match="reserved"):
+        restored.set_part_text("document.xml", "bad", "application/xml")
+
+
+def test_archive_rejects_bad_paths_duplicates_and_limits():
+    def package(*parts):
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
+            archive.writestr("document.xml", "<doclang><text>Body</text></doclang>")
+            for path, value in parts:
+                archive.writestr(path, value)
+        return buffer.getvalue()
+
+    for path in ("../outside", "/absolute", "a/../b", "a\\b"):
+        doc = DocLangXDocument()
+        assert not doc.read_bytes(package((path, b"x")))
+    doc = DocLangXDocument()
+    assert not doc.read_bytes(package(("document.xml", b"duplicate")))
+    assert "duplicate" in doc.last_error()
+    bounds = ArchiveLimits()
+    bounds.max_entry_bytes = 10
+    assert not DocLangXDocument().read_bytes(package(("assets/large", b"01234567890")), bounds)
+    ratio_bounds = ArchiveLimits()
+    ratio_bounds.max_compression_ratio = 2
+    assert not DocLangXDocument().read_bytes(package(("assets/repetitive", b"x" * 1000)), ratio_bounds)
+
+
+def test_sidecar_staleness_and_structured_nodes():
+    doc = DocLangXDocument()
+    assert doc.read_xml('<doclang version="0.7"><heading>Title</heading><text>Body</text></doclang>')
+    assert not doc.set(
+        R.TABLE_OF_CONTENTS,
+        _document('<doclang><heading><href uri="#%2Fdoclang%5B1%5D%2Fmissing%5B1%5D"/>Bad</heading></doclang>'),
+    )
+    assert doc.set(R.TABLE_OF_CONTENTS, _document(TOC))
+    nodes = doc.iter_nodes("/doclang[1]", limit=3)
+    assert [item["name"] for item in nodes] == ["doclang", "heading", "text"]
+    assert nodes[1]["xpath"] == "/doclang[1]/heading[1]"
+    assert nodes[1]["page"] == 1
+    assert len(doc.iter_nodes(limit=2)) == 2
+    doc.append_child("/doclang[1]", DoclangTextNode("Extra"))
+    assert doc.sidecars_stale()
+    with pytest.raises(ValueError, match="sidecars"):
+        doc.write_bytes()
+    assert doc.set(R.TABLE_OF_CONTENTS, _document(TOC))
+    assert not doc.sidecars_stale()
+    assert doc.write_bytes()
+
+
+def test_package_validation_reports_bad_metadata_and_source_refs():
+    buffer = io.BytesIO()
+    with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
+        archive.writestr(
+            "document.xml",
+            '<doclang version="0.7"><picture><src uri="assets/missing.png"/></picture></doclang>',
+        )
+        archive.writestr("[Content_Types].xml", "<Types></Types>")
+        archive.writestr("_rels/.rels", "<Relationships></Relationships>")
+    doc = DocLangXDocument()
+    assert doc.read_bytes(buffer.getvalue())
+    codes = {item["code"] for item in doc.validate_package()["errors"]}
+    assert {
+        "invalid_document_type",
+        "invalid_relationship_type",
+        "document_relation_count",
+        "missing_source_part",
+    } <= codes
+    doc.set_part_bytes("assets/missing.png", b"image", "image/png")
+    restored = DocLangXDocument()
+    assert restored.read_bytes(doc.write_bytes())
+    assert restored.validate_package()["ok"]
+
+
+def test_package_validation_checks_page_alignment():
+    doc = DocLangXDocument()
+    assert doc.read_xml('<doclang version="0.7"><text>One page</text></doclang>')
+    doc.set_part_bytes("pages/2.png", b"image", "image/png")
+    restored = DocLangXDocument()
+    assert restored.read_bytes(doc.write_bytes())
+    assert "invalid_media_index" in {issue["code"] for issue in restored.validate_package()["errors"]}
+
+
+def test_native_round_trip_of_python_packed_media(tmp_path):
+    demo = Path(__file__).resolve().parents[1] / "examples" / "archive-demo"
+    source = pack(demo / "document.xml", output=tmp_path / "source.dclx", pages=demo / "pages", audio=demo / "audio")
+    doc = DocLangXDocument()
+    assert doc.read(str(source))
+    assert doc.validate_package()["ok"]
+    restored = DocLangXDocument()
+    assert restored.read_bytes(doc.write_bytes())
+    assert restored.validate_package()["ok"]
+    assert restored.get_part_bytes("pages/1.png") == (demo / "pages" / "1.png").read_bytes()
+    assert restored.get_part_bytes("audio/1.wav") == (demo / "audio" / "1.wav").read_bytes()

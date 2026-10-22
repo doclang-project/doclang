@@ -32,36 +32,42 @@ namespace doclang::native
 
   struct validation_report
   {
+    /* validation */
+    bool ok() const;
+    std::string first_error() const;
+    std::tuple<bool, std::string> is_valid() const;
+
+    /* state */
     std::vector<xsd_issue> xsd_errors;
     std::vector<validation_issue> schematron_errors;
     std::string scope = "document";
-
-    bool ok() const
-    {
-      return xsd_errors.empty() and schematron_errors.empty();
-    }
-
-    std::string first_error() const
-    {
-      if(not xsd_errors.empty())
-        {
-          const auto& issue = xsd_errors.front();
-          return "XSD" + (issue.line > 0 ? " line " + std::to_string(issue.line) : "") + ": "
-                 + issue.message;
-        }
-      if(not schematron_errors.empty())
-        {
-          const auto& issue = schematron_errors.front();
-          return "Schematron " + issue.location + ": " + issue.message;
-        }
-      return "";
-    }
-
-    std::tuple<bool, std::string> is_valid() const
-    {
-      return { ok(), first_error() };
-    }
   };
+
+  inline bool validation_report::ok() const
+  {
+    return xsd_errors.empty() and schematron_errors.empty();
+  }
+
+  inline std::string validation_report::first_error() const
+  {
+    if(not xsd_errors.empty())
+      {
+        const auto& issue = xsd_errors.front();
+        return "XSD" + (issue.line > 0 ? " line " + std::to_string(issue.line) : "") + ": "
+               + issue.message;
+      }
+    if(not schematron_errors.empty())
+      {
+        const auto& issue = schematron_errors.front();
+        return "Schematron " + issue.location + ": " + issue.message;
+      }
+    return "";
+  }
+
+  inline std::tuple<bool, std::string> validation_report::is_valid() const
+  {
+    return { ok(), first_error() };
+  }
 
   namespace validation_detail
   {

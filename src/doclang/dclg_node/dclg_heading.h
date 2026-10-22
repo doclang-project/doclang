@@ -17,6 +17,7 @@ namespace doclang::native
   public:
 
     dclg_heading(std::string_view text = "", std::size_t level = 1);
+    /* validation */
     validation_report validate_local() const;
     std::tuple<bool, std::string> is_valid() const;
     validation_report validate_in(const dclg_document& doc, const insertion_site& site) const;
