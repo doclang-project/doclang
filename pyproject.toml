@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "doclang"
-version = "0.7.3"  # DO NOT EDIT MANUALLY, updated automatically
+version = "0.8.0"  # DO NOT EDIT MANUALLY, updated automatically
 description = "DocLang reference toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -71,9 +71,6 @@ wheel.packages = ["doclang"]
 sdist.inclusion-mode = "explicit"
 sdist.include = ["pyproject.toml", "README.md", "LICENSE", "CMakeLists.txt", "doclang/**", "src/doclang/**", "src/pybind/**", "tests/cpp/**", "tests/data/**"]
 sdist.exclude = ["**/__pycache__/**", "**/*.pyc", "**/.#*", "**/#*#"]
-
-[tool.pytest.ini_options]
-markers = ["validation: XSD and Schematron validation tests"]
 
 [tool.ruff]
 target-version = "py310"
@@ -151,3 +148,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+markers = ["validation: XSD and Schematron validation tests"]
+filterwarnings = ["ignore:No DocLang version declared:UserWarning"]

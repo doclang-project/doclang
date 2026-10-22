@@ -1,3 +1,24 @@
+## [v0.8.0](https://github.com/doclang-project/doclang/releases/tag/v0.8.0)
+
+* add version migration (#196)
+* enable version-specific validation (#195)
+  * **BREAKING CHANGE**: XSD no longer restricts `version` attribute to one value nor does it give it a default; selection of version to validate against now defined in spec and implemented by reference toolkit.
+* reformat appendix into annexes (#187)
+* add conformance clause, move versioning rules into it, define roles (#193)
+* fix `<src>` reference entry for `<frame>`, `<cover>` and `<audio>` (#199)
+* define subject matter in scope section (#192)
+* replace mermaid governance workflow diagram with static file (#194)
+* remove section on version 0.x behavior (#191)
+* reorganize terms and definitions, disambiguate "document" (#184)
+* fix normative references and bibliography clauses (#183)
+* move motivation details out of spec (#180)
+* move list of contributors from spec to README (#179)
+* specify spec as authoritative source in case of discrepancies
+* fix commented out section so nothing gets left behind (#190)
+* allow multiple captions (#176)
+* add `<track>` for time-aligned media transcripts (#175)
+* expose special token vocabulary (#174)
+
 ## [v0.7.3](https://github.com/doclang-project/doclang/releases/tag/v0.7.3)
 
 * refuse symbolic links when packing pages and assets (#171)

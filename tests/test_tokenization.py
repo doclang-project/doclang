@@ -33,7 +33,8 @@ def _expand_range_row(backticked: list[str]) -> list[str]:
 
 def _tokens_from_spec() -> list[str]:
     text = SPEC_PATH.read_text()
-    section = text[text.index("#### Token vocabulary") : text.index("### Future Extensions")]
+    """Future extensions section is Annex D"""
+    section = text[text.index("#### Token vocabulary") : text.index("### Annex D")]
 
     tokens: list[str] = []
     for match in _ROW_RE.finditer(section):

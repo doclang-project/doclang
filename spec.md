@@ -1,12 +1,8 @@
 # DocLang: Universal AI Document Format
 
-Version: 0.7
+Version: 0.8
 
-## Introduction and Overview
-
-This document specifies the DocLang format, a universal markup language for representing structured document content with semantic, geometric, and formatting information.
-
-### Introduction
+## Introduction
 
 Digital documents exist in many formats, which makes processing, conversion, and understanding challenging. Moreover, many of these formats have been designed primarily for rendering, so semantic information, structural relationships, and geometric context may be lost during document conversion.
 
@@ -21,16 +17,17 @@ DocLang aims to address these challenges by providing a minimalist, unambiguous 
 
 This document builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
 
-### Scope
+## Scope
 
-This document specifies:
+This document specifies DocLang, a markup language for representing structured document content, including its semantic, geometric, and formatting information.
+
+It covers the following aspects:
 
 - The syntax and semantics of the DocLang markup language
 - Rules for encoding document structure, content, and metadata
 - Primitives for representing geometric layout and pagination
 - Methods for expressing formatting and text direction
 - Specifications for complex document components (tables, charts, formulas, code, forms)
-- Requirements for conforming implementations
 
 ## Normative references
 
@@ -57,6 +54,22 @@ For the purposes of this document, the following terms and definitions apply. Te
 2. **document component**
 
    A cohesive and meaningful part of document content, e.g. a table, list item with a marker, a bold piece of text, etc.
+
+### Roles
+
+An implementation may act in one or more of the following roles.
+
+1. **producer**
+
+   An implementation that creates DocLang instances.
+
+2. **processor**
+
+   An implementation that reads, transforms or renders DocLang instances.
+
+3. **validator**
+
+   A processor that checks DocLang instances against this document.
 
 ### Adopted from XML
 
@@ -85,6 +98,41 @@ For the purposes of this document, the following terms and definitions apply. Te
    An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
 
    Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
+
+## Conformance
+
+A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD [3] schema and Schematron rules) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
+
+Requirements addressed to a producer, processor or validator apply to implementations acting in that role. A producer SHOULD ensure that the instances it produces conform, for example by validating its output and rejecting or repairing non-conforming results.
+
+### Version
+
+A DocLang instance states the version of this document it is intended to conform to, in `MAJOR.MINOR` format, through the `version` attribute of the root `<doclang>` element.
+
+### Omitted version
+
+The `version` attribute is optional. If it is omitted, the version of the instance is unspecified: it is neither implied to be the version of this document nor any earlier version.
+
+- A producer SHOULD always set `version`.
+- A validator SHOULD validate an instance with an unspecified version against the latest version of this document it supports, and SHOULD warn that no version was declared.
+- A validator MAY allow the user to explicitly select the version to validate against, overriding the declared one.
+
+### Compatibility
+
+The versions of this document follow the principles of Semantic Versioning [7] (considering X >= 1, and Y < Z):
+
+- A DocLang instance that conforms to version `X.Y` also conforms to version `X.Z`.
+- A DocLang instance that conforms to version `X.Z` need not conform to version `X.Y`.
+
+**Example:**
+- A `1.0` instance conforms to version `1.1`
+- A `1.1` instance need not conform to version `1.0`
+
+### Schema versions
+
+A schema may additionally carry a patch version, i.e. a full Semantic Versioning string (e.g., `1.0.0`, `1.0.1`), to track schema-level changes that do not affect document compatibility.
+
+The XSD schema constrains the `version` attribute of the root `<doclang>` element only to the `MAJOR.MINOR` format; selecting the schema that corresponds to an instance's version is the responsibility of the validator.
 
 ## Language Design Principles
 
@@ -175,7 +223,7 @@ While the details are specified in the sections further below, this snippet show
 
 ### Subclasses
 
-For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Recommendations](#recommendations)), but for extensibility purposes, the label value is not to be validated.
+For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Recommendations](#annex-c-informative-recommendations)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
 
 In the example further below:
@@ -191,45 +239,17 @@ In the example further below:
 </doclang>
 ```
 
-### Version Management and Compatibility
-
-DocLang instances define a version in `MAJOR.MINOR` format through the `version` attribute of the root `<doclang>` element. This indicates the version of this document against which the instance is intended to be validated.
-
-#### Semantic Versioning Principles
-
-The XSD [3] schema used for validating DocLang XML documents defines the specification versions it supports based on Semantic Versioning [7] principles, i.e. considering X >= 1, and Y < Z:
-
-- A DocLang instance with version `X.Y` is compatible with an XSD schema with version `X.Z`, i.e. a DocLang instance that is valid against schema `X.Y` will also successfully validate against schema `X.Z`.
-- A DocLang instance with version `X.Z` is considered incompatible with an XSD schema with version `X.Y`, i.e. a DocLang instance that is valid against schema `X.Z` need not be successfully validate against `X.Y`.
-
-**Example:**
-- A `1.0` document is compatible with a `1.1` schema
-- A `1.1` document is considered incompatible with a `1.0` schema
-
-#### Version 0.x Behavior
-
-As per Semantic Versioning conventions, versions where `MAJOR = 0` indicate initial development and always break backward compatibility. Therefore:
-
-- A DocLang instance of version `0.1` is considered incompatible with a `0.2` schema
-- A DocLang instance of version `0.2` is considered incompatible with a `0.1` schema
-
-Each minor version increment in the 0.x series represents a breaking change.
-
-#### XSD Schema Versioning
-
-The XSD schema itself may additionally capture a patch version and internally define a full Semantic Versioning (SemVer) version string (e.g., `1.0.0`, `1.0.1`) to track schema-level changes that do not affect document compatibility.
-
 ## Language Specification
 
 DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
-The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#reference).
+The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#annex-a-normative-reference).
 
-The DocLang archive format is defined in [DocLang Archive Format](#doclang-archive-format).
+The DocLang archive format is defined in [DocLang Archive Format](#annex-b-normative-doclang-archive-format).
 
-Non-normative recommendation guidelines are covered in [Recommendations](#recommendations).
+Non-normative recommendation guidelines are covered in [Recommendations](#annex-c-informative-recommendations).
 
-Planned extensions are discussed in [Future Extensions](#future-extensions).
+Planned extensions are discussed in [Future extensions](#annex-d-informative-future-extensions).
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
@@ -299,7 +319,7 @@ Picture by base64-encoded data:
 </picture>
 ```
 
-Bar chart using [recommended label](#recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
+Bar chart using [recommended label](#annex-c-informative-recommendations) and [`<tabular>`](#tabular) for capturing structured chart data:
 
 ```xml
 <picture class="chart">
@@ -329,7 +349,7 @@ Picture with document [caption](#caption), [description](#description), and [sum
 
 ### Code snippets
 
-Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Recommendations](#recommendations)).
+Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Recommendations](#annex-c-informative-recommendations)).
 
 Whitespace can be retained by `<content>` and XML escape characters can be addressed using CDATA.
 
@@ -1572,7 +1592,7 @@ Cue block with a video frame and an audio clip:
 </track>
 ```
 
-Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#doclang-archive-format).
+Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#annex-b-normative-doclang-archive-format).
 
 Crossing the hour mark, and consecutive turns with no speaker attribution:
 
@@ -2030,7 +2050,7 @@ list item is split.
 
 The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in SMILES representation.
 
-For details, see [custom metadata](#custom) and vocabulary guidelines in [Recommendations](#recommendations).
+For details, see [custom metadata](#custom) and vocabulary guidelines in [Recommendations](#annex-c-informative-recommendations).
 
 For shared/interoperable documents, using a formal XML namespace is recommended:
 
@@ -2056,10 +2076,10 @@ For local/private usage where formal namespaces are not used, a collision-resist
 </picture>
 ```
 
-## Appendix
+## Annexes
 
 <!-- NOTE: do not edit Reference manually; updates to be made using generate_reference.py -->
-### Reference
+### Annex A (normative): Reference
 
 #### Special Elements
 
@@ -2078,7 +2098,7 @@ Exists exactly once, as root element.
 | Attribute | Required / Optional | Allowed Values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
-| `version` | Optional; default: "0.7" | {"0.7"} | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Verisoning. |
+| `version` | Optional; if omitted, the version is unspecified | "MAJOR.MINOR" of a published DocLang specification version | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Versioning. If omitted, the version is unspecified (see [Omitted version](#omitted-version)). |
 
 ###### Allowed Content Types
 
@@ -2352,7 +2372,7 @@ None
 
 ##### `<code>`
 
-Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Recommendations](#recommendations)).
+Captures a code snippet, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label)in the element head (see [Recommendations](#annex-c-informative-recommendations)).
 
 ###### Allowed Context
 
@@ -2819,7 +2839,7 @@ None
 
 ##### `<custom>`
 
-Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Recommendations](#recommendations) for naming and namespacing guidance for custom vocabularies.
+Optional part of the element head; custom metadata, e.g. for application-specific purposes. See [Recommendations](#annex-c-informative-recommendations) for naming and namespacing guidance for custom vocabularies.
 
 ###### Allowed Context
 
@@ -2880,11 +2900,11 @@ Payload elements are low-level elements that help define the effective content o
 
 ##### `<src>`
 
-The image's source.
+The source of the element's media: an image in [`<picture>`](#picture), [`<frame>`](#frame) and [`<cover>`](#cover), or an audio clip in [`<audio>`](#audio).
 
 ###### Allowed Context
 
-Can only be part of the picture-specific element body sequence of [`<picture>`](#picture).
+Can only be part of the picture-specific element body sequence of [`<picture>`](#picture), or come right after the element head of [`<frame>`](#frame), [`<cover>`](#cover) or [`<audio>`](#audio).
 
 ###### Attributes
 
@@ -3413,7 +3433,7 @@ Can only be child of [`<head>`](#head).
 
 None (empty element).
 
-### DocLang Archive Format
+### Annex B (normative): DocLang archive format
 
 A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
@@ -3490,7 +3510,7 @@ Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* c
 
 The *N*-th [`<track>`](#track) in the DocLang instance aligns with `audio/{N}.*` and/or `video/{N}.*` when present. A cue block's timestamps are then playback offsets into that file, measured from its start (`00:00:00.000`). Per-cue [`<frame>`](#frame) and [`<audio>`](#audio) fragments are independent references (via [`<src>`](#src)) and are not derived from the whole-track files. A track with neither an `audio/` nor a `video/` entry is simply a transcript whose timestamps refer to a recording the archive does not carry.
 
-### Recommendations
+### Annex C (informative): Recommendations
 
 This appendix is informative and does not define conformance requirements.
 
@@ -3672,7 +3692,7 @@ The token vocabulary trades off size and inference cost:
 | `<seconds value="0"/>`, `<seconds value="1"/>`, ..., `<seconds value="59"/>` | [`seconds`](#seconds) tokens with values from 0 to 59 |
 | `<msecs value="0"/>`, `<msecs value="10"/>`, ..., `<msecs value="990"/>` | [`msecs`](#msecs) tokens with values in multiples of 10 from 0 to 990 |
 
-### Future Extensions
+### Annex D (informative): Future extensions
 
 These features are considered for future versions of Doclang.
 
@@ -3686,7 +3706,7 @@ Repetitive structures currently rely on a bare delimiter plus unwrapped content:
 
 #### Multi-part track media
 
-The [archive format](#doclang-archive-format) carries at most one whole-track file per [`<track>`](#track) per modality (`audio/{N}.*`, `video/{N}.*`). A future revision may add a backward-compatible form for media split into ordered segments (e.g. an `audio/{N}/` directory plus a small manifest giving each segment's start offset), for very long recordings or capture that was paused and resumed.
+The [archive format](#annex-b-normative-doclang-archive-format) carries at most one whole-track file per [`<track>`](#track) per modality (`audio/{N}.*`, `video/{N}.*`). A future revision may add a backward-compatible form for media split into ordered segments (e.g. an `audio/{N}/` directory plus a small manifest giving each segment's start offset), for very long recordings or capture that was paused and resumed.
 
 #### Metadata
 
@@ -3783,38 +3803,7 @@ Implementers SHOULD consult authoritative sources and legal counsel to determine
 Governance metadata is intended to travel with the DocLang instance and provide downstream systems with machine-readable constraints.
 The diagram below illustrates how the four governance areas map to common document-to-AI workflows.
 
-```mermaid
-flowchart LR
-  D["Document content<br/>(DocLang body)"] --> H["<head><br/>Governance metadata"]
-
-  H --> PII["Privacy & PII controls<br/>(pii_*)"]
-  H --> EXT["Extraction controls<br/>(extraction_*)"]
-  H --> RAG["RAG controls<br/>(rag_*)"]
-  H --> TRN["Training controls<br/>(training_*)"]
-
-  D --> X["Extraction pipeline"]
-  EXT --> X
-  PII --> X
-  X --> XD["Extracted dataset / fields"]
-
-  D --> I["Index/Embed pipeline"]
-  RAG --> I
-  PII --> I
-  I --> E["Embeddings / index"]
-
-  E --> Q["Retrieve"]
-  RAG --> Q
-  Q --> M["Model inference"]
-  M --> O["Output"]
-  RAG --> O
-  PII --> O
-
-  D --> T["Training / fine-tuning pipeline"]
-  TRN --> T
-  PII --> T
-  T --> TD["Training dataset"]
-  T --> TM["Trained model"]
-```
+<img src="resources/governance_workflow.png">
 
 ###### Naming and terminology conventions
 
