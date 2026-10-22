@@ -17,6 +17,8 @@
 #include <doclang/archive.h>
 #include <doclang/content.h>
 #include <doclang/dclg_document.h>
+#include <doclang/opc.h>
+#include <doclang/source.h>
 
 namespace doclang::native
 {
@@ -44,6 +46,12 @@ namespace doclang::native
 
     void set_archive(archive value);
     void clear_archive();
+
+    /* original source */
+    bool has_source() const;
+    std::optional<std::pair<std::span<const std::byte>, std::string>> get_source() const;
+    bool set_source(std::span<const std::byte> data, std::string_view mimetype);
+    void clear_source();
 
     /* graph annotations */
     std::shared_ptr<std::vector<base_property>> shared_properties();
@@ -112,6 +120,68 @@ namespace doclang::native
   };
 
   inline dclx_document::dclx_document() = default;
+
+  inline bool dclx_document::has_source() const
+  {
+    return has_archive() and artifacts().has(SOURCE_MIMETYPE) and artifacts().has(SOURCE_DOCUMENT);
+  }
+
+  inline std::optional<std::pair<std::span<const std::byte>, std::string>>
+  dclx_document::get_source() const
+  {
+    if(not has_archive())
+      {
+        return std::nullopt;
+      }
+    std::string error;
+    if(not validate_source_parts(artifacts(), error))
+      {
+        throw std::runtime_error(error);
+      }
+    if(not has_source())
+      {
+        return std::nullopt;
+      }
+    const auto data = artifacts().bytes(SOURCE_DOCUMENT);
+    if(not data)
+      {
+        throw std::runtime_error("could not read source/document");
+      }
+    return std::make_pair(*data, source_mimetype(artifacts()));
+  }
+
+  inline bool dclx_document::set_source(std::span<const std::byte> data, std::string_view mimetype)
+  {
+    if(not valid_source_mimetype(mimetype))
+      {
+        set_last_error("invalid source MIME type; expected type/subtype");
+        return false;
+      }
+    archive updated = has_archive() ? artifacts() : archive{};
+    std::string error;
+    if(not set_part_content_type(updated, SOURCE_MIMETYPE, "text/plain", error)
+       or not set_part_content_type(updated, SOURCE_DOCUMENT, mimetype, error))
+      {
+        set_last_error(error);
+        return false;
+      }
+    updated.set_text(SOURCE_MIMETYPE, mimetype);
+    updated.set_bytes(SOURCE_DOCUMENT, data);
+    set_archive(std::move(updated));
+    set_last_error("");
+    return true;
+  }
+
+  inline void dclx_document::clear_source()
+  {
+    if(has_archive())
+      {
+        artifacts().erase(SOURCE_MIMETYPE);
+        artifacts().erase(SOURCE_DOCUMENT);
+        remove_part_content_type(artifacts(), SOURCE_MIMETYPE);
+        remove_part_content_type(artifacts(), SOURCE_DOCUMENT);
+      }
+  }
 
   inline void dclx_document::set_source_path(std::filesystem::path path)
   {

@@ -150,6 +150,12 @@ namespace doclang::native
         return false;
       }
 
+    std::string source_error;
+    if(not validate_source_parts(zip, source_error))
+      {
+        out.set_last_error(source_error);
+        return false;
+      }
     out.set_archive(std::move(zip));
     return load_annotations(out);
   }

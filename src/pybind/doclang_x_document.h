@@ -38,6 +38,17 @@ namespace doclang::binding
   public:
 
     DocLangXDocument();
+    DocLangXDocument(std::optional<py::bytes> source, std::optional<std::string> source_mimetype);
+    DocLangXDocument(const std::string& xml, std::optional<py::bytes> source = std::nullopt,
+                     std::optional<std::string> source_mimetype = std::nullopt);
+    DocLangXDocument(const DoclangDocument& dclg, std::optional<py::bytes> source = std::nullopt,
+                     std::optional<std::string> source_mimetype = std::nullopt);
+
+    /* original source */
+    bool has_source() const;
+    std::optional<std::pair<py::bytes, std::string>> get_source() const;
+    void set_source(py::bytes data, const std::string& mimetype);
+    void clear_source();
 
     /* reading */
     static std::uint64_t hash(const std::string& text);
@@ -169,6 +180,67 @@ namespace doclang::binding
   {
   }
 
+  inline DocLangXDocument::DocLangXDocument(std::optional<py::bytes> source,
+                                            std::optional<std::string> source_mimetype)
+      : DocLangXDocument()
+  {
+    if(source.has_value() != source_mimetype.has_value())
+      {
+        throw py::value_error("source and source_mimetype must be supplied together");
+      }
+    if(source)
+      {
+        set_source(*source, *source_mimetype);
+      }
+  }
+
+  inline DocLangXDocument::DocLangXDocument(const std::string& xml, std::optional<py::bytes> source,
+                                            std::optional<std::string> source_mimetype)
+      : DocLangXDocument(std::move(source), std::move(source_mimetype))
+  {
+    read_xml(xml);
+  }
+
+  inline DocLangXDocument::DocLangXDocument(const DoclangDocument& dclg,
+                                            std::optional<py::bytes> source,
+                                            std::optional<std::string> source_mimetype)
+      : DocLangXDocument(dclg.xml(), std::move(source), std::move(source_mimetype))
+  {
+  }
+
+  inline bool DocLangXDocument::has_source() const
+  {
+    return doc->has_source();
+  }
+
+  inline std::optional<std::pair<py::bytes, std::string>> DocLangXDocument::get_source() const
+  {
+    const auto source = doc->get_source();
+    if(not source)
+      {
+        return std::nullopt;
+      }
+    return std::make_pair(
+        py::bytes(reinterpret_cast<const char*>(source->first.data()), source->first.size()),
+        source->second);
+  }
+
+  inline void DocLangXDocument::set_source(py::bytes data, const std::string& mimetype)
+  {
+    const std::string buffer = data;
+    if(not doc->set_source(std::span<const std::byte>(
+                               reinterpret_cast<const std::byte*>(buffer.data()), buffer.size()),
+                           mimetype))
+      {
+        throw py::value_error(doc->get_last_error());
+      }
+  }
+
+  inline void DocLangXDocument::clear_source()
+  {
+    doc->clear_source();
+  }
+
   inline std::uint64_t DocLangXDocument::hash(const std::string& text)
   {
     return native::dclx_document::hash(text);
@@ -208,9 +280,16 @@ namespace doclang::binding
 
   inline bool DocLangXDocument::read_xml(const std::string& xml)
   {
-    // A plain DCLG buffer must not retain state from a previous DCLX read.
+    // Replace XML and annotations while retaining the original source.
+    const auto source = get_source();
     doc->clear();
     const bool result = doc->read(xml);
+    if(source)
+      {
+        const auto error = doc->get_last_error();
+        set_source(source->first, source->second);
+        doc->set_last_error(error);
+      }
     if(result)
       {
         reset_generations();
@@ -313,7 +392,8 @@ namespace doclang::binding
   inline bool DocLangXDocument::protected_part(const std::string& path)
   {
     return path == "document.xml" or path == "[Content_Types].xml" or path == "_rels/.rels"
-           or path.rfind("annotations/", 0) == 0;
+           or path.rfind("annotations/", 0) == 0 or path == native::SOURCE_MIMETYPE
+           or path == native::SOURCE_DOCUMENT;
   }
 
   inline std::optional<py::bytes> DocLangXDocument::get_part_bytes(const std::string& path) const
@@ -428,6 +508,11 @@ namespace doclang::binding
     if(doc->has_archive())
       {
         const auto& zip = doc->artifacts();
+        std::string source_error;
+        if(not native::validate_source_parts(zip, source_error))
+          {
+            add_error("invalid_source", "source/", source_error);
+          }
         pugi::xml_document types;
         const auto type_text = zip.text("[Content_Types].xml");
         if(not type_text or not types.load_string(std::string(*type_text).c_str())
@@ -473,6 +558,30 @@ namespace doclang::binding
               {
                 add_error("invalid_relationship_type", "[Content_Types].xml",
                           "relationship type missing");
+              }
+          }
+        if(doc->has_source() and source_error.empty())
+          {
+            const auto mimetype = native::source_mimetype(zip);
+            for(const auto& part :
+                { std::make_pair(native::SOURCE_MIMETYPE, std::string("text/plain")),
+                  std::make_pair(native::SOURCE_DOCUMENT, mimetype) })
+              {
+                bool matches = false;
+                for(auto entry : types.child("Types").children("Override"))
+                  {
+                    if(std::string(entry.attribute("PartName").value())
+                           == "/" + std::string(part.first)
+                       and entry.attribute("ContentType").value() == part.second)
+                      {
+                        matches = true;
+                      }
+                  }
+                if(not matches)
+                  {
+                    add_error("invalid_source_type", std::string(part.first),
+                              "source part requires a matching content type override");
+                  }
               }
           }
         pugi::xml_document rels;

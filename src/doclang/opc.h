@@ -6,6 +6,7 @@
 #include <pugixml.hpp>
 #include <doclang/archive.h>
 #include <doclang/content.h>
+#include <doclang/source.h>
 
 namespace doclang::native
 {
@@ -107,6 +108,16 @@ namespace doclang::native
 
   inline bool prepare_opc(archive& zip, std::string& error)
   {
+    if(not validate_source_parts(zip, error))
+      {
+        return false;
+      }
+    if(zip.has(SOURCE_DOCUMENT)
+       and (not set_part_content_type(zip, SOURCE_MIMETYPE, "text/plain", error)
+            or not set_part_content_type(zip, SOURCE_DOCUMENT, source_mimetype(zip), error)))
+      {
+        return false;
+      }
     for(const auto& path : zip.paths())
       {
         if(path == "[Content_Types].xml" or path == "_rels/.rels")

@@ -313,7 +313,18 @@ PYBIND11_MODULE(_native, module)
       .def_readwrite("max_compression_ratio",
                      &doclang::native::archive::limits::max_compression_ratio);
   py::class_<DocLangXDocument, DoclangDocument>(module, "DocLangXDocument")
-      .def(py::init<>())
+      .def(py::init<std::optional<py::bytes>, std::optional<std::string>>(), py::kw_only(),
+           py::arg("source") = py::none(), py::arg("source_mimetype") = py::none())
+      .def(py::init<const std::string&, std::optional<py::bytes>, std::optional<std::string>>(),
+           py::arg("xml"), py::kw_only(), py::arg("source") = py::none(),
+           py::arg("source_mimetype") = py::none())
+      .def(py::init<const DoclangDocument&, std::optional<py::bytes>, std::optional<std::string>>(),
+           py::arg("dclg"), py::kw_only(), py::arg("source") = py::none(),
+           py::arg("source_mimetype") = py::none())
+      .def("has_source", &DocLangXDocument::has_source)
+      .def("get_source", &DocLangXDocument::get_source)
+      .def("set_source", &DocLangXDocument::set_source, py::arg("data"), py::arg("mimetype"))
+      .def("clear_source", &DocLangXDocument::clear_source)
       .def_static("hash", &DocLangXDocument::hash, py::arg("text"))
       .def("read", &DocLangXDocument::read, py::arg("path"),
            py::arg("limits") = doclang::native::archive::limits{})

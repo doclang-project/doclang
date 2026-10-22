@@ -3441,8 +3441,10 @@ An archive is a **package** of **parts** (files in the ZIP). Each part has a pat
 
 #### Layout
 
-```
-[Content_Types].xml    # required — OPC content types
+The following layout identifies the required parts and reserved optional paths of a DocLang archive. ZIP entry names are shown relative to the archive root.
+
+```text
+[Content_Types].xml     # required — OPC content types
 _rels/
   .rels                # required — package → main document
 document.xml           # required — valid DocLang instance
@@ -3450,7 +3452,51 @@ pages/                 # optional — page images, e.g. 1.png, 2.png
 audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
 video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
 assets/                # optional — files referenced from markup
+annotations/           # optional — annotations and derived DocLang documents
+  properties.csv       # optional — properties attached to document elements
+  instances.csv        # optional — located annotation occurrences
+  entities.csv         # optional — entity records
+  relations.csv        # optional — semantic relation records
+  summary.dclg         # optional — document summary
+  toc.dclg             # optional — table of contents
+  concepts.dclg        # optional — document concepts
+  references.dclg      # optional — bibliographic references
+governance/            # optional — governance-related information
+source/                # optional — original source document
+  mimetype             # required with source — original document's MIME type
+  document             # required with source — original document bytes
 ```
+
+Optional paths do not require explicit directory entries in the ZIP. An archive MAY omit any optional part or directory, subject to the requirements for related parts specified below.
+
+#### Reserved paths
+
+The paths listed below are reserved for their specified purposes. Producers MUST NOT use them for unrelated application data.
+
+| Path or prefix | Reserved purpose |
+|----------------|------------------|
+| `[Content_Types].xml` | OPC content-type declarations. |
+| `_rels/` | OPC relationship parts, as defined by OPC. |
+| `document.xml` | The main DocLang instance. |
+| `pages/` | Raster images aligned with document pages. |
+| `audio/` | Complete audio recordings aligned with document tracks. |
+| `video/` | Complete video recordings aligned with document tracks. |
+| `assets/` | Payloads referenced by URI from DocLang markup. |
+| `annotations/` | DocLang annotation tables and derived DocLang documents. |
+| `governance/` | Governance-related information associated with the document or package. |
+| `source/` | The original source document and its MIME type. |
+
+Reserved names are case-sensitive. For example, `Pages/1.png` does not identify the page image `pages/1.png`.
+
+The `annotations/` namespace is reserved for DocLang-defined annotation parts. Unrecognized names within this namespace MUST NOT be interpreted as one of the annotation roles defined below.
+
+Application-specific parts MAY be included outside reserved paths. Applications SHOULD use a distinct prefix identifying their vocabulary or producer to avoid naming collisions.
+
+The presence of an unrecognized part does not, by itself, make an archive non-conforming. Readers MAY ignore unrecognized parts. Editors SHOULD preserve unrecognized parts when rewriting an archive unless their removal is explicitly requested.
+
+Every part remains subject to the OPC content-type declaration requirements.
+
+#### Package parts
 
 ##### `[Content_Types].xml` (required)
 
@@ -3500,7 +3546,144 @@ Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based posi
 
 ##### `assets/` (optional)
 
-Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
+Optional payloads referenced by relative URIs in DocLang markup. Relative package URIs resolve from the archive root.
+
+This directory may contain picture images, track covers, cue frames, audio clips, and other referenced payloads. Filenames and subdirectory names within `assets/` are application-defined. For example, `<src uri="assets/pictures/chart.svg"/>` identifies the part `assets/pictures/chart.svg`.
+
+Asset filenames do not establish an association with a document element: the association is established by the referencing URI. In particular, there is no positional correspondence between an asset filename and the position of a `<picture>`, `<cover>`, `<frame>`, or `<audio>` element.
+
+Whole-track recordings use `audio/` and `video/` as specified above. Per-cue media fragments are referenced independently through `<src>`. DocLang does not reserve separate top-level `pictures/`, `frames/`, `covers/`, or `tracks/` directories.
+
+##### `annotations/` (optional)
+
+Optional annotations and derived documents associated with the main DocLang instance.
+
+Annotation parts supplement `document.xml`; they do not replace it or change its reading order. A reader that does not support annotation parts MAY process the main document independently.
+
+The following part names are reserved:
+
+| Part | Definition | Representation |
+|------|------------|----------------|
+| `annotations/properties.csv` | Records properties assigned to elements in the main document, such as language or classification labels. | CSV table. |
+| `annotations/instances.csv` | Records located annotation occurrences in the main document, such as mentions of named entities or terms. | CSV table. |
+| `annotations/entities.csv` | Records entities associated with the document, potentially aggregating multiple occurrences. | CSV table. |
+| `annotations/relations.csv` | Records named semantic relations between annotated subjects. | CSV table. |
+| `annotations/summary.dclg` | Provides a derived summary of the main document. | DocLang instance. |
+| `annotations/toc.dclg` | Provides a table of contents referring to elements in the main document. | DocLang instance with the additional constraints below. |
+| `annotations/concepts.dclg` | Describes concepts associated with the main document. | DocLang instance. |
+| `annotations/references.dclg` | Provides bibliographic references associated with the main document. | DocLang instance. |
+
+Each part is optional. The presence of one part does not require the presence of the others.
+
+CSV parts MUST be declared with content type `text/csv`. DocLang sidecar parts MUST be declared with content type `application/vnd.doclang.document+xml`.
+
+###### Annotation CSV headers
+
+Each annotation CSV part MUST contain a header record whose field names and order match the corresponding header below exactly. Field names are case-sensitive. Every subsequent record MUST contain the same number of fields as the header. A table with no data records MAY consist of its header alone.
+
+`annotations/properties.csv`:
+
+```csv
+type,xpath,label,confidence
+```
+
+| Header | Definition |
+|--------|------------|
+| `type` | The category of property assigned to the document element, such as language or classification. |
+| `xpath` | The absolute element path in `document.xml` identifying the element to which the property applies. |
+| `label` | The value assigned to the property, such as `en` for a language property. |
+| `confidence` | The producer's numerical confidence score for assigning this property value to the identified element. |
+
+`annotations/instances.csv`:
+
+```csv
+type,subtype,xpath,conf,ehash,ihash,char_i,char_j,name,original
+```
+
+| Header | Definition |
+|--------|------------|
+| `type` | The primary category of the annotation occurrence, such as a named entity or term. |
+| `subtype` | A finer classification within `type`, or an empty value when no finer classification is assigned. |
+| `xpath` | The absolute element path in `document.xml` identifying the element whose text contains the occurrence. |
+| `conf` | The producer's numerical confidence score for this annotation occurrence. |
+| `ehash` | An unsigned 64-bit hash identifying the entity associated with the occurrence, shared with that entity's `ehash` in `annotations/entities.csv` when present. |
+| `ihash` | An unsigned 64-bit hash identifying this particular occurrence, allowing occurrences of the same entity to be distinguished. |
+| `char_i` | The inclusive start offset of the occurrence in the text associated with `xpath`. |
+| `char_j` | The exclusive end offset of the occurrence in the same text and offset convention as `char_i`. |
+| `name` | The producer's normalized name for the entity represented by the occurrence. |
+| `original` | The occurrence's source text before the normalization used to produce `name`. |
+
+`annotations/entities.csv`:
+
+```csv
+type,subtype,name,ehash,count
+```
+
+| Header | Definition |
+|--------|------------|
+| `type` | The primary category of the entity, such as a named entity or term. |
+| `subtype` | A finer classification within `type`, or an empty value when no finer classification is assigned. |
+| `name` | The producer's normalized name for the entity represented by the record. |
+| `ehash` | An unsigned 64-bit hash identifying the named entity across its annotation occurrences. |
+| `count` | The number of occurrences attributed to this entity by the producer's aggregation procedure. |
+
+`annotations/relations.csv`:
+
+```csv
+name,conf,hash_i,hash_j
+```
+
+| Header | Definition |
+|--------|------------|
+| `name` | The name of the semantic relation asserted between the two endpoints. |
+| `conf` | The producer's numerical confidence score for the asserted relation. |
+| `hash_i` | An unsigned 64-bit hash identifying the first endpoint of the relation. |
+| `hash_j` | An unsigned 64-bit hash identifying the second endpoint of the relation. |
+
+This annex defines the CSV part names, roles, header layouts, and field meanings. Confidence scales, name normalization, hash generation and collision handling, whether relation endpoints identify entities or occurrences, entity aggregation procedures, and the text extraction, offset units, and index origin used for `char_i` and `char_j` remain unspecified in this revision. The occurrence span uses the half-open interval `[char_i, char_j)`.
+
+Semantic relations in `annotations/relations.csv` are distinct from OPC relationships. OPC relationship parts describe package relationships; they do not represent the document's semantic relation annotations.
+
+###### Derived DocLang documents
+
+Each `.dclg` annotation part MUST be a valid DocLang instance with its own `<doclang>` root.
+
+A sidecar's role is established by its reserved package path. For example, `annotations/summary.dclg` contains a document-level derived summary; it is distinct from a `<summary>` property attached to an element in `document.xml`.
+
+Except for the table-of-contents constraints below, this annex imposes no additional role-specific element structure on these documents.
+
+###### Table of contents
+
+The body of `annotations/toc.dclg` MUST contain only `<heading>` elements. Each heading MUST contain an `<href>` identifying its target in the main document.
+
+The `href@uri` MUST begin with `#`, followed by a percent-encoded absolute element path. For this sidecar role, the path is evaluated against `document.xml`, rather than against the table-of-contents document.
+
+Paths identify elements by name and 1-based position among siblings with the same name. For example, `#%2Fdoclang%5B1%5D%2Fheading%5B2%5D` identifies `/doclang[1]/heading[2]` in the main document.
+
+Each target MUST resolve to an existing element. Heading order in the sidecar defines the table-of-contents order.
+
+###### Consistency with the main document
+
+Annotations and derived documents refer to a particular revision of the main document. Structural edits may invalidate element paths; textual edits may invalidate occurrence locations or derived content.
+
+When modifying the main document, producers SHOULD update or remove affected annotation parts. Table-of-contents targets MUST continue to resolve in the resulting archive.
+
+##### `governance/` (optional)
+
+The root-level `governance/` directory is reserved for governance-related information associated with the document or package. This revision does not prescribe filenames, subdirectories, formats, or required parts within this directory.
+
+Readers MAY ignore governance parts they do not recognize. Each part MUST have a content type declared through the package's OPC metadata.
+
+##### `source/` (optional)
+
+The root-level `source/` directory is reserved for the original document from which the main DocLang instance was produced. Including the source is optional; if either of the following parts is present, both MUST be present.
+
+| Part | Definition |
+|------|------------|
+| `source/mimetype` | A UTF-8 text file containing only the MIME type of the original source document, such as `application/pdf`, with an optional final line ending. |
+| `source/document` | The original source document stored as its unmodified binary bytes, without base64 encoding or an additional file extension. |
+
+Both filenames are literal and have no extension. The package's `[Content_Types].xml` MUST contain an `<Override>` for `/source/mimetype` with content type `text/plain` and an `<Override>` for `/source/document` with the MIME type recorded in `source/mimetype`, excluding its optional final line ending.
 
 #### Page alignment
 

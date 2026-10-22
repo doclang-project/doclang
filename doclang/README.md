@@ -368,6 +368,29 @@ their XML against DocLang's bundled XSD and Schematron rules. Use
 affects the package's archive and annotations. Table of contents entries are
 DocLang headings with percent-encoded source XPaths in `href` fragments.
 
+Original source documents belong exclusively to `DocLangXDocument`:
+
+```python
+xml = '<doclang><text>Converted content</text></doclang>'
+package = DoclangXDocument(xml, source=b"original bytes", source_mimetype="application/pdf")
+assert package.get_source() == (b"original bytes", "application/pdf")
+package.set_source(b"replacement bytes", mimetype="application/pdf")
+assert package.has_source()
+package.clear_source()
+```
+
+The constructor accepts an XML string or a `DoclangDocument`, with optional
+keyword-only `source` and `source_mimetype` arguments supplied together.
+Constructing from a `DoclangDocument` copies its current XML into an independent
+package. Empty and source-only construction are also supported.
+`get_source()` returns
+`(bytes, mimetype)` or `None`; an empty byte string is a valid source.
+Source data survives XML edits and `read_xml()`. Reading another file or
+archive replaces the source along with the package. DCLX writes store
+`source/document` and `source/mimetype` with explicit OPC content types;
+`clear_source()` removes both parts and their declarations. Generic part
+setters and removal cannot modify these two managed paths.
+
 `get_part_bytes`, `get_part_text`, `set_part_bytes`, `set_part_text`, and
 `remove_part` use archive-relative paths. Generic setters reject the main
 document, OPC metadata, and DocLang-managed `annotations/` paths. Setters

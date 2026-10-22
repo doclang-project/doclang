@@ -15,6 +15,46 @@ using namespace doclang::native;
 
 namespace
 {
+  void original_source_round_trip()
+  {
+    dclx_document document;
+    CHECK(document.read("<doclang><text>Body</text></doclang>"));
+    CHECK(not document.has_source());
+    CHECK(not document.get_source());
+    const std::vector<std::byte> payload{ std::byte{ 0 }, std::byte{ 255 }, std::byte{ 128 } };
+    CHECK(document.set_source(payload, "application/pdf"));
+    CHECK(document.has_source());
+    CHECK(not document.set_source({}, "invalid"));
+    CHECK(document.get_source()->second == "application/pdf");
+    CHECK(document.get_source()->first.size() == payload.size());
+    std::vector<std::byte> bytes;
+    CHECK(writer::write_dclx_buffer(document, bytes, { .include_annotations = false }));
+    dclx_document restored;
+    CHECK(reader::read_dclx_buffer(bytes, restored));
+    const auto source = restored.get_source();
+    CHECK(source->second == "application/pdf");
+    CHECK(std::equal(source->first.begin(), source->first.end(), payload.begin(), payload.end()));
+    CHECK(restored.set_source({}, "text/plain"));
+    CHECK(restored.has_source());
+    CHECK(restored.get_source()->first.empty());
+    restored.clear_source();
+    CHECK(not restored.has_source());
+    CHECK(not restored.artifacts().has(SOURCE_DOCUMENT));
+    CHECK(not restored.artifacts().has(SOURCE_MIMETYPE));
+    CHECK(restored.set_source(payload, "application/pdf"));
+    restored.clear();
+    CHECK(not restored.has_source());
+
+    archive incomplete;
+    incomplete.set_text("document.xml", document.raw());
+    incomplete.set_text(SOURCE_MIMETYPE, "application/pdf");
+    document.set_archive(incomplete);
+    CHECK(not writer::write_dclx_buffer(document, bytes));
+    CHECK(incomplete.write_to_memory(bytes));
+    CHECK(not reader::read_dclx_buffer(bytes, restored));
+    CHECK(restored.get_last_error().find("together") != std::string::npos);
+  }
+
   void archive_and_annotation_round_trip()
   {
     dclx_document document;
@@ -82,6 +122,7 @@ namespace
 int main()
 {
   return test_support::run(
-      { { "archive and annotation round trip", archive_and_annotation_round_trip },
+      { { "original source round trip", original_source_round_trip },
+        { "archive and annotation round trip", archive_and_annotation_round_trip },
         { "writer options and bad input", writer_options_and_bad_input } });
 }
