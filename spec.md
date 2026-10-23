@@ -99,6 +99,35 @@ An implementation may act in one or more of the following roles.
 
    Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
 
+## Symbols and abbreviated terms
+
+**CDATA**
+Character data
+
+**HTML**
+HyperText Markup Language
+
+**LLM**
+Large language model
+
+**OTSL**
+Optimised table-structure language
+
+**URI**
+Uniform resource identifier
+
+**URL**
+Uniform resource locator
+
+**UTF**
+Unicode transformation format
+
+**XML**
+Extensible Markup Language
+
+**XSD**
+XML Schema Definition
+
 ## Conformance
 
 A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD [3] schema and Schematron rules) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
@@ -2048,7 +2077,7 @@ list item is split.
 
 ### Custom vocabularies
 
-The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in SMILES representation.
+The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in simplified molecular-input line-entry system (SMILES) representation.
 
 For details, see [custom metadata](#custom) and vocabulary guidelines in [Recommendations](#annex-c-informative-recommendations).
 
@@ -3454,7 +3483,7 @@ assets/                # optional — files referenced from markup
 
 ##### `[Content_Types].xml` (required)
 
-Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with IANA in a future revision; conformance does not depend on registration.
+Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with the Internet Assigned Numbers Authority (IANA) in a future revision; conformance does not depend on registration.
 
 Example:
 
@@ -3721,7 +3750,7 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - `date`
 - `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
 - `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
-- `generated_by`, upstream pipeline information, e.g. VLM ID
+- `generated_by`, upstream pipeline information, e.g. vision language model (VLM) ID
 - `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
 - `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
 - `document_hash`, Hash of the source document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
@@ -3791,8 +3820,8 @@ The following standards and regulations are commonly referenced:
 | **ISO/IEC 27001** | International standard for information security management systems (ISMS), covering access control, asset management, logging, and security controls. |
 | **ISO/IEC 27701** | Extension to ISO/IEC 27001 focused on privacy information management (PIMS), including controller/processor roles and personal data handling. |
 | **ISO/IEC 23894** | Guidance on AI risk management, including lifecycle governance, human oversight, and accountability for AI systems. |
-| **HIPAA** | U.S. regulation governing protected health information (PHI), including privacy, security, and breach notification requirements. |
-| **PCI DSS** | Security standard for handling payment card data, including storage, processing, and transmission controls. |
+| **HIPAA (Health Insurance Portability and Accountability Act)** | U.S. regulation governing protected health information (PHI), including privacy, security, and breach notification requirements. |
+| **PCI DSS (Payment Card Industry Data Security Standard)** | Security standard for handling payment card data, including storage, processing, and transmission controls. |
 | **FedRAMP** | U.S. government program defining security requirements for cloud services used by federal agencies. |
 
 Where multiple standards are referenced for a single metadata element, the intent is to indicate conceptual alignment rather than impose cumulative obligations.
@@ -3853,7 +3882,7 @@ Governance metadata is intended to be machine-actionable: it should enable downs
 
 - `compliance_requirements` States the compliance frameworks (regulatory or industrial) governing the lifecycle and use of the documents.
 
-###### Privacy and PII controls
+###### Privacy and personally identifiable information (PII) controls
 
 This subsection defines governance signals related to personal data detection, sensitivity, and permitted handling.
 Implementations SHOULD use these elements to drive privacy-aware processing (e.g., redaction, restricted access, minimization).
@@ -3878,8 +3907,8 @@ Unless otherwise required by an implementation, these elements are intended to b
 | `cross_border_transfer_status` | Indicates whether cross-border transfers occur/are allowed. | GDPR Art. 44–49 |
 | `transfer_mechanism` | Indicates transfer mechanism where applicable (e.g., adequacy, SCCs). | GDPR Art. 45–47 |
 | `retention_category` | Indicates retention category for personal data contained in the DocLang instance. | GDPR Art. 5(1)(e) |
-| `dsr_impact_flag` | Signals potential impact on data subject rights (DSR handling implications). | GDPR Art. 12–23 |
-| `dpia_required` | Indicates whether a DPIA is required for intended processing. | GDPR Art. 35–36 |
+| `dsr_impact_flag` | Signals potential impact on the handling of data subject rights (DSR). | GDPR Art. 12–23 |
+| `dpia_required` | Indicates whether a data protection impact assessment (DPIA) is required for intended processing. | GDPR Art. 35–36 |
 | `children_pii_present` | Flags whether children’s data is present. | GDPR Art. 8 |
 | `automated_decisioning_relevance` | Indicates whether automated decision-making/profiling obligations apply. | GDPR Art. 22 |
 | `logging_monitoring_enabled` | Indicates whether logging/monitoring is enabled for access and processing (accountability/auditability). | ISO 27001 A.12/A.16; GDPR Art. 5(2) |
@@ -3970,7 +3999,7 @@ Unless otherwise required by an implementation, these elements SHOULD be express
 | `training_provenance_required` | Indicates whether provenance metadata must be retained for training records. | ISO 27001 A.12; AI accountability best practice |
 | `training_audit_required` | Indicates whether training usage must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
 | `training_audit_retention` | Specifies retention period for training-related audit logs. | GDPR Art. 5(1)(e) |
-| `model_output_usage_constraints` | Specifies constraints on use of models trained on this content (e.g., internal-only, non-commercial). | Licensing and IP best practice |
+| `model_output_usage_constraints` | Specifies constraints on use of models trained on this content (e.g., internal-only, non-commercial). | Licensing and intellectual property (IP) best practice |
 | `right_to_be_forgotten_applicability` | Indicates whether erasure obligations apply to trained models or datasets. | GDPR Art. 17; emerging AI guidance |
 
 Implementations SHOULD define controlled vocabularies for training scope, purpose, model type, and transformation requirements.
