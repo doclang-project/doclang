@@ -48,8 +48,8 @@ def normalize_category_name(category):
 
 
 def format_category_for_display(category):
-    """Format category name for display by adding 'Elements' suffix"""
-    return category + " Elements"
+    """Format category name for display in sentence case, adding 'elements' suffix"""
+    return f"{category} elements".capitalize()
 
 
 def run_docling_conversion(input_file, output_dir):
@@ -140,8 +140,8 @@ def parse_intermediate_markdown(md_file):
                     content_type_columns[idx] = content_type
                 elif idx == 4 and header:  # Element context is typically at index 4
                     # Store the context column header and normalize it
-                    # Remove "Element " prefix if present and capitalize
-                    element_context_header = header.replace("Element ", "").strip().title()
+                    # Remove "Element " prefix if present and use sentence case
+                    element_context_header = header.replace("Element ", "").strip().capitalize()
             continue
 
         # Check if we're in the attributes table (has Element and Attribute columns, but no Category)

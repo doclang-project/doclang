@@ -2095,14 +2095,14 @@ Exists exactly once, as root element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
 | `version` | Optional; if omitted, the version is unspecified | "MAJOR.MINOR" of a published DocLang specification version | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Versioning. If omitted, the version is unspecified (see [Omitted version](#omitted-version)). |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
@@ -2130,7 +2130,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
@@ -2180,7 +2180,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2196,13 +2196,13 @@ Any context that allows semantic elements.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The heading depth (1 = top-level). |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2222,7 +2222,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2242,7 +2242,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2262,7 +2262,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2282,7 +2282,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2298,13 +2298,13 @@ Any context that allows semantic elements.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unordered" | {"unordered", "ordered"} | The list type. |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
@@ -2324,7 +2324,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
@@ -2344,7 +2344,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | TRUE, also on cell level in case of virtual [`<text>`](#text) |
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
@@ -2364,7 +2364,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2384,7 +2384,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2400,13 +2400,13 @@ Any context that allows semantic elements.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "undefined" | {"undefined", "chart"} | The picture type. |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2426,7 +2426,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2446,7 +2446,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2462,13 +2462,13 @@ Can only be descendant of [`<field_region>`](#field_region).
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `level` | Optional; default "1" | Positive integer | The field heading depth (1 = top-level). |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2488,7 +2488,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2508,7 +2508,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2524,13 +2524,13 @@ Can only be descendant of [`<field_item>`](#field_item).
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "read_only" | {"read_only", "fillable"} | The value type. |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2550,7 +2550,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2570,7 +2570,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2590,7 +2590,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Only within a cue block transcript |
@@ -2631,7 +2631,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2651,7 +2651,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2671,7 +2671,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Not allowed |
@@ -2691,7 +2691,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2711,7 +2711,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Allowed |
 | Raw text | Allowed |
@@ -2731,7 +2731,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "undefined" | Different value domains may be recommended per host element (not to be validated). | A label for concretely specifying a subclass type for the host element. |
 
@@ -2749,7 +2749,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` must be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
 
@@ -2767,7 +2767,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the DocLang instance. |
 
@@ -2785,13 +2785,13 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The URI of the referenced resource. |
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
@@ -2811,7 +2811,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -2831,7 +2831,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -2851,7 +2851,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
@@ -2867,7 +2867,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `resolution` | Optional; defaults to `default_resolution@width` or `default_resolution@height` depending on whether location refers to x or y, otherwise "512" if respective `default_resolution` not explicitly specified | Positive integer | Axis boundary (exclusive) for the respective `location@value`. |
 | `value` | Required | Integer within [0, `location@resolution`) | Coordinate w.r.t. top-left corner. |
@@ -2886,7 +2886,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Optional; default: "body" | {"body", "background", "furniture"} | The layer value: "body" is for the main content, "background" is for watermarks and other background components, while "furniture" is the fallback for any supplementary components not contributing to the main content, such as navigation or decorations. |
 
@@ -2908,7 +2908,7 @@ Can only be part of the picture-specific element body sequence of [`<picture>`](
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `uri` | Required | URI | The source URI. May use a `data:` URI (RFC 2397) with base64-encoded payload, e.g. `uri="data:image/png;base64,…"`. Relative URIs are allowed too, e.g. `uri="assets/chart.svg"`. |
 
@@ -2930,7 +2930,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Only on cell level, in case of virtual [`<text>`](#text) |
 | Raw text | Only on cell level, in case of virtual [`<text>`](#text) |
@@ -2946,7 +2946,7 @@ Any context that allows raw text content.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `class` | Optional; default: "unselected" | {"unselected", "selected"} | The checkbox type. |
 
@@ -2968,7 +2968,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -2984,7 +2984,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Required | Non-negative integer | Hours component of a track cue timestamp. |
 
@@ -3002,7 +3002,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, 59] | Minutes component of a track cue timestamp. |
 
@@ -3020,7 +3020,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, 59] | Seconds component of a track cue timestamp. |
 
@@ -3038,7 +3038,7 @@ Can only be part of a timestamp run in a [`<track>`](#track) cue block.
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `value` | Required | Integer within [0, 999] | Milliseconds component of a track cue timestamp. |
 
@@ -3064,7 +3064,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3084,7 +3084,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3104,7 +3104,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3124,7 +3124,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3144,7 +3144,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3164,7 +3164,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3184,7 +3184,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3204,7 +3204,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Allowed |
@@ -3388,7 +3388,7 @@ None
 
 ###### Allowed content types
 
-| Content Type | Allowed / Not allowed |
+| Content type | Allowed / Not allowed |
 | --- | --- |
 | Element head | Not allowed |
 | Raw text | Not allowed |
@@ -3424,7 +3424,7 @@ Can only be child of [`<head>`](#head).
 
 ###### Attributes
 
-| Attribute | Required / Optional | Allowed Values | Description |
+| Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `width` | Optional; default "512" | Non-negative integer | Default document width in pixels. |
 | `height` | Optional; default "512" | Non-negative integer | Default document height in pixels. |
