@@ -24,6 +24,8 @@ from doclang._schemas import _available_versions
 from doclang.utils import _DTD_REJECTED_MESSAGE, _write_xml_without_dtd
 from doclang.validation import VersionNote
 
+pytestmark = pytest.mark.validation
+
 TEST_DATA_DIR = Path(__file__).parent / "data"
 VALID_DIR = TEST_DATA_DIR / "valid"
 INVALID_DIR = TEST_DATA_DIR / "invalid"

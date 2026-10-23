@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -384,6 +384,9 @@ dev = [
     { name = "ruff" },
     { name = "saxonche" },
 ]
+docling = [
+    { name = "docling" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -414,6 +417,7 @@ dev = [
     { name = "ruff", specifier = ">=0.14.11" },
     { name = "saxonche", specifier = ">=12.9.0" },
 ]
+docling = [{ name = "docling", specifier = ">=2.89.0" }]
 
 [[package]]
 name = "docling"
