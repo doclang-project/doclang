@@ -743,6 +743,7 @@ Notes:
 
 - OTSL follows the rectangular rule; ensure each row has the same number of structural elements up to `<nl/>`.
 - A cell can include any valid DocLang semantic element sequence.
+- Structural elements describe the logical structure of the table: cells follow each other within a row, and rows follow each other within the table. The names of `<lcel/>` ("left") and `<ucel/>` ("upward") reflect a left-to-right horizontal layout. In a right-to-left table, the previous cell in a row is on its right. In a vertical table with right-to-left line progression (e.g. Japanese), the previous cell in a row is above it, and the previous row is on its right.
 
 
 ### Fields
@@ -3309,7 +3310,7 @@ None (empty element).
 
 ##### `<corn>`
 
-Indicates the beginning of a corner cell, typically the top-left header intersection.
+Indicates the beginning of a corner cell, typically where the column headers and the row headers meet.
 
 ###### Allowed context
 
@@ -3341,7 +3342,7 @@ None (empty element).
 
 ##### `<lcel>`
 
-Left-merge extension token; extends the previous cell horizontally (colspan continuation).
+Left-merge extension token; extends the previous cell in the same row (colspan continuation).
 
 ###### Allowed context
 
@@ -3357,7 +3358,7 @@ None (empty element).
 
 ##### `<ucel>`
 
-Upward-merge extension token; extends the cell above vertically (rowspan continuation)
+Upward-merge extension token; extends the cell at the same position in the previous row (rowspan continuation).
 
 ###### Allowed context
 
@@ -3373,7 +3374,7 @@ None (empty element).
 
 ##### `<xcel>`
 
-Cross/combined span extension token; used where both horizontal and vertical spanning intersect.
+Cross/combined span extension token; used where a colspan continuation and a rowspan continuation intersect.
 
 ###### Allowed context
 
