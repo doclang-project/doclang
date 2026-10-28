@@ -250,7 +250,7 @@ provides-extras = ["schematron-saxon"]
 
 [package.metadata.requires-dev]
 ci = [
-    { name = "docling-slim", extras = ["format-xlsx"], specifier = "<2.143" },
+    { name = "docling-slim", extras = ["format-xlsx"], specifier = ">=2.144.0" },
     { name = "mypy", specifier = "~=1.6" },
     { name = "pre-commit", specifier = "~=3.7" },
     { name = "pytest", specifier = "~=8.3" },
@@ -259,7 +259,7 @@ ci = [
     { name = "saxonche", specifier = ">=12.9.0" },
 ]
 dev = [
-    { name = "docling-slim", extras = ["format-xlsx"], specifier = "<2.143" },
+    { name = "docling-slim", extras = ["format-xlsx"], specifier = ">=2.144.0" },
     { name = "mypy", specifier = "~=1.6" },
     { name = "openpyxl", specifier = ">=3.1.0" },
     { name = "pre-commit", specifier = "~=3.7" },
@@ -300,7 +300,7 @@ wheels = [
 
 [[package]]
 name = "docling-slim"
-version = "2.142.1"
+version = "2.144.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -314,9 +314,9 @@ dependencies = [
     { name = "requests" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1f/43/fa84e245dd80d8c48912f0495c3a31a333fb3804efb0295646f5f052e748/docling_slim-2.142.1.tar.gz", hash = "sha256:b6042f9b6c8f156f04d59a298188b33aa8f6317ca57073225453056c164af0f4", size = 922507, upload-time = "2026-10-23T08:20:49.57Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/f0/3d8ef84a97a9fb13bc2858df03bc0723271ddc236eeddd43bd9206287110/docling_slim-2.144.0.tar.gz", hash = "sha256:41011453dc18bf35f367fd0c7479d1e00e2ebf537a9d06248637bdc66a4d015e", size = 942334, upload-time = "2026-10-28T12:04:53.19Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/5f/6ca181855e1cad1d9e8be1830fa660cf481bbb5e5da6caa21df491181e71/docling_slim-2.142.1-py3-none-any.whl", hash = "sha256:8013da3da0692b51406e6192c3b2aba4c241da92ff055af106dbe6b723b7f528", size = 1116839, upload-time = "2026-10-23T08:20:47.142Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/0c/a0bb89024451536e1795b86cfbc67e0a8a0926740efe58e234046835d75f/docling_slim-2.144.0-py3-none-any.whl", hash = "sha256:beea693f88ad21ba4b11cd54794d4d8020337ba862bc0cdc26651fa5034ede8e", size = 1138292, upload-time = "2026-10-28T12:04:50.852Z" },
 ]
 
 [package.optional-dependencies]

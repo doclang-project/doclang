@@ -53,8 +53,7 @@ ci = [
     "pytest~=8.3",
     "python-docx>=1.2.0",
     "saxonche>=12.9.0",
-    # 2.143 imports torch in DocumentConverter (via the ASR pipeline)
-    "docling-slim[format-xlsx]<2.143",
+    "docling-slim[format-xlsx]>=2.144.0",
 ]
 dev = [
     { include-group = "ci" },
