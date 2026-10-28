@@ -48,8 +48,8 @@ def normalize_category_name(category):
 
 
 def format_category_for_display(category):
-    """Format category name for display by adding 'Elements' suffix"""
-    return category + " Elements"
+    """Format category name for display in sentence case, adding 'elements' suffix"""
+    return f"{category} elements".capitalize()
 
 
 def run_docling_conversion(input_file, output_dir):
@@ -140,8 +140,8 @@ def parse_intermediate_markdown(md_file):
                     content_type_columns[idx] = content_type
                 elif idx == 4 and header:  # Element context is typically at index 4
                     # Store the context column header and normalize it
-                    # Remove "Element " prefix if present and capitalize
-                    element_context_header = header.replace("Element ", "").strip().title()
+                    # Remove "Element " prefix if present and use sentence case
+                    element_context_header = header.replace("Element ", "").strip().capitalize()
             continue
 
         # Check if we're in the attributes table (has Element and Attribute columns, but no Category)
@@ -375,7 +375,7 @@ def generate_reference_content(
                 output_lines.append("###### Attributes\n\n")
 
                 # Write table header
-                output_lines.append("| Attribute | Required / Optional | Allowed Values | Description |\n")
+                output_lines.append("| Attribute | Required / Optional | Allowed values | Description |\n")
                 output_lines.append("|-----------|----------|----------------|-------------|\n")
 
                 # Write table rows (with linkified element references in description)
@@ -393,7 +393,7 @@ def generate_reference_content(
             # Write content types table if they exist
             if content_types_by_element.get(element):
                 content_types = content_types_by_element[element]
-                output_lines.append("###### Allowed Content Types\n\n")
+                output_lines.append("###### Allowed content types\n\n")
 
                 # If XML content is not allowed, the element is empty:
                 # omit the table and render a note. Otherwise, create a vertical
@@ -405,7 +405,7 @@ def generate_reference_content(
                     output_lines.append("None (empty element).\n\n")
                 else:
                     # Write table header (vertical format)
-                    output_lines.append("| Content Type | Allowed / Not allowed |\n")
+                    output_lines.append("| Content type | Allowed / Not allowed |\n")
                     output_lines.append("| --- | --- |\n")
 
                     # Write one row per content type
@@ -457,19 +457,19 @@ def update_spec_appendix(reference_content, spec_file):
     try:
         spec_content = Path(spec_file).read_text(encoding="utf-8")
 
-        # Reference content sits between ### Reference and ### DocLang Archive Format
-        reference_pattern = r"(### Reference\n\n)"
-        next_section_pattern = r"(### DocLang Archive Format)"
+        # Reference content sits between ### Annex A Reference and ### Annex B Doclang archive Format
+        reference_pattern = r"(### Annex A .*\n\n)"
+        next_section_pattern = r"(### Annex B .*)"
 
         match_reference = re.search(reference_pattern, spec_content)
         match_next = re.search(next_section_pattern, spec_content)
 
         if not match_reference:
-            print("Error: Could not find '### Reference' marker in spec.md")
+            print("Error: Could not find '### Annex A' marker in spec.md")
             return False
 
         if not match_next:
-            print("Error: Could not find '### DocLang Archive Format' marker in spec.md")
+            print("Error: Could not find '### Annex B' marker in spec.md")
             return False
 
         # Reconstruct: through Reference header + new content + from next appendix section on
