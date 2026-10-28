@@ -70,6 +70,8 @@ To generate the reference from the input Excel file, example DocLang files, and 
 uv run python utils/generate_reference.py reference/input
 ```
 
+A pre-commit hook checks that Appendix A is up to date (`--check`), so don't edit it by hand.
+
 ## Word export
 
 To export [spec.md](./spec.md) to Word:
