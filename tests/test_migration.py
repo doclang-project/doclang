@@ -38,7 +38,19 @@ def test_track_is_dropped_with_its_surroundings_kept(tmp_path):
     assert (result.source_version, result.target_version) == ("0.8", "0.7")
     assert 'version="0.7"' in result.xml
     assert result.xml.endswith("</doclang>\n")
-    assert result.xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ')
+    assert result.xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ')  # from <?xml version='1.0' ...
+
+
+@pytest.mark.parametrize(
+    ("start", "declared"),
+    [(b"", False), (b"<?xml version='1.0'?>\n", True), (b'\xef\xbb\xbf<?xml version="1.0"?>\n', True)],
+)
+def test_xml_declaration_is_written_as_in_the_input(tmp_path, start, declared):
+    doc = tmp_path / "doc.dclg"
+    doc.write_bytes(start + f'<doclang xmlns="{NS}" version="0.8">\n  <text>x</text>\n</doclang>\n'.encode())
+    xml = migrate(doc, to="0.7").xml
+    assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ' if declared else "<doclang ")
+    assert xml.endswith("</doclang>\n")
 
 
 def test_tracks_inside_group_and_table_cell_are_dropped(tmp_path):

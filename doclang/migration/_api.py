@@ -138,12 +138,23 @@ def migrate(
         )
 
     root.set("version", to)
-    body = etree.tostring(tree, encoding="UTF-8", xml_declaration=False).decode("utf-8")
-    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{body}\n'  # lxml would write the declaration with single quotes
+    xml = etree.tostring(tree, encoding="UTF-8", xml_declaration=False).decode("utf-8") + "\n"
+    if _has_xml_declaration(path):  # written here: lxml would use single quotes
+        xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml}'
 
     _validate_output(xml, to, output_validation, input_validation, has_namespace, changes.items, head=to == head)
 
     return MigrationResult(xml=xml, source_version=declared, target_version=to, changes=changes.items)
+
+
+def _has_xml_declaration(path: Path) -> bool:
+    """Whether the document starts with an XML declaration (after an optional byte order mark)."""
+    with path.open("rb") as f:
+        start = f.read(16)
+    for bom, encoding in ((b"\xef\xbb\xbf", "utf-8"), (b"\xff\xfe", "utf-16-le"), (b"\xfe\xff", "utf-16-be")):
+        if start.startswith(bom):
+            return start[len(bom) :].startswith("<?xml".encode(encoding))
+    return start.startswith(b"<?xml")
 
 
 def _head_version(newest: str | None) -> str | None:
