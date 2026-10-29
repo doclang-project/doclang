@@ -12,7 +12,7 @@ from typing import Any, Union
 
 from lxml import etree
 
-from doclang._schemas import UnsupportedVersionError, _available_versions, _version_key
+from doclang._schemas import UnsupportedVersionError, _available_versions, _head_description, _version_key
 from doclang.migration._plan import NoMigrationPath, _load_steps, _plan
 from doclang.migration._tree import Changes
 from doclang.utils import _parse_doclang_document
@@ -59,9 +59,13 @@ def migrate(
     """Migrate a DocLang XML file to the spec version ``to`` (``MAJOR.MINOR``).
 
     The source version is the ``version`` attribute of the root element. If it is missing, the document is
-    treated as the latest version and a :class:`UserWarning` is issued. Currently only older targets are
-    supported: a newer one needs no migration, as documents are forward compatible, and raises
-    :class:`MigrationError`.
+    treated as the latest version and a :class:`UserWarning` is issued.
+
+    ``to`` can be an older or a newer version with bundled schemas, or, while the development schemas have
+    unreleased changes, the next minor version after the newest released one (validated against the development
+    schemas). Migrating to a newer version rewrites the document where the newer version reads the same markup
+    differently, so that it keeps its meaning; otherwise only the version changes, as documents are forward
+    compatible. A document whose version has no bundled schemas cannot be migrated up.
 
     By default the migration is best effort: content that has an equivalent in the target version is mapped,
     the rest is dropped, and every such change is reported in ``changes``. With ``strict=True`` any change
@@ -82,9 +86,12 @@ def migrate(
             raise ValueError(f"{name} must be one of {', '.join(_VALIDATION_SCOPES)}; got {scope!r}")
 
     available = _available_versions()
-    if to not in available:
+    newest = max(available, key=_version_key) if available else None
+    head = _head_version(newest)
+    targets = available + ([head] if head else [])
+    if to not in targets:
         raise UnsupportedVersionError(
-            f"No schema for DocLang spec version '{to}'; available versions: {', '.join(available) or 'none'}"
+            f"No schema for DocLang spec version '{to}'; available versions: {', '.join(targets) or 'none'}"
         )
 
     path = Path(xml_file)
@@ -101,22 +108,27 @@ def migrate(
         )
     elif not _VERSION_RE.match(declared):
         raise MigrationError(f"Invalid declared DocLang version '{declared}'; expected MAJOR.MINOR")
-    elif _version_key(declared) < _version_key(to):
-        raise MigrationError(
-            f"Target version {to} is newer than the document's version {declared}. Documents are forward "
-            "compatible, so only the version attribute needs updating."
-        )
+    upward = declared is not None and _version_key(declared) < _version_key(to)
+    if upward and declared not in targets:
+        raise MigrationError(f"No schema for the document's version {declared}; cannot migrate it to {to}")
 
-    _validate(path, input_validation, allow_empty_namespace=not has_namespace, failure=_input_failure(declared))
+    _validate(
+        path,
+        input_validation,
+        allow_empty_namespace=not has_namespace,
+        failure=_input_failure(declared),
+        head=declared is not None and declared == head,
+    )
 
     changes = Changes()
-    if declared is None or _version_key(declared) > _version_key(to):
-        try:
-            steps = _plan(declared, to, _load_steps(max(available, key=_version_key)))
-        except NoMigrationPath as exc:
-            raise MigrationError(str(exc)) from exc
-        for step in steps:
-            step.apply(root, changes)
+    assert newest is not None  # ``to`` is one of the available versions or the next one
+    source = declared if declared in targets else head or newest  # no version or a newer one: the latest
+    try:
+        steps = _plan(source, to, _load_steps(newest, head))
+    except NoMigrationPath as exc:
+        raise MigrationError(str(exc)) from exc
+    for step in steps:
+        step.apply(root, changes)
 
     if strict and changes.items:
         raise MigrationError(
@@ -126,11 +138,21 @@ def migrate(
         )
 
     root.set("version", to)
-    xml = etree.tostring(tree, encoding="UTF-8", xml_declaration=True).decode("utf-8")
+    body = etree.tostring(tree, encoding="UTF-8", xml_declaration=False).decode("utf-8")
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{body}\n'  # lxml would write the declaration with single quotes
 
-    _validate_output(xml, to, output_validation, input_validation, has_namespace, changes.items)
+    _validate_output(xml, to, output_validation, input_validation, has_namespace, changes.items, head=to == head)
 
     return MigrationResult(xml=xml, source_version=declared, target_version=to, changes=changes.items)
+
+
+def _head_version(newest: str | None) -> str | None:
+    """The version of the development head: the minor after the newest released one, or None if the head has
+    no changes of its own (as any change to the spec makes a new minor version)."""
+    if newest is None or _head_description() == newest:
+        return None
+    major, minor = _version_key(newest)
+    return f"{major}.{minor + 1}"
 
 
 def _validate(
@@ -140,14 +162,20 @@ def _validate(
     allow_empty_namespace: bool,
     failure: Callable[[ValidationError], MigrationError],
     spec_version: str | None = None,
+    head: bool = False,
 ) -> None:
-    """Validate ``path`` as :func:`~doclang.validation.validate` does, limited to ``scope``."""
+    """Validate ``path`` as :func:`~doclang.validation.validate` does, limited to ``scope``.
+
+    With ``head``, the document declares the version of the development head and is validated against it.
+    """
     if scope == "none":
         return
     try:
         with warnings.catch_warnings():
             # migrate() already warns about a missing version
             warnings.filterwarnings("ignore", message="No DocLang version declared")
+            if head:  # intended: the head's version has no bundled schemas yet
+                warnings.filterwarnings("ignore", message="No schema for declared DocLang version")
             validate(
                 path,
                 spec_version=spec_version,
@@ -171,6 +199,8 @@ def _validate_output(
     input_scope: str,
     has_namespace: bool,
     changes: list[dict[str, Any]],
+    *,
+    head: bool,
 ) -> None:
     unless = "" if input_scope == "all" else f", unless the input was already invalid (input validation: {input_scope})"
 
@@ -183,7 +213,14 @@ def _validate_output(
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "migrated.dclg"
         path.write_text(xml, encoding="utf-8")
-        _validate(path, scope, allow_empty_namespace=not has_namespace, spec_version=to, failure=failure)
+        _validate(
+            path,
+            scope,
+            allow_empty_namespace=not has_namespace,
+            spec_version=None if head else to,
+            failure=failure,
+            head=head,
+        )
 
 
 # present the public names as living in ``doclang.migration`` (in reprs, error messages, pickles)

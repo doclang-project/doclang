@@ -86,9 +86,13 @@ Outputs are written under [exports/](./exports/) (`doclang.docx`, and `doclang-s
 
 Schemas of earlier spec versions are bundled in `doclang/schemas/<MAJOR.MINOR>/`; `doclang/doclang.{xsd,sch}` are
 the development head. When a change to the head schema cannot be expressed in the previous version (a new element,
-a relaxed cardinality, ...), the same pull request adds a rule to `doclang/migration/_steps/next.py` that maps or drops it
+a relaxed cardinality, ...), the same pull request adds a rule to `doclang/migration/_steps/from_next.py` that maps or drops it
 for `doclang migrate`, plus a valid test fixture using it. `tests/test_migration.py` migrates every valid fixture
 to the newest released version and validates the result, so a change without a rule fails the tests.
+
+When a change gives existing documents a different meaning (e.g. how whitespace is read), the same pull request adds
+a rule to `doclang/migration/_steps/to_next.py` that rewrites documents of the newest released version so that they
+keep their meaning when migrated up.
 
 ## Release workflow
 
@@ -96,7 +100,7 @@ For maintainers preparing a release:
 
 1. **Test** — `uv run pytest`
 2. **Prepare release** — `uv run python utils/prepare_release.py TARGET_VERSION`
-   (syncs version across artifacts, turns `next.py` into the released migration step when the release starts a new minor version, snapshots the schemas into `doclang/schemas/`, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
+   (syncs version across artifacts, turns `from_next.py` and `to_next.py` into the released migration steps when the release starts a new minor version, snapshots the schemas into `doclang/schemas/`, regenerates Appendix A, writes DOCX exports, and prepends a section to `CHANGELOG.md`; optional `--reference-input reference/input`)
    - Make any manual changes needed (e.g. ToC regeneration on DOCX file, export to PDF etc.)
 3. **Commit & tag** — once committed to `main`, create and push the tag.
 
