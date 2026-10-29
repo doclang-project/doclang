@@ -1,3 +1,7 @@
+## [v0.8.1](https://github.com/doclang-project/doclang/releases/tag/v0.8.1)
+
+* fix element head rules for all their elements (#213)
+
 ## [v0.8.0](https://github.com/doclang-project/doclang/releases/tag/v0.8.0)
 
 * add version migration (#196)
@@ -18,6 +22,10 @@
 * allow multiple captions (#176)
 * add `<track>` for time-aligned media transcripts (#175)
 * expose special token vocabulary (#174)
+
+## [v0.7.4](https://github.com/doclang-project/doclang/releases/tag/v0.7.4)
+
+* fix element head rules for all their elements (#214)
 
 ## [v0.7.3](https://github.com/doclang-project/doclang/releases/tag/v0.7.3)
 
