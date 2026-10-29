@@ -471,3 +471,29 @@ def test_fallback_warnings_describe_the_head(schema_dir, tmp_path):
         UserWarning, match=r"No schema for declared DocLang version 1\.4; .*\(unreleased development version\)"
     ):
         validate(_doc(tmp_path, "1.4"), xsd_only=True)
+
+
+_LOC = '<location value="10"/><location value="20"/><location value="30"/><location value="40"/>'
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        # non-first branches of union rule contexts
+        f'<heading level="1">stray{_LOC}</heading>',
+        f"<table><ecel/>stray{_LOC}<nl/></table>",
+        f"<index><fcel/>stray{_LOC}<nl/></index>",
+        f'<list class="unordered">stray{_LOC}<ldiv/>item</list>',
+        # text equal in value to the head must not be mistaken for it
+        '<list class="unordered"><ldiv/>stray<caption>stray</caption></list>',
+        "<table><fcel/>stray<caption>stray</caption><nl/></table>",
+    ],
+    ids=["heading", "table_ecel", "index_fcel", "list_own_head", "list_same_value", "table_same_value"],
+)
+def test_text_before_element_head_is_rejected(tmp_path, body):
+    path = tmp_path / "doc.dclg"
+    path.write_text(f'<doclang xmlns="https://www.doclang.ai/ns/v0">{body}</doclang>', encoding="utf-8")
+    with pytest.raises(ValidationError) as excinfo:
+        validate(path)
+    assert not excinfo.value.xsd_errors
+    assert any("before element head" in str(e) for e in excinfo.value.schematron_errors)

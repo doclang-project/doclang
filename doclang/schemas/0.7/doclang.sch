@@ -80,10 +80,24 @@
     <sch:rule context="dl:text | dl:heading | dl:code | dl:formula | dl:caption | dl:description | dl:summary |
                        dl:page_header | dl:page_footer | dl:footnote | dl:picture | dl:marker |
                        dl:field_region | dl:field_heading | dl:field_item | dl:key | dl:value |
-                       dl:list | dl:table | dl:index | dl:group">
+                       dl:group">
       <sch:let name="header-elements" value="dl:label | dl:thread | dl:xref | dl:href | dl:layer | dl:location | dl:caption | dl:description | dl:summary | dl:custom"/>
 
       <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]]"/>
+
+      <sch:assert test="every $t in $text-before-header satisfies normalize-space($t) = ''">
+        Property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
+        Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
+      </sch:assert>
+    </sch:rule>
+
+    <!-- containers: only their own head (before the first body element) is checked here; -->
+    <!-- the heads of their items and cells are checked by the virtual text rules -->
+    <sch:rule context="dl:list | dl:table | dl:index">
+      <sch:let name="first-body" value="*[not(self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom)][1]"/>
+
+      <sch:let name="text-before-header" value="text()[following-sibling::*[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]
+                                                      [not($first-body) or . &lt;&lt; $first-body]]"/>
 
       <sch:assert test="every $t in $text-before-header satisfies normalize-space($t) = ''">
         Property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
@@ -238,14 +252,8 @@
 
       <sch:let name="header-elements" value="$item-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]"/>
 
-      <sch:let name="first-header-index" value="if ($header-elements)
-                                                 then index-of($item-content, $header-elements[1])[1]
-                                                 else 0"/>
-
-      <sch:let name="text-before-header" value="if ($first-header-index > 0)
-                                                 then for $i in 1 to ($first-header-index - 1)
-                                                      return $item-content[$i][self::text()][normalize-space(.) != '']
-                                                 else ()"/>
+      <!-- compared by position in the document (not by value: e.g. empty elements would all be equal) -->
+      <sch:let name="text-before-header" value="$item-content[self::text()][normalize-space(.) != ''][. &lt;&lt; $header-elements[1]]"/>
 
       <sch:assert test="empty($text-before-header)">
         In list items (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
@@ -278,14 +286,8 @@
 
       <sch:let name="header-elements" value="$cell-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom]"/>
 
-      <sch:let name="first-header-index" value="if ($header-elements)
-                                                 then index-of($cell-content, $header-elements[1])[1]
-                                                 else 0"/>
-
-      <sch:let name="text-before-header" value="if ($first-header-index > 0)
-                                                 then for $i in 1 to ($first-header-index - 1)
-                                                      return $cell-content[$i][self::text()][normalize-space(.) != '']
-                                                 else ()"/>
+      <!-- compared by position in the document (not by value: e.g. empty elements would all be equal) -->
+      <sch:let name="text-before-header" value="$cell-content[self::text()][normalize-space(.) != ''][. &lt;&lt; $header-elements[1]]"/>
 
       <sch:assert test="empty($text-before-header)">
         In table and index cells (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
