@@ -57,7 +57,8 @@ _ISO_SCHEMATRON_TRANSPILER = """<?xml version="1.0" encoding="UTF-8"?>
   </xsl:template>
 
   <xsl:template match="sch:rule" mode="apply-rules">
-    <xsl2:apply-templates select="//{@context}" mode="check-{generate-id()}"/>
+    <!-- parenthesized so that // applies to every branch of a union context -->
+    <xsl2:apply-templates select="//({@context})" mode="check-{generate-id()}"/>
   </xsl:template>
 
   <!-- Generate template definitions at stylesheet level -->
