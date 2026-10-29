@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <track>
+    <!-- the element head of a turn (virtual <text>) must come before its text -->
+    <bdiv/>
+    <seconds value="2"/>
+    <voice>Lecturer</voice>
+    So the energy is
+    <location value="40"/><location value="420"/><location value="460"/><location value="470"/>
+    high.
+  </track>
+</doclang>

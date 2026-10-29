@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from doclang import MigrationError, SchematronBackendNotFound, UnsupportedVersionError, migrate
+from doclang.migration._api import _head_version
 from doclang.migration._plan import NoMigrationPath, Step, _plan
 
 VALID_DIR = Path(__file__).parent / "data" / "valid"
@@ -159,6 +160,13 @@ def test_up_steps_apply_on_the_way_to_the_head(tmp_path, monkeypatch):
     assert "<text>marked</text>" in result.xml and 'version="0.9"' in result.xml
 
 
+HEAD = _head_version("0.8")
+
+
+def test_head_has_a_version_of_its_own():
+    assert HEAD == "0.9"
+
+
 def test_head_is_no_target_without_changes_of_its_own(tmp_path, monkeypatch):
     from doclang.migration import _api
 
@@ -284,6 +292,31 @@ def test_every_valid_fixture_migrates_to_the_newest_released_version(fixture):
 
     newest = max(_available_versions(), key=_version_key)
     assert migrate(fixture, to=newest).target_version == newest
+
+
+# --- transcript turns down to 0.8 ------------------------------------------------------------------
+
+
+def test_explicit_text_with_inline_content_in_a_turn_is_unwrapped(tmp_path):
+    body = '<track><bdiv/><seconds value="2"/><voice>A</voice><text>Hi <bold>there</bold></text></track>'
+    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    assert "<voice>A</voice>Hi <bold>there</bold></track>" in result.xml
+    assert [(c["kind"], c["location"]) for c in result.changes] == [("mapped", "/doclang/track/text")]
+
+
+def test_element_head_and_semantic_elements_of_a_turn_are_dropped(tmp_path):
+    head = "".join(f'<location value="{v}"/>' for v in (1, 2, 3, 4))
+    body = (
+        f'<track><label value="t"/><bdiv/><seconds value="2"/>{head}So <formula>x</formula>.'
+        "<voice/><text>A <formula>y</formula></text></track>"
+    )
+    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    assert '<track><label value="t"/><bdiv/><seconds value="2"/>So .<voice/></track>' in result.xml  # track head stays
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        *(("dropped", f"/doclang/track/location[{i}]") for i in (1, 2, 3, 4)),
+        ("dropped", "/doclang/track/formula"),
+        ("dropped", "/doclang/track/text"),  # not inline only
+    ]
 
 
 # --- file-based cases ----------------------------------------------------------------------------

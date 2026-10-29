@@ -780,13 +780,19 @@
   <!-- Same content model as <text>; effective only from the start time of the cue block that carries it -->
   <xs:element name="chapter" type="dl:component_with_semantic_seq"/>
 
-  <!-- Transcript region: <voice>-attributed turns plus inline-formatted / raw text -->
-  <xs:group name="transcript_content">
-    <xs:choice>
-      <xs:element ref="dl:content"/>
-      <xs:element ref="dl:voice"/>
-      <xs:group ref="dl:headless_txt"/>
-    </xs:choice>
+  <!-- TRANSCRIPT: turns, each an optional <voice> followed by its content, as for a list item: -->
+  <!-- semantic element(s), or virtual text (optional element_head + raw text/formatting/semantic elements); -->
+  <!-- only the first turn may lack a <voice> -->
+  <xs:group name="transcript">
+    <xs:sequence>
+      <xs:group ref="dl:element_head" minOccurs="0"/>
+      <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="dl:voice"/>
+        <xs:group ref="dl:element_head" minOccurs="0"/>
+        <xs:group ref="dl:virtual_text_content" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:sequence>
   </xs:group>
 
   <!-- TRACK_CUE_BLOCK: bdiv + start timestamp + optional end timestamp + optional chapter + optional frame/audio + optional transcript -->
@@ -798,13 +804,13 @@
       <xs:element ref="dl:chapter" minOccurs="0"/>
       <xs:element ref="dl:frame" minOccurs="0"/>
       <xs:element ref="dl:audio" minOccurs="0"/>
-      <xs:group ref="dl:transcript_content" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:group ref="dl:transcript" minOccurs="0"/>
     </xs:sequence>
   </xs:group>
 
   <!-- TRACK ELEMENT: optional element_head + optional cover + track_cue_block* -->
   <!-- Semantic element: may optionally begin with element_head (per spec.md) -->
-  <!-- mixed: a literal newline between consecutive unattributed transcript turns is allowed -->
+  <!-- mixed: raw text of transcript turns (each a virtual <text>) and whitespace between elements -->
   <!-- Schematron enforces: first cue block is a bdiv (after the optional element head and cover) -->
   <xs:element name="track">
     <xs:complexType mixed="true">

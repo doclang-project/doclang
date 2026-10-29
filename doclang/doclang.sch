@@ -100,7 +100,7 @@
   <!-- ============================================ -->
   <!-- ELEMENT HEAD: Text must not precede property elements -->
   <!-- Property elements: label, thread, xref, href, layer, location, caption, description, summary, custom (per XSD element_head group) -->
-  <!-- This rule applies to regular semantic elements AND virtual <text> in lists/tables -->
+  <!-- This rule applies to regular semantic elements; virtual <text> in lists, tables and tracks has rules below -->
   <!-- ============================================ -->
 
   <sch:pattern id="element-head-placement">
@@ -253,6 +253,8 @@
                           return
                             if ($t/parent::dl:list) then
                               (if ($t/preceding-sibling::dl:ldiv) then 'list-item' else 'list')
+                            else if ($t/parent::dl:track) then
+                              (if ($t/preceding-sibling::dl:bdiv) then 'transcript-turn' else 'track')
                             else if ($t/parent::dl:table or $t/parent::dl:index) then
                               (if ($t/preceding-sibling::*[local-name() = $cell-token-names]) then 'table-cell' else local-name($t/parent::*))
                             else local-name($t/parent::*)
@@ -284,6 +286,32 @@
 
       <sch:assert test="empty($text-before-header)">
         In list items (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
+        Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ============================================ -->
+  <!-- VIRTUAL TEXT IN TRACKS: Element head must precede content -->
+  <!-- A transcript turn (content after a <voice>, or after the start of a cue block, up to the next <voice> or -->
+  <!-- <bdiv>) acts as a virtual <text>; the track's own element head precedes its first cue block -->
+  <!-- ============================================ -->
+
+  <sch:pattern id="track-virtual-text-element-head">
+    <sch:rule context="dl:track/dl:bdiv | dl:track/dl:voice">
+      <sch:let name="next-boundary" value="following-sibling::*[self::dl:bdiv or self::dl:voice][1]"/>
+
+      <sch:let name="turn-content" value="if ($next-boundary)
+                                          then following-sibling::node()[. &lt;&lt; $next-boundary]
+                                          else following-sibling::node()"/>
+
+      <sch:let name="first-header" value="$turn-content[self::dl:label or self::dl:thread or self::dl:xref or self::dl:href or self::dl:layer or self::dl:location or self::dl:caption or self::dl:description or self::dl:summary or self::dl:custom][1]"/>
+
+      <!-- compared by position in the document (not by value: empty elements would all be equal) -->
+      <sch:let name="text-before-header" value="$turn-content[self::text()][normalize-space(.) != ''][. &lt;&lt; $first-header]"/>
+
+      <sch:assert test="empty($text-before-header)">
+        In transcript turns (virtual text), property elements in the element head (label, thread, xref, href, layer, location, caption, description, summary, custom) must appear before any non-whitespace text content.
         Found non-whitespace text before element head: '<sch:value-of select="normalize-space(string-join($text-before-header, ''))"/>'
       </sch:assert>
     </sch:rule>

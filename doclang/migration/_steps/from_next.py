@@ -9,13 +9,19 @@ from __future__ import annotations
 
 from lxml import etree
 
-from doclang.migration._tree import Changes, is_element, local_name
+from doclang.migration._tree import Changes, is_element, local_name, remove_keeping_tail
 
+# what the target allows in a cue block: its structure, and in transcripts <voice> and inline text
+_CUE_BLOCK = frozenset("bdiv hours minutes seconds msecs chapter frame audio voice".split())
+_INLINE = frozenset(
+    "content bold italic underline strikethrough superscript subscript handwriting rtl marker hint checkbox".split()
+)
 _WHITESPACE = " \t\r\n"
 _FORMATTING = frozenset("bold italic underline strikethrough superscript subscript handwriting rtl".split())
 
 
 def migrate(root: etree._Element, changes: Changes) -> None:
+    _reduce_transcript_turns(root, changes)
     _move_content_out_of_field_headings(root, changes)
 
 
@@ -57,3 +63,53 @@ def _move_content_out_of_field_headings(root: etree._Element, changes: Changes) 
 
 def _formatting(element: etree._Element | None) -> bool:
     return element is not None and is_element(element) and local_name(element) in _FORMATTING
+
+
+def _reduce_transcript_turns(root: etree._Element, changes: Changes) -> None:
+    """A transcript turn can hold any semantic elements now, or a virtual <text>; in the target, it is inline text
+    only. An explicit <text> with inline content only is unwrapped; the rest (a turn's element head, semantic
+    elements) is dropped."""
+    for track in [e for e in root.iter() if is_element(e) and local_name(e) == "track"]:
+        first_cue_block = next((c for c in track if is_element(c) and local_name(c) == "bdiv"), None)
+        if first_cue_block is None:
+            continue
+        unwrapped, dropped = [], []
+        for element in [c for c in first_cue_block.itersiblings() if is_element(c)]:
+            name = local_name(element)
+            if name in _CUE_BLOCK or name in _INLINE:
+                continue
+            if name == "text" and all(local_name(d) in _INLINE for d in element.iterdescendants() if is_element(d)):
+                changes.record("mapped", element, "<text> in a transcript turn unwrapped into the turn's text")
+                unwrapped.append(element)
+            else:
+                changes.record(
+                    "dropped", element, f"<{name}> in a transcript turn has no equivalent in the target version"
+                )
+                dropped.append(element)
+        for element in unwrapped:  # recorded first: changing the tree shifts the positions of the others
+            _unwrap(element)
+        for element in dropped:
+            remove_keeping_tail(element)
+
+
+def _unwrap(element: etree._Element) -> None:
+    """Replace ``element`` by its content."""
+    parent = element.getparent()
+    assert parent is not None
+    previous = element.getprevious()
+    text = element.text or ""
+    if previous is not None:
+        previous.tail = (previous.tail or "") + text
+    else:
+        parent.text = (parent.text or "") + text
+    position = parent.index(element)
+    children = list(element)
+    if children:
+        children[-1].tail = (children[-1].tail or "") + (element.tail or "")
+    elif previous is not None:
+        previous.tail = (previous.tail or "") + (element.tail or "")
+    else:
+        parent.text = (parent.text or "") + (element.tail or "")
+    parent.remove(element)
+    for offset, child in enumerate(children):
+        parent.insert(position + offset, child)

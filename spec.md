@@ -1584,7 +1584,7 @@ A cue block consists of, in order:
 - an optional `<chapter>` — a chapter or section title (see [Chapters](#chapters) below), handled like [`<text>`](#text): it may carry its own element head and inline [formatting](#formatting).
 - an optional `<frame>` — a still image for the cue block's start time, with an optional element head and an optional [`<src>`](#src). Typically a video frame, but equally a slide, a keyframe, or any representative still for that moment. A point sample; valid on any cue block. (For a track-wide image, use `<cover>` instead.)
 - an optional `<audio>` — the recording over the cue block's interval `[start, end]`, with the same shape as `<frame>`. It is a temporal crop of the track's audio, the way a [`<picture>`](#picture) crop corresponds to its page region; the timestamps are authoritative and the clip is a best-effort fragment. Requires the cue block to carry an end time.
-- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting); it runs until the next `<voice>` or the end of the cue block. An empty `<voice/>` ends the current speaker's turn — the text after it is unattributed. How unattributed text is interpreted — e.g. as an unknown speaker, no speaker (e.g. a sound description), continuation of the last named speaker, etc. — is application-defined.
+- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by its content; it runs until the next `<voice>`, `<bdiv/>` or `</track>`. Similarly to list items and table cells, the content of a turn can be any semantic element sequence, but may also comprise unwrapped text content, i.e. constituting a virtual [`<text>`](#text). An empty `<voice/>` ends the current speaker's turn — the text after it is unattributed. How unattributed text is interpreted — e.g. as an unknown speaker, no speaker (e.g. a sound description), continuation of the last named speaker, etc. — is application-defined.
 
 Minimal cue block (start time and one line of text) — `<hours>`, `<minutes>` and `<msecs>` omitted:
 
@@ -1608,6 +1608,17 @@ Start and end time, two attributed turns:
 </track>
 ```
 
+Turn with a formula:
+
+```xml
+<track>
+  <bdiv/>
+  <minutes value="12"/><seconds value="5"/>
+  <voice>Lecturer</voice>
+  So the energy is <formula>E = mc^2</formula>, as shown on the slide.
+</track>
+```
+
 Cue block with a video frame and an audio clip:
 
 ```xml
@@ -1623,7 +1634,7 @@ Cue block with a video frame and an audio clip:
 
 Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#annex-b-normative-doclang-archive-format).
 
-Crossing the hour mark, and consecutive turns with no speaker attribution:
+Crossing the hour mark, and an unattributed turn:
 
 ```xml
 <track>
@@ -2197,7 +2208,7 @@ None (empty element).
 
 ##### `<text>`
 
-Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
+Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item, a table cell or a transcript turn — see [Lists](#lists).
 
 ###### Allowed context
 
@@ -2319,7 +2330,7 @@ None
 
 ##### `<list>`
 
-Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. Each list item can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2341,7 +2352,7 @@ Any context that allows semantic elements.
 
 ##### `<table>`
 
-Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. Each table cell can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2361,7 +2372,7 @@ None
 
 ##### `<index>`
 
-Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. Each cell can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2607,7 +2618,7 @@ None
 
 ##### `<track>`
 
-Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
+Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of turns, each an optional [`<voice>`](#voice) followed by its content, which can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2621,9 +2632,9 @@ None
 
 | Content type | Allowed / Not allowed |
 | --- | --- |
-| Element head | Allowed |
-| Raw text | Only within a cue block transcript |
-| Primary semantic elements | [`<cover>`](#cover) before the first cue block; within cue blocks, [`<chapter>`](#chapter), [`<frame>`](#frame), [`<audio>`](#audio), and [`<voice>`](#voice) |
+| Element head | TRUE, also on transcript turn level in case of virtual [`<text>`](#text) |
+| Raw text | Only on transcript turn level, in case of virtual [`<text>`](#text) |
+| Primary semantic elements | [`<cover>`](#cover) before the first cue block; within cue blocks, [`<chapter>`](#chapter), [`<frame>`](#frame), [`<audio>`](#audio) and [`<voice>`](#voice); on transcript turn level, any |
 
 ###### Example
 

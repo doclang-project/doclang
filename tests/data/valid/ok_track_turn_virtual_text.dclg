@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <track>
+    <!-- the spoken text of a turn is a virtual <text>: element head, inline formatting, semantic elements -->
+    <bdiv/>
+    <minutes value="12"/><seconds value="5"/>
+    Welcome back.
+    <voice>Lecturer</voice>
+    <label value="slide"/>
+    So the energy is given by <formula>E = mc^2</formula>, which is known as <italic>mass–energy equivalence</italic>.
+    <voice/><text>Applause.</text>
+  </track>
+</doclang>
