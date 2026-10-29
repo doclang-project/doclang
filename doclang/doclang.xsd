@@ -804,7 +804,7 @@
 
   <!-- TRACK ELEMENT: optional element_head + optional cover + track_cue_block* -->
   <!-- Semantic element: may optionally begin with element_head (per spec.md) -->
-  <!-- mixed: a literal newline between consecutive unattributed transcript turns is allowed -->
+  <!-- mixed: raw text of transcript turns, and whitespace between elements -->
   <!-- Schematron enforces: first cue block is a bdiv (after the optional element head and cover) -->
   <xs:element name="track">
     <xs:complexType mixed="true">
