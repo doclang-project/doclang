@@ -423,7 +423,7 @@ def test_migration_case(source):
         ),
         (
             "<field_heading>Contact:<content>  </content> <italic>Address</italic></field_heading>",
-            "<field_heading>Contact:<italic><content>  </content> Address</italic></field_heading>",
+            "<field_heading>Contact:<italic><content>  </content><content> </content>Address</italic></field_heading>",
             ["mapped"],
         ),
         (
@@ -618,6 +618,28 @@ def test_content_stays_where_unwrapping_would_change_the_reading(text):
     assert full.find(f".//{{{NS}}}content") is not None
 
 
+@pytest.mark.parametrize(
+    ("turns", "reading"),
+    [
+        (  # pretty-printed
+            "\n  <voice>Alice</voice>\n  Hello\n  <bold>everyone</bold>,\n  welcome.\n  <voice>Bob</voice>Thanks!\n",
+            ["Alice", "Hello <bold>everyone</bold>, welcome.", "Bob", "Thanks!"],
+        ),
+        ("<voice>A</voice> Hi <voice/> (applause) ", ["A", "Hi", "(applause)"]),  # edges of a turn
+        ('All done. <bdiv/><seconds value="5"/> And next', ["All done.", "And next"]),  # a cue block ends a turn
+        ("<voice> Dr. <bold>Smith</bold> </voice>Hi", ["Dr. <bold>Smith</bold>", "Hi"]),  # <voice> is a block
+        ("It was <italic>very </italic> <bold>good</bold>", ["It was <italic>very </italic><bold>good</bold>"]),
+        ("First line\n  second line", ["First line second line"]),  # a line break reads as a space
+        ("First line<content>\n</content>second line", ["First line\nsecond line"]),
+    ],
+)
+def test_reader_reads_transcript_turns(turns, reading):
+    from lxml import etree
+
+    xml = f'<doclang xmlns="{NS}"><track><bdiv/><seconds value="2"/>{turns}</track></doclang>'
+    assert _read(etree.fromstring(xml)) == reading
+
+
 def test_reader_reads_elements_without_raw_text_as_part_of_the_text():
     from lxml import etree
 
@@ -688,3 +710,122 @@ def test_reader_reads_the_spec_example():
     assert _read(etree.fromstring(xml)) == [
         "Water is H<subscript>2</subscript>O, <bold>very </bold><italic>clear</italic> and two  spaces apart."
     ]
+
+
+# --- keeping spaces in the 0.9 to 0.8 step ---------------------------------------------------------
+
+
+def _downgraded(xml: str):
+    from lxml import etree
+
+    from doclang.migration._steps import from_next
+    from doclang.migration._tree import Changes
+
+    root = etree.fromstring(xml.encode("utf-8"))
+    changes = Changes()
+    from_next.migrate(root, changes)
+    return root, changes
+
+
+@pytest.mark.parametrize(
+    "source",
+    sorted((CASES_DIR / "0.9_to_0.8").glob("*in.dclg")) + sorted(VALID_DIR.glob("*.dclg")),
+    ids=lambda f: f.stem,
+)
+def test_downgrading_keeps_the_reading(source):
+    from lxml import etree
+
+    xml = source.read_text(encoding="utf-8")
+    root, changes = _downgraded(xml)
+    if changes.items:
+        pytest.skip("drops what the target cannot express")
+    assert _read(root, rules="0.8") == _read(etree.fromstring(xml.encode("utf-8")))
+
+
+@pytest.mark.parametrize(
+    ("text", "downgraded"),
+    [
+        ("<text>Hi <bold>there</bold></text>", "<text>Hi<content> </content><bold>there</bold></text>"),
+        ("<text>Hi\n  <bold>there</bold></text>", "<text>Hi<content> </content>\n  <bold>there</bold></text>"),
+        (
+            "<text><bold>very </bold> <italic>clear</italic></text>",  # the space stays bold
+            "<text><bold>very<content> </content></bold><italic>clear</italic></text>",
+        ),
+        ("<text>a <content>b</content></text>", "<text>a<content> </content><content>b</content></text>"),
+        (
+            "<list><ldiv/>a <bold>b</bold><ldiv/>c</list>",
+            "<list><ldiv/>a<content> </content><bold>b</bold><ldiv/>c</list>",
+        ),
+        ("<text>\n  two words\n</text>", "<text>\n  two words\n</text>"),  # between words, at the body's edges
+        ('<text><location value="1"/> <bold>a</bold></text>', '<text><location value="1"/> <bold>a</bold></text>'),
+        (  # paragraphs in a list item are blocks of their own: the whitespace between them is ignored
+            "<list><ldiv/><text>Apples.</text> <text>Pears.</text></list>",
+            "<list><ldiv/><text>Apples.</text> <text>Pears.</text></list>",
+        ),
+        (
+            "<list><ldiv/>Fruit: <text>apples</text></list>",
+            "<list><ldiv/>Fruit:<content> </content><text>apples</text></list>",
+        ),
+        (  # a comment is disregarded: one space across it
+            "<text>c <!-- note --> d</text>",
+            "<text>c<content> </content><!-- note -->d</text>",
+        ),
+        (  # the head of a nested element is disregarded
+            '<text>Visit our <text><href uri="u"/>website</text> now</text>',
+            '<text>Visit our<content> </content><text><href uri="u"/>website</text><content> </content>now</text>',
+        ),
+        (  # an element without raw text is part of the text, with a space on either side
+            "<text><checkbox/> Accept, see <picture/> below.</text>",
+            "<text><checkbox/><content> </content>Accept, see<content> </content><picture/><content> </content>"
+            "below.</text>",
+        ),
+    ],
+)
+def test_spaces_the_target_would_lose_become_content(text, downgraded):
+    from lxml import etree
+
+    root, _ = _downgraded(f'<doclang xmlns="{NS}">{text}</doclang>')
+    assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
+
+
+@pytest.mark.parametrize(
+    ("text", "downgraded", "kinds"),
+    [
+        (
+            "<field_heading><italic>Contact:</italic> Address</field_heading>",
+            "<field_heading><italic>Contact:<content> </content></italic>Address</field_heading>",
+            ["mapped"],
+        ),
+        (
+            "<field_heading>Contact: <italic>Address</italic></field_heading>",
+            "<field_heading>Contact:<italic><content> </content>Address</italic></field_heading>",
+            ["mapped"],
+        ),
+        (  # no formatting element next to it: the space is lost
+            "<field_heading>Accept <checkbox/></field_heading>",
+            "<field_heading>Accept<checkbox/></field_heading>",
+            ["dropped"],
+        ),
+    ],
+)
+def test_field_heading_spaces_go_into_a_formatting_element(text, downgraded, kinds):
+    """<field_heading> cannot hold <content>; the space takes the formatting of its neighbour instead."""
+    from lxml import etree
+
+    root, changes = _downgraded(f'<doclang xmlns="{NS}">{text}</doclang>')
+    assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
+    assert [c["kind"] for c in changes.items] == kinds
+
+
+@pytest.mark.parametrize("source", sorted((CASES_DIR / "0.9_to_0.8").glob("*in.dclg")), ids=lambda f: f.stem)
+def test_upgrading_again_unwraps_the_added_spaces(source):
+    from lxml import etree
+
+    from doclang.migration._steps import to_next
+    from doclang.migration._tree import Changes
+
+    root, _ = _downgraded(source.read_text(encoding="utf-8"))
+    to_next.migrate(root, Changes())
+    original = etree.fromstring(source.read_bytes())
+    assert len(root.findall(f".//{{{NS}}}content")) == len(original.findall(f".//{{{NS}}}content"))
+    assert _read(root) == _read(original)

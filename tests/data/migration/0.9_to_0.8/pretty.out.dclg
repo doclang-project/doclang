@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.8">
+  <!-- formula -->
+  <text>
+    <location value="64"/>
+    <location value="210"/>
+    <location value="436"/>
+    <location value="248"/>
+    In summary, the model is described by equations (3.1)-(3.4). The aim is to solve them for the unknowns<content> </content><formula>(p, q, r, s)</formula>. Using (3.6) and (3.5), we then obtain<content> </content><formula>(u, v, w, s, \alpha)</formula>. The following section presents two example families of solutions to these equations.
+  </text>
+  <!-- inline_key_value -->
+  <field_region>
+    <field_item>
+      <text>
+        <key>Invoice no.:</key><content> </content><value>2026-0042</value>
+      </text>
+    </field_item>
+    <field_item>
+      <text>
+        <key><bold>Issued</bold>:</key><content> </content><value>15 March 2026</value><content> </content>(<value><italic>payable on receipt</italic></value>)
+      </text>
+    </field_item>
+  </field_region>
+  <!-- inline_runs -->
+  <text>
+    Water is H<subscript>2</subscript>O, and CO<subscript>2</subscript><content> </content>is a gas.
+  </text>
+  <text>
+    Held on the 21<superscript>st</superscript><content> </content>of June, see<content> </content><italic>the agenda</italic>.
+  </text>
+  <text>
+    Some<content> </content><bold>bold<content> </content></bold>text with<content> </content><code>code</code><content> </content>inside.
+  </text>
+  <!-- list_and_table -->
+  <list>
+    <ldiv/>
+    First<content> </content><bold>item</bold>
+    <ldiv/>
+    <italic>Second</italic><content> </content>item
+  </list>
+  <table>
+    <fcel/>
+    a<content> </content><bold>b</bold>
+    <fcel/>
+    c
+    <nl/>
+  </table>
+  <!-- kept_content -->
+  <text>
+    <content> Indented</content><content> by one space, a run of  two, and </content><bold>a line</bold><content>
+break.</content>
+  </text>
+  <!-- paragraph -->
+  <text>
+    <location value="12"/>
+    <location value="40"/>
+    <location value="300"/>
+    <location value="58"/>
+    See<content> </content><italic>Table 2</italic><content> </content>for the values of<content> </content><formula>\beta</formula>.
+  </text>
+</doclang>
