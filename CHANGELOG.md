@@ -1,3 +1,7 @@
+## [v0.7.4](https://github.com/doclang-project/doclang/releases/tag/v0.7.4)
+
+* fix element head rules for all their elements (#214)
+
 ## [v0.7.3](https://github.com/doclang-project/doclang/releases/tag/v0.7.3)
 
 * refuse symbolic links when packing pages and assets (#171)
