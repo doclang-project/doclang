@@ -1,3 +1,7 @@
+## [v0.8.1](https://github.com/doclang-project/doclang/releases/tag/v0.8.1)
+
+* fix element head rules for all their elements (#213)
+
 ## [v0.8.0](https://github.com/doclang-project/doclang/releases/tag/v0.8.0)
 
 * add version migration (#196)
