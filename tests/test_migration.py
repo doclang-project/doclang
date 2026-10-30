@@ -137,9 +137,10 @@ def test_target_without_schema_is_unsupported(tmp_path):
         migrate(_doc(tmp_path, "<text>x</text>"), to="0.1")
 
 
-def test_malformed_declared_version(tmp_path):
-    with pytest.raises(MigrationError, match="Invalid declared DocLang version 'v8'"):
-        migrate(_doc(tmp_path, "<text>x</text>", version="v8"), to="0.7")
+@pytest.mark.parametrize(("version", "read"), [("v8", "v8"), ("0.8&#10;", "0.8\n")])
+def test_malformed_declared_version(tmp_path, version, read):
+    with pytest.raises(MigrationError, match=f"Invalid declared DocLang version '{re.escape(read)}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=version), to="0.7")
 
 
 def test_undeclared_version_warns_is_treated_as_latest_and_gets_declared(tmp_path):
@@ -673,6 +674,12 @@ def test_other_semantic_elements_in_a_marker_are_dropped(tmp_path):
     ]
 
 
+def test_non_breaking_space_next_to_a_dropped_element_is_kept(tmp_path):
+    body = "<list><ldiv><marker>1<italic>a</italic>&#160;<picture/>\n</marker></ldiv>x</list>"
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
+    assert "<marker>1<italic>a</italic>\u00a0\n</marker>" in result.xml  # not whitespace in XML
+
+
 def test_nested_markers_are_unwrapped_from_the_inside(tmp_path):
     body = "<list><ldiv><marker><marker><picture/><hint><italic>i</italic></hint></marker></marker></ldiv>x</list>"
     result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
@@ -825,6 +832,8 @@ def test_content_is_unwrapped_where_it_reads_the_same(text, unwrapped):
     [
         "<text>a<content>  b</content></text>",  # two spaces would collapse
         "<text>a<content>\nb</content></text>",  # a line break would read as a space
+        "<text>a<content>b\n</content>c</text>",  # also at its end
+        "<text>a<content>\n</content></text>",
         "<text>a<content>\tb</content></text>",
         "<text><content> a</content></text>",  # at the start of the body, the space would be dropped
         "<text><content>a </content></text>",  # at its end, too

@@ -34,7 +34,7 @@ _DELIMITERS = frozenset(
     "ldiv fcel ecel ched rhed corn srow lcel ucel xcel nl bdiv hours minutes seconds msecs voice chapter frame audio "
     "cover".split()
 )
-_ONLY_SINGLE_SPACES = re.compile(r"^[^\t\r\n]*$")
+_ONLY_SINGLE_SPACES = re.compile(r"[^\t\r\n]*")
 
 
 def migrate(root: etree._Element, changes: Changes) -> None:
@@ -107,7 +107,7 @@ def _unwrap_contents(root: etree._Element) -> None:
 
 def _reads_the_same_unwrapped(content: etree._Element) -> bool:
     text = content.text or ""
-    if len(content) or not text or "  " in text or not _ONLY_SINGLE_SPACES.match(text):
+    if len(content) or not text or "  " in text or not _ONLY_SINGLE_SPACES.fullmatch(text):
         return False
     if text.startswith(" ") and not _is_word_character(_character_before(content)):
         return False

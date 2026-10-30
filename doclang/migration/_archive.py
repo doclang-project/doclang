@@ -18,7 +18,7 @@ from lxml import etree
 
 from doclang.migration._tree import Changes, is_element, local_name
 
-_TRACK_MEDIA_RE = re.compile(r"^(audio|video)/([1-9][0-9]*)(\.[^/]+)$")
+_TRACK_MEDIA_RE = re.compile(r"(audio|video)/([1-9][0-9]*)(\.[^/]+)")
 
 
 def tracks(root: etree._Element) -> list[etree._Element]:
@@ -61,7 +61,7 @@ def member_renames(
     referenced = asset_references(root)
     renames: dict[str, str | None] = {}
     for name in names:
-        match = _TRACK_MEDIA_RE.match(name)
+        match = _TRACK_MEDIA_RE.fullmatch(name)
         if match and int(match[2]) <= len(tracks_before):
             new = new_positions[int(match[2]) - 1]
             if new is None and positions:

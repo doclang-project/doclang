@@ -6,6 +6,8 @@ from typing import Any
 
 from lxml import etree
 
+_WHITESPACE = " \t\r\n"
+
 
 def is_element(node: etree._Element) -> bool:
     """True for elements (as opposed to comments and processing instructions)."""
@@ -43,7 +45,7 @@ def remove_keeping_tail(element: etree._Element) -> None:
     tail = element.tail or ""
     previous = element.getprevious()
     before = (previous.tail if previous is not None else parent.text) or ""
-    merged = tail if not before.strip() and not tail.strip() else before + tail
+    merged = tail if not before.strip(_WHITESPACE) and not tail.strip(_WHITESPACE) else before + tail
     if previous is not None:
         previous.tail = merged or None
     else:
