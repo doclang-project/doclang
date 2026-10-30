@@ -17,7 +17,7 @@ from doclang._schemas import _version_key
 from doclang.migration import _steps as steps_package
 from doclang.migration._tree import Changes
 
-_RELEASED_STEP_RE = re.compile(r"^v(\d+)_(\d+)_to_(\d+)_(\d+)$")
+_RELEASED_STEP_RE = re.compile(r"v(\d+)_(\d+)_to_(\d+)_(\d+)")
 
 StepFunction = Callable[[etree._Element, Changes], None]
 
@@ -51,7 +51,7 @@ def _load_steps(newest_released: str, head: str | None) -> list[Step]:
                 ends = (head, newest_released) if info.name == "from_next" else (newest_released, head)
                 steps.append(Step(*ends, apply=apply))
             continue
-        match = _RELEASED_STEP_RE.match(info.name)
+        match = _RELEASED_STEP_RE.fullmatch(info.name)
         if match:
             steps.append(Step(f"{match.group(1)}.{match.group(2)}", f"{match.group(3)}.{match.group(4)}", apply))
     return steps

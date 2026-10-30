@@ -20,7 +20,7 @@ from doclang.migration._tree import Changes
 from doclang.utils import _parse_doclang_document
 from doclang.validation import ValidationError, validate
 
-_VERSION_RE = re.compile(r"^\d+\.\d+$")
+_VERSION_RE = re.compile(r"\d+\.\d+")
 _VALIDATION_SCOPES = ("all", "xsd", "schematron", "none")
 
 
@@ -166,7 +166,7 @@ def _migrate(
             UserWarning,
             stacklevel=3,
         )
-    elif not _VERSION_RE.match(declared):
+    elif not _VERSION_RE.fullmatch(declared):
         raise MigrationError(f"Invalid declared DocLang version '{declared}'; expected MAJOR.MINOR")
     upward = declared is not None and _version_key(declared) < _version_key(to)
     if upward and declared not in targets:
