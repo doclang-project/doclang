@@ -109,11 +109,16 @@ is best effort: content that has an equivalent in the target version is mapped (
 newer version rewrites the document where the newer version reads the same markup differently, so that it keeps
 its meaning; otherwise only the `version` attribute changes, as documents are forward compatible.
 
+The source version is the document's `version` attribute. A document without one is read as the latest version,
+with a warning; `--from X.Y` reads it as version X.Y instead (a document that declares another version is an
+error).
+
 #### More migration scenarios
 
 ```bash
 doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
 doclang migrate document.dclg --to 0.7 --strict        # fail instead of changing anything
+doclang migrate undeclared.dclg --from 0.8 --to 0.9    # a document without a version attribute, written for 0.8
 doclang migrate document.dclg --to 0.7 --format json   # versions, changes and the document as JSON
 doclang migrate document.dclg --to 0.7 --input-validation xsd --output-validation xsd   # without Schematron
 doclang migrate document.dclg --to 0.7 --input-validation none                          # skip validating the input
