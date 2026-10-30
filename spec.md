@@ -17,7 +17,7 @@ DocLang aims to address these challenges by providing a minimalist, unambiguous 
 
 This document builds upon research in document understanding and is intended to represent the content of a document as accurately as possible while maintaining implementation simplicity.
 
-## Scope
+## 1 Scope
 
 This document specifies DocLang, a markup language for representing structured document content, including its semantic, geometric, and formatting information.
 
@@ -29,7 +29,7 @@ It covers the following aspects:
 - Methods for expressing formatting and text direction
 - Specifications for complex document components (tables, charts, formulas, code, forms)
 
-## Normative references
+## 2 Normative references
 
 The following documents are referred to in the text in such a way that some or all of their content constitutes requirements of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
@@ -41,11 +41,11 @@ The following documents are referred to in the text in such a way that some or a
 6. IETF RFC 2397: The "data" URL scheme
 7. Semantic Versioning 2.0.0 (semver.org)
 
-## Terms and definitions
+## 3 Terms and definitions
 
 For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2].
 
-### Abstract concepts
+### 3.1 Abstract concepts
 
 1. **DocLang instance**
 
@@ -55,7 +55,7 @@ For the purposes of this document, the following terms and definitions apply. Te
 
    A cohesive and meaningful part of document content, e.g. a table, list item with a marker, a bold piece of text, etc.
 
-### Roles
+### 3.2 Roles
 
 An implementation may act in one or more of the following roles.
 
@@ -71,7 +71,7 @@ An implementation may act in one or more of the following roles.
 
    A processor that checks DocLang instances against this document.
 
-### Adopted from XML
+### 3.3 Adopted from XML
 
 1. **element**
 
@@ -87,7 +87,7 @@ An implementation may act in one or more of the following roles.
 
    An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
-## Symbols and abbreviated terms
+## 4 Symbols and abbreviated terms
 
 **CDATA**
 Character data
@@ -113,17 +113,17 @@ Extensible Markup Language
 **XSD**
 XML Schema Definition
 
-## Conformance
+## 5 Conformance
 
 A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD [3] schema and Schematron rules) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
 
 Requirements addressed to a producer, processor or validator apply to implementations acting in that role. A producer SHOULD ensure that the instances it produces conform, for example by validating its output and rejecting or repairing non-conforming results.
 
-### Version
+### 5.1 Version
 
 A DocLang instance states the version of this document it is intended to conform to, in `MAJOR.MINOR` format, through the `version` attribute of the root `<doclang>` element.
 
-### Omitted version
+### 5.2 Omitted version
 
 The `version` attribute is optional. If it is omitted, the version of the instance is unspecified: it is neither implied to be the version of this document nor any earlier version.
 
@@ -131,7 +131,7 @@ The `version` attribute is optional. If it is omitted, the version of the instan
 - A validator SHOULD validate an instance with an unspecified version against the latest version of this document it supports, and SHOULD warn that no version was declared.
 - A validator MAY allow the user to explicitly select the version to validate against, overriding the declared one.
 
-### Compatibility
+### 5.3 Compatibility
 
 The versions of this document follow the principles of Semantic Versioning [7] (considering X >= 1, and Y < Z):
 
@@ -142,15 +142,15 @@ The versions of this document follow the principles of Semantic Versioning [7] (
 - A `1.0` instance conforms to version `1.1`
 - A `1.1` instance need not conform to version `1.0`
 
-### Schema versions
+### 5.4 Schema versions
 
 A schema may additionally carry a patch version, i.e. a full Semantic Versioning string (e.g., `1.0.0`, `1.0.1`), to track schema-level changes that do not affect document compatibility.
 
 The XSD schema constrains the `version` attribute of the root `<doclang>` element only to the `MAJOR.MINOR` format; selecting the schema that corresponds to an instance's version is the responsibility of the validator.
 
-## Language design principles
+## 6 Language design principles
 
-### Property semantics
+### 6.1 Property semantics
 
 In XML, the attribute syntax allows explicitly separating an element's properties from its content.
 Let's consider the following example: `<elem size="250" color="#ffeedd">foo</elem>`.
@@ -166,7 +166,7 @@ This representation can reduce the number of tokens and streamline how XML is ma
 
 For elements with a strictly limited set of possible property values, attributes are still used.
 
-### Head and body areas
+### 6.2 Head and body areas
 
 Documents and their core components (as implemented via [semantic elements](#semantic-elements)) can have various properties associated with them.
 To separate between properties and actual content, DocLang follows a two-part scheme, both on the the component / element level and on the global document level.
@@ -226,7 +226,7 @@ While the details are specified in the sections further below, this snippet show
 </doclang>
 ```
 
-### Content encoding and whitespace handling
+### 6.3 Content encoding and whitespace handling
 
 As DocLang is XML, standard XML [2] encoding rules apply — for example:
 - any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
@@ -278,7 +278,7 @@ This reads as `Water (H₂O) is clear and odorless. This keeps two  spaces as wr
 | one space between `odorless.` and `This` | rule 3: the line break and indentation read as a single space |
 | `two  spaces` keeps both spaces | `<content>` is literal |
 
-### Subclasses
+### 6.4 Subclasses
 
 For core document components like `<picture>` or `<code>`, a subclass may be indicated via the [`<label>`](#label) element. DocLang provides some recommended value domains (see [Recommendations](#annex-c-informative-recommendations)), but for extensibility purposes, the label value is not to be validated.
 Additionally, some elements, e.g. `<picture>`, may include a `class` attribute for providing an intermediate classification level typically associated with specific semantics and structural implications.
@@ -296,7 +296,7 @@ In the example further below:
 </doclang>
 ```
 
-## Language specification
+## 7 Language specification
 
 DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
@@ -310,9 +310,9 @@ Planned extensions are discussed in [Future extensions](#annex-d-informative-fut
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
-## Usage examples
+## 8 Usage examples
 
-### Simple document structure
+### 8.1 Simple document structure
 
 In the simplest document example, document elements are in a flat list,
 
@@ -354,7 +354,7 @@ In case of page-layout information, the coordinates are provided only at the sem
 </doclang>
 ```
 
-### Pictures
+### 8.2 Pictures
 
 Pictures are captured with the `<picture>` element and may be specialized via the `class` attribute, as detailed
 in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI [5] capturing the image
@@ -404,7 +404,7 @@ Picture with document [caption](#caption), [description](#description), and [sum
 </picture>
 ```
 
-### Code snippets
+### 8.3 Code snippets
 
 Code content is captured with `<code>`, either as a standalone block or inlined within a semantic element. For language classification, use a [`<label>`](#label) in the element head (see [Recommendations](#annex-c-informative-recommendations)).
 
@@ -468,7 +468,7 @@ seq 1 5 | while read n; do echo $n; done</content>
 </code>
 ```
 
-### Math and equations
+### 8.4 Math and equations
 
 All math is authored as LaTeX inside <formula>, whether in standalone blocks or inlined within a semantic element (similar to code).
 
@@ -533,7 +533,7 @@ Cross-page block formula with continuation:
 
 Note: All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the tag conveys math context.
 
-### Lists
+### 8.5 Lists
 
 A list can contain as list items any semantic element sequence.
 List items are namely introduced by `<ldiv>` elements, whereby an `<ldiv>` may optionally contain a marker.
@@ -662,7 +662,7 @@ Notes
 - Lists can nest as shown above.
 - When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
 
-### Tables
+### 8.6 Tables
 
 A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
 This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
@@ -766,7 +766,7 @@ Notes:
 - A cell can include any valid DocLang semantic element sequence.
 
 
-### Fields
+### 8.7 Fields
 
 Fields provide a flexible structure for representing key-value data and structured content. The field elements allow for more flexible document structures where keys and values may be separated by other content or organized in complex layouts.
 
@@ -1590,7 +1590,7 @@ Field region with mixed content:
 
 Detailed examples can be seen here: [Form Examples](/examples/form/form-examples.md)
 
-### Tracks
+### 8.8 Tracks
 
 A `<track>` captures a time-aligned media transcript — subtitles, captions, or diarized speech associated with an audio or video recording. It is a [semantic element](#semantic-elements) and may begin with an [element head](#element-head).
 
@@ -1602,10 +1602,10 @@ A cue block consists of, in order:
 
 - a **start time** (mandatory): a run of `<hours value="H"/>`, `<minutes value="M"/>`, `<seconds value="S"/>`, `<msecs value="MS"/>` in that order. Only `<seconds>` is required; `<hours>`, `<minutes>` and `<msecs>` each default to `0` when omitted. `<seconds>` anchors the run, so two consecutive runs stay unambiguous.
 - an **end time** (optional): the same run shape, immediately following the start time. A cue block covers the inclusive interval `[start, end]`. When the end time is omitted it is taken to equal the start time, i.e. the cue block is the single instant `[start, start]` — for example, the timestamp of a `<frame>` or a point annotation.
-- an optional `<chapter>` — a chapter or section title (see [Chapters](#chapters) below), handled like [`<text>`](#text): it may carry its own element head and inline [formatting](#formatting).
+- an optional `<chapter>` — a chapter or section title (see [Chapters](#chapters) below), handled like [`<text>`](#text): it may carry its own element head and inline [formatting](#811-formatting).
 - an optional `<frame>` — a still image for the cue block's start time, with an optional element head and an optional [`<src>`](#src). Typically a video frame, but equally a slide, a keyframe, or any representative still for that moment. A point sample; valid on any cue block. (For a track-wide image, use `<cover>` instead.)
 - an optional `<audio>` — the recording over the cue block's interval `[start, end]`, with the same shape as `<frame>`. It is a temporal crop of the track's audio, the way a [`<picture>`](#picture) crop corresponds to its page region; the timestamps are authoritative and the clip is a best-effort fragment. Requires the cue block to carry an end time.
-- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#formatting); it runs until the next `<voice>` or the end of the cue block. An empty `<voice/>` ends the current speaker's turn — the text after it is unattributed. How unattributed text is interpreted — e.g. as an unknown speaker, no speaker (e.g. a sound description), continuation of the last named speaker, etc. — is application-defined.
+- an optional **transcript**: a sequence of speaker turns. A turn is an optional `<voice>` (the speaker attribution, which may itself be styled) followed by the spoken text with inline [formatting](#811-formatting); it runs until the next `<voice>` or the end of the cue block. An empty `<voice/>` ends the current speaker's turn — the text after it is unattributed. How unattributed text is interpreted — e.g. as an unknown speaker, no speaker (e.g. a sound description), continuation of the last named speaker, etc. — is application-defined.
 
 Minimal cue block (start time and one line of text) — `<hours>`, `<minutes>` and `<msecs>` omitted:
 
@@ -1706,7 +1706,7 @@ Notes:
 - `<msecs value="…"/>` accepts any integer in `[0, 999]`.
 - `<cover>`, `<bdiv>`, `<chapter>`, `<frame>`, `<audio>`, `<voice>`, and the timestamp elements are only meaningful inside a `<track>`.
 
-### Split structure
+### 8.9 Split structure
 
 We can capture content that is split (e.g. across columns or across pages) using the `<thread thread_id="N"/>` element, where `N` is a unique identifier.
 
@@ -1954,7 +1954,7 @@ to be reached to add the thread for "Europe" in the example above.
 
 -->
 
-### References
+### 8.10 References
 
 #### Cross-references
 
@@ -1999,7 +1999,7 @@ Hyperink from a non-text element:
 </picture>
 ```
 
-### Formatting
+### 8.11 Formatting
 
 Formatting may be preserved through nested tags or escape sequences:
 
@@ -2043,7 +2043,7 @@ Superscript and subscript:
 </text>
 ```
 
-### Page break with continuation
+### 8.12 Page break with continuation
 
 Page breaks are complex components that interrupt the flow of a document. They can interrupt paragraphs, tables, lists, etc. In general, we follow two rules,
 
@@ -2092,7 +2092,7 @@ A more complicated example is shown below in which we break the content of a lis
 Above, `<thread thread_id="1"/>` captures that the list itself is split, while `<thread thread_id="2"/>` captures that a particular
 list item is split.
 
-### Custom vocabularies
+### 8.13 Custom vocabularies
 
 The examples below illustrate custom vocabulary use, namely for capturing a chemistry picture in simplified molecular-input line-entry system (SMILES) representation.
 
@@ -2144,7 +2144,7 @@ Exists exactly once, as root element.
 | Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
 | `xmlns` | Optional; default: "https://www.doclang.ai/ns/v0" | {"https://www.doclang.ai/ns/v0"} | The DocLang specification version namespace. |
-| `version` | Optional; if omitted, the version is unspecified | "MAJOR.MINOR" of a published DocLang specification version | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Versioning. If omitted, the version is unspecified (see [Omitted version](#omitted-version)). |
+| `version` | Optional; if omitted, the version is unspecified | "MAJOR.MINOR" of a published DocLang specification version | The DocLang specification version the DocLang instance is supposed to validate against, in "MAJOR.MINOR" format, i.e. first two positions of Semantic Versioning. If omitted, the version is unspecified (see [Omitted version](#52-omitted-version)). |
 
 ###### Allowed content types
 
@@ -2184,7 +2184,7 @@ None
 
 ##### `<page_break>`
 
-Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#head-and-body-areas), i.e. would be a valid DocLang instance if wrapped in a `doclang` root element.
+Indicates a page break. A paginated document may be divided into pages using the `<page_break/>` empty element. Any page content, as split by `<page_break/>`, forms a valid DocLang [document body](#62-head-and-body-areas), i.e. would be a valid DocLang instance if wrapped in a `doclang` root element.
 
 ###### Allowed context
 
