@@ -378,6 +378,11 @@ def pack(
 def migrate(
     document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …)", exists=True),
     to: str = typer.Option(..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to"),
+    source: str | None = typer.Option(
+        None,
+        "--from",
+        help="Spec version (MAJOR.MINOR) of a document that declares none (default: the latest version)",
+    ),
     output: Path | None = typer.Option(
         None, "-o", "--output", help="Write the migrated document here (default: stdout)"
     ),
@@ -410,6 +415,7 @@ def migrate(
         doclang migrate document.dclg --to 0.7
         doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
         doclang migrate document.dclg --to 0.7 --strict --format json
+        doclang migrate undeclared.dclg --from 0.8 --to 0.9
     """
     warning_messages: list[str] = []
     try:
@@ -419,6 +425,7 @@ def migrate(
                 result = migrate_document(
                     document,
                     to=to,
+                    source=source,
                     strict=strict,
                     input_validation=input_validation.value,
                     output_validation=output_validation.value,

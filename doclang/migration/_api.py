@@ -32,7 +32,7 @@ class MigrationResult:
     """
 
     xml: str
-    source_version: str | None  # None if the document declared no version
+    source_version: str | None  # None if the document declared no version and no source was given
     target_version: str
     changes: list[dict[str, Any]] = field(default_factory=list)
 
@@ -52,6 +52,7 @@ def migrate(
     xml_file: Union[str, Path],
     *,
     to: str,
+    source: str | None = None,
     strict: bool = False,
     input_validation: str = "all",
     output_validation: str = "all",
@@ -59,7 +60,9 @@ def migrate(
     """Migrate a DocLang XML file to the spec version ``to`` (``MAJOR.MINOR``).
 
     The source version is the ``version`` attribute of the root element. If it is missing, the document is
-    treated as the latest version and a :class:`UserWarning` is issued.
+    treated as the latest version and a :class:`UserWarning` is issued, unless ``source`` gives its version.
+    ``source`` (``MAJOR.MINOR``, a version with bundled schemas or the development head) is meant for such
+    undeclared documents; for a document that declares a different version, :class:`MigrationError` is raised.
 
     ``to`` can be an older or a newer version with bundled schemas, or, while the development schemas have
     unreleased changes, the next minor version after the newest released one (validated against the development
@@ -78,7 +81,7 @@ def migrate(
     :class:`MigrationError`. A failing output indicates a bug in a migration step (or an invalid input that was
     not validated) and also raises :class:`MigrationError`.
 
-    Raises :class:`UnsupportedVersionError` if there is no schema for ``to``, and :class:`ValueError` for an
+    Raises :class:`UnsupportedVersionError` if there is no schema for ``to`` or ``source``, and :class:`ValueError` for an
     unknown validation scope.
     """
     for name, scope in (("input_validation", input_validation), ("output_validation", output_validation)):
@@ -89,10 +92,11 @@ def migrate(
     newest = max(available, key=_version_key) if available else None
     head = _head_version(newest)
     targets = available + ([head] if head else [])
-    if to not in targets:
-        raise UnsupportedVersionError(
-            f"No schema for DocLang spec version '{to}'; available versions: {', '.join(targets) or 'none'}"
-        )
+    for version in (to, source):
+        if version is not None and version not in targets:
+            raise UnsupportedVersionError(
+                f"No schema for DocLang spec version '{version}'; available versions: {', '.join(targets) or 'none'}"
+            )
 
     path = Path(xml_file)
     tree = _parse_doclang_document(path, keep_cdata=True)  # written back as in the input
@@ -100,6 +104,10 @@ def migrate(
     has_namespace = etree.QName(root).namespace is not None
 
     declared = root.get("version")
+    if source is not None and declared is not None and declared != source:
+        raise MigrationError(f"The document declares version {declared}, not the given source version {source}")
+    if declared is None:
+        declared = source  # from here on: the version the document is read as
     if declared is None:
         warnings.warn(
             "No DocLang version declared; migrating from the latest version.",
@@ -117,14 +125,15 @@ def migrate(
         input_validation,
         allow_empty_namespace=not has_namespace,
         failure=_input_failure(declared),
+        spec_version=source if source != head else None,  # the head is the default without a declared version
         head=declared is not None and declared == head,
     )
 
     changes = Changes()
     assert newest is not None  # ``to`` is one of the available versions or the next one
-    source = declared if declared in targets else head or newest  # no version or a newer one: the latest
+    start = declared if declared in targets else head or newest  # no version or a newer one: the latest
     try:
-        steps = _plan(source, to, _load_steps(newest, head))
+        steps = _plan(start, to, _load_steps(newest, head))
     except NoMigrationPath as exc:
         raise MigrationError(str(exc)) from exc
     for step in steps:

@@ -144,6 +144,30 @@ def test_undeclared_version_warns_is_treated_as_latest_and_gets_declared(tmp_pat
     assert 'version="0.7"' in result.xml and "track" not in result.xml
 
 
+@pytest.mark.parametrize("version", [None, "0.8"])
+def test_source_is_the_version_of_an_undeclared_document(tmp_path, recwarn, version):
+    result = migrate(_doc(tmp_path, TRACK, version=version), source="0.8", to="0.7")
+    assert (result.source_version, result.target_version) == ("0.8", "0.7")
+    assert 'version="0.7"' in result.xml and "track" not in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_source_contradicting_the_declared_version_is_an_error(tmp_path):
+    with pytest.raises(MigrationError, match=r"declares version 0\.7, not the given source version 0\.8"):
+        migrate(_doc(tmp_path, "<text>x</text>", version="0.7"), source="0.8", to="0.7")
+
+
+@pytest.mark.parametrize("source", ["0.1", "v8", "1.0"])
+def test_source_without_schema_is_unsupported(tmp_path, source):
+    with pytest.raises(UnsupportedVersionError, match=f"No schema for DocLang spec version '{source}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=None), source=source, to="0.7")
+
+
+def test_undeclared_document_is_validated_against_the_source(tmp_path):
+    with pytest.raises(MigrationError, match=r"not valid for DocLang 0\.7"):
+        migrate(_doc(tmp_path, TRACK, version=None), source="0.7", to="0.8")  # <track> is new in 0.8
+
+
 # --- up to the development head ------------------------------------------------------------------
 
 
@@ -243,6 +267,19 @@ def test_undeclared_version_to_the_head_only_gets_declared(tmp_path):
     with pytest.warns(UserWarning, match="No DocLang version declared"):
         result = migrate(_doc(tmp_path, "<text> x </text>", version=None), to=HEAD)
     assert "<text> x </text>" in result.xml and f'version="{HEAD}"' in result.xml
+
+
+def test_undeclared_document_from_an_older_source_gets_the_head_steps(tmp_path, recwarn):
+    result = migrate(_doc(tmp_path, "<text>a<content> b</content></text>", version=None), source="0.8", to=HEAD)
+    assert (result.source_version, result.target_version) == ("0.8", HEAD)
+    assert "<text>a b</text>" in result.xml and f'version="{HEAD}"' in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_head_as_source_of_an_undeclared_document(tmp_path, recwarn):
+    result = migrate(_doc(tmp_path, "<text> x </text>", version=None), source=HEAD, to=HEAD)
+    assert result.source_version == HEAD and "<text> x </text>" in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
 
 
 def test_head_is_no_target_without_changes_of_its_own(tmp_path, monkeypatch):

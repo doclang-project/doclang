@@ -179,6 +179,27 @@ def test_cli_migrate_validation_options(tmp_path, monkeypatch):
     assert none.exit_code == 0, none.output
 
 
+def test_cli_migrate_from(tmp_path):
+    doc = tmp_path / "undeclared.dclg"
+    doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0"><text>a<content> b</content></text></doclang>')
+    result = runner.invoke(app, ["migrate", str(doc), "--from", "0.8", "--to", "0.9"])
+    assert result.exit_code == 0, result.output
+    assert "<text>a b</text>" in result.stdout and 'version="0.9"' in result.stdout
+    assert "No DocLang version declared" not in result.output
+
+    without = runner.invoke(app, ["migrate", str(doc), "--to", "0.9"])
+    assert without.exit_code == 0, without.output
+    assert "<content> b</content>" in without.stdout and "No DocLang version declared" in without.output
+
+    contradicting = runner.invoke(app, ["migrate", str(_migratable(tmp_path)), "--from", "0.7", "--to", "0.8"])
+    assert (
+        contradicting.exit_code == 1
+        and "declares version 0.8, not the given source version 0.7" in contradicting.output
+    )
+    unknown = runner.invoke(app, ["migrate", str(doc), "--from", "0.1", "--to", "0.9"])
+    assert unknown.exit_code == 1 and "No schema for DocLang spec version '0.1'" in unknown.output
+
+
 def test_cli_migrate_rejects_invalid_input(tmp_path):
     doc = tmp_path / "bad.dclg"
     doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.8"><unknown_future_element/></doclang>')
