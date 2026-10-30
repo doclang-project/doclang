@@ -53,6 +53,11 @@ def test_xml_declaration_is_written_as_in_the_input(tmp_path, start, declared):
     assert xml.endswith("</doclang>\n")
 
 
+def test_cdata_sections_are_written_as_in_the_input(tmp_path):
+    result = migrate(_doc(tmp_path, f"<text>x <formula><![CDATA[p<0.001]]></formula></text>{TRACK}"), to="0.7")
+    assert "<formula><![CDATA[p<0.001]]></formula>" in result.xml
+
+
 def test_tracks_inside_group_and_table_cell_are_dropped(tmp_path):
     result = migrate(_doc(tmp_path, f"<group>{TRACK}</group><table><fcel/>{TRACK}<nl/></table>"), to="0.7")
     assert [c["location"] for c in result.changes] == ["/doclang/group/track", "/doclang/table/track"]

@@ -95,7 +95,7 @@ def migrate(
         )
 
     path = Path(xml_file)
-    tree = _parse_doclang_document(path)
+    tree = _parse_doclang_document(path, keep_cdata=True)  # written back as in the input
     root = tree.getroot()
     has_namespace = etree.QName(root).namespace is not None
 
