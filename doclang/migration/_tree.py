@@ -52,7 +52,8 @@ def remove_keeping_tail(element: etree._Element) -> None:
 
 
 class Changes:
-    """What a migration mapped or dropped, in document order."""
+    """What a migration mapped or dropped, in document order, followed by the archive members it renamed, removed
+    or orphaned."""
 
     def __init__(self) -> None:
         self.items: list[dict[str, Any]] = []
@@ -67,3 +68,7 @@ class Changes:
                 "message": message,
             }
         )
+
+    def record_member(self, kind: str, name: str, message: str) -> None:
+        """Record a change (``kind`` is "renamed", "removed" or "orphaned") of the archive member ``name``."""
+        self.items.append({"kind": kind, "location": name, "line": None, "message": message})

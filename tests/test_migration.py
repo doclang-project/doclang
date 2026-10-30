@@ -1,6 +1,7 @@
 """Tests for migrating documents to another spec version."""
 
 import sys
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -394,6 +395,149 @@ def test_newer_version_without_schema_is_migrated_down_as_the_latest(tmp_path):
     with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 1\.0"):
         result = migrate(_doc(tmp_path, TRACK, version="1.0"), to="0.7")
     assert result.source_version == "1.0" and "track" not in result.xml
+
+
+# --- archives ------------------------------------------------------------------------------------
+
+FRAME_TRACK = '<track><bdiv/><seconds value="2"/><frame><src uri="assets/frames/2.jpg"/></frame>Hi.</track>'
+
+
+def _archive(tmp_path: Path, body: str, members: dict[str, bytes], version: str | None = "0.8") -> Path:
+    """An archive of the document ``body`` and ``members``, in that order (without OPC metadata, as found in
+    the wild); ``pages/1.png`` is stored uncompressed with a fixed date."""
+    path = tmp_path / "doc.dclx"
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("document.xml", _doc(tmp_path, body, version=version).read_bytes())
+        for name, data in members.items():
+            info = zipfile.ZipInfo(name, date_time=(2020, 1, 2, 3, 4, 6))
+            info.compress_type = zipfile.ZIP_STORED if name == "pages/1.png" else zipfile.ZIP_DEFLATED
+            info.external_attr = 0o640 << 16
+            archive.writestr(info, data)
+    return path
+
+
+def _members(path: Path) -> dict[str, bytes]:
+    with zipfile.ZipFile(path) as archive:
+        return {name: archive.read(name) for name in archive.namelist()}
+
+
+def test_archive_document_is_migrated_and_other_members_copied(tmp_path):
+    members = {
+        "pages/1.png": b"\x89PNG page",
+        "[Content_Types].xml": b"<Types/>",
+        "assets/": b"",
+        "assets/a.svg": b"<svg/>",
+    }
+    body = '<picture><caption>A</caption><caption>B</caption><src uri="assets/a.svg"/></picture>'
+    archive = _archive(tmp_path, body, members)
+    out = tmp_path / "out.dclx"
+    result = migrate(archive, to="0.7", output=out)
+
+    assert [c["kind"] for c in result.changes] == ["mapped"]
+    written = _members(out)
+    assert list(written) == ["document.xml", *members]
+    assert written["document.xml"].decode("utf-8") == result.xml and 'version="0.7"' in result.xml
+    assert {name: written[name] for name in members} == members
+    with zipfile.ZipFile(archive) as before, zipfile.ZipFile(out) as after:
+        for name in members:
+            old, new = before.getinfo(name), after.getinfo(name)
+            assert (new.date_time, new.compress_type, new.external_attr) == (
+                old.date_time,
+                old.compress_type,
+                old.external_attr,
+            )
+
+
+def test_archive_is_written_only_with_an_output_and_may_replace_the_input(tmp_path):
+    archive = _archive(tmp_path, "<text>x</text>", {"pages/1.png": b"page"})
+    original = archive.read_bytes()
+    result = migrate(archive, to="0.7")
+    assert 'version="0.7"' in result.xml and archive.read_bytes() == original
+
+    migrate(archive, to="0.7", output=archive)
+    assert _members(archive) == {"document.xml": result.xml.encode("utf-8"), "pages/1.png": b"page"}
+
+
+def test_xml_output_is_written(tmp_path):
+    out = tmp_path / "out.dclg"
+    result = migrate(_doc(tmp_path, TRACK), to="0.7", output=out)
+    assert out.read_text(encoding="utf-8") == result.xml
+
+
+def test_source_applies_to_an_archive(tmp_path, recwarn):
+    result = migrate(_archive(tmp_path, TRACK, {}, version=None), source="0.8", to="0.7")
+    assert result.source_version == "0.8" and "track" not in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_media_and_assets_of_dropped_tracks_are_kept_and_reported(tmp_path):
+    members = {
+        "audio/1.mp3": b"a1",
+        "video/2.mp4": b"v2",
+        "assets/frames/2.jpg": b"frame",  # only referenced from a track
+        "assets/chart.svg": b"chart",  # still referenced
+        "assets/notes.txt": b"notes",  # never referenced
+        "audio/README": b"unrelated",
+    }
+    body = f'{TRACK}{FRAME_TRACK}<picture><src uri="./assets/chart.svg"/></picture>'
+    out = tmp_path / "out.dclx"
+    result = migrate(_archive(tmp_path, body, members), to="0.7", output=out)
+
+    assert [(c["kind"], c["location"], c["line"]) for c in result.changes] == [
+        ("dropped", "/doclang/track[1]", 2),
+        ("dropped", "/doclang/track", 2),  # recorded after the first was removed
+        ("orphaned", "audio/1.mp3", None),
+        ("orphaned", "video/2.mp4", None),
+        ("orphaned", "assets/frames/2.jpg", None),
+    ]
+    assert list(_members(out)) == ["document.xml", *members]
+
+
+def test_media_of_remaining_tracks_is_renumbered(tmp_path, monkeypatch):
+    def drop_first_track(root, changes):
+        track = root.find(f"{{{NS}}}track")
+        changes.record("dropped", track, "dropped")
+        root.remove(track)
+
+    _with_unreleased_head(monkeypatch, drop_first_track)
+    members = {"audio/1.mp3": b"a1", "audio/2.ogg": b"a2", "video/3.mp4": b"v3", "assets/frames/2.jpg": b"f"}
+    out = tmp_path / "out.dclx"
+    result = migrate(_archive(tmp_path, f"{TRACK}{FRAME_TRACK}{TRACK}", members), to=HEAD, output=out)
+
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("dropped", "/doclang/track[1]"),
+        ("removed", "audio/1.mp3"),  # it would pair with the old track 2
+        ("renamed", "audio/2.ogg"),
+        ("renamed", "video/3.mp4"),
+    ]
+    assert "audio/1.ogg" in result.changes[2]["message"]
+    assert _members(out) == {
+        "document.xml": result.xml.encode("utf-8"),
+        "audio/1.ogg": b"a2",
+        "video/2.mp4": b"v3",
+        "assets/frames/2.jpg": b"f",
+    }
+
+
+def test_strict_fails_on_the_dropped_elements_not_on_orphaned_members(tmp_path):
+    out = tmp_path / "out.dclx"
+    with pytest.raises(MigrationError, match="would change 1 part") as info:
+        migrate(_archive(tmp_path, TRACK, {"audio/1.mp3": b"a"}), to="0.7", output=out, strict=True)
+    assert [c["kind"] for c in info.value.changes] == ["dropped", "orphaned"]
+    assert not out.exists()
+
+
+@pytest.mark.parametrize(
+    ("names", "error"),
+    [(["pages/1.png"], "No document.xml"), (["document.xml", "../evil"], "Invalid archive member path")],
+)
+def test_unreadable_archives_are_rejected(tmp_path, names, error):
+    path = tmp_path / "bad.dclx"
+    with zipfile.ZipFile(path, "w") as archive:
+        for name in names:
+            archive.writestr(name, _doc(tmp_path, "<text>x</text>").read_bytes())
+    with pytest.raises(MigrationError, match=error):
+        migrate(path, to="0.7")
 
 
 # --- every valid fixture ---------------------------------------------------------------------------

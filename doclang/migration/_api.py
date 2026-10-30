@@ -5,14 +5,16 @@ from __future__ import annotations
 import re
 import tempfile
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Union
 
 from lxml import etree
 
+from doclang._packaging import PackagingError, _is_archive, _read_archive, _write_archive
 from doclang._schemas import UnsupportedVersionError, _available_versions, _head_description, _version_key
+from doclang.migration import _archive
 from doclang.migration._plan import NoMigrationPath, _load_steps, _plan
 from doclang.migration._tree import Changes
 from doclang.utils import _parse_doclang_document
@@ -27,8 +29,10 @@ class MigrationResult:
     """The outcome of :func:`migrate`.
 
     ``changes`` lists what was mapped or dropped, in document order. Each change is a dict with the keys
-    ``kind`` ("mapped" or "dropped"), ``location`` (path of the element), ``line`` and ``message``. The
-    ``kind`` values are stable; ``message`` is meant for humans.
+    ``kind`` ("mapped" or "dropped"), ``location`` (path of the element), ``line`` and ``message``. For an
+    archive, the members renamed, removed or orphaned by dropped elements follow, with the ``kind`` "renamed",
+    "removed" or "orphaned", the member name as ``location`` and ``line`` None. The ``kind`` values are stable; ``message``
+    is meant for humans.
     """
 
     xml: str
@@ -53,11 +57,20 @@ def migrate(
     *,
     to: str,
     source: str | None = None,
+    output: Union[str, Path, None] = None,
     strict: bool = False,
     input_validation: str = "all",
     output_validation: str = "all",
 ) -> MigrationResult:
-    """Migrate a DocLang XML file to the spec version ``to`` (``MAJOR.MINOR``).
+    """Migrate a DocLang XML file or archive (``.dclx``) to the spec version ``to`` (``MAJOR.MINOR``).
+
+    The migrated document is returned in the result and, if ``output`` is given, written there: as a file for
+    an XML file, as an archive for an archive. An archive is migrated by migrating its ``document.xml``; all
+    other members are copied as they are, except for the whole-track media when ``<track>`` elements are
+    dropped: that of the remaining tracks is renumbered to stay aligned with them, and that of the dropped ones
+    removed, as it would pair with another track. Members that only dropped elements used and that can stay
+    (files under ``assets/`` that only they referenced, the media of dropped tracks if none remain) are kept and
+    reported as orphaned; they do not count as changes for ``strict``.
 
     The source version is the ``version`` attribute of the root element. If it is missing, the document is
     treated as the latest version and a :class:`UserWarning` is issued, unless ``source`` gives its version.
@@ -82,12 +95,52 @@ def migrate(
     not validated) and also raises :class:`MigrationError`.
 
     Raises :class:`UnsupportedVersionError` if there is no schema for ``to`` or ``source``, and :class:`ValueError` for an
-    unknown validation scope.
+    unknown validation scope. An archive that cannot be read (e.g. without ``document.xml``) raises
+    :class:`MigrationError`.
     """
     for name, scope in (("input_validation", input_validation), ("output_validation", output_validation)):
         if scope not in _VALIDATION_SCOPES:
             raise ValueError(f"{name} must be one of {', '.join(_VALIDATION_SCOPES)}; got {scope!r}")
+    options: dict[str, Any] = {
+        "to": to,
+        "source": source,
+        "strict": strict,
+        "input_validation": input_validation,
+        "output_validation": output_validation,
+    }
 
+    path = Path(xml_file)
+    if not _is_archive(path):
+        result, _ = _migrate(path, None, **options)
+        if output is not None:
+            Path(output).write_text(result.xml, encoding="utf-8")
+        return result
+
+    try:
+        members, document = _read_archive(path)
+    except PackagingError as exc:
+        raise MigrationError(str(exc)) from exc
+    with tempfile.TemporaryDirectory() as tmp:
+        document_path = Path(tmp) / "document.xml"
+        document_path.write_bytes(document)
+        result, renames = _migrate(document_path, [m.filename for m in members], **options)
+    if output is not None:
+        _write_archive(path, output, result.xml.encode("utf-8"), renames)
+    return result
+
+
+def _migrate(
+    path: Path,
+    members: Sequence[str] | None,
+    *,
+    to: str,
+    source: str | None,
+    strict: bool,
+    input_validation: str,
+    output_validation: str,
+) -> tuple[MigrationResult, dict[str, str | None]]:
+    """Migrate the XML file ``path`` (see :func:`migrate`), with the renames of the archive ``members`` (or
+    of none, if it is no archive's)."""
     available = _available_versions()
     newest = max(available, key=_version_key) if available else None
     head = _head_version(newest)
@@ -98,7 +151,6 @@ def migrate(
                 f"No schema for DocLang spec version '{version}'; available versions: {', '.join(targets) or 'none'}"
             )
 
-    path = Path(xml_file)
     tree = _parse_doclang_document(path, keep_cdata=True)  # written back as in the input
     root = tree.getroot()
     has_namespace = etree.QName(root).namespace is not None
@@ -112,7 +164,7 @@ def migrate(
         warnings.warn(
             "No DocLang version declared; migrating from the latest version.",
             UserWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
     elif not _VERSION_RE.match(declared):
         raise MigrationError(f"Invalid declared DocLang version '{declared}'; expected MAJOR.MINOR")
@@ -136,12 +188,15 @@ def migrate(
         steps = _plan(start, to, _load_steps(newest, head))
     except NoMigrationPath as exc:
         raise MigrationError(str(exc)) from exc
+    tracks, assets = _archive.tracks(root), _archive.asset_references(root)
     for step in steps:
         step.apply(root, changes)
+    renames = {} if members is None else _archive.member_renames(members, tracks, assets, root, changes)
 
-    if strict and changes.items:
+    changed = [c for c in changes.items if c["kind"] != "orphaned"]
+    if strict and changed:
         raise MigrationError(
-            f"Migrating to {to} would change {len(changes.items)} part(s) of the document; "
+            f"Migrating to {to} would change {len(changed)} part(s) of the document; "
             "pass strict=False to accept the changes",
             changes=changes.items,
         )
@@ -153,7 +208,7 @@ def migrate(
 
     _validate_output(xml, to, output_validation, input_validation, has_namespace, changes.items, head=to == head)
 
-    return MigrationResult(xml=xml, source_version=declared, target_version=to, changes=changes.items)
+    return MigrationResult(xml=xml, source_version=declared, target_version=to, changes=changes.items), renames
 
 
 def _has_xml_declaration(path: Path) -> bool:
