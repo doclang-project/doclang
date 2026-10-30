@@ -633,6 +633,7 @@
       <xs:sequence>
         <xs:group ref="dl:element_head"/>
         <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element ref="dl:content"/>
           <xs:group ref="dl:headless_txt"/>
           <xs:group ref="dl:top_level_cat"/>
         </xs:choice>

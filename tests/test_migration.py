@@ -309,3 +309,39 @@ def test_migration_case(source):
         expected.write_text(actual, encoding="utf-8")
         pytest.fail(f"wrote {expected.name} from the actual result: review it, then rerun")
     assert actual == expected.read_text(encoding="utf-8")
+
+
+# --- <content> in <field_heading> down to 0.8 ------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text", "downgraded", "kinds"),
+    [
+        (
+            "<field_heading><italic>Contact:</italic><content>  </content>Address</field_heading>",
+            "<field_heading><italic>Contact:<content>  </content></italic>Address</field_heading>",
+            ["mapped"],
+        ),
+        (
+            "<field_heading>Contact:<content>  </content> <italic>Address</italic></field_heading>",
+            "<field_heading>Contact:<italic><content>  </content> Address</italic></field_heading>",
+            ["mapped"],
+        ),
+        (
+            "<field_heading>Contact:<content>  </content>Address</field_heading>",
+            "<field_heading>Contact:  Address</field_heading>",
+            ["dropped"],
+        ),
+    ],
+)
+def test_content_in_a_field_heading_goes_into_a_formatting_element(text, downgraded, kinds):
+    """<field_heading> cannot hold <content>; it moves into a neighbouring formatting element, or is unwrapped."""
+    from lxml import etree
+
+    from doclang.migration._steps import from_next
+    from doclang.migration._tree import Changes
+
+    root, changes = etree.fromstring(f'<doclang xmlns="{NS}">{text}</doclang>'.encode()), Changes()
+    from_next.migrate(root, changes)
+    assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
+    assert [c["kind"] for c in changes.items] == kinds
