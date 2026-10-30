@@ -43,7 +43,7 @@ The following documents are referred to in the text in such a way that some or a
 
 ## Terms and definitions
 
-For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2]; terms adopted from HTML are as defined in the HTML Standard (see Bibliography [1]).
+For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2].
 
 ### Abstract concepts
 
@@ -87,25 +87,10 @@ An implementation may act in one or more of the following roles.
 
    An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
-### Adopted from HTML
-
-1. **block-level element**
-
-   An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
-
-2. **inline element**
-
-   An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
-
-   Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
-
 ## Symbols and abbreviated terms
 
 **CDATA**
 Character data
-
-**HTML**
-HyperText Markup Language
 
 **LLM**
 Large language model
@@ -181,14 +166,6 @@ This representation can reduce the number of tokens and streamline how XML is ma
 
 For elements with a strictly limited set of possible property values, attributes are still used.
 
-### Content encoding and whitespace handling
-
-As DocLang is XML, standard XML [2] encoding rules apply — for example:
-- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
-- special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
-
-DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
-
 ### Head and body areas
 
 Documents and their core components (as implemented via [semantic elements](#semantic-elements)) can have various properties associated with them.
@@ -239,8 +216,7 @@ While the details are specified in the sections further below, this snippet show
     <location value="440"/><location value="270"/>
 
     <!-- element body: -->
-    <italic>Hello</italic>
-    <content> world!</content>
+    Hello world!
 
   </text>
   <text>
@@ -249,6 +225,58 @@ While the details are specified in the sections further below, this snippet show
   </text>
 </doclang>
 ```
+
+### Content encoding and whitespace handling
+
+As DocLang is XML, standard XML [2] encoding rules apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
+- special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
+
+In this section, *whitespace* means any of the following characters:
+- space (U+0020)
+- tab (U+0009)
+- carriage return (U+000D)
+- line feed (U+000A)
+
+The rules below do not apply to attribute values, which are subject to XML attribute-value normalization.
+
+[`<content>`](#content) preserves whitespace: its content shall be interpreted literally.
+
+A *text block* is defined as any of the following:
+- the body of an element in which raw text is allowed directly (raw text content type "Allowed" in [Annex A](#annex-a-normative-reference)), unless that element is part of another text block (e.g. `<bold>` within `<text>`);
+- the body of a virtual [`<text>`](#text);
+- the spoken text of a transcript turn (see [`<track>`](#track)).
+
+When reading a text block, XML comments and processing instructions within it, as well as the [element heads](#element-head) of the elements within it, are disregarded, as if they were removed. The elements of such element heads are read separately: e.g. a `<caption>` forms a text block of its own, to which the same rules apply.
+
+A consumer shall interpret whitespace outside `<content>` as follows:
+
+1. Whitespace outside text blocks shall be ignored.
+2. Whitespace at the start and at the end of a text block shall be ignored.
+3. Any other sequence of consecutive whitespace, taken as a whole, shall be interpreted as a single space. Whitespace separated only by start-tags and end-tags of elements within the text block that allow raw text (e.g. formatting elements) counts as consecutive; whitespace within a `<content>` element does not count together with whitespace outside it.
+4. When a sequence of whitespace spans several elements, the space shall be attributed to the element that contains the first character of the sequence.
+
+To retain whitespace that these rules would collapse or ignore, such as runs of spaces or line breaks, a producer shall use `<content>`. A producer should use `<content>` only where these rules would otherwise change the intended reading. Conversely, a producer can insert a line break and indentation wherever a single space is intended, for example to improve readability.
+
+Example:
+
+```xml
+<text>
+  Water (H<subscript>2</subscript>O) is <bold>clear </bold>
+  <italic> and odorless</italic>.
+  This keeps <content>two  spaces</content> as written.
+</text>
+```
+
+This reads as `Water (H₂O) is clear and odorless. This keeps two  spaces as written.`, with:
+
+| Part | Reason |
+| --- | --- |
+| no space before `Water`, none after `written.` | rule 2 (start and end of the text block) |
+| `H₂O` stays tight | no whitespace in the source, so none in the reading |
+| one space between `clear` and `and`, which is bold | rules 3 and 4: one sequence across the tags; its first character is in `<bold>` |
+| one space between `odorless.` and `This` | rule 3: the line break and indentation read as a single space |
+| `two  spaces` keeps both spaces | `<content>` is literal |
 
 ### Subclasses
 
@@ -396,12 +424,11 @@ Code block with language classification and whitespace preservation:
 ```xml
 <code>
   <label value="Python"/>
-  <content>
-  def add(a, b):
-      return a + b
+  <content>def add(a, b):
+    return a + b
 
-  if __name__ == "__main__":
-      print(add(2, 3))</content>
+if __name__ == "__main__":
+    print(add(2, 3))</content>
 </code>
 ```
 
@@ -415,13 +442,12 @@ Grouped code with caption and coordinates:
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Listing 1: Minimal HTTP server
   </caption>
-  <content><![CDATA[
-  // Minimal Node.js server
-  import http from 'node:http';
-  const server = http.createServer((req, res) => {
-    res.end('OK');
-  });
-  server.listen(3000);]]></content>
+  <content><![CDATA[// Minimal Node.js server
+import http from 'node:http';
+const server = http.createServer((req, res) => {
+  res.end('OK');
+});
+server.listen(3000);]]></content>
 </code>
 ```
 
@@ -431,16 +457,14 @@ Long code blocks can be split across pages using continuation elements; keep `<l
 <code>
   <label value="Shell"/>
   <thread thread_id="42"/>
-  <content>
-  # Part 1
-  seq 1 5 | while read n; do echo $n; done</content>
+  <content># Part 1
+seq 1 5 | while read n; do echo $n; done</content>
 </code>
 <page_footer>Foo</page_footer>
 <page_break/>
 <code>
   <thread thread_id="42"/>
-  <content>
-  echo "done"</content>
+  <content>echo "done"</content>
 </code>
 ```
 
@@ -483,11 +507,10 @@ Multi-line LaTeX in a single formula:
 
 ```xml
 <formula>
-  <content><![CDATA[
-  \begin{align}
-    \nabla\cdot\mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
-    \nabla\cdot\mathbf{B} &= 0
-  \end{align}]]></content>
+  <content><![CDATA[\begin{align}
+  \nabla\cdot\mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+  \nabla\cdot\mathbf{B} &= 0
+\end{align}]]></content>
 </formula>
 ```
 
@@ -496,17 +519,15 @@ Cross-page block formula with continuation:
 ```xml
 <formula>
   <thread thread_id="42"/>
-  <content>
-  \begin{equation}
-    \mathbf{F}(t) = \int_0^t e^{A(t-\tau)}\,\mathbf{b}(\tau)\,d\tau
-  \end{equation}</content>
+  <content>\begin{equation}
+  \mathbf{F}(t) = \int_0^t e^{A(t-\tau)}\,\mathbf{b}(\tau)\,d\tau
+\end{equation}</content>
 </formula>
 <page_footer>Foo</page_footer>
 <page_break/>
 <formula>
   <thread thread_id="42"/>
-  <content>
-  % Optional tail content if the printed equation spans pages</content>
+  <content>% Optional tail content if the printed equation spans pages</content>
 </formula>
 ```
 
@@ -518,8 +539,7 @@ A list can contain as list items any semantic element sequence.
 List items are namely introduced by `<ldiv>` elements, whereby an `<ldiv>` may optionally contain a marker.
 This means that a non-empty `<list>` element body must begin with an `<ldiv>`.
 
-To promote token efficiency within the repetitive context of a list, a list item may also comprise unwrapped text content.
-That case is called a *virtual `<text>`* and is to be handled exactly as if the whole list item (content between two sibling `<ldiv>`s or until `</list>`) were wrapped by `<text>` tags.
+To promote token efficiency within the repetitive context of a list, a list item (the content between two sibling `<ldiv>`s or until `</list>`) may also be a virtual [`<text>`](#text), i.e. unwrapped text content.
 
 Basic list with virtual `<text>`
 
@@ -646,7 +666,7 @@ Notes
 A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
 This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
-Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
+Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also be a virtual [`<text>`](#text), i.e. unwrapped text content.
 
 Basic table with virtual `<text>`:
 
@@ -1416,39 +1436,39 @@ Field region with mixed content:
       <field_heading>COCHER LES CASES CONCERNEES</field_heading>
       <field_item>
           <key>La cause du sinistre se situe-t-elle chez vous ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>A</marker>non</text>
-          <text><checkbox class="unselected"/><marker>B</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>B</marker>non</text>
+          <text><checkbox class="unselected"/><marker>A</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>A</marker> non</text>
+          <text><checkbox class="unselected"/><marker>B</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>B</marker> non</text>
       </field_item>
       <field_item>
           <key>Êtes-vous assuré en dégâts des eaux ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>A</marker>non</text>
-          <text><checkbox class="unselected"/><marker>B</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>B</marker>non</text>
+          <text><checkbox class="unselected"/><marker>A</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>A</marker> non</text>
+          <text><checkbox class="unselected"/><marker>B</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>B</marker> non</text>
       </field_item>
       <field_item>
           <key>Si vous êtes occupant et que vous allez déménager avez-vous donné ou reçu congé ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>avant le sinistre</text>
-          <text><checkbox class="unselected"/><marker>A</marker>après le sinistre</text>
-          <text><checkbox class="unselected"/><marker>B</marker>avant le sinistre</text>
-          <text><checkbox class="unselected"/><marker>B</marker>après le sinistre</text>
+          <text><checkbox class="unselected"/><marker>A</marker> avant le sinistre</text>
+          <text><checkbox class="unselected"/><marker>A</marker> après le sinistre</text>
+          <text><checkbox class="unselected"/><marker>B</marker> avant le sinistre</text>
+          <text><checkbox class="unselected"/><marker>B</marker> après le sinistre</text>
       </field_item>
       <field_heading>NATURE DES DOMMAGES peinture et/ou papier peint</field_heading>
       <field_item>
           <key>revêtements (sol, mur, plafond)</key>
-          <text><checkbox class="unselected"/><marker>A</marker>collés</text>
-          <text><checkbox class="unselected"/><marker>A</marker>agrafés ou cloués</text>
-          <text><checkbox class="unselected"/><marker>B</marker>collés</text>
-          <text><checkbox class="unselected"/><marker>B</marker>agrafés ou cloués</text>
+          <text><checkbox class="unselected"/><marker>A</marker> collés</text>
+          <text><checkbox class="unselected"/><marker>A</marker> agrafés ou cloués</text>
+          <text><checkbox class="unselected"/><marker>B</marker> collés</text>
+          <text><checkbox class="unselected"/><marker>B</marker> agrafés ou cloués</text>
       </field_item>
       <field_item>
           <key>Ces aménagements ont-ils été exécutés à vos frais ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>A</marker>non</text>
-          <text><checkbox class="unselected"/><marker>B</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>B</marker>non</text>
+          <text><checkbox class="unselected"/><marker>A</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>A</marker> non</text>
+          <text><checkbox class="unselected"/><marker>B</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>B</marker> non</text>
       </field_item>
       <field_item>
           <key>Autres dommages immobiliers (carrelage, parquet, plâtrerie...)</key>
@@ -1623,7 +1643,7 @@ Cue block with a video frame and an audio clip:
 
 Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#annex-b-normative-doclang-archive-format).
 
-Crossing the hour mark, and consecutive turns with no speaker attribution:
+Crossing the hour mark, and an unattributed turn:
 
 ```xml
 <track>
@@ -1951,9 +1971,7 @@ Cross-references can be captured using the `<xref>` element as part of the eleme
   </picture>
   <!--...-->
   <text>
-    <content>... is shown in </content>
-    <text><xref thread_id="1"/>Figure 3</text>
-    . The desired balance...
+    ... is shown in <text><xref thread_id="1"/>Figure 3</text>. The desired balance...
   </text>
   ```
 
@@ -1967,9 +1985,7 @@ Basic example:
 
 ```xml
 <text>
-  <content>Visit our </content>
-  <text><href uri="https://www.example.com"/>website</text>
-  <content> for more information.</content>
+  Visit our <text><href uri="https://www.example.com"/>website</text> for more information.
 </text>
 ```
 
@@ -2193,11 +2209,11 @@ None (empty element).
 
 #### Semantic elements
 
-*Semantic elements* capture core document components with specific meaning and functional role (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
+*Semantic elements* capture core document components with specific meaning and functional role (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be read as separate blocks, such as a paragraph, although some can also be nested within text. Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
 ##### `<text>`
 
-Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
+Represents a piece of cohesive text as that would appear in a paragraph. A list item, or a cell of a [`<table>`](#table), [`<index>`](#index) or [`<tabular>`](#tabular), may also consist of raw text, optionally preceded by an element head, without wrapping [`<text>`](#text) tags. Such content is called a *virtual [`<text>`](#text)* and is interpreted exactly as if it were wrapped in [`<text>`](#text) tags.
 
 ###### Allowed context
 
@@ -2319,7 +2335,7 @@ None
 
 ##### `<list>`
 
-Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2341,7 +2357,7 @@ Any context that allows semantic elements.
 
 ##### `<table>`
 
-Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2361,7 +2377,7 @@ None
 
 ##### `<index>`
 
-Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -4229,7 +4245,6 @@ Metadata elements are meant to capture information that is not directly part of 
 As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
--->
 
 ## Bibliography
 
@@ -4238,3 +4253,4 @@ The following lists the documents which are cited informatively in this document
 1. W3C HTML5 Specification
 2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
 3. DoclingDocument API Specification
+-->
