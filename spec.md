@@ -658,6 +658,7 @@ Notes
 
 - `<marker>` is optional. Include it when the printed glyph/number is visible.
 - `<marker>` may begin with an [element head](#element-head) (e.g. [`<location>`](#location) coordinates to pinpoint bullet/number placement) before the visible glyph or [`<checkbox>`](#checkbox).
+- Like a [`<text>`](#text), a `<marker>` may also hold semantic elements, e.g. a [`<picture>`](#picture) for an image bullet.
 - Lists can nest as shown above.
 - When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
 

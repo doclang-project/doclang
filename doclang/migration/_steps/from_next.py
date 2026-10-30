@@ -11,7 +11,7 @@ import re
 
 from lxml import etree
 
-from doclang.migration._tree import Changes, is_element, local_name
+from doclang.migration._tree import Changes, is_element, local_name, remove_keeping_tail
 
 _WHITESPACE = " \t\r\n"
 # The source's terms, as of this step (kept here, so that the step does not change with later versions):
@@ -44,6 +44,7 @@ _FORMATTING = frozenset("bold italic underline strikethrough superscript subscri
 
 def migrate(root: etree._Element, changes: Changes) -> None:
     _move_content_out_of_field_headings(root, changes)
+    _reduce_markers(root, changes)
     _keep_spaces(root, changes)
 
 
@@ -81,6 +82,63 @@ def _move_content_out_of_field_headings(root: etree._Element, changes: Changes) 
                 else:
                     heading.text = (heading.text or "") + text or None
                 heading.remove(content)
+
+
+def _reduce_markers(root: etree._Element, changes: Changes) -> None:
+    """A <marker> can hold any semantic elements now, like a <text>; in the target, it holds its element head and
+    text-level content only. A <text> or <hint> with text-level content only, or a <marker> without an element head,
+    is unwrapped (a <marker> after reducing its own content); other elements (e.g. a <picture> or a <formula>) are
+    dropped."""
+    unwrapped: list[etree._Element] = []
+    dropped: list[etree._Element] = []
+
+    def reduce(marker: etree._Element) -> None:
+        for element in [c for c in marker if is_element(c)]:
+            name = local_name(element)
+            if name in _TEXT_LEVEL or name in _HEAD:
+                continue
+            if (
+                name in ("text", "hint")
+                and all(local_name(d) in _TEXT_LEVEL for d in element.iterdescendants() if is_element(d))
+            ) or (name == "marker" and not any(is_element(c) and local_name(c) in _HEAD for c in element)):
+                changes.record("mapped", element, f"<{name}> in a <marker> unwrapped into the marker's text")
+                unwrapped.append(element)
+                if name == "marker":
+                    reduce(element)
+            else:
+                changes.record("dropped", element, f"<{name}> in a <marker> has no equivalent in the target version")
+                dropped.append(element)
+
+    for marker in [e for e in root.iter() if is_element(e) and local_name(e) == "marker"]:
+        if not any(local_name(a) == "marker" for a in marker.iterancestors()):
+            reduce(marker)
+    for element in dropped:  # recorded first, in document order: changing the tree shifts the positions
+        remove_keeping_tail(element)
+    for element in reversed(unwrapped):  # inner ones first
+        _unwrap(element)
+
+
+def _unwrap(element: etree._Element) -> None:
+    """Replace ``element`` by its content."""
+    parent = element.getparent()
+    assert parent is not None
+    previous = element.getprevious()
+    text = element.text or ""
+    if previous is not None:
+        previous.tail = (previous.tail or "") + text or None
+    else:
+        parent.text = (parent.text or "") + text or None
+    position = parent.index(element)
+    children = list(element)
+    if children:
+        children[-1].tail = (children[-1].tail or "") + (element.tail or "") or None
+    elif previous is not None:
+        previous.tail = (previous.tail or "") + (element.tail or "") or None
+    else:
+        parent.text = (parent.text or "") + (element.tail or "") or None
+    parent.remove(element)
+    for offset, child in enumerate(children):
+        parent.insert(position + offset, child)
 
 
 def _formatting(element: etree._Element | None) -> bool:
