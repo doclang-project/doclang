@@ -1,5 +1,6 @@
 """Tests for migrating documents to another spec version."""
 
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from doclang import MigrationError, SchematronBackendNotFound, UnsupportedVersionError, migrate
+from doclang._schemas import _available_versions, _version_key
 from doclang.migration._api import _head_version
 from doclang.migration._plan import NoMigrationPath, Step, _plan
 
@@ -16,6 +18,8 @@ VALID_DIR = Path(__file__).parent / "data" / "valid"
 CASES_DIR = Path(__file__).parent / "data" / "migration"
 
 NS = "https://www.doclang.ai/ns/v0"
+NEWEST = max(_available_versions(), key=_version_key)  # the newest released version
+NEXT = f"{_version_key(NEWEST)[0]}.{_version_key(NEWEST)[1] + 1}"  # the head's version, when it has changes
 TRACK = '<track><bdiv/><minutes value="0"/><seconds value="2"/>Hello.</track>'
 
 
@@ -185,16 +189,21 @@ def test_up_steps_apply_on_the_way_to_the_head(tmp_path, monkeypatch):
         root[0].text = "marked"
 
     _with_unreleased_head(monkeypatch, mark)
-    result = migrate(_doc(tmp_path, "<text>x</text>"), to="0.9")
-    assert (result.source_version, result.target_version) == ("0.8", "0.9")
-    assert "<text>marked</text>" in result.xml and 'version="0.9"' in result.xml
+    result = migrate(_doc(tmp_path, "<text>x</text>", version=NEWEST), to=NEXT)
+    assert (result.source_version, result.target_version) == (NEWEST, NEXT)
+    assert "<text>marked</text>" in result.xml and f'version="{NEXT}"' in result.xml
 
 
-HEAD = _head_version("0.8")
+HEAD = "0.9"  # the version with the whitespace rules
 
 
-def test_head_has_a_version_of_its_own():
-    assert HEAD == "0.9"
+def test_head_has_a_version_of_its_own_only_with_changes_of_its_own(monkeypatch):
+    from doclang.migration import _api
+
+    monkeypatch.setattr(_api, "_head_description", lambda: "unreleased development version")
+    assert _head_version(NEWEST) == NEXT
+    monkeypatch.setattr(_api, "_head_description", lambda: NEWEST)  # as right after a release
+    assert _head_version(NEWEST) is None
 
 
 def test_texts_are_stripped_and_unneeded_content_unwrapped(tmp_path):
@@ -286,9 +295,9 @@ def test_head_as_source_of_an_undeclared_document(tmp_path, recwarn):
 def test_head_is_no_target_without_changes_of_its_own(tmp_path, monkeypatch):
     from doclang.migration import _api
 
-    monkeypatch.setattr(_api, "_head_description", lambda: "0.8")  # as right after a release
-    with pytest.raises(UnsupportedVersionError, match=r"No schema for DocLang spec version '0\.9'"):
-        migrate(_doc(tmp_path, "<text>x</text>"), to="0.9")
+    monkeypatch.setattr(_api, "_head_description", lambda: NEWEST)  # as right after a release
+    with pytest.raises(UnsupportedVersionError, match=rf"No schema for DocLang spec version '{re.escape(NEXT)}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=NEWEST), to=NEXT)
 
 
 # --- validation of input and output ------------------------------------------------------------------
@@ -502,7 +511,7 @@ def test_media_of_remaining_tracks_is_renumbered(tmp_path, monkeypatch):
     _with_unreleased_head(monkeypatch, drop_first_track)
     members = {"audio/1.mp3": b"a1", "audio/2.ogg": b"a2", "video/3.mp4": b"v3", "assets/frames/2.jpg": b"f"}
     out = tmp_path / "out.dclx"
-    result = migrate(_archive(tmp_path, f"{TRACK}{FRAME_TRACK}{TRACK}", members), to=HEAD, output=out)
+    result = migrate(_archive(tmp_path, f"{TRACK}{FRAME_TRACK}{TRACK}", members, version=NEWEST), to=NEXT, output=out)
 
     assert [(c["kind"], c["location"]) for c in result.changes] == [
         ("dropped", "/doclang/track[1]"),

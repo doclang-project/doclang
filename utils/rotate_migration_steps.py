@@ -118,7 +118,7 @@ def _retarget_tests(tests_dir: Path, renames: dict[str, str]) -> None:
     """In the tests importing a development step, refer to the released step instead."""
     if not tests_dir.is_dir():
         return
-    imports = re.compile(r"_steps import (" + "|".join(renames) + r")\b")
+    imports = re.compile(r"^\s*from doclang\.migration\._steps import (" + "|".join(renames) + r")\b", re.MULTILINE)
     names = re.compile(r"\b(" + "|".join(renames) + r")\b")
     for path in sorted(tests_dir.rglob("*.py")):
         content = path.read_text(encoding="utf-8")
