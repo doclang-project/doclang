@@ -642,6 +642,42 @@ def test_layouts_migrate_alike(folder):
     assert all(d == documents[0] for d in documents)
 
 
+# --- semantic elements in <marker> down to 0.8 -----------------------------------------------------
+
+
+def test_text_with_text_level_content_in_a_marker_is_unwrapped(tmp_path):
+    body = "<list><ldiv><marker><text>a<bold>)</bold></text></marker></ldiv>x</list>"
+    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    assert "<marker>a<bold>)</bold></marker>" in result.xml
+    assert [(c["kind"], c["location"]) for c in result.changes] == [("mapped", "/doclang/list/ldiv/marker/text")]
+
+
+def test_other_semantic_elements_in_a_marker_are_dropped(tmp_path):
+    head = "".join(f'<location value="{v}"/>' for v in (1, 2, 3, 4))
+    body = (
+        f"<list><ldiv><marker>{head}<picture/>1<formula>x</formula><text>b <formula>y</formula></text>"
+        "</marker></ldiv>x</list>"
+    )
+    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    assert f"<marker>{head}1</marker>" in result.xml  # the marker's head stays
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("dropped", "/doclang/list/ldiv/marker/picture"),
+        ("dropped", "/doclang/list/ldiv/marker/formula"),
+        ("dropped", "/doclang/list/ldiv/marker/text"),  # not text-level only
+    ]
+
+
+def test_nested_markers_are_unwrapped_from_the_inside(tmp_path):
+    body = "<list><ldiv><marker><marker><picture/><hint><italic>i</italic></hint></marker></marker></ldiv>x</list>"
+    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    assert "<marker><italic>i</italic></marker>" in result.xml
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("mapped", "/doclang/list/ldiv/marker/marker"),
+        ("dropped", "/doclang/list/ldiv/marker/marker/picture"),
+        ("mapped", "/doclang/list/ldiv/marker/marker/hint"),
+    ]
+
+
 # --- unwrapping <content> in the 0.8 to 0.9 step ---------------------------------------------------
 
 
