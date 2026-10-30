@@ -624,11 +624,11 @@ def test_content_in_a_field_heading_goes_into_a_formatting_element(text, downgra
     """<field_heading> cannot hold <content>; it moves into a neighbouring formatting element, or is unwrapped."""
     from lxml import etree
 
-    from doclang.migration._steps import from_next
+    from doclang.migration._steps import v0_9_to_0_8
     from doclang.migration._tree import Changes
 
     root, changes = etree.fromstring(f'<doclang xmlns="{NS}">{text}</doclang>'.encode()), Changes()
-    from_next.migrate(root, changes)
+    v0_9_to_0_8.migrate(root, changes)
     assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
     assert [c["kind"] for c in changes.items] == kinds
 
@@ -697,7 +697,7 @@ def _read(root, rules: str = "0.9") -> list[str]:
     """
     import re
 
-    from doclang.migration._steps import to_next
+    from doclang.migration._steps import v0_8_to_0_9
 
     pieces: list[str] = []
     items: list[tuple[str, str]] = []  # (kind, text) with kind "ws", "word", "literal" or "tag"
@@ -730,7 +730,7 @@ def _read(root, rules: str = "0.9") -> list[str]:
     def walk(element):
         add(element.text)
         for child in element:
-            if to_next._inline(child):
+            if v0_8_to_0_9._inline(child):
                 name = etree_localname(child)
                 if name == "content":
                     items.append(("literal", child.text or ""))
@@ -738,12 +738,12 @@ def _read(root, rules: str = "0.9") -> list[str]:
                     items.append(("tag", f"<{name}>"))
                     walk(child)
                     items.append(("tag", f"</{name}>"))
-            elif isinstance(child.tag, str) and etree_localname(child) in to_next._HEAD:
+            elif isinstance(child.tag, str) and etree_localname(child) in v0_8_to_0_9._HEAD:
                 apart(child)  # disregarded here, e.g. a caption is read on its own
-            elif isinstance(child.tag, str) and etree_localname(child) in to_next._SEMANTIC:
+            elif isinstance(child.tag, str) and etree_localname(child) in v0_8_to_0_9._SEMANTIC:
                 flush()  # e.g. one of two <text> paragraphs in a list item: a block of its own
                 visit(child)
-            elif isinstance(child.tag, str) and etree_localname(child) not in to_next._DELIMITERS:
+            elif isinstance(child.tag, str) and etree_localname(child) not in v0_8_to_0_9._DELIMITERS:
                 items.append(("literal", f"[{etree_localname(child)}]"))  # e.g. a checkbox: part of the text
                 apart(child)
             elif not isinstance(child.tag, str):
@@ -762,7 +762,7 @@ def _read(root, rules: str = "0.9") -> list[str]:
 
     def visit(element):
         name = etree_localname(element)
-        if name in to_next._RAW_TEXT or name in to_next._VIRTUAL_TEXT:
+        if name in v0_8_to_0_9._RAW_TEXT or name in v0_8_to_0_9._VIRTUAL_TEXT:
             walk(element)
             flush()
         else:
@@ -783,13 +783,13 @@ def etree_localname(element) -> str:
 def _strip_only_and_full(xml: str):
     from lxml import etree
 
-    from doclang.migration._steps import to_next
+    from doclang.migration._steps import v0_8_to_0_9
     from doclang.migration._tree import Changes
 
     stripped = etree.fromstring(xml.encode("utf-8"))
-    to_next._strip_texts(stripped)
+    v0_8_to_0_9._strip_texts(stripped)
     full = etree.fromstring(xml.encode("utf-8"))
-    to_next.migrate(full, Changes())
+    v0_8_to_0_9.migrate(full, Changes())
     return stripped, full
 
 
@@ -941,12 +941,12 @@ def test_reader_reads_the_spec_example():
 def _downgraded(xml: str):
     from lxml import etree
 
-    from doclang.migration._steps import from_next
+    from doclang.migration._steps import v0_9_to_0_8
     from doclang.migration._tree import Changes
 
     root = etree.fromstring(xml.encode("utf-8"))
     changes = Changes()
-    from_next.migrate(root, changes)
+    v0_9_to_0_8.migrate(root, changes)
     return root, changes
 
 
@@ -1044,11 +1044,11 @@ def test_field_heading_spaces_go_into_a_formatting_element(text, downgraded, kin
 def test_upgrading_again_unwraps_the_added_spaces(source):
     from lxml import etree
 
-    from doclang.migration._steps import to_next
+    from doclang.migration._steps import v0_8_to_0_9
     from doclang.migration._tree import Changes
 
     root, _ = _downgraded(source.read_text(encoding="utf-8"))
-    to_next.migrate(root, Changes())
+    v0_8_to_0_9.migrate(root, Changes())
     original = etree.fromstring(source.read_bytes())
     assert len(root.findall(f".//{{{NS}}}content")) == len(original.findall(f".//{{{NS}}}content"))
     assert _read(root) == _read(original)
