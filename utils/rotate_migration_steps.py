@@ -7,6 +7,8 @@ for it, and creates fresh, empty ones:
 - doclang/migration/_steps/from_next.py -> v<NEW>_to_<PREVIOUS>.py (e.g. v0_8_to_0_7.py), down
 - doclang/migration/_steps/to_next.py -> v<PREVIOUS>_to_<NEW>.py (e.g. v0_8_to_0_9.py), up
 <PREVIOUS> is the newest minor with schemas in doclang/schemas/.
+Tests that import a development step (``from doclang.migration._steps import to_next``) are retargeted to the
+released one, so they keep testing the rules they were written for.
 Nothing happens for a patch release of an existing minor, or if there is no previous minor.
 
 Run this before utils/snapshot_schemas.py, which creates doclang/schemas/<NEW>/.
@@ -87,9 +89,11 @@ def rotate_migration_steps(version: str, project_root: Path | None = None) -> Pa
     previous = max(previous_versions, key=_key)
 
     released = _rotate(from_next_path, new, previous, _FRESH_FROM_NEXT)
+    renames = {"from_next": released.stem}
     to_next_path = from_next_path.with_name("to_next.py")
     if to_next_path.exists():
-        _rotate(to_next_path, previous, new, _FRESH_TO_NEXT)
+        renames["to_next"] = _rotate(to_next_path, previous, new, _FRESH_TO_NEXT).stem
+    _retarget_tests(project_root / "tests", renames)
     return released
 
 
@@ -108,6 +112,19 @@ def _rotate(path: Path, source: str, target: str, fresh: str) -> Path:
     path.write_text(fresh, encoding="utf-8")
     print(f"Migration steps rotated: {path.name} -> {released.name}")
     return released
+
+
+def _retarget_tests(tests_dir: Path, renames: dict[str, str]) -> None:
+    """In the tests importing a development step, refer to the released step instead."""
+    if not tests_dir.is_dir():
+        return
+    imports = re.compile(r"_steps import (" + "|".join(renames) + r")\b")
+    names = re.compile(r"\b(" + "|".join(renames) + r")\b")
+    for path in sorted(tests_dir.rglob("*.py")):
+        content = path.read_text(encoding="utf-8")
+        if imports.search(content):
+            path.write_text(names.sub(lambda m: renames[m.group(1)], content), encoding="utf-8")
+            print(f"Tests retargeted to the released migration steps: {path.name}")
 
 
 def main():
