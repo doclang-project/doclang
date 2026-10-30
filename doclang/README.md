@@ -29,6 +29,7 @@ On a minimal install, pass `xsd_only=True` for XSD-only validation, or supply a 
 
 ```bash
 doclang validate my_document.dclg
+doclang validate my_archive.dclx   # validates the archive's document.xml
 ```
 
 The schema is chosen as follows:
@@ -113,12 +114,21 @@ The source version is the document's `version` attribute. A document without one
 with a warning; `--from X.Y` reads it as version X.Y instead (a document that declares another version is an
 error).
 
+A `.dclx` archive is migrated to another archive, so `-o` is required: its `document.xml` is migrated as above, and
+all other files are copied as they are. Whole-track media (`audio/{N}.*`, `video/{N}.*`) pairs with the N-th
+`<track>`, so when tracks are dropped, the media of the remaining ones is renumbered to stay aligned with them, and
+that of the dropped ones is removed (it would pair with another track). Other files that only dropped elements used
+(files under `assets/` that only they referenced via `<src uri>`, the media of dropped tracks if no tracks remain,
+e.g. in 0.7) are kept and reported as orphaned, so you can remove them if you like. Renamed and removed files are
+reported like changed elements; orphaned ones do not fail `--strict`.
+
 #### More migration scenarios
 
 ```bash
 doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
 doclang migrate document.dclg --to 0.7 --strict        # fail instead of changing anything
 doclang migrate undeclared.dclg --from 0.8 --to 0.9    # a document without a version attribute, written for 0.8
+doclang migrate document.dclx --to 0.7 -o document_0.7.dclx   # an archive
 doclang migrate document.dclg --to 0.7 --format json   # versions, changes and the document as JSON
 doclang migrate document.dclg --to 0.7 --input-validation xsd --output-validation xsd   # without Schematron
 doclang migrate document.dclg --to 0.7 --input-validation none                          # skip validating the input
@@ -220,7 +230,15 @@ else:
 
 `migrate(..., strict=True)` raises `MigrationError` (carrying `changes`) if anything would be changed. The source
 version is the document's `version` attribute; without one the document is treated as the latest version, with a
-warning.
+warning, unless `source="X.Y"` gives its version.
+
+`migrate()` also takes a `.dclx` archive (see [Migration](#migration) above); pass `output=` to write the migrated
+archive (or, for an XML file, the migrated document). The archive files renamed, removed or orphaned are reported
+after the element changes, with the kind `"renamed"`, `"removed"` or `"orphaned"`, the file name as location and no line:
+
+```python
+result = migrate("document.dclx", to="0.7", output="document_0.7.dclx")
+```
 
 The input is validated before and the result after the migration; `input_validation` and `output_validation`
 (`"all"` by default, or `"xsd"`, `"schematron"`, `"none"`) select what runs. As with `validate()`, a missing

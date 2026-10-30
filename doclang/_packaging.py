@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import copy
+import os
 import shutil
 import tempfile
+import time
 import zipfile
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
 
@@ -252,3 +256,81 @@ def _pack(
         _create_zip(stage, output_path)
 
     return output_path.resolve()
+
+
+def _is_archive(path: Union[str, Path]) -> bool:
+    """Whether ``path`` is a DocLang archive (a ZIP file) rather than bare markup."""
+    return Path(path).is_file() and zipfile.is_zipfile(path)
+
+
+def _read_archive(path: Union[str, Path]) -> tuple[list[zipfile.ZipInfo], bytes]:
+    """The members of the archive ``path`` and the content of its ``document.xml``.
+
+    Refuses archives with unsafe or duplicate member names, encrypted members or no ``document.xml``.
+    """
+    try:
+        with zipfile.ZipFile(path) as archive:
+            members = archive.infolist()
+            names = [member.filename for member in members]
+            for member in members:
+                _validate_archive_relative_path(member.filename, label="archive member")
+                if member.flag_bits & 0x1:
+                    raise PackagingError(f"Encrypted archive member: {member.filename!r}")
+            if len(set(names)) != len(names):
+                raise PackagingError(f"Duplicate archive members in {path}")
+            if "document.xml" not in names:
+                raise PackagingError(f"No document.xml in archive {path}")
+            return members, archive.read("document.xml")
+    except zipfile.BadZipFile as exc:
+        raise PackagingError(f"Invalid archive {path}: {exc}") from exc
+
+
+@contextmanager
+def _document_file(path: Union[str, Path]) -> Iterator[Path]:
+    """The markup file of ``path``: ``path`` itself, or a temporary copy of an archive's ``document.xml``."""
+    if not _is_archive(path):
+        yield Path(path)
+        return
+    _, document = _read_archive(path)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        extracted = Path(temp_dir) / "document.xml"
+        extracted.write_bytes(document)
+        yield extracted
+
+
+def _write_archive(
+    source: Union[str, Path],
+    output: Union[str, Path],
+    document: bytes,
+    renames: Mapping[str, str | None],
+) -> None:
+    """Write a copy of the archive ``source`` to ``output`` with ``document`` as its ``document.xml``.
+
+    ``renames`` maps member names to new names, or to None to leave the member out. Every other member is
+    copied as is, with its zip metadata, in the original order. ``output`` may be ``source``.
+    """
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=output_path.parent, suffix=".dclx", delete=False) as temp:
+        temp_path = Path(temp.name)
+    try:
+        with zipfile.ZipFile(source) as archive_in, zipfile.ZipFile(temp_path, "w") as archive_out:
+            archive_out.comment = archive_in.comment
+            for member in archive_in.infolist():
+                name = renames.get(member.filename, member.filename)
+                if name is None:
+                    continue
+                info = copy.copy(member)
+                info.filename = name
+                if member.filename == "document.xml":
+                    info.date_time = time.localtime()[:6]
+                    archive_out.writestr(info, document)
+                elif member.is_dir():
+                    archive_out.writestr(info, b"")
+                else:  # streamed: media can be large
+                    with archive_in.open(member) as data, archive_out.open(info, "w") as copied:
+                        shutil.copyfileobj(data, copied)
+        os.replace(temp_path, output_path)
+    except BaseException:
+        temp_path.unlink(missing_ok=True)
+        raise
