@@ -706,17 +706,35 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
 def _new_restarted_list_num_id(document: DocxDocument, style_name: str) -> Optional[int]:
     """Create a new Word list instance (w:num) based on the numbering of `style_name`.
 
-    The new instance restarts at 1, so ordered lists after a heading don't continue
-    the numbering of earlier lists. Returns None if the style has no numbering.
+    The new instance restarts at 1, so a new ordered list doesn't continue the
+    numbering of earlier lists. Returns None if the style has no numbering.
+
+    python-docx has no API for creating list instances, so this edits the numbering
+    part's XML (via the public `numbering_part.element`).
     """
     try:
-        style_ppr = document.styles[style_name].element.pPr
-        base_num_id = style_ppr.numPr.numId.val
-        numbering = document.part.numbering_part.numbering_definitions._numbering
-        base_num = next(n for n in numbering.num_lst if n.numId == base_num_id)
-        num = numbering.add_num(base_num.abstractNumId.val)
-        num.add_lvlOverride(ilvl=0).add_startOverride(1)
-        return num.numId
+        style_el = document.styles[style_name].element
+        base_num_id = style_el.find(f"{qn('w:pPr')}/{qn('w:numPr')}/{qn('w:numId')}").get(qn("w:val"))
+        numbering = document.part.numbering_part.element
+        nums = numbering.findall(qn("w:num"))
+        base_num = next(n for n in nums if n.get(qn("w:numId")) == base_num_id)
+        abstract_id = base_num.find(qn("w:abstractNumId")).get(qn("w:val"))
+        new_id = max(int(n.get(qn("w:numId"))) for n in nums) + 1
+
+        num = OxmlElement("w:num")
+        num.set(qn("w:numId"), str(new_id))
+        abstract = OxmlElement("w:abstractNumId")
+        abstract.set(qn("w:val"), abstract_id)
+        num.append(abstract)
+        override = OxmlElement("w:lvlOverride")
+        override.set(qn("w:ilvl"), "0")
+        start = OxmlElement("w:startOverride")
+        start.set(qn("w:val"), "1")
+        override.append(start)
+        num.append(override)
+        # w:num elements must stay grouped before any trailing w:numIdMacAtCleanup
+        nums[-1].addnext(num)
+        return new_id
     except Exception:
         return None
 
@@ -725,8 +743,8 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
     lines = md_text.splitlines()
     i = 0
     para_buf: list[str] = []
-    # Word list instance for the current ordered list; reset at every heading so
-    # numbering restarts at 1 in each new section.
+    # Word list instance for the current ordered list; reset at every heading and
+    # whenever other content interrupts the list, so numbering restarts at 1.
     ordered_num_id: Optional[int] = None
     # Track the last seen Markdown heading level to place sub-headers
     current_heading_level: int = 1
@@ -739,6 +757,19 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
 
     while i < len(lines):
         line = lines[i]
+
+        # An ordered list continues across blank lines, ordered items, nested bullets
+        # and indented content; anything else (heading, paragraph, top-level bullet,
+        # table, ...) interrupts it, so the next ordered list restarts at 1.
+        if ordered_num_id is not None and line.strip():
+            mb_cont = _LIST_BULLET_RE.match(line)
+            continues = (
+                _LIST_ORDERED_RE.match(line) is not None
+                or (mb_cont is not None and list_level_for_indent(mb_cont.group("indent")) > 0)
+                or (mb_cont is None and line[0] in " \t")
+            )
+            if not continues:
+                ordered_num_id = None
 
         # Handle <details> wrapper with <summary> header: inject a sub-heading and
         # skip wrapper/comment lines; keep inner content for normal parsing.
@@ -753,7 +784,6 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
                     sub_level = min(current_heading_level + 1, 6)
                     add_heading_with_bookmark(document, summary_text, sub_level, next_bookmark_id)
                     next_bookmark_id += 1
-                    ordered_num_id = None
                     # Do not update current_heading_level so siblings remain at same level
                     i += 1
             # Skip optional blank/comment lines after <summary>
@@ -890,7 +920,6 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
                 page_break_before=heading_page_break,
             )
             next_bookmark_id += 1
-            ordered_num_id = None
             current_heading_level = level
             i += 1
             continue
