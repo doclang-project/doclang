@@ -97,16 +97,17 @@ doclang pack markup.dclg --validate
 
 ### Migration
 
-Migrate a document to another spec version. Currently only older versions are supported (documents are forward
-compatible, so a newer target needs no migration):
+Migrate a document to a specific spec version:
 
 ```bash
 doclang migrate document.dclg --to 0.7
 ```
 
-The migrated document goes to stdout (or `-o FILE`); what was changed goes to stderr. The migration is best effort:
-content that has an equivalent in the target version is mapped (e.g. additional captions become `<text>`), the rest
-is dropped (e.g. `<track>`), and every change is reported with its location.
+The migrated document goes to stdout (or `-o FILE`); what was changed goes to stderr. Migrating to an older version
+is best effort: content that has an equivalent in the target version is mapped (e.g. additional captions become
+`<text>`), the rest is dropped (e.g. `<track>`), and every change is reported with its location. Migrating to a
+newer version rewrites the document where the newer version reads the same markup differently, so that it keeps
+its meaning; otherwise only the `version` attribute changes, as documents are forward compatible.
 
 #### More migration scenarios
 

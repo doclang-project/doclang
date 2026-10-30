@@ -121,13 +121,15 @@ def test_cli_migrate_prints_document_and_reports_changes(tmp_path):
     assert result.exit_code == 0, result.output
     assert 'version="0.7"' in result.output and "<bdiv" not in result.output
     assert "Dropped: /doclang/track" in result.output
+    assert result.stdout.endswith("</doclang>\n")  # one newline, not two
 
 
 def test_cli_migrate_writes_output_file(tmp_path):
     out = tmp_path / "out.dclg"
     result = runner.invoke(app, ["migrate", str(_migratable(tmp_path)), "--to", "0.7", "-o", str(out)])
     assert result.exit_code == 0, result.output
-    assert 'version="0.7"' in out.read_text(encoding="utf-8")
+    written = out.read_text(encoding="utf-8")
+    assert 'version="0.7"' in written and written.endswith("</doclang>\n")
     assert "<doclang" not in result.output  # the document goes to the file, not to stdout
 
 

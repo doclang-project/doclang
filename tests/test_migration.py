@@ -9,6 +9,9 @@ from doclang import MigrationError, SchematronBackendNotFound, UnsupportedVersio
 from doclang.migration._plan import NoMigrationPath, Step, _plan
 
 VALID_DIR = Path(__file__).parent / "data" / "valid"
+# <source>_to_<target>/ holds the cases, labelled by comments, in in.dclg or in several layouts (pretty.in.dclg,
+# minified.in.dclg, hybrid.in.dclg), each with its expected result (out.dclg, pretty.out.dclg, ...)
+CASES_DIR = Path(__file__).parent / "data" / "migration"
 
 NS = "https://www.doclang.ai/ns/v0"
 TRACK = '<track><bdiv/><minutes value="0"/><seconds value="2"/>Hello.</track>'
@@ -34,6 +37,25 @@ def test_track_is_dropped_with_its_surroundings_kept(tmp_path):
     assert result.changes[0]["line"] == 4
     assert (result.source_version, result.target_version) == ("0.8", "0.7")
     assert 'version="0.7"' in result.xml
+    assert result.xml.endswith("</doclang>\n")
+    assert result.xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ')  # from <?xml version='1.0' ...
+
+
+@pytest.mark.parametrize(
+    ("start", "declared"),
+    [(b"", False), (b"<?xml version='1.0'?>\n", True), (b'\xef\xbb\xbf<?xml version="1.0"?>\n', True)],
+)
+def test_xml_declaration_is_written_as_in_the_input(tmp_path, start, declared):
+    doc = tmp_path / "doc.dclg"
+    doc.write_bytes(start + f'<doclang xmlns="{NS}" version="0.8">\n  <text>x</text>\n</doclang>\n'.encode())
+    xml = migrate(doc, to="0.7").xml
+    assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ' if declared else "<doclang ")
+    assert xml.endswith("</doclang>\n")
+
+
+def test_cdata_sections_are_written_as_in_the_input(tmp_path):
+    result = migrate(_doc(tmp_path, f"<text>x <formula><![CDATA[p<0.001]]></formula></text>{TRACK}"), to="0.7")
+    assert "<formula><![CDATA[p<0.001]]></formula>" in result.xml
 
 
 def test_tracks_inside_group_and_table_cell_are_dropped(tmp_path):
@@ -85,13 +107,22 @@ def test_strict_passes_when_nothing_is_lost(tmp_path):
 # --- versions ------------------------------------------------------------------------------------
 
 
-def test_same_version_is_a_noop(tmp_path):
-    result = migrate(_doc(tmp_path, "<text>x</text>", version="0.7"), to="0.7")
-    assert (result.source_version, result.changes) == ("0.7", [])
+@pytest.mark.parametrize("version", ["0.7", "0.8"])
+def test_same_version_is_a_noop(tmp_path, version):
+    body = "\n  <text>\n    x <bold>y</bold><content> z</content>\n  </text>\n"
+    result = migrate(_doc(tmp_path, body, version=version), to=version)
+    assert (result.source_version, result.changes) == (version, [])
+    assert f'version="{version}">{body}</doclang>' in result.xml  # untouched, whitespace and <content> included
 
 
-def test_newer_target_is_an_error(tmp_path):
-    with pytest.raises(MigrationError, match="newer than the document's version"):
+def test_newer_target_without_up_steps_only_updates_the_version(tmp_path):
+    result = migrate(_doc(tmp_path, "\n  <text>x  <bold>y</bold> z</text>\n", version="0.7"), to="0.8")
+    assert (result.source_version, result.target_version, result.changes) == ("0.7", "0.8", [])
+    assert "<text>x  <bold>y</bold> z</text>" in result.xml and 'version="0.8"' in result.xml
+
+
+def test_newer_target_from_a_version_without_schema_is_an_error(tmp_path):
+    with pytest.raises(MigrationError, match=r"No schema for the document's version 0\.6"):
         migrate(_doc(tmp_path, "<text>x</text>", version="0.6"), to="0.7")
 
 
@@ -110,6 +141,35 @@ def test_undeclared_version_warns_is_treated_as_latest_and_gets_declared(tmp_pat
         result = migrate(_doc(tmp_path, TRACK, version=None), to="0.7")
     assert result.source_version is None
     assert 'version="0.7"' in result.xml and "track" not in result.xml
+
+
+# --- up to the development head ------------------------------------------------------------------
+
+
+def _with_unreleased_head(monkeypatch, apply):
+    """As if the development schemas had unreleased changes, with ``apply`` as their up step."""
+    from doclang.migration import _api
+
+    monkeypatch.setattr(_api, "_head_description", lambda: "unreleased development version")
+    monkeypatch.setattr(_api, "_load_steps", lambda newest, head: [Step(newest, head, apply)])
+
+
+def test_up_steps_apply_on_the_way_to_the_head(tmp_path, monkeypatch):
+    def mark(root, changes):
+        root[0].text = "marked"
+
+    _with_unreleased_head(monkeypatch, mark)
+    result = migrate(_doc(tmp_path, "<text>x</text>"), to="0.9")
+    assert (result.source_version, result.target_version) == ("0.8", "0.9")
+    assert "<text>marked</text>" in result.xml and 'version="0.9"' in result.xml
+
+
+def test_head_is_no_target_without_changes_of_its_own(tmp_path, monkeypatch):
+    from doclang.migration import _api
+
+    monkeypatch.setattr(_api, "_head_description", lambda: "0.8")  # as right after a release
+    with pytest.raises(UnsupportedVersionError, match=r"No schema for DocLang spec version '0\.9'"):
+        migrate(_doc(tmp_path, "<text>x</text>"), to="0.9")
 
 
 # --- validation of input and output ------------------------------------------------------------------
@@ -138,7 +198,7 @@ def test_a_step_producing_an_invalid_document_is_reported_as_a_bug(tmp_path, mon
     def broken_step(root, changes):
         etree.SubElement(root, f"{{{NS}}}unknown_future_element")
 
-    monkeypatch.setattr(_api, "_load_steps", lambda newest: {None: Step(None, "0.7", broken_step)})
+    monkeypatch.setattr(_api, "_load_steps", lambda newest, head: [Step("0.8", "0.7", broken_step)])
     with pytest.raises(MigrationError) as excinfo:
         migrate(_doc(tmp_path, "<text>x</text>"), to="0.7")
     assert "bug in the migration steps:" in str(excinfo.value)  # no hint: the input was fully validated
@@ -187,30 +247,35 @@ def _steps():
     def noop(root, changes):
         return None
 
-    return {
-        None: Step(None, "0.9", noop),
-        "0.9": Step("0.9", "0.8", noop),
-        "0.8": Step("0.8", "0.7", noop),
-    }
+    down = [Step("0.10", "0.9", noop), Step("0.9", "0.8", noop), Step("0.8", "0.7", noop)]
+    up = [Step("0.7", "0.8", noop), Step("0.9", "0.10", noop)]  # none from 0.8 to 0.9
+    return down + up
 
 
 @pytest.mark.parametrize(
     ("source", "target", "expected"),
     [
-        (None, "0.9", [None]),  # head to the newest release
-        (None, "0.7", [None, "0.9", "0.8"]),  # all the way down
-        ("0.9", "0.7", ["0.9", "0.8"]),  # starts at a released version
+        ("0.10", "0.9", [("0.10", "0.9")]),
+        ("0.10", "0.7", [("0.10", "0.9"), ("0.9", "0.8"), ("0.8", "0.7")]),  # all the way down
         ("0.8", "0.8", []),
-        ("1.0", "0.8", [None, "0.9"]),  # an unreleased version is treated as the head
+        ("0.7", "0.10", [("0.7", "0.8"), ("0.9", "0.10")]),  # 0.8 to 0.9 only updates the version
+        ("0.8", "0.10", [("0.9", "0.10")]),
+        ("0.8", "0.9", []),
     ],
 )
 def test_plan(source, target, expected):
-    assert [s.source for s in _plan(source, target, _steps())] == expected
+    assert [(s.source, s.target) for s in _plan(source, target, _steps())] == expected
 
 
-def test_plan_without_exact_path_fails():
+def test_plan_down_without_exact_path_fails():
     with pytest.raises(NoMigrationPath):
         _plan("0.8", "0.6", _steps())  # no step below 0.7
+
+
+def test_newer_version_without_schema_is_migrated_down_as_the_latest(tmp_path):
+    with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 1\.0"):
+        result = migrate(_doc(tmp_path, TRACK, version="1.0"), to="0.7")
+    assert result.source_version == "1.0" and "track" not in result.xml
 
 
 # --- every valid fixture ---------------------------------------------------------------------------
@@ -224,3 +289,23 @@ def test_every_valid_fixture_migrates_to_the_newest_released_version(fixture):
 
     newest = max(_available_versions(), key=_version_key)
     assert migrate(fixture, to=newest).target_version == newest
+
+
+# --- file-based cases ----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "source", sorted(CASES_DIR.glob("*/*in.dclg")), ids=lambda f: f"{f.parent.name}/{f.name.removesuffix('.dclg')}"
+)
+def test_migration_case(source):
+    """The cases migrate to the version their folder names and give the matching out.dclg exactly.
+
+    Without it, one is written from the actual result, to review (and commit) before the test passes.
+    """
+    target = source.parent.name.split("_to_")[1]
+    expected = source.with_name(source.name.removesuffix("in.dclg") + "out.dclg")
+    actual = migrate(source, to=target).xml
+    if not expected.exists():
+        expected.write_text(actual, encoding="utf-8")
+        pytest.fail(f"wrote {expected.name} from the actual result: review it, then rerun")
+    assert actual == expected.read_text(encoding="utf-8")

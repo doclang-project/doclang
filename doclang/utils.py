@@ -19,13 +19,14 @@ class _BinaryWriter(Protocol):
     def write(self, data: bytes, /) -> int: ...
 
 
-def _safe_xml_parser() -> etree.XMLParser:
+def _safe_xml_parser(*, keep_cdata: bool = False) -> etree.XMLParser:
     """Return an lxml parser that does not expand entities or load external DTDs."""
     return etree.XMLParser(
         resolve_entities=False,
         no_network=True,
         load_dtd=False,
         dtd_validation=False,
+        strip_cdata=not keep_cdata,
     )
 
 
@@ -48,14 +49,17 @@ def _reject_dtd_or_entities(xml_doc: etree._ElementTree) -> None:
         raise ValueError(_DTD_REJECTED_MESSAGE)
 
 
-def _parse_xml(source: Union[str, Path, BinaryIO]) -> etree._ElementTree:
+def _parse_xml(source: Union[str, Path, BinaryIO], *, keep_cdata: bool = False) -> etree._ElementTree:
     """Parse XML with :func:`_safe_xml_parser` (no DTD/entity policy checks)."""
-    return etree.parse(source, parser=_safe_xml_parser())
+    return etree.parse(source, parser=_safe_xml_parser(keep_cdata=keep_cdata))
 
 
-def _parse_doclang_document(source: Union[str, Path, BinaryIO]) -> etree._ElementTree:
-    """Parse a DocLang document safely and reject DTD / entity payloads."""
-    xml_doc = _parse_xml(source)
+def _parse_doclang_document(source: Union[str, Path, BinaryIO], *, keep_cdata: bool = False) -> etree._ElementTree:
+    """Parse a DocLang document safely and reject DTD / entity payloads.
+
+    ``keep_cdata`` keeps CDATA sections as such (where the text is not changed), e.g. for rewriting a document.
+    """
+    xml_doc = _parse_xml(source, keep_cdata=keep_cdata)
     _reject_dtd_or_entities(xml_doc)
     return xml_doc
 

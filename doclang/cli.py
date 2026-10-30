@@ -377,9 +377,7 @@ def pack(
 )
 def migrate(
     document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …)", exists=True),
-    to: str = typer.Option(
-        ..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to; currently only older versions"
-    ),
+    to: str = typer.Option(..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to"),
     output: Path | None = typer.Option(
         None, "-o", "--output", help="Write the migrated document here (default: stdout)"
     ),
@@ -402,7 +400,7 @@ def migrate(
     format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
 ):
     """
-    Migrate a DocLang document to another spec version (currently only older versions are supported).
+    Migrate a DocLang document to a specific spec version.
 
     The migrated document goes to stdout (or --output); changes and warnings go to stderr. With
     --format json, stdout holds a JSON object with the versions, the changes and the document.
@@ -460,7 +458,7 @@ def migrate(
         return
 
     if output is None:
-        typer.echo(result.xml)
+        typer.echo(result.xml, nl=False)  # ends with a newline already
     if not quiet:
         for message in warning_messages:
             typer.echo(f"Warning: {message}", err=True)

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <!-- track_and_captions -->
+  <picture>
+    <caption>FIG. 1</caption>
+    <src uri="a.png"/>
+  </picture>
+  <text>Source: A</text>
+  <text>after</text>
+</doclang>
