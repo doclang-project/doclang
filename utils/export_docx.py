@@ -703,10 +703,31 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
     return "".join(out)
 
 
+def _new_restarted_list_num_id(document: DocxDocument, style_name: str) -> Optional[int]:
+    """Create a new Word list instance (w:num) based on the numbering of `style_name`.
+
+    The new instance restarts at 1, so ordered lists after a heading don't continue
+    the numbering of earlier lists. Returns None if the style has no numbering.
+    """
+    try:
+        style_ppr = document.styles[style_name].element.pPr
+        base_num_id = style_ppr.numPr.numId.val
+        numbering = document.part.numbering_part.numbering_definitions._numbering
+        base_num = next(n for n in numbering.num_lst if n.numId == base_num_id)
+        num = numbering.add_num(base_num.abstractNumId.val)
+        num.add_lvlOverride(ilvl=0).add_startOverride(1)
+        return num.numId
+    except Exception:
+        return None
+
+
 def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path) -> None:
     lines = md_text.splitlines()
     i = 0
     para_buf: list[str] = []
+    # Word list instance for the current ordered list; reset at every heading so
+    # numbering restarts at 1 in each new section.
+    ordered_num_id: Optional[int] = None
     # Track the last seen Markdown heading level to place sub-headers
     current_heading_level: int = 1
     next_bookmark_id = 0
@@ -732,6 +753,7 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
                     sub_level = min(current_heading_level + 1, 6)
                     add_heading_with_bookmark(document, summary_text, sub_level, next_bookmark_id)
                     next_bookmark_id += 1
+                    ordered_num_id = None
                     # Do not update current_heading_level so siblings remain at same level
                     i += 1
             # Skip optional blank/comment lines after <summary>
@@ -868,6 +890,7 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
                 page_break_before=heading_page_break,
             )
             next_bookmark_id += 1
+            ordered_num_id = None
             current_heading_level = level
             i += 1
             continue
@@ -896,6 +919,12 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
                 text = mo.group("text")
                 level = list_level_for_indent(indent)
                 p = document.add_paragraph(style="List Number")
+                if ordered_num_id is None:
+                    ordered_num_id = _new_restarted_list_num_id(document, "List Number")
+                if ordered_num_id is not None:
+                    num_pr = p._p.get_or_add_pPr().get_or_add_numPr()
+                    num_pr.get_or_add_ilvl().val = 0
+                    num_pr.get_or_add_numId().val = ordered_num_id
                 _add_inline_formatted_runs(p, text)
             # Indent to reflect nesting level
             try:
