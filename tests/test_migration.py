@@ -1,5 +1,6 @@
 """Tests for migrating documents to another spec version."""
 
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from doclang import MigrationError, SchematronBackendNotFound, UnsupportedVersionError, migrate
+from doclang._schemas import _available_versions, _version_key
 from doclang.migration._api import _head_version
 from doclang.migration._plan import NoMigrationPath, Step, _plan
 
@@ -16,6 +18,8 @@ VALID_DIR = Path(__file__).parent / "data" / "valid"
 CASES_DIR = Path(__file__).parent / "data" / "migration"
 
 NS = "https://www.doclang.ai/ns/v0"
+NEWEST = max(_available_versions(), key=_version_key)  # the newest released version
+NEXT = f"{_version_key(NEWEST)[0]}.{_version_key(NEWEST)[1] + 1}"  # the head's version, when it has changes
 TRACK = '<track><bdiv/><minutes value="0"/><seconds value="2"/>Hello.</track>'
 
 
@@ -185,16 +189,18 @@ def test_up_steps_apply_on_the_way_to_the_head(tmp_path, monkeypatch):
         root[0].text = "marked"
 
     _with_unreleased_head(monkeypatch, mark)
-    result = migrate(_doc(tmp_path, "<text>x</text>"), to="0.9")
-    assert (result.source_version, result.target_version) == ("0.8", "0.9")
-    assert "<text>marked</text>" in result.xml and 'version="0.9"' in result.xml
+    result = migrate(_doc(tmp_path, "<text>x</text>", version=NEWEST), to=NEXT)
+    assert (result.source_version, result.target_version) == (NEWEST, NEXT)
+    assert "<text>marked</text>" in result.xml and f'version="{NEXT}"' in result.xml
 
 
-HEAD = _head_version("0.8")
+def test_head_has_a_version_of_its_own_only_with_changes_of_its_own(monkeypatch):
+    from doclang.migration import _api
 
-
-def test_head_has_a_version_of_its_own():
-    assert HEAD == "0.9"
+    monkeypatch.setattr(_api, "_head_description", lambda: "unreleased development version")
+    assert _head_version(NEWEST) == NEXT
+    monkeypatch.setattr(_api, "_head_description", lambda: NEWEST)  # as right after a release
+    assert _head_version(NEWEST) is None
 
 
 def test_texts_are_stripped_and_unneeded_content_unwrapped(tmp_path):
@@ -203,14 +209,14 @@ def test_texts_are_stripped_and_unneeded_content_unwrapped(tmp_path):
         "    <content> of June, see </content>\n    <italic>the agenda</italic>\n.\n  </text>"
         "\n  <text>x <bold>y</bold> z</text>\n"
     )
-    result = migrate(_doc(tmp_path, body), to=HEAD)
+    result = migrate(_doc(tmp_path, body), to="0.9")
 
-    assert (result.source_version, result.target_version, result.changes) == ("0.8", HEAD, [])
+    assert (result.source_version, result.target_version, result.changes) == ("0.8", "0.9", [])
     assert (  # the target ignores the whitespace at the start and end of the body, so it stays
         "<text>\n    Held on the 21<superscript>st</superscript> of June, see <italic>the agenda</italic>.\n  </text>"
     ) in result.xml
     assert "<text>x<bold>y</bold>z</text>" in result.xml  # whitespace next to tags was not guaranteed
-    assert f'<doclang xmlns="{NS}" version="{HEAD}">\n  <text>' in result.xml  # root layout is kept
+    assert f'<doclang xmlns="{NS}" version="0.9">\n  <text>' in result.xml  # root layout is kept
 
 
 def test_whitespace_the_target_ignores_is_kept(tmp_path):
@@ -221,7 +227,7 @@ def test_whitespace_the_target_ignores_is_kept(tmp_path):
         "\n  <list>\n    <ldiv/>\n    c\n    <ldiv/>\n    <italic>d</italic>\n  </list>"
         "\n  <field_region>\n    <field_item>\n      <key>e</key>\n    </field_item>\n  </field_region>\n"
     )
-    result = migrate(_doc(tmp_path, body), to=HEAD)
+    result = migrate(_doc(tmp_path, body), to="0.9")
     head = "\n    ".join(f'<location value="{v}"/>' for v in (1, 2, 3, 4))
     assert f"<text>\n    {head}\n    a<bold>b</bold>\n  </text>" in result.xml
     assert "<list>\n    <ldiv/>\n    c\n    <ldiv/>\n    <italic>d</italic>\n  </list>" in result.xml
@@ -232,63 +238,63 @@ def test_whitespace_between_paragraphs_of_a_list_item_is_kept(tmp_path):
     body = (
         "<list>\n  <ldiv/>\n  <text>First.</text>\n  <text>Second.</text>\n  <ldiv/>Fruit: <text>apples</text>\n</list>"
     )
-    result = migrate(_doc(tmp_path, body), to=HEAD)
+    result = migrate(_doc(tmp_path, body), to="0.9")
     assert "<ldiv/>\n  <text>First.</text>\n  <text>Second.</text>\n  <ldiv/>Fruit:<text>apples</text>" in result.xml
 
 
 def test_content_comments_and_interior_whitespace_are_kept(tmp_path):
     body = "<code><content>\n  def f():\n      pass\n</content></code><text>a  b\n c<!-- note  --> d</text>"
-    result = migrate(_doc(tmp_path, body), to=HEAD)
+    result = migrate(_doc(tmp_path, body), to="0.9")
     assert "<content>\n  def f():\n      pass\n</content>" in result.xml
     assert "<text>a  b\n c<!-- note  -->d</text>" in result.xml  # interior whitespace reads as one space anyway
 
 
 def test_cdata_sections_the_step_does_not_change_are_kept(tmp_path):
-    result = migrate(_doc(tmp_path, "<text>x<formula><![CDATA[p<0.001]]></formula></text>"), to=HEAD)
+    result = migrate(_doc(tmp_path, "<text>x<formula><![CDATA[p<0.001]]></formula></text>"), to="0.9")
     assert "<formula><![CDATA[p<0.001]]></formula>" in result.xml
 
 
 def test_whitespace_other_than_space_tab_and_line_breaks_is_kept(tmp_path):
-    result = migrate(_doc(tmp_path, "<text>\u00a0x\u2003</text>"), to=HEAD)
+    result = migrate(_doc(tmp_path, "<text>\u00a0x\u2003</text>"), to="0.9")
     assert "<text>\u00a0x\u2003</text>" in result.xml
 
 
 def test_older_documents_get_the_head_steps_too(tmp_path):
-    result = migrate(_doc(tmp_path, "<text>x <bold>y</bold></text>", version="0.7"), to=HEAD)
-    assert "<text>x<bold>y</bold></text>" in result.xml and f'version="{HEAD}"' in result.xml
+    result = migrate(_doc(tmp_path, "<text>x <bold>y</bold></text>", version="0.7"), to="0.9")
+    assert "<text>x<bold>y</bold></text>" in result.xml and 'version="0.9"' in result.xml
 
 
 def test_head_documents_migrate_down_without_a_fallback_warning(tmp_path, recwarn):
-    result = migrate(_doc(tmp_path, "<text>x</text>", version=HEAD), to="0.8")
-    assert result.source_version == HEAD
+    result = migrate(_doc(tmp_path, "<text>x</text>", version="0.9"), to="0.8")
+    assert result.source_version == "0.9"
     assert not [w for w in recwarn if "No schema" in str(w.message)]
 
 
 def test_undeclared_version_to_the_head_only_gets_declared(tmp_path):
     with pytest.warns(UserWarning, match="No DocLang version declared"):
-        result = migrate(_doc(tmp_path, "<text> x </text>", version=None), to=HEAD)
-    assert "<text> x </text>" in result.xml and f'version="{HEAD}"' in result.xml
+        result = migrate(_doc(tmp_path, "<text> x </text>", version=None), to="0.9")
+    assert "<text> x </text>" in result.xml and 'version="0.9"' in result.xml
 
 
 def test_undeclared_document_from_an_older_source_gets_the_head_steps(tmp_path, recwarn):
-    result = migrate(_doc(tmp_path, "<text>a<content> b</content></text>", version=None), source="0.8", to=HEAD)
-    assert (result.source_version, result.target_version) == ("0.8", HEAD)
-    assert "<text>a b</text>" in result.xml and f'version="{HEAD}"' in result.xml
+    result = migrate(_doc(tmp_path, "<text>a<content> b</content></text>", version=None), source="0.8", to="0.9")
+    assert (result.source_version, result.target_version) == ("0.8", "0.9")
+    assert "<text>a b</text>" in result.xml and 'version="0.9"' in result.xml
     assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
 
 
 def test_head_as_source_of_an_undeclared_document(tmp_path, recwarn):
-    result = migrate(_doc(tmp_path, "<text> x </text>", version=None), source=HEAD, to=HEAD)
-    assert result.source_version == HEAD and "<text> x </text>" in result.xml
+    result = migrate(_doc(tmp_path, "<text> x </text>", version=None), source="0.9", to="0.9")
+    assert result.source_version == "0.9" and "<text> x </text>" in result.xml
     assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
 
 
 def test_head_is_no_target_without_changes_of_its_own(tmp_path, monkeypatch):
     from doclang.migration import _api
 
-    monkeypatch.setattr(_api, "_head_description", lambda: "0.8")  # as right after a release
-    with pytest.raises(UnsupportedVersionError, match=r"No schema for DocLang spec version '0\.9'"):
-        migrate(_doc(tmp_path, "<text>x</text>"), to="0.9")
+    monkeypatch.setattr(_api, "_head_description", lambda: NEWEST)  # as right after a release
+    with pytest.raises(UnsupportedVersionError, match=rf"No schema for DocLang spec version '{re.escape(NEXT)}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=NEWEST), to=NEXT)
 
 
 # --- validation of input and output ------------------------------------------------------------------
@@ -502,7 +508,7 @@ def test_media_of_remaining_tracks_is_renumbered(tmp_path, monkeypatch):
     _with_unreleased_head(monkeypatch, drop_first_track)
     members = {"audio/1.mp3": b"a1", "audio/2.ogg": b"a2", "video/3.mp4": b"v3", "assets/frames/2.jpg": b"f"}
     out = tmp_path / "out.dclx"
-    result = migrate(_archive(tmp_path, f"{TRACK}{FRAME_TRACK}{TRACK}", members), to=HEAD, output=out)
+    result = migrate(_archive(tmp_path, f"{TRACK}{FRAME_TRACK}{TRACK}", members, version=NEWEST), to=NEXT, output=out)
 
     assert [(c["kind"], c["location"]) for c in result.changes] == [
         ("dropped", "/doclang/track[1]"),
@@ -568,7 +574,7 @@ def test_every_valid_fixture_migrates_from_the_newest_release_to_the_head(fixtur
         validate(doc, spec_version="0.8", allow_empty_namespace=True)
     except ValidationError:
         pytest.skip("uses what the newest release cannot express")
-    assert migrate(doc, to=HEAD).target_version == HEAD
+    assert migrate(doc, to="0.9").target_version == "0.9"
 
 
 # --- file-based cases ----------------------------------------------------------------------------
@@ -647,7 +653,7 @@ def test_layouts_migrate_alike(folder):
 
 def test_text_with_text_level_content_in_a_marker_is_unwrapped(tmp_path):
     body = "<list><ldiv><marker><text>a<bold>)</bold></text></marker></ldiv>x</list>"
-    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
     assert "<marker>a<bold>)</bold></marker>" in result.xml
     assert [(c["kind"], c["location"]) for c in result.changes] == [("mapped", "/doclang/list/ldiv/marker/text")]
 
@@ -658,7 +664,7 @@ def test_other_semantic_elements_in_a_marker_are_dropped(tmp_path):
         f"<list><ldiv><marker>{head}<picture/>1<formula>x</formula><text>b <formula>y</formula></text>"
         "</marker></ldiv>x</list>"
     )
-    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
     assert f"<marker>{head}1</marker>" in result.xml  # the marker's head stays
     assert [(c["kind"], c["location"]) for c in result.changes] == [
         ("dropped", "/doclang/list/ldiv/marker/picture"),
@@ -669,7 +675,7 @@ def test_other_semantic_elements_in_a_marker_are_dropped(tmp_path):
 
 def test_nested_markers_are_unwrapped_from_the_inside(tmp_path):
     body = "<list><ldiv><marker><marker><picture/><hint><italic>i</italic></hint></marker></marker></ldiv>x</list>"
-    result = migrate(_doc(tmp_path, body, version=HEAD), to="0.8")
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
     assert "<marker><italic>i</italic></marker>" in result.xml
     assert [(c["kind"], c["location"]) for c in result.changes] == [
         ("mapped", "/doclang/list/ldiv/marker/marker"),

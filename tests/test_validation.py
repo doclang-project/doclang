@@ -6,6 +6,7 @@ via the public ``validate()`` API.
 """
 
 import builtins
+import re
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -296,16 +297,20 @@ def test_08_document_validates_against_the_released_08_schema(tmp_path):
         assert validate(track_08, spec_version="0.8") is None
 
 
-def test_newer_declared_version_falls_back_to_the_development_head(tmp_path):
-    """The head differs from the released 0.8 schema, so the fallback message names it as unreleased."""
-    newer = _versioned_doc(tmp_path, "0.9", _TRACK_BODY)
+def test_newer_declared_version_falls_back_to_the_head(tmp_path):
+    """The fallback message names the head by its version if it is identical to that released schema, else as
+    unreleased."""
+    newest = max(_available_versions(), key=lambda v: tuple(map(int, v.split("."))))
+    major, minor = map(int, newest.split("."))
+    newer = f"{major}.{minor + 1}"
+    doc = _versioned_doc(tmp_path, newer, _TRACK_BODY)
+    head = rf"({re.escape(newest)}|unreleased development version)"
     with pytest.warns(
-        UserWarning,
-        match=r"No schema for declared DocLang version 0\.9; .*latest schema \(unreleased development version\)\.",
+        UserWarning, match=rf"No schema for declared DocLang version {re.escape(newer)}; .*latest schema \({head}\)\."
     ):
-        assert validate(newer) is None
-    with pytest.raises(ValidationError, match=r"No schema for declared DocLang version '0\.9'"):
-        validate(newer, strict_declared_version=True)
+        assert validate(doc) is None
+    with pytest.raises(ValidationError, match=rf"No schema for declared DocLang version '{re.escape(newer)}'"):
+        validate(doc, strict_declared_version=True)
 
 
 def test_version_attribute_only_constrained_to_format(tmp_path):

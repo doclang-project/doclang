@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from utils.rotate_migration_steps import rotate_migration_steps  # noqa: E402
+from utils.rotate_migration_steps import _FRESH_TO_NEXT, rotate_migration_steps  # noqa: E402
 from utils.snapshot_schemas import snapshot_schemas  # noqa: E402
 
 
@@ -128,3 +128,23 @@ def test_released_steps_migrate_as_the_development_steps_did(tmp_path, monkeypat
     for case in cases:
         target = case.parent.name.split("_to_")[1]
         assert migrated(case, target, after) == migrated(case, target, before), case.name
+
+
+def test_rotate_retargets_tests_importing_the_development_steps(tmp_path):
+    migrate_dir = _project_with_steps(tmp_path, ["0.7"])
+    (migrate_dir / "to_next.py").write_text(_FRESH_TO_NEXT, encoding="utf-8")
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "test_steps.py").write_text(
+        "from doclang.migration._steps import from_next, to_next\n\nto_next.migrate(root, from_next._X)\n",
+        encoding="utf-8",
+    )
+    other = 'path = steps_dir / "to_next.py"\n'  # no import of a step: left alone
+    (tests_dir / "test_other.py").write_text(other, encoding="utf-8")
+
+    rotate_migration_steps("0.8.0", tmp_path)
+
+    assert (tests_dir / "test_steps.py").read_text(encoding="utf-8") == (
+        "from doclang.migration._steps import v0_8_to_0_7, v0_7_to_0_8\n\nv0_7_to_0_8.migrate(root, v0_8_to_0_7._X)\n"
+    )
+    assert (tests_dir / "test_other.py").read_text(encoding="utf-8") == other
