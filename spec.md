@@ -1065,7 +1065,7 @@ Field region with mixed content:
               <value></value>
           </field_item>
           <!--...-->
-      <field_region>
+      </field_region>
       <field_region>
           <field_item>
               <key>Date and time of delivery:</key>
@@ -1117,12 +1117,12 @@ Field region with mixed content:
     </field_item>
     <field_item>
         <key>I am in the United States as a:</key>
-        <text><checkbox class="unselected"/>Visitor</text>
-        <text><checkbox class="unselected"/>Student</text>
-        <text><checkbox class="unselected"/>Permanent Resident</text>
-        <text><checkbox class="unselected"/>Other (Specify)</text>
+        <text><checkbox class="unselected"/> Visitor</text>
+        <text><checkbox class="unselected"/> Student</text>
+        <text><checkbox class="unselected"/> Permanent Resident</text>
+        <text><checkbox class="unselected"/> Other (Specify)</text>
         <value></value>
-    <field_item>
+    </field_item>
     <field_item>
         <key>Country of Citizenship</key>
         <value></value>
