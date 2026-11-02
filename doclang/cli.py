@@ -142,6 +142,7 @@ def validate(
         else:
             ctx.call_on_close(schematron.close)  # type: ignore[attr-defined]
 
+    seen_schemas: set[Path] = set()
     failed = 0
     for path in files:
         if not path.exists():
@@ -152,6 +153,7 @@ def validate(
             _validate_one(
                 ctx,
                 path,
+                seen_schemas=seen_schemas,
                 schematron=schematron,
                 xsd_only=xsd_only,
                 schematron_only=schematron_only,
@@ -173,10 +175,20 @@ def validate(
         raise typer.Exit(1)
 
 
+def _schema_line(schema: Optional[Path], seen_schemas: set[Path]) -> str:
+    """Verbose line for a schema: processed on first use, then reused from the in-memory cache."""
+    if schema is None:
+        return "Schema: n/a"
+    status = "reused, already processed" if schema in seen_schemas else "processing"
+    seen_schemas.add(schema)
+    return f"Schema: {schema} ({status})"
+
+
 def _validate_one(
     ctx: typer.Context,
     xml_file: Path,
     *,
+    seen_schemas: set[Path],
     schematron: Optional[SchematronValidator],
     xsd_only: bool,
     schematron_only: bool,
@@ -247,7 +259,7 @@ def _validate_one(
             if not schematron_only:
                 if verbose:
                     typer.echo("XSD Validation")
-                    typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
+                    typer.echo(_schema_line(bundled_xsd, seen_schemas))
                 if not exc.xsd_errors:
                     typer.echo("XSD validation passed")
                 else:
@@ -261,7 +273,7 @@ def _validate_one(
             if not xsd_only:
                 if verbose:
                     typer.echo("Schematron Validation")
-                    typer.echo(f"Schema: {bundled_sch or 'n/a'}")
+                    typer.echo(_schema_line(bundled_sch, seen_schemas))
                 if not exc.schematron_errors:
                     typer.echo("Schematron validation passed")
                 else:
@@ -282,13 +294,13 @@ def _validate_one(
         if not schematron_only:
             if verbose:
                 typer.echo("XSD Validation")
-                typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
+                typer.echo(_schema_line(bundled_xsd, seen_schemas))
             typer.echo("XSD validation passed")
 
         if not xsd_only:
             if verbose:
                 typer.echo("Schematron Validation")
-                typer.echo(f"Schema: {bundled_sch or 'n/a'}")
+                typer.echo(_schema_line(bundled_sch, seen_schemas))
             typer.echo("Schematron validation passed")
 
     if format == OutputFormat.json:
