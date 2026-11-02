@@ -300,13 +300,13 @@ In the example further below:
 
 DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
-The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#annex-a-normative-reference).
+The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Annex A - Reference](#annex-a-normative-reference). The status of Annex A is normative.
 
-The DocLang archive format is defined in [DocLang Archive Format](#annex-b-normative-doclang-archive-format).
+The DocLang archive format is defined in [Annex B - DocLang archive format](#annex-b-normative-doclang-archive-format). The status of Annex B is normative.
 
-Non-normative recommendation guidelines are covered in [Recommendations](#annex-c-informative-recommendations).
+Recommendation guidelines are covered in [Annex C - Recommendations](#annex-c-informative-recommendations). The status of Annex C is informative.
 
-Planned extensions are discussed in [Future extensions](#annex-d-informative-future-extensions).
+Planned extensions are discussed in [Annex D - Future extensions](#annex-d-informative-future-extensions). The status of Annex D is informative.
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
