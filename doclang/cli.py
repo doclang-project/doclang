@@ -58,11 +58,12 @@ def validate(
         None,
         "--filelist",
         help=(
-            "File containing a list of files to validate, one path per line "
-            "(blank lines and lines starting with '#' are ignored)"
+            "File containing a list of files to validate, one path per line, or '-' to read the list from "
+            "standard input (blank lines and lines starting with '#' are ignored)"
         ),
         exists=True,
         dir_okay=False,
+        allow_dash=True,
     ),
     xsd_only: bool = typer.Option(False, "--xsd-only", help="Validate XSD only"),
     schematron_only: bool = typer.Option(False, "--schematron-only", help="Validate Schematron only"),
@@ -112,13 +113,17 @@ def validate(
         doclang validate document.xml --spec-version 0.7 --strict-xsd-version-attr
         doclang validate document.xml --format json
         doclang validate --filelist files.txt
+        find . -name "*.dclg" | doclang validate --filelist -
     """
     files: list[Path] = []
     if xml_file is not None:
         files.append(xml_file)
     if filelist is not None:
         try:
-            lines = filelist.read_text(encoding="utf-8").splitlines()
+            if str(filelist) == "-":
+                lines = typer.get_text_stream("stdin").read().splitlines()
+            else:
+                lines = filelist.read_text(encoding="utf-8").splitlines()
         except (OSError, UnicodeDecodeError) as exc:
             typer.echo(f"Error: cannot read file list {filelist}: {exc}", err=True)
             raise typer.Exit(1)
