@@ -1,6 +1,6 @@
 # DocLang: Universal AI Document Format
 
-Version: 0.8
+Version: 0.9
 
 ## Introduction
 
@@ -43,7 +43,7 @@ The following documents are referred to in the text in such a way that some or a
 
 ## Terms and definitions
 
-For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2]; terms adopted from HTML are as defined in the HTML Standard (see Bibliography [1]).
+For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2].
 
 ### Abstract concepts
 
@@ -87,25 +87,10 @@ An implementation may act in one or more of the following roles.
 
    An XML tag: can be a start-tag, an end-tag, or an empty-element tag (a.k.a. self-closing tag).
 
-### Adopted from HTML
-
-1. **block-level element**
-
-   An element that is meant to be interpreted or displayed as a block, i.e. starting on a new line, occupying the full width of its container, and typically with increased margin to any other neighboring block-level elements; a typical HTML example is the `p` element (paragraph).
-
-2. **inline element**
-
-   An element that can be used *within* a block element to shape its in-line structure; a typical HTML example is the `span` element.
-
-   Note 1 to entry: Whether block-level or inline, an element may contain *explicit* new lines.
-
 ## Symbols and abbreviated terms
 
 **CDATA**
 Character data
-
-**HTML**
-HyperText Markup Language
 
 **LLM**
 Large language model
@@ -181,14 +166,6 @@ This representation can reduce the number of tokens and streamline how XML is ma
 
 For elements with a strictly limited set of possible property values, attributes are still used.
 
-### Content encoding and whitespace handling
-
-As DocLang is XML, standard XML [2] encoding rules apply — for example:
-- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
-- special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
-
-DocLang generally allows applications to decide how to handle XML whitespace (i.e implicit `xml:space="default"` behavior). To address cases where preservation is required, DocLang provides [`<content>`](#content) for whitespace preservation (i.e. `xml:space="preserve"` behavior).
-
 ### Head and body areas
 
 Documents and their core components (as implemented via [semantic elements](#semantic-elements)) can have various properties associated with them.
@@ -239,8 +216,7 @@ While the details are specified in the sections further below, this snippet show
     <location value="440"/><location value="270"/>
 
     <!-- element body: -->
-    <italic>Hello</italic>
-    <content> world!</content>
+    Hello world!
 
   </text>
   <text>
@@ -249,6 +225,58 @@ While the details are specified in the sections further below, this snippet show
   </text>
 </doclang>
 ```
+
+### Content encoding and whitespace handling
+
+As DocLang is XML, standard XML [2] encoding rules apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
+- special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
+
+In this section, *whitespace* means any of the following characters:
+- space (U+0020)
+- tab (U+0009)
+- carriage return (U+000D)
+- line feed (U+000A)
+
+The rules below do not apply to attribute values, which are subject to XML attribute-value normalization.
+
+[`<content>`](#content) preserves whitespace: its content shall be interpreted literally.
+
+A *text block* is defined as any of the following:
+- the body of an element in which raw text is allowed directly (raw text content type "Allowed" in [Annex A](#annex-a-normative-reference)), unless that element is part of another text block (e.g. `<bold>` within `<text>`);
+- the body of a virtual [`<text>`](#text);
+- the spoken text of a transcript turn (see [`<track>`](#track)).
+
+When reading a text block, XML comments and processing instructions within it, as well as the [element heads](#element-head) of the elements within it, are disregarded, as if they were removed. The elements of such element heads are read separately: e.g. a `<caption>` forms a text block of its own, to which the same rules apply.
+
+A consumer shall interpret whitespace outside `<content>` as follows:
+
+1. Whitespace outside text blocks shall be ignored.
+2. Whitespace at the start and at the end of a text block shall be ignored.
+3. Any other sequence of consecutive whitespace, taken as a whole, shall be interpreted as a single space. Whitespace separated only by start-tags and end-tags of elements within the text block that allow raw text (e.g. formatting elements) counts as consecutive; whitespace within a `<content>` element does not count together with whitespace outside it.
+4. When a sequence of whitespace spans several elements, the space shall be attributed to the element that contains the first character of the sequence.
+
+To retain whitespace that these rules would collapse or ignore, such as runs of spaces or line breaks, a producer shall use `<content>`. A producer should use `<content>` only where these rules would otherwise change the intended reading. Conversely, a producer can insert a line break and indentation wherever a single space is intended, for example to improve readability.
+
+Example:
+
+```xml
+<text>
+  Water (H<subscript>2</subscript>O) is <bold>clear </bold>
+  <italic> and odorless</italic>.
+  This keeps <content>two  spaces</content> as written.
+</text>
+```
+
+This reads as `Water (H₂O) is clear and odorless. This keeps two  spaces as written.`, with:
+
+| Part | Reason |
+| --- | --- |
+| no space before `Water`, none after `written.` | rule 2 (start and end of the text block) |
+| `H₂O` stays tight | no whitespace in the source, so none in the reading |
+| one space between `clear` and `and`, which is bold | rules 3 and 4: one sequence across the tags; its first character is in `<bold>` |
+| one space between `odorless.` and `This` | rule 3: the line break and indentation read as a single space |
+| `two  spaces` keeps both spaces | `<content>` is literal |
 
 ### Subclasses
 
@@ -396,12 +424,11 @@ Code block with language classification and whitespace preservation:
 ```xml
 <code>
   <label value="Python"/>
-  <content>
-  def add(a, b):
-      return a + b
+  <content>def add(a, b):
+    return a + b
 
-  if __name__ == "__main__":
-      print(add(2, 3))</content>
+if __name__ == "__main__":
+    print(add(2, 3))</content>
 </code>
 ```
 
@@ -415,13 +442,12 @@ Grouped code with caption and coordinates:
     <location value="10"/><location value="20"/><location value="400"/><location value="60"/>
     Listing 1: Minimal HTTP server
   </caption>
-  <content><![CDATA[
-  // Minimal Node.js server
-  import http from 'node:http';
-  const server = http.createServer((req, res) => {
-    res.end('OK');
-  });
-  server.listen(3000);]]></content>
+  <content><![CDATA[// Minimal Node.js server
+import http from 'node:http';
+const server = http.createServer((req, res) => {
+  res.end('OK');
+});
+server.listen(3000);]]></content>
 </code>
 ```
 
@@ -431,16 +457,14 @@ Long code blocks can be split across pages using continuation elements; keep `<l
 <code>
   <label value="Shell"/>
   <thread thread_id="42"/>
-  <content>
-  # Part 1
-  seq 1 5 | while read n; do echo $n; done</content>
+  <content># Part 1
+seq 1 5 | while read n; do echo $n; done</content>
 </code>
 <page_footer>Foo</page_footer>
 <page_break/>
 <code>
   <thread thread_id="42"/>
-  <content>
-  echo "done"</content>
+  <content>echo "done"</content>
 </code>
 ```
 
@@ -483,11 +507,10 @@ Multi-line LaTeX in a single formula:
 
 ```xml
 <formula>
-  <content><![CDATA[
-  \begin{align}
-    \nabla\cdot\mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
-    \nabla\cdot\mathbf{B} &= 0
-  \end{align}]]></content>
+  <content><![CDATA[\begin{align}
+  \nabla\cdot\mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+  \nabla\cdot\mathbf{B} &= 0
+\end{align}]]></content>
 </formula>
 ```
 
@@ -496,17 +519,15 @@ Cross-page block formula with continuation:
 ```xml
 <formula>
   <thread thread_id="42"/>
-  <content>
-  \begin{equation}
-    \mathbf{F}(t) = \int_0^t e^{A(t-\tau)}\,\mathbf{b}(\tau)\,d\tau
-  \end{equation}</content>
+  <content>\begin{equation}
+  \mathbf{F}(t) = \int_0^t e^{A(t-\tau)}\,\mathbf{b}(\tau)\,d\tau
+\end{equation}</content>
 </formula>
 <page_footer>Foo</page_footer>
 <page_break/>
 <formula>
   <thread thread_id="42"/>
-  <content>
-  % Optional tail content if the printed equation spans pages</content>
+  <content>% Optional tail content if the printed equation spans pages</content>
 </formula>
 ```
 
@@ -516,10 +537,9 @@ Note: All math content is LaTeX; omit `$...$` or `\[...\]` delimiters since the 
 
 A list can contain as list items any semantic element sequence.
 List items are namely introduced by `<ldiv>` elements, whereby an `<ldiv>` may optionally contain a marker.
-This means that a non-empty `<list>` element body shall begin with an `<ldiv>`.
+This means that a non-empty `<list>` element body must begin with an `<ldiv>`.
 
-To promote token efficiency within the repetitive context of a list, a list item may also comprise unwrapped text content.
-That case is called a *virtual `<text>`* and is to be handled exactly as if the whole list item (content between two sibling `<ldiv>`s or until `</list>`) were wrapped by `<text>` tags.
+To promote token efficiency within the repetitive context of a list, a list item (the content between two sibling `<ldiv>`s or until `</list>`) may also be a virtual [`<text>`](#text), i.e. unwrapped text content.
 
 Basic list with virtual `<text>`
 
@@ -638,15 +658,16 @@ Notes
 
 - `<marker>` is optional. Include it when the printed glyph/number is visible.
 - `<marker>` may begin with an [element head](#element-head) (e.g. [`<location>`](#location) coordinates to pinpoint bullet/number placement) before the visible glyph or [`<checkbox>`](#checkbox).
+- Like a [`<text>`](#text), a `<marker>` may also hold semantic elements, e.g. a [`<picture>`](#picture) for an image bullet.
 - Lists can nest as shown above.
 - When broken across pages, close items before the `page_break`, then re-open and continue with matching `thread` ids after the break.
 
 ### Tables
 
 A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
-This means that a non-empty `<table>` element body shall begin with such an OTSL structural element.
+This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
-Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also comprise unwrapped text content too, i.e. constituting a virtual `<text>`.
+Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also be a virtual [`<text>`](#text), i.e. unwrapped text content.
 
 Basic table with virtual `<text>`:
 
@@ -763,8 +784,8 @@ including e.g. their own bounding box location information.
 
 #### Field structure rules
 
-- Any `field_heading` or `field_item` shall be a descendant of a `field_region` (not necessarily a direct child)
-- Any `key` or `value` element shall be a descendant of a `field_item` (not necessarily a direct child)
+- Any `field_heading` or `field_item` must be a descendant of a `field_region` (not necessarily a direct child)
+- Any `key` or `value` element must be a descendant of a `field_item` (not necessarily a direct child)
   — More precisely, 0 or 1 `key` element and 0 or more `value` elements are allowed within a single `field_item`
     - For a given `field_item`, the 0..1 `key` constraint applies to its own descendant scope, excluding descendants that belong to nested `field_item` elements
   - This way, the `field_item` can serve for associating the `values` with a `key`
@@ -1045,7 +1066,7 @@ Field region with mixed content:
               <value></value>
           </field_item>
           <!--...-->
-      <field_region>
+      </field_region>
       <field_region>
           <field_item>
               <key>Date and time of delivery:</key>
@@ -1097,12 +1118,12 @@ Field region with mixed content:
     </field_item>
     <field_item>
         <key>I am in the United States as a:</key>
-        <text><checkbox class="unselected"/>Visitor</text>
-        <text><checkbox class="unselected"/>Student</text>
-        <text><checkbox class="unselected"/>Permanent Resident</text>
-        <text><checkbox class="unselected"/>Other (Specify)</text>
+        <text><checkbox class="unselected"/> Visitor</text>
+        <text><checkbox class="unselected"/> Student</text>
+        <text><checkbox class="unselected"/> Permanent Resident</text>
+        <text><checkbox class="unselected"/> Other (Specify)</text>
         <value></value>
-    <field_item>
+    </field_item>
     <field_item>
         <key>Country of Citizenship</key>
         <value></value>
@@ -1416,39 +1437,39 @@ Field region with mixed content:
       <field_heading>COCHER LES CASES CONCERNEES</field_heading>
       <field_item>
           <key>La cause du sinistre se situe-t-elle chez vous ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>A</marker>non</text>
-          <text><checkbox class="unselected"/><marker>B</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>B</marker>non</text>
+          <text><checkbox class="unselected"/><marker>A</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>A</marker> non</text>
+          <text><checkbox class="unselected"/><marker>B</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>B</marker> non</text>
       </field_item>
       <field_item>
           <key>Êtes-vous assuré en dégâts des eaux ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>A</marker>non</text>
-          <text><checkbox class="unselected"/><marker>B</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>B</marker>non</text>
+          <text><checkbox class="unselected"/><marker>A</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>A</marker> non</text>
+          <text><checkbox class="unselected"/><marker>B</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>B</marker> non</text>
       </field_item>
       <field_item>
           <key>Si vous êtes occupant et que vous allez déménager avez-vous donné ou reçu congé ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>avant le sinistre</text>
-          <text><checkbox class="unselected"/><marker>A</marker>après le sinistre</text>
-          <text><checkbox class="unselected"/><marker>B</marker>avant le sinistre</text>
-          <text><checkbox class="unselected"/><marker>B</marker>après le sinistre</text>
+          <text><checkbox class="unselected"/><marker>A</marker> avant le sinistre</text>
+          <text><checkbox class="unselected"/><marker>A</marker> après le sinistre</text>
+          <text><checkbox class="unselected"/><marker>B</marker> avant le sinistre</text>
+          <text><checkbox class="unselected"/><marker>B</marker> après le sinistre</text>
       </field_item>
       <field_heading>NATURE DES DOMMAGES peinture et/ou papier peint</field_heading>
       <field_item>
           <key>revêtements (sol, mur, plafond)</key>
-          <text><checkbox class="unselected"/><marker>A</marker>collés</text>
-          <text><checkbox class="unselected"/><marker>A</marker>agrafés ou cloués</text>
-          <text><checkbox class="unselected"/><marker>B</marker>collés</text>
-          <text><checkbox class="unselected"/><marker>B</marker>agrafés ou cloués</text>
+          <text><checkbox class="unselected"/><marker>A</marker> collés</text>
+          <text><checkbox class="unselected"/><marker>A</marker> agrafés ou cloués</text>
+          <text><checkbox class="unselected"/><marker>B</marker> collés</text>
+          <text><checkbox class="unselected"/><marker>B</marker> agrafés ou cloués</text>
       </field_item>
       <field_item>
           <key>Ces aménagements ont-ils été exécutés à vos frais ?</key>
-          <text><checkbox class="unselected"/><marker>A</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>A</marker>non</text>
-          <text><checkbox class="unselected"/><marker>B</marker>oui</text>
-          <text><checkbox class="unselected"/><marker>B</marker>non</text>
+          <text><checkbox class="unselected"/><marker>A</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>A</marker> non</text>
+          <text><checkbox class="unselected"/><marker>B</marker> oui</text>
+          <text><checkbox class="unselected"/><marker>B</marker> non</text>
       </field_item>
       <field_item>
           <key>Autres dommages immobiliers (carrelage, parquet, plâtrerie...)</key>
@@ -1575,7 +1596,7 @@ A `<track>` captures a time-aligned media transcript — subtitles, captions, or
 
 The body of a `<track>` may begin with a single `<cover>` — a representative image for the track as a whole (podcast artwork, a poster, a title card). It has the same shape as `<frame>` (an optional element head followed by an optional [`<src>`](#src)).
 
-The rest of the body is a sequence of *cue blocks*. Each cue block is introduced by a `<bdiv/>` delimiter (analogous to `<ldiv/>` for lists): the first cue block shall be a `<bdiv/>`, and a cue block spans everything between two sibling `<bdiv/>` elements (or until `</track>`).
+The rest of the body is a sequence of *cue blocks*. Each cue block is introduced by a `<bdiv/>` delimiter (analogous to `<ldiv/>` for lists): the first cue block must be a `<bdiv/>`, and a cue block spans everything between two sibling `<bdiv/>` elements (or until `</track>`).
 
 A cue block consists of, in order:
 
@@ -1623,7 +1644,7 @@ Cue block with a video frame and an audio clip:
 
 Per-cue `<frame>` and `<audio>` reference standalone fragments (a still, a clip) — typically archive `assets/` or a `data:` URI. The complete recording a track's timestamps refer to is carried separately, as `audio/{N}.*` / `video/{N}.*` in a [DocLang archive](#annex-b-normative-doclang-archive-format).
 
-Crossing the hour mark, and consecutive turns with no speaker attribution:
+Crossing the hour mark, and an unattributed turn:
 
 ```xml
 <track>
@@ -1673,14 +1694,14 @@ Chapters therefore form a **flat partition** of the timeline: no nesting, no ove
 
 Because only the start time counts, a chapter boundary may fall inside an earlier, still-open cue block. Given a cue block with `<chapter>A</chapter>` starting at `01:00` and one with `<chapter>B</chapter>` starting at `01:15`, chapter A is `[01:00, 01:15)` and B begins at `01:15` — even if A's cue block carries transcript out to `01:30`.
 
-Chapters shall begin at strictly increasing times — two chapters cannot mark the same instant. A `<chapter>` has no attributes in this version; nesting would be a future `level` attribute.
+Chapters must begin at strictly increasing times — two chapters cannot mark the same instant. A `<chapter>` has no attributes in this version; nesting would be a future `level` attribute.
 
 Notes:
 
-- A `<track>` body may open with one `<cover>` (a track-wide image); the first cue block, and every non-empty `<track>` body, then begins with a `<bdiv/>`. There shall be no text before the first cue block, nor between a `<bdiv/>` and its start time.
-- Every timestamp run carries `<seconds>` (the only required component); an end time, when present, shall not be earlier than the start time. Cue-block intervals are inclusive of both endpoints; a missing end time means the interval `[start, start]`.
+- A `<track>` body may open with one `<cover>` (a track-wide image); the first cue block, and every non-empty `<track>` body, then begins with a `<bdiv/>`. There must be no text before the first cue block, nor between a `<bdiv/>` and its start time.
+- Every timestamp run carries `<seconds>` (the only required component); an end time, when present, must not be earlier than the start time. Cue-block intervals are inclusive of both endpoints; a missing end time means the interval `[start, start]`.
 - Cue blocks appear in non-decreasing order of start time. They may still overlap — for example, two speakers talking at once. When two cue blocks share a start time, their relative order is not further constrained (end times are not used as a tie-breaker).
-- A `<frame>` is the still at the cue block's start time. An `<audio>` clip is the recording over `[start, end]`, so a cue block with an `<audio>` shall have an end time. Its duration is expected to correspond to `end − start`, but small differences from codec framing and encoder padding are normal and not significant; the timestamps, not the clip, are authoritative, and DocLang does not decode media to check this.
+- A `<frame>` is the still at the cue block's start time. An `<audio>` clip is the recording over `[start, end]`, so a cue block with an `<audio>` must have an end time. Its duration is expected to correspond to `end − start`, but small differences from codec framing and encoder padding are normal and not significant; the timestamps, not the clip, are authoritative, and DocLang does not decode media to check this.
 - A `<chapter>`, when present, comes after the timestamps and before any `<frame>`. It defines a chapter boundary at the cue block's start time only — see [Chapters](#chapters).
 - `<msecs value="…"/>` accepts any integer in `[0, 999]`.
 - `<cover>`, `<bdiv>`, `<chapter>`, `<frame>`, `<audio>`, `<voice>`, and the timestamp elements are only meaningful inside a `<track>`.
@@ -1710,7 +1731,7 @@ The basic structure is shown below, e.g. for a `text` tag:
 
 Each block that has location information is a top-level tag of the corresponding label, e.g. "text".
 
-Elements which belong to the same document component shall have the same thread ID and same host element type (e.g. all
+Elements which belong to the same document component must have the same thread ID and same host element type (e.g. all
 under `<text>`, not mixed `<text>` and `<picture>`).
 
 ```xml
@@ -1852,7 +1873,7 @@ The scenario in the above figure is represented below.
 similarly to the usual thread elements `thread`.
 - Only the content that is visible within the page is included in the table element (e.g. see "2025 d").
 - When thread linking is resolvable through `ucel`/`lcel` or `h_thread`, the `thread` element is not used, as it would be redundant.
-- When thread linking shall be captured, we capture it the earliest possible, i.e. we don't wait for the bottom-most cell
+- When thread linking must be captured, we capture it the earliest possible, i.e. we don't wait for the bottom-most cell
 to be reached to add the thread for "Europe" in the example above.
 
 ```xml
@@ -1951,9 +1972,7 @@ Cross-references can be captured using the `<xref>` element as part of the eleme
   </picture>
   <!--...-->
   <text>
-    <content>... is shown in </content>
-    <text><xref thread_id="1"/>Figure 3</text>
-    . The desired balance...
+    ... is shown in <text><xref thread_id="1"/>Figure 3</text>. The desired balance...
   </text>
   ```
 
@@ -1967,9 +1986,7 @@ Basic example:
 
 ```xml
 <text>
-  <content>Visit our </content>
-  <text><href uri="https://www.example.com"/>website</text>
-  <content> for more information.</content>
+  Visit our <text><href uri="https://www.example.com"/>website</text> for more information.
 </text>
 ```
 
@@ -2193,11 +2210,11 @@ None (empty element).
 
 #### Semantic elements
 
-*Semantic elements* capture core document components with specific meaning and functional role (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be interpreted as block-level elements (although they can also be inlined via nesting). Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
+*Semantic elements* capture core document components with specific meaning and functional role (e.g. a paragraph, a table, a list etc.) and may optionally begin with a [element head](#element-head). They are generally meant to be read as separate blocks, such as a paragraph, although some can also be nested within text. Semantic elements that can appear on the top level within [`<doclang>`](#doclang) are called *primary*, while those that can only appear within other semantic elements are called *secondary*.
 
 ##### `<text>`
 
-Represents a piece of cohesive text as that would appear in a paragraph. Note: a special construct related to this element is the so-called "virtual [`<text>`](#text)", which can occur only as a list item or a table cell — see [`<list>`](#list) and [`<table>`](#table) below for details.
+Represents a piece of cohesive text as that would appear in a paragraph. A list item, or a cell of a [`<table>`](#table), [`<index>`](#index) or [`<tabular>`](#tabular), may also consist of raw text, optionally preceded by an element head, without wrapping [`<text>`](#text) tags. Such content is called a *virtual [`<text>`](#text)* and is interpreted exactly as if it were wrapped in [`<text>`](#text) tags.
 
 ###### Allowed context
 
@@ -2319,7 +2336,7 @@ None
 
 ##### `<list>`
 
-Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body shall begin with such a structural element. A list item can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a list. List items are started by the respective structural elements ([`<ldiv>`](#ldiv)). A non-empty [`<list>`](#list) element body must begin with such a structural element. A list item can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2341,7 +2358,7 @@ Any context that allows semantic elements.
 
 ##### `<table>`
 
-Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body shall begin with such a structural element. A table cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures a table in an OTSL-based format. Table cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<table>`](#table) element body must begin with such a structural element. A table cell can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2361,7 +2378,7 @@ None
 
 ##### `<index>`
 
-Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body shall begin with such a structural element. A cell can be defined without a wrapping tag, i.e. as pure (optional) element head followed by raw text; this is called an "virtual [`<text>`](#text)" and is handled exactly like a regular [`<text>`](#text) element.
+Captures an index, e.g. for a table of contents or glossary, in an OTSL-based format. Index cells are started by the respective structural elements ([`<fcel>`](#fcel) etc). A non-empty [`<index>`](#index) element body must begin with such a structural element. A cell can be any semantic element sequence or a virtual [`<text>`](#text).
 
 ###### Allowed context
 
@@ -2607,7 +2624,7 @@ None
 
 ##### `<track>`
 
-Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body shall begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
+Captures a time-aligned media transcript (subtitles, captions, or diarized speech). The body may open with a single [`<cover>`](#cover) (a track-wide image), then a sequence of cue blocks, each introduced by a [`<bdiv>`](#bdiv) delimiter; a non-empty [`<track>`](#track) body must begin with a [`<cover>`](#cover) or a [`<bdiv>`](#bdiv). A cue block carries a mandatory start time, an optional end time (each a run of [`<hours>`](#hours)/[`<minutes>`](#minutes)/[`<seconds>`](#seconds)/[`<msecs>`](#msecs)), an optional [`<chapter>`](#chapter), an optional [`<frame>`](#frame), an optional [`<audio>`](#audio), and an optional transcript of [`<voice>`](#voice)-attributed turns.
 
 ###### Allowed context
 
@@ -2780,7 +2797,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 | Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` shall be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
+| `thread_id` | Required | Positive integer | The ID of the thread. All [`<thread>`](#thread) elements that share a given `thread_id` must be under the same host element type (e.g. all under [`<text>`](#text), not mixed [`<text>`](#text) and [`<picture>`](#picture)). |
 
 ###### Allowed content types
 
@@ -2798,7 +2815,7 @@ Can only be part of the [element head](#element-head) of a semantic element.
 
 | Attribute | Required / Optional | Allowed values | Description |
 |-----------|----------|----------------|-------------|
-| `thread_id` | Required | Positive integer | The ID of the referenced thread. This shall be defined by at least one [`<thread>`](#thread) in the DocLang instance. |
+| `thread_id` | Required | Positive integer | The ID of the referenced thread. This must be defined by at least one [`<thread>`](#thread) in the DocLang instance. |
 
 ###### Allowed content types
 
@@ -2888,7 +2905,7 @@ None
 
 ##### `<location>`
 
-Optional part of the element head; coordinate system is the top-left corner of the page. When present, appears in sequence of 4 [`<location>`](#location) instances, representing x0, y0, x1, y1. The following shall then hold: `x0_norm<=x1_norm` and `y0_norm<=y1_norm` (i.e. first top-left point then bottom-right point), whereby `*_norm` is the respective coordinate normalized to its effective resolution.
+Optional part of the element head; coordinate system is the top-left corner of the page. When present, appears in sequence of 4 [`<location>`](#location) instances, representing x0, y0, x1, y1. The following must then hold: `x0_norm<=x1_norm` and `y0_norm<=y1_norm`(i.e. first top-left point then bottom-right point), whereby `*_norm` is the respective coordinate normalized to its effective resolution.
 
 ###### Allowed context
 
@@ -3483,7 +3500,7 @@ assets/                # optional — files referenced from markup
 
 ##### `[Content_Types].xml` (required)
 
-Declares content types for package parts. Shall include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. Should declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with the Internet Assigned Numbers Authority (IANA) in a future revision; conformance does not depend on registration.
+Declares content types for package parts. Must include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. should declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with the Internet Assigned Numbers Authority (IANA) in a future revision; conformance does not depend on registration.
 
 Example:
 
@@ -3500,7 +3517,7 @@ Example:
 
 ##### `_rels/.rels` (required)
 
-Package-level relationships. Shall contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
+Package-level relationships. Must contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
 
 Example:
 
@@ -3525,7 +3542,7 @@ Optional raster images for review. Name files `{N}.{png|jpg|jpeg|webp}` with 1-b
 
 ##### `video/` (optional)
 
-Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` shall not exceed the number of `<track>` elements in the document.
+Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based position of the corresponding [`<track>`](#track) in document reading order (counting every `<track>`, including nested ones). A track has a whole-track audio recording when `audio/{N}.*` is present, and a whole-track video recording when `video/{N}.*` is present — either, both, or neither. At most one file per track per modality. Gaps are allowed; `N` must not exceed the number of `<track>` elements in the document.
 
 ##### `assets/` (optional)
 
@@ -3533,7 +3550,7 @@ Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/c
 
 #### Page alignment
 
-Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* corresponds to page *N*. Page count is determined by markup: the number of `<page_break/>` elements plus one. Page images are optional and individual gaps are allowed, but page files shall not exceed this count (e.g. two `<page_break/>` elements define three pages, so `4.png` is out of bounds).
+Review tools split markup (excluding `<head>`) on `<page_break/>`; segment *N* corresponds to page *N*. Page count is determined by markup: the number of `<page_break/>` elements plus one. Page images are optional and individual gaps are allowed, but page files must not exceed this count (e.g. two `<page_break/>` elements define three pages, so `4.png` is out of bounds).
 
 #### Track alignment
 
@@ -3578,7 +3595,7 @@ Content inside [`<custom>`](#custom) is implementation-defined and not governed 
 To improve interoperability and reduce naming collisions, the following recommendations apply:
 
 - Producers of shared custom vocabularies should use formal XML namespaces with stable namespace URIs.
-- Processors should treat the namespace URI as the namespace identifier and shall not assume semantic meaning from prefix names alone.
+- Processors should treat the namespace URI as the namespace identifier and must not assume semantic meaning from prefix names alone.
 - For private or local use where formal namespaces are not used, producers should use collision-resistant element names prefixed with a stable organization or project identifier (e.g. `acme_`).
 - Producers should avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
 - Producers should document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
@@ -3749,8 +3766,8 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - each `author` element can optionally begin with one or more `affiliation` elements
 - `date`
 - `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
-- `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content shall be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries may be provided.
-- `generated_by`, upstream pipeline information, e.g. Vision Language Model (VLM) ID
+- `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content must be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries may be provided.
+- `generated_by`, upstream pipeline information, e.g. vision language model (VLM) ID
 - `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
 - `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
 - `document_hash`, Hash of the source document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
@@ -3796,7 +3813,7 @@ Here is an example:
 In addition to the core metadata elements, publishers can optionally provide metadata pertaining to governance and compliance.
 These elements allow the communication of acceptable use, policy, licensing, contact information and compliance requirements.
 
-Governance and compliance metadata shall be expressed at the document level inside `<head>` and may be overridden at component level for finer-grained control.
+Governance and compliance metadata must be expressed at the document level inside `<head>` and may be overridden at component level for finer-grained control.
 
 ###### Standards reference and interpretation
 
@@ -3937,7 +3954,7 @@ Unless otherwise required by an implementation, these elements should be express
 | `extraction_output_constraints` | Constrains allowed output formats or destinations for extracted data. | ISO 27001 A.8; GDPR Art. 32 |
 | `downstream_sharing_permitted` | Indicates whether extracted data may be shared with downstream systems or third parties. | GDPR Art. 5(1)(a,b); Art. 28 |
 | `downstream_usage_restrictions` | Specifies restrictions on how extracted data may be used downstream. | GDPR Art. 5(1)(b) |
-| `extraction_audit_required` | Indicates whether extraction activities shall be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
+| `extraction_audit_required` | Indicates whether extraction activities must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
 | `extraction_audit_retention` | Specifies retention period for extraction audit logs. | GDPR Art. 5(1)(e) |
 | `human_in_the_loop_required` | Indicates whether human review/approval is required before or after extraction. | ISO 23894; ISO 27701 |
 | `automated_decisioning_dependency` | Indicates whether extracted data feeds automated decision-making systems. | GDPR Art. 22 |
@@ -3968,7 +3985,7 @@ Unless otherwise required by an implementation, these elements should be express
 | `rag_downstream_sharing_permitted` | Indicates whether retrieved content may be shared beyond the immediate RAG response. | GDPR Art. 5(1)(a,b); Art. 28 |
 | `rag_caching_allowed` | Indicates whether retrieved content may be cached for performance or reuse. | ISO 27001 A.8; GDPR Art. 5(1)(e) |
 | `rag_cache_retention` | Specifies retention period for cached embeddings or retrieved content. | GDPR Art. 5(1)(e) |
-| `rag_audit_required` | Indicates whether retrieval events shall be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
+| `rag_audit_required` | Indicates whether retrieval events must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
 | `rag_audit_retention` | Specifies retention period for RAG access and retrieval logs. | GDPR Art. 5(1)(e) |
 | `rag_model_scope` | Restricts which models or model classes may access this content via RAG. | ISO 23894; internal governance |
 
@@ -3996,8 +4013,8 @@ Unless otherwise required by an implementation, these elements should be express
 | `training_pii_included` | Indicates whether training data may include PII. | GDPR Art. 6; ISO 27701 |
 | `training_sensitive_data_included` | Indicates whether special-category or sensitive data may be included in training. | GDPR Art. 9–10 |
 | `training_transformation_required` | Specifies required transformations prior to training (e.g., anonymization, pseudonymization). | GDPR Art. 25; Recital 26 |
-| `training_provenance_required` | Indicates whether provenance metadata shall be retained for training records. | ISO 27001 A.12; AI accountability best practice |
-| `training_audit_required` | Indicates whether training usage shall be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
+| `training_provenance_required` | Indicates whether provenance metadata must be retained for training records. | ISO 27001 A.12; AI accountability best practice |
+| `training_audit_required` | Indicates whether training usage must be logged and auditable. | GDPR Art. 5(2); ISO 27001 A.12 |
 | `training_audit_retention` | Specifies retention period for training-related audit logs. | GDPR Art. 5(1)(e) |
 | `model_output_usage_constraints` | Specifies constraints on use of models trained on this content (e.g., internal-only, non-commercial). | Licensing and intellectual property (IP) best practice |
 | `right_to_be_forgotten_applicability` | Indicates whether erasure obligations apply to trained models or datasets. | GDPR Art. 17; emerging AI guidance |
@@ -4213,7 +4230,7 @@ Notes:
 
 - The example uses illustrative values. Implementations should define controlled vocabularies for enums such as `pii_status`, `pii_sensitivity_level`, `extraction_scope`, `rag_embedding_scope`, and `training_model_type`.
 - When `training_permitted` is `false`, implementations should treat training-related fields as either omitted or set to explicit "none" values.
-- Where retention elements include a `unit` attribute, producers shall use consistent units and pre-normalized values.
+- Where retention elements include a `unit` attribute, producers must use consistent units and pre-normalized values.
 
 <!--
 
@@ -4229,7 +4246,6 @@ Metadata elements are meant to capture information that is not directly part of 
 As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata should always be properly namespaced, as illustrated in the examples further below.
--->
 
 ## Bibliography
 
@@ -4238,3 +4254,4 @@ The following lists the documents which are cited informatively in this document
 1. W3C HTML5 Specification
 2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
 3. DoclingDocument API Specification
+-->

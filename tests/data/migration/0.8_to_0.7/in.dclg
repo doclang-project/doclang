@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.8">
+  <!-- track_and_captions -->
+  <picture>
+    <caption>FIG. 1</caption>
+    <caption>Source: A</caption>
+    <src uri="a.png"/>
+  </picture>
+  <track>
+    <bdiv/>
+    <seconds value="2"/>
+    Hello, and welcome.
+  </track>
+  <text>after</text>
+</doclang>

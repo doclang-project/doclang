@@ -27,6 +27,14 @@ repos:
         pass_filenames: false
         language: system
         files: '\.py$'
+  - repo: local
+    hooks:
+      - id: reference-sync-check
+        name: reference-sync-check
+        entry: uv run --no-sync python utils/generate_reference.py --check reference/input
+        pass_filenames: false
+        language: system
+        files: '^(spec\.md|reference/input/.*|utils/generate_reference\.py)$'
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.7.8
     hooks:

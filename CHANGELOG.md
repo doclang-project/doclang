@@ -1,3 +1,23 @@
+## [v0.9.0](https://github.com/doclang-project/doclang/releases/tag/v0.9.0)
+
+* make tests survive a release (#223)
+* allow semantic elements in markers (#222)
+* fix malformed field examples (#221)
+* support archives in migrate (#220)
+* add a source version option to migrate (#219)
+* define whitespace handling (#205)
+  * **BREAKING CHANGE**: interpretation of whitespace in raw text outside `<content>` now prescribed by spec
+* allow `<content>` in `<field_heading>` (#212)
+* fix schematron union contexts and element head detection (#211)
+* support migrating to newer versions (#207)
+* add reference sync check (#204)
+* add definition of abbreviations/acronyms (#185)
+* change headings capitalization from title case to sentence case (#181)
+
+## [v0.8.1](https://github.com/doclang-project/doclang/releases/tag/v0.8.1)
+
+* fix element head rules for all their elements (#213)
+
 ## [v0.8.0](https://github.com/doclang-project/doclang/releases/tag/v0.8.0)
 
 * add version migration (#196)
@@ -18,6 +38,10 @@
 * allow multiple captions (#176)
 * add `<track>` for time-aligned media transcripts (#175)
 * expose special token vocabulary (#174)
+
+## [v0.7.4](https://github.com/doclang-project/doclang/releases/tag/v0.7.4)
+
+* fix element head rules for all their elements (#214)
 
 ## [v0.7.3](https://github.com/doclang-project/doclang/releases/tag/v0.7.3)
 

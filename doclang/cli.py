@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 import typer
 
+from doclang._packaging import _document_file, _is_archive
 from doclang._schemas import UnsupportedVersionError, _select_schemas
 from doclang.migration import MigrationError
 from doclang.migration import migrate as migrate_document
@@ -51,7 +52,8 @@ class OutputFormat(str, Enum):
     no_args_is_help=True,
 )
 def validate(
-    xml_file: Path = typer.Argument(..., help="XML file to validate", exists=True),
+    ctx: typer.Context,
+    xml_file: Path = typer.Argument(..., help="XML file or .dclx archive to validate", exists=True),
     xsd_only: bool = typer.Option(False, "--xsd-only", help="Validate XSD only"),
     schematron_only: bool = typer.Option(False, "--schematron-only", help="Validate Schematron only"),
     allow_empty_namespace: bool = typer.Option(
@@ -89,16 +91,24 @@ def validate(
     """
     Validate XML document against bundled XSD schema and Schematron rules.
 
+    For a .dclx archive, its document.xml is validated.
+
     Examples:
 
         doclang validate document.xml
+        doclang validate document.dclx
         doclang validate document.xml --xsd-only
         doclang validate document.xml --spec-version 0.7
         doclang validate document.xml --spec-version 0.7 --strict-xsd-version-attr
         doclang validate document.xml --format json
     """
     try:
-        selection = _select_schemas(xml_file, spec_version, strict_declared_version=strict_declared_version)
+        document = ctx.with_resource(_document_file(xml_file))
+    except PackagingError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    try:
+        selection = _select_schemas(document, spec_version, strict_declared_version=strict_declared_version)
     except UnsupportedVersionError as exc:
         # An unsupported declared version is reported as a validation failure below.
         if spec_version is not None:
@@ -121,7 +131,7 @@ def validate(
             warnings.simplefilter("always")
             try:
                 validate_document(
-                    xml_file,
+                    document,
                     allow_empty_namespace=allow_empty_namespace,
                     xsd_only=xsd_only,
                     schematron_only=schematron_only,
@@ -376,12 +386,18 @@ def pack(
     no_args_is_help=True,
 )
 def migrate(
-    document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …)", exists=True),
-    to: str = typer.Option(
-        ..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to; currently only older versions"
+    document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …) or .dclx archive", exists=True),
+    to: str = typer.Option(..., "--to", help="Spec version (MAJOR.MINOR) to migrate the document to"),
+    source: str | None = typer.Option(
+        None,
+        "--from",
+        help="Spec version (MAJOR.MINOR) of a document that declares none (default: the latest version)",
     ),
     output: Path | None = typer.Option(
-        None, "-o", "--output", help="Write the migrated document here (default: stdout)"
+        None,
+        "-o",
+        "--output",
+        help="Write the migrated document (or archive) here (default: stdout; required for an archive)",
     ),
     strict: bool = typer.Option(
         False,
@@ -402,17 +418,27 @@ def migrate(
     format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
 ):
     """
-    Migrate a DocLang document to another spec version (currently only older versions are supported).
+    Migrate a DocLang document to a specific spec version.
 
     The migrated document goes to stdout (or --output); changes and warnings go to stderr. With
     --format json, stdout holds a JSON object with the versions, the changes and the document.
+
+    A .dclx archive is migrated to another archive (--output): its document.xml is migrated, the
+    other files are copied, except the media of dropped tracks if tracks remain, which is removed
+    while that of the remaining tracks is renumbered. Other files only dropped elements used are
+    kept and reported as orphaned.
 
     Examples:
 
         doclang migrate document.dclg --to 0.7
         doclang migrate document.dclg --to 0.7 -o document_0.7.dclg
         doclang migrate document.dclg --to 0.7 --strict --format json
+        doclang migrate undeclared.dclg --from 0.8 --to 0.9
+        doclang migrate document.dclx --to 0.7 -o document_0.7.dclx
     """
+    if output is None and _is_archive(document):
+        typer.echo("Error: an archive cannot be written to stdout; pass --output (-o)", err=True)
+        raise typer.Exit(1)
     warning_messages: list[str] = []
     try:
         with warnings.catch_warnings(record=True) as caught:
@@ -421,6 +447,8 @@ def migrate(
                 result = migrate_document(
                     document,
                     to=to,
+                    source=source,
+                    output=output,
                     strict=strict,
                     input_validation=input_validation.value,
                     output_validation=output_validation.value,
@@ -444,9 +472,6 @@ def migrate(
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
 
-    if output is not None:
-        output.write_text(result.xml, encoding="utf-8")
-
     if format == OutputFormat.json:
         payload: dict[str, Any] = {
             "source_version": result.source_version,
@@ -460,7 +485,7 @@ def migrate(
         return
 
     if output is None:
-        typer.echo(result.xml)
+        typer.echo(result.xml, nl=False)  # ends with a newline already
     if not quiet:
         for message in warning_messages:
             typer.echo(f"Warning: {message}", err=True)
@@ -471,7 +496,8 @@ def migrate(
 
 
 def _format_change(change: dict[str, Any]) -> str:
-    return f"  {change['kind'].capitalize()}: {change['location']} (line {change['line']}): {change['message']}"
+    line = "" if change["line"] is None else f" (line {change['line']})"
+    return f"  {change['kind'].capitalize()}: {change['location']}{line}: {change['message']}"
 
 
 def _version_callback(value: bool):

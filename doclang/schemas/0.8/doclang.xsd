@@ -10,7 +10,7 @@
   xmlns:dl="https://www.doclang.ai/ns/v0"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
-  version="0.8.0"
+  version="0.8.1"
 >
 
   <!-- ============================================ -->
