@@ -18,7 +18,7 @@ from doclang.migration import MigrationError
 from doclang.migration import migrate as migrate_document
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
-from doclang.schematron import SchematronBackendNotFound
+from doclang.schematron import SchematronBackendNotFound, SchematronValidator, _default_schematron_validator
 from doclang.utils import _VERSION
 from doclang.validation import ValidationError, VersionNote
 from doclang.validation import validate as validate_document
@@ -127,6 +127,16 @@ def validate(
         typer.echo("Error: provide an XML_FILE argument or --filelist", err=True)
         raise typer.Exit(2)
 
+    # One validator for all files: it keeps the compiled Schematron, so each schema is processed once.
+    schematron: Optional[SchematronValidator] = None
+    if not xsd_only:
+        try:
+            schematron = _default_schematron_validator()
+        except SchematronBackendNotFound:
+            pass  # reported for each file by validate_document
+        else:
+            ctx.call_on_close(schematron.close)  # type: ignore[attr-defined]
+
     failed = 0
     for path in files:
         if not path.exists():
@@ -137,6 +147,7 @@ def validate(
             _validate_one(
                 ctx,
                 path,
+                schematron=schematron,
                 xsd_only=xsd_only,
                 schematron_only=schematron_only,
                 allow_empty_namespace=allow_empty_namespace,
@@ -161,6 +172,7 @@ def _validate_one(
     ctx: typer.Context,
     xml_file: Path,
     *,
+    schematron: Optional[SchematronValidator],
     xsd_only: bool,
     schematron_only: bool,
     allow_empty_namespace: bool,
@@ -203,6 +215,7 @@ def _validate_one(
                 validate_document(
                     document,
                     allow_empty_namespace=allow_empty_namespace,
+                    schematron=schematron,
                     xsd_only=xsd_only,
                     schematron_only=schematron_only,
                     spec_version=spec_version,

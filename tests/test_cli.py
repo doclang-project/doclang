@@ -63,6 +63,40 @@ def test_cli_warns_when_version_undeclared(tmp_path):
     assert "No DocLang version declared" in result.output
 
 
+def test_cli_filelist_processes_each_schema_once(tmp_path):
+    from unittest.mock import patch
+
+    from lxml import etree
+
+    import doclang.backends.saxonche as saxonche_backend
+    import doclang.xsd_validation as xsd_validation
+
+    docs = []
+    for i in range(3):
+        doc = tmp_path / f"doc{i}.dclg"
+        doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0"><text>hi</text></doclang>', encoding="utf-8")
+        docs.append(doc)
+    missing = tmp_path / "missing.dclg"
+    filelist = tmp_path / "files.txt"
+    filelist.write_text("\n".join(str(p) for p in [*docs, missing]) + "\n", encoding="utf-8")
+
+    xsd_validation._compiled_schema.cache_clear()
+    with (
+        patch.object(
+            saxonche_backend,
+            "_transpile_schematron_to_xslt",
+            wraps=saxonche_backend._transpile_schematron_to_xslt,
+        ) as transpile,
+        patch.object(xsd_validation.etree, "XMLSchema", wraps=etree.XMLSchema) as compile_xsd,
+    ):
+        result = runner.invoke(app, ["validate", "--filelist", str(filelist)])
+
+    assert result.exit_code == 1, result.output
+    assert "Validated 4 files: 3 passed, 1 failed" in result.output
+    assert transpile.call_count == 1
+    assert compile_xsd.call_count == 1
+
+
 def _doc_with_version(tmp_path, version):
     doc = tmp_path / "doc.dclg"
     doc.write_text(f'<doclang xmlns="https://www.doclang.ai/ns/v0" version="{version}"/>', encoding="utf-8")
