@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 
 from lxml import etree
@@ -63,6 +64,11 @@ def _version_key(version: str) -> tuple[int, int]:
 
 def _schema_version(xsd: Path) -> str:
     """The ``MAJOR.MINOR`` spec version of an XSD, from its ``xs:schema`` version attribute."""
+    return _schema_version_cached(xsd, xsd.stat().st_mtime_ns)
+
+
+@cache
+def _schema_version_cached(xsd: Path, mtime_ns: int) -> str:
     match = _SCHEMA_VERSION_RE.search(xsd.read_text(encoding="utf-8"))
     if match is None:
         raise FileNotFoundError(f"No schema version found in {xsd}")
@@ -130,12 +136,17 @@ def _head_description() -> str:
     return "unreleased development version"
 
 
+@cache
+def _enumerated_versions_cached(xsd: str, mtime_ns: int) -> frozenset[str]:
+    parser = etree.XMLParser(resolve_entities=False, no_network=True)
+    tree = etree.parse(xsd, parser)
+    values = tree.xpath("//xs:attribute[@name='version']//xs:enumeration/@value", namespaces={"xs": _XS_NS})
+    return frozenset(str(v) for v in values)  # type: ignore[union-attr]
+
+
 def _enumerated_versions(xsd: Path) -> set[str]:
     """Versions the XSD enumerates for the root ``version`` attribute (empty if only format-constrained)."""
-    parser = etree.XMLParser(resolve_entities=False, no_network=True)
-    tree = etree.parse(str(xsd), parser)
-    values = tree.xpath("//xs:attribute[@name='version']//xs:enumeration/@value", namespaces={"xs": _XS_NS})
-    return {str(v) for v in values}  # type: ignore[union-attr]
+    return set(_enumerated_versions_cached(str(xsd), xsd.stat().st_mtime_ns))
 
 
 def _declared_version(xml_file: str | Path) -> str | None:
