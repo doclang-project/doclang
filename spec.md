@@ -4246,12 +4246,10 @@ Metadata elements are meant to capture information that is not directly part of 
 As applications can have varying requirements, this document defines a set of reserved metadata elements for common use
 cases, but also allows for custom metadata elements to be added.
 To avoid collisions, custom metadata SHOULD always be properly namespaced, as illustrated in the examples further below.
+-->
 
 ## Bibliography
 
 The following lists the documents which are cited informatively in this document, as well as other information resources. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. W3C HTML5 Specification
-2. SmolDocling: An ultra-compact vision-language model for end-to-end multi-modal document conversion
-3. DoclingDocument API Specification
--->
+1. ISO 639-3 *Codes for the representation of names of languages*
