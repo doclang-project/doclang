@@ -1,0 +1,9 @@
+#ifndef DOCLANG_NATIVE_SCHEMA_DATA_H_
+#define DOCLANG_NATIVE_SCHEMA_DATA_H_
+
+namespace doclang::native
+{
+  inline constexpr char bundled_xsd[] = R"DOCLANG_XSD(@DOCLANG_XSD_TEXT@)DOCLANG_XSD";
+}
+
+#endif
