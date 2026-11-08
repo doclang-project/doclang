@@ -10,6 +10,7 @@
 
 #include <libxml/parser.h>
 #include <libxml/xmlschemas.h>
+#include <libxml/xmlversion.h>
 
 #include <doclang/content.h>
 #include <doclang/validation/rules.h>
@@ -94,7 +95,14 @@ namespace doclang::native
                   or contains_entity_reference(document->children));
     }
 
-    inline void collect_xsd_error(void* context, xmlErrorPtr error)
+    // libxml2 2.12 changed xmlStructuredErrorFunc to take a const xmlError*.
+#if LIBXML_VERSION >= 21200
+    using xml_error_ptr = const xmlError*;
+#else
+    using xml_error_ptr = xmlError*;
+#endif
+
+    inline void collect_xsd_error(void* context, xml_error_ptr error)
     {
       if(not context or not error)
         {

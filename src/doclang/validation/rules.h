@@ -553,23 +553,33 @@ namespace doclang::native
           {
             continue;
           }
-        bool text_seen = false;
+        // Text is misplaced when a head element follows it among its siblings. Containers only
+        // check their own head, which ends at their first body element: heads after it belong to
+        // their items, cells or cue blocks, which the virtual text rules check.
+        const bool container = detail::named(node, "list", accept_empty_namespace)
+                               or detail::named(node, "table", accept_empty_namespace)
+                               or detail::named(node, "index", accept_empty_namespace)
+                               or detail::named(node, "track", accept_empty_namespace);
+        pugi::xml_node last_head;
         for(const auto child : node.children())
           {
-            if((detail::named(node, "list", accept_empty_namespace)
-                and detail::named(child, "ldiv", accept_empty_namespace))
-               or ((detail::named(node, "table", accept_empty_namespace)
-                    or detail::named(node, "index", accept_empty_namespace))
-                   and detail::is_cell(child, accept_empty_namespace)))
+            if(detail::is_head(child, accept_empty_namespace))
+              {
+                last_head = child;
+              }
+            else if(container and child.type() == pugi::node_element)
               {
                 break;
               }
+          }
+        if(not last_head)
+          {
+            continue;
+          }
+        for(auto child = node.first_child(); child != last_head; child = child.next_sibling())
+          {
             if((child.type() == pugi::node_pcdata or child.type() == pugi::node_cdata)
                and not is_xml_whitespace(child.value()))
-              {
-                text_seen = true;
-              }
-            if(text_seen and detail::is_head(child, accept_empty_namespace))
               {
                 detail::add(issues, "element-head-placement", node,
                             "Property elements in the element head must appear before any "

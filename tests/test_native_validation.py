@@ -27,6 +27,12 @@ _ASSERTIONS = [
         "<table><fcel/><lcel/><nl/><fcel/><nl/></table>",
     ),
     ("element-head-placement", "<text><label/>Body</text>", "<text>Body<label/></text>"),
+    # containers: only their own head, before the first body element, is checked
+    (
+        "element-head-placement",
+        '<track><label/><bdiv/><seconds value="1"/>Hi<label/></track>',
+        '<track>Intro<label/><bdiv/><seconds value="1"/></track>',
+    ),
     (
         "xref-href-mutual-exclusivity",
         '<text><xref thread_id="1"/></text><text><thread thread_id="1"/></text>',
@@ -141,7 +147,7 @@ def test_native_matrix_covers_every_schema_assertion():
         "picture-src-first": "picture-body",
         "picture-tabular-after-src": "picture-body",
     }
-    assert len(assertions) == len(_ASSERTIONS) == 27
+    assert len(assertions) == len(_ASSERTIONS) == 28
     assert {pattern.get("id") for pattern in patterns} == {
         grouped.get(assertion, assertion) for assertion, _, _ in _ASSERTIONS
     }
