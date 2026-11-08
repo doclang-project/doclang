@@ -4,6 +4,7 @@ Tests for the DocLang CLI.
 Tests the command-line interface using Typer's CliRunner.
 """
 
+import zipfile
 from importlib.metadata import version
 from pathlib import Path
 
@@ -121,13 +122,15 @@ def test_cli_migrate_prints_document_and_reports_changes(tmp_path):
     assert result.exit_code == 0, result.output
     assert 'version="0.7"' in result.output and "<bdiv" not in result.output
     assert "Dropped: /doclang/track" in result.output
+    assert result.stdout.endswith("</doclang>\n")  # one newline, not two
 
 
 def test_cli_migrate_writes_output_file(tmp_path):
     out = tmp_path / "out.dclg"
     result = runner.invoke(app, ["migrate", str(_migratable(tmp_path)), "--to", "0.7", "-o", str(out)])
     assert result.exit_code == 0, result.output
-    assert 'version="0.7"' in out.read_text(encoding="utf-8")
+    written = out.read_text(encoding="utf-8")
+    assert 'version="0.7"' in written and written.endswith("</doclang>\n")
     assert "<doclang" not in result.output  # the document goes to the file, not to stdout
 
 
@@ -177,8 +180,66 @@ def test_cli_migrate_validation_options(tmp_path, monkeypatch):
     assert none.exit_code == 0, none.output
 
 
+def test_cli_migrate_from(tmp_path):
+    doc = tmp_path / "undeclared.dclg"
+    doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0"><text>a<content> b</content></text></doclang>')
+    result = runner.invoke(app, ["migrate", str(doc), "--from", "0.8", "--to", "0.9"])
+    assert result.exit_code == 0, result.output
+    assert "<text>a b</text>" in result.stdout and 'version="0.9"' in result.stdout
+    assert "No DocLang version declared" not in result.output
+
+    without = runner.invoke(app, ["migrate", str(doc), "--to", "0.9"])
+    assert without.exit_code == 0, without.output
+    assert "<content> b</content>" in without.stdout and "No DocLang version declared" in without.output
+
+    contradicting = runner.invoke(app, ["migrate", str(_migratable(tmp_path)), "--from", "0.7", "--to", "0.8"])
+    assert (
+        contradicting.exit_code == 1
+        and "declares version 0.8, not the given source version 0.7" in contradicting.output
+    )
+    unknown = runner.invoke(app, ["migrate", str(doc), "--from", "0.1", "--to", "0.9"])
+    assert unknown.exit_code == 1 and "No schema for DocLang spec version '0.1'" in unknown.output
+
+
 def test_cli_migrate_rejects_invalid_input(tmp_path):
     doc = tmp_path / "bad.dclg"
     doc.write_text('<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.8"><unknown_future_element/></doclang>')
     result = runner.invoke(app, ["migrate", str(doc), "--to", "0.7"])
     assert result.exit_code == 1 and "fix it before migrating" in result.output
+
+
+def _migratable_archive(tmp_path):
+    archive = tmp_path / "doc_08.dclx"
+    with zipfile.ZipFile(archive, "w") as zf:
+        zf.writestr("document.xml", _MIGRATABLE)
+        zf.writestr("pages/1.png", b"page")
+        zf.writestr("audio/1.mp3", b"track")
+    return archive
+
+
+def test_cli_migrate_archive(tmp_path):
+    out = tmp_path / "out.dclx"
+    result = runner.invoke(app, ["migrate", str(_migratable_archive(tmp_path)), "--to", "0.7", "-o", str(out)])
+    assert result.exit_code == 0, result.output
+    assert "Dropped: /doclang/track (line 1)" in result.output
+    assert "Orphaned: audio/1.mp3: kept" in result.output
+    with zipfile.ZipFile(out) as zf:
+        assert zf.namelist() == ["document.xml", "pages/1.png", "audio/1.mp3"]
+        assert 'version="0.7"' in zf.read("document.xml").decode("utf-8")
+
+
+def test_cli_migrate_archive_needs_an_output(tmp_path):
+    result = runner.invoke(app, ["migrate", str(_migratable_archive(tmp_path)), "--to", "0.7"])
+    assert result.exit_code == 1 and "pass --output" in result.output
+
+
+def test_cli_validate_archive(tmp_path):
+    result = runner.invoke(app, ["validate", str(_migratable_archive(tmp_path)), "--xsd-only"])
+    assert result.exit_code == 0, result.output
+    assert "XSD validation passed" in result.output
+
+    bad = tmp_path / "bad.dclx"
+    with zipfile.ZipFile(bad, "w") as zf:
+        zf.writestr("pages/1.png", b"page")
+    missing = runner.invoke(app, ["validate", str(bad)])
+    assert missing.exit_code == 1 and "No document.xml" in missing.output

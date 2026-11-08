@@ -9,11 +9,12 @@ Process:
 4. Update the Reference section in spec.md with the generated content
 
 Usage:
-    python generate_reference.py <input_directory>
+    python generate_reference.py [--check] <input_directory>
 
     Arguments:
     - input_directory: Directory containing the Excel file with element definitions
       (also may contain .dclg and .png files for examples)
+    - --check: don't update spec.md; exit with an error if its Reference is not up to date
 """
 
 import os
@@ -48,8 +49,8 @@ def normalize_category_name(category):
 
 
 def format_category_for_display(category):
-    """Format category name for display by adding 'Elements' suffix"""
-    return category + " Elements"
+    """Format category name for display in sentence case, adding 'elements' suffix"""
+    return f"{category} elements".capitalize()
 
 
 def run_docling_conversion(input_file, output_dir):
@@ -140,8 +141,8 @@ def parse_intermediate_markdown(md_file):
                     content_type_columns[idx] = content_type
                 elif idx == 4 and header:  # Element context is typically at index 4
                     # Store the context column header and normalize it
-                    # Remove "Element " prefix if present and capitalize
-                    element_context_header = header.replace("Element ", "").strip().title()
+                    # Remove "Element " prefix if present and use sentence case
+                    element_context_header = header.replace("Element ", "").strip().capitalize()
             continue
 
         # Check if we're in the attributes table (has Element and Attribute columns, but no Category)
@@ -375,7 +376,7 @@ def generate_reference_content(
                 output_lines.append("###### Attributes\n\n")
 
                 # Write table header
-                output_lines.append("| Attribute | Required / Optional | Allowed Values | Description |\n")
+                output_lines.append("| Attribute | Required / Optional | Allowed values | Description |\n")
                 output_lines.append("|-----------|----------|----------------|-------------|\n")
 
                 # Write table rows (with linkified element references in description)
@@ -393,7 +394,7 @@ def generate_reference_content(
             # Write content types table if they exist
             if content_types_by_element.get(element):
                 content_types = content_types_by_element[element]
-                output_lines.append("###### Allowed Content Types\n\n")
+                output_lines.append("###### Allowed content types\n\n")
 
                 # If XML content is not allowed, the element is empty:
                 # omit the table and render a note. Otherwise, create a vertical
@@ -405,7 +406,7 @@ def generate_reference_content(
                     output_lines.append("None (empty element).\n\n")
                 else:
                     # Write table header (vertical format)
-                    output_lines.append("| Content Type | Allowed / Not allowed |\n")
+                    output_lines.append("| Content type | Allowed / Not allowed |\n")
                     output_lines.append("| --- | --- |\n")
 
                     # Write one row per content type
@@ -448,11 +449,14 @@ def generate_reference_content(
     return "".join(output_lines)
 
 
-def update_spec_appendix(reference_content, spec_file):
-    """Update the Reference section in spec.md with generated reference content"""
+def update_spec_appendix(reference_content, spec_file, check=False):
+    """Update the Reference section in spec.md with generated reference content
+
+    With check=True, spec.md is left unchanged; returns whether it is already up to date.
+    """
     import re
 
-    print(f"\nUpdating Reference in {spec_file}...")
+    print(f"\n{'Checking' if check else 'Updating'} Reference in {spec_file}...")
 
     try:
         spec_content = Path(spec_file).read_text(encoding="utf-8")
@@ -478,6 +482,13 @@ def update_spec_appendix(reference_content, spec_file):
         # Strip trailing whitespace from reference content to avoid extra blank lines
         new_content = before_reference + reference_content.rstrip() + "\n\n" + from_next_section
 
+        if check:
+            if new_content != spec_content:
+                print(f"Error: Reference in {spec_file} does not match the Excel input; regenerate it")
+                return False
+            print(f"✓ Reference in {spec_file} is up to date")
+            return True
+
         # Write back to spec.md
         Path(spec_file).write_text(new_content, encoding="utf-8")
         print(f"✓ Successfully updated Reference in {spec_file}")
@@ -488,8 +499,11 @@ def update_spec_appendix(reference_content, spec_file):
         return False
 
 
-def generate_reference(input_dir: str | Path) -> None:
-    """Generate reference content from Excel input and update spec.md Reference section."""
+def generate_reference(input_dir: str | Path, check: bool = False) -> None:
+    """Generate reference content from Excel input and update spec.md Reference section.
+
+    With check=True, only verify that the Reference section is up to date (raises RuntimeError if not).
+    """
     input_dir = Path(input_dir)
 
     if not input_dir.exists():
@@ -545,8 +559,10 @@ def generate_reference(input_dir: str | Path) -> None:
         str(spec_path),
     )
 
-    if not update_spec_appendix(reference_content, str(spec_path)):
-        raise RuntimeError("Failed to update Reference in spec.md")
+    if not update_spec_appendix(reference_content, str(spec_path), check=check):
+        raise RuntimeError(f"Failed to {'check' if check else 'update'} Reference in spec.md")
+    if check:
+        return
 
     print("\nAll tasks completed successfully!")
     print(f"- Input: {input_file}")
@@ -555,13 +571,16 @@ def generate_reference(input_dir: str | Path) -> None:
 
 
 def main():
-    if len(sys.argv) < 2:
+    args = sys.argv[1:]
+    check = "--check" in args
+    args = [a for a in args if a != "--check"]
+    if len(args) != 1:
         print("Error: Input directory path is required.")
-        print("Usage: python generate_reference.py <input_directory>")
+        print("Usage: python generate_reference.py [--check] <input_directory>")
         sys.exit(1)
 
     try:
-        generate_reference(sys.argv[1])
+        generate_reference(args[0], check=check)
     except (FileNotFoundError, NotADirectoryError, ValueError, RuntimeError) as exc:
         print(f"Error: {exc}")
         sys.exit(1)

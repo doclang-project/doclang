@@ -1,16 +1,25 @@
 """Tests for migrating documents to another spec version."""
 
+import re
 import sys
+import zipfile
 from pathlib import Path
 
 import pytest
 
 from doclang import MigrationError, SchematronBackendNotFound, UnsupportedVersionError, migrate
+from doclang._schemas import _available_versions, _version_key
+from doclang.migration._api import _head_version
 from doclang.migration._plan import NoMigrationPath, Step, _plan
 
 VALID_DIR = Path(__file__).parent / "data" / "valid"
+# <source>_to_<target>/ holds the cases, labelled by comments, in in.dclg or in several layouts (pretty.in.dclg,
+# minified.in.dclg, hybrid.in.dclg), each with its expected result (out.dclg, pretty.out.dclg, ...)
+CASES_DIR = Path(__file__).parent / "data" / "migration"
 
 NS = "https://www.doclang.ai/ns/v0"
+NEWEST = max(_available_versions(), key=_version_key)  # the newest released version
+NEXT = f"{_version_key(NEWEST)[0]}.{_version_key(NEWEST)[1] + 1}"  # the head's version, when it has changes
 TRACK = '<track><bdiv/><minutes value="0"/><seconds value="2"/>Hello.</track>'
 
 
@@ -34,6 +43,25 @@ def test_track_is_dropped_with_its_surroundings_kept(tmp_path):
     assert result.changes[0]["line"] == 4
     assert (result.source_version, result.target_version) == ("0.8", "0.7")
     assert 'version="0.7"' in result.xml
+    assert result.xml.endswith("</doclang>\n")
+    assert result.xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ')  # from <?xml version='1.0' ...
+
+
+@pytest.mark.parametrize(
+    ("start", "declared"),
+    [(b"", False), (b"<?xml version='1.0'?>\n", True), (b'\xef\xbb\xbf<?xml version="1.0"?>\n', True)],
+)
+def test_xml_declaration_is_written_as_in_the_input(tmp_path, start, declared):
+    doc = tmp_path / "doc.dclg"
+    doc.write_bytes(start + f'<doclang xmlns="{NS}" version="0.8">\n  <text>x</text>\n</doclang>\n'.encode())
+    xml = migrate(doc, to="0.7").xml
+    assert xml.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<doclang ' if declared else "<doclang ")
+    assert xml.endswith("</doclang>\n")
+
+
+def test_cdata_sections_are_written_as_in_the_input(tmp_path):
+    result = migrate(_doc(tmp_path, f"<text>x <formula><![CDATA[p<0.001]]></formula></text>{TRACK}"), to="0.7")
+    assert "<formula><![CDATA[p<0.001]]></formula>" in result.xml
 
 
 def test_tracks_inside_group_and_table_cell_are_dropped(tmp_path):
@@ -85,13 +113,22 @@ def test_strict_passes_when_nothing_is_lost(tmp_path):
 # --- versions ------------------------------------------------------------------------------------
 
 
-def test_same_version_is_a_noop(tmp_path):
-    result = migrate(_doc(tmp_path, "<text>x</text>", version="0.7"), to="0.7")
-    assert (result.source_version, result.changes) == ("0.7", [])
+@pytest.mark.parametrize("version", ["0.7", "0.8", "0.9"])
+def test_same_version_is_a_noop(tmp_path, version):
+    body = "\n  <text>\n    x <bold>y</bold><content> z</content>\n  </text>\n"
+    result = migrate(_doc(tmp_path, body, version=version), to=version)
+    assert (result.source_version, result.changes) == (version, [])
+    assert f'version="{version}">{body}</doclang>' in result.xml  # untouched, whitespace and <content> included
 
 
-def test_newer_target_is_an_error(tmp_path):
-    with pytest.raises(MigrationError, match="newer than the document's version"):
+def test_newer_target_without_up_steps_only_updates_the_version(tmp_path):
+    result = migrate(_doc(tmp_path, "\n  <text>x  <bold>y</bold> z</text>\n", version="0.7"), to="0.8")
+    assert (result.source_version, result.target_version, result.changes) == ("0.7", "0.8", [])
+    assert "<text>x  <bold>y</bold> z</text>" in result.xml and 'version="0.8"' in result.xml
+
+
+def test_newer_target_from_a_version_without_schema_is_an_error(tmp_path):
+    with pytest.raises(MigrationError, match=r"No schema for the document's version 0\.6"):
         migrate(_doc(tmp_path, "<text>x</text>", version="0.6"), to="0.7")
 
 
@@ -100,9 +137,10 @@ def test_target_without_schema_is_unsupported(tmp_path):
         migrate(_doc(tmp_path, "<text>x</text>"), to="0.1")
 
 
-def test_malformed_declared_version(tmp_path):
-    with pytest.raises(MigrationError, match="Invalid declared DocLang version 'v8'"):
-        migrate(_doc(tmp_path, "<text>x</text>", version="v8"), to="0.7")
+@pytest.mark.parametrize(("version", "read"), [("v8", "v8"), ("0.8&#10;", "0.8\n")])
+def test_malformed_declared_version(tmp_path, version, read):
+    with pytest.raises(MigrationError, match=f"Invalid declared DocLang version '{re.escape(read)}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=version), to="0.7")
 
 
 def test_undeclared_version_warns_is_treated_as_latest_and_gets_declared(tmp_path):
@@ -110,6 +148,154 @@ def test_undeclared_version_warns_is_treated_as_latest_and_gets_declared(tmp_pat
         result = migrate(_doc(tmp_path, TRACK, version=None), to="0.7")
     assert result.source_version is None
     assert 'version="0.7"' in result.xml and "track" not in result.xml
+
+
+@pytest.mark.parametrize("version", [None, "0.8"])
+def test_source_is_the_version_of_an_undeclared_document(tmp_path, recwarn, version):
+    result = migrate(_doc(tmp_path, TRACK, version=version), source="0.8", to="0.7")
+    assert (result.source_version, result.target_version) == ("0.8", "0.7")
+    assert 'version="0.7"' in result.xml and "track" not in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_source_contradicting_the_declared_version_is_an_error(tmp_path):
+    with pytest.raises(MigrationError, match=r"declares version 0\.7, not the given source version 0\.8"):
+        migrate(_doc(tmp_path, "<text>x</text>", version="0.7"), source="0.8", to="0.7")
+
+
+@pytest.mark.parametrize("source", ["0.1", "v8", "1.0"])
+def test_source_without_schema_is_unsupported(tmp_path, source):
+    with pytest.raises(UnsupportedVersionError, match=f"No schema for DocLang spec version '{source}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=None), source=source, to="0.7")
+
+
+def test_undeclared_document_is_validated_against_the_source(tmp_path):
+    with pytest.raises(MigrationError, match=r"not valid for DocLang 0\.7"):
+        migrate(_doc(tmp_path, TRACK, version=None), source="0.7", to="0.8")  # <track> is new in 0.8
+
+
+# --- up to the development head ------------------------------------------------------------------
+
+
+def _with_unreleased_head(monkeypatch, apply):
+    """As if the development schemas had unreleased changes, with ``apply`` as their up step."""
+    from doclang.migration import _api
+
+    monkeypatch.setattr(_api, "_head_description", lambda: "unreleased development version")
+    monkeypatch.setattr(_api, "_load_steps", lambda newest, head: [Step(newest, head, apply)])
+
+
+def test_up_steps_apply_on_the_way_to_the_head(tmp_path, monkeypatch):
+    def mark(root, changes):
+        root[0].text = "marked"
+
+    _with_unreleased_head(monkeypatch, mark)
+    result = migrate(_doc(tmp_path, "<text>x</text>", version=NEWEST), to=NEXT)
+    assert (result.source_version, result.target_version) == (NEWEST, NEXT)
+    assert "<text>marked</text>" in result.xml and f'version="{NEXT}"' in result.xml
+
+
+def test_head_has_a_version_of_its_own_only_with_changes_of_its_own(monkeypatch):
+    from doclang.migration import _api
+
+    monkeypatch.setattr(_api, "_head_description", lambda: "unreleased development version")
+    assert _head_version(NEWEST) == NEXT
+    monkeypatch.setattr(_api, "_head_description", lambda: NEWEST)  # as right after a release
+    assert _head_version(NEWEST) is None
+
+
+def test_texts_are_stripped_and_unneeded_content_unwrapped(tmp_path):
+    body = (
+        "\n  <text>\n    Held on the 21\n    <superscript> st </superscript>\n"
+        "    <content> of June, see </content>\n    <italic>the agenda</italic>\n.\n  </text>"
+        "\n  <text>x <bold>y</bold> z</text>\n"
+    )
+    result = migrate(_doc(tmp_path, body), to="0.9")
+
+    assert (result.source_version, result.target_version, result.changes) == ("0.8", "0.9", [])
+    assert (  # the target ignores the whitespace at the start and end of the body, so it stays
+        "<text>\n    Held on the 21<superscript>st</superscript> of June, see <italic>the agenda</italic>.\n  </text>"
+    ) in result.xml
+    assert "<text>x<bold>y</bold>z</text>" in result.xml  # whitespace next to tags was not guaranteed
+    assert f'<doclang xmlns="{NS}" version="0.9">\n  <text>' in result.xml  # root layout is kept
+
+
+def test_whitespace_the_target_ignores_is_kept(tmp_path):
+    body = (
+        "\n  <text>\n    "
+        + "\n    ".join(f'<location value="{v}"/>' for v in (1, 2, 3, 4))
+        + "\n    a\n    <bold>b</bold>\n  </text>"
+        "\n  <list>\n    <ldiv/>\n    c\n    <ldiv/>\n    <italic>d</italic>\n  </list>"
+        "\n  <field_region>\n    <field_item>\n      <key>e</key>\n    </field_item>\n  </field_region>\n"
+    )
+    result = migrate(_doc(tmp_path, body), to="0.9")
+    head = "\n    ".join(f'<location value="{v}"/>' for v in (1, 2, 3, 4))
+    assert f"<text>\n    {head}\n    a<bold>b</bold>\n  </text>" in result.xml
+    assert "<list>\n    <ldiv/>\n    c\n    <ldiv/>\n    <italic>d</italic>\n  </list>" in result.xml
+    assert "<field_region>\n    <field_item>\n      <key>e</key>\n    </field_item>\n  </field_region>" in result.xml
+
+
+def test_whitespace_between_paragraphs_of_a_list_item_is_kept(tmp_path):
+    body = (
+        "<list>\n  <ldiv/>\n  <text>First.</text>\n  <text>Second.</text>\n  <ldiv/>Fruit: <text>apples</text>\n</list>"
+    )
+    result = migrate(_doc(tmp_path, body), to="0.9")
+    assert "<ldiv/>\n  <text>First.</text>\n  <text>Second.</text>\n  <ldiv/>Fruit:<text>apples</text>" in result.xml
+
+
+def test_content_comments_and_interior_whitespace_are_kept(tmp_path):
+    body = "<code><content>\n  def f():\n      pass\n</content></code><text>a  b\n c<!-- note  --> d</text>"
+    result = migrate(_doc(tmp_path, body), to="0.9")
+    assert "<content>\n  def f():\n      pass\n</content>" in result.xml
+    assert "<text>a  b\n c<!-- note  -->d</text>" in result.xml  # interior whitespace reads as one space anyway
+
+
+def test_cdata_sections_the_step_does_not_change_are_kept(tmp_path):
+    result = migrate(_doc(tmp_path, "<text>x<formula><![CDATA[p<0.001]]></formula></text>"), to="0.9")
+    assert "<formula><![CDATA[p<0.001]]></formula>" in result.xml
+
+
+def test_whitespace_other_than_space_tab_and_line_breaks_is_kept(tmp_path):
+    result = migrate(_doc(tmp_path, "<text>\u00a0x\u2003</text>"), to="0.9")
+    assert "<text>\u00a0x\u2003</text>" in result.xml
+
+
+def test_older_documents_get_the_head_steps_too(tmp_path):
+    result = migrate(_doc(tmp_path, "<text>x <bold>y</bold></text>", version="0.7"), to="0.9")
+    assert "<text>x<bold>y</bold></text>" in result.xml and 'version="0.9"' in result.xml
+
+
+def test_head_documents_migrate_down_without_a_fallback_warning(tmp_path, recwarn):
+    result = migrate(_doc(tmp_path, "<text>x</text>", version="0.9"), to="0.8")
+    assert result.source_version == "0.9"
+    assert not [w for w in recwarn if "No schema" in str(w.message)]
+
+
+def test_undeclared_version_to_the_head_only_gets_declared(tmp_path):
+    with pytest.warns(UserWarning, match="No DocLang version declared"):
+        result = migrate(_doc(tmp_path, "<text> x </text>", version=None), to="0.9")
+    assert "<text> x </text>" in result.xml and 'version="0.9"' in result.xml
+
+
+def test_undeclared_document_from_an_older_source_gets_the_head_steps(tmp_path, recwarn):
+    result = migrate(_doc(tmp_path, "<text>a<content> b</content></text>", version=None), source="0.8", to="0.9")
+    assert (result.source_version, result.target_version) == ("0.8", "0.9")
+    assert "<text>a b</text>" in result.xml and 'version="0.9"' in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_head_as_source_of_an_undeclared_document(tmp_path, recwarn):
+    result = migrate(_doc(tmp_path, "<text> x </text>", version=None), source="0.9", to="0.9")
+    assert result.source_version == "0.9" and "<text> x </text>" in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_head_is_no_target_without_changes_of_its_own(tmp_path, monkeypatch):
+    from doclang.migration import _api
+
+    monkeypatch.setattr(_api, "_head_description", lambda: NEWEST)  # as right after a release
+    with pytest.raises(UnsupportedVersionError, match=rf"No schema for DocLang spec version '{re.escape(NEXT)}'"):
+        migrate(_doc(tmp_path, "<text>x</text>", version=NEWEST), to=NEXT)
 
 
 # --- validation of input and output ------------------------------------------------------------------
@@ -138,7 +324,7 @@ def test_a_step_producing_an_invalid_document_is_reported_as_a_bug(tmp_path, mon
     def broken_step(root, changes):
         etree.SubElement(root, f"{{{NS}}}unknown_future_element")
 
-    monkeypatch.setattr(_api, "_load_steps", lambda newest: {None: Step(None, "0.7", broken_step)})
+    monkeypatch.setattr(_api, "_load_steps", lambda newest, head: [Step("0.8", "0.7", broken_step)])
     with pytest.raises(MigrationError) as excinfo:
         migrate(_doc(tmp_path, "<text>x</text>"), to="0.7")
     assert "bug in the migration steps:" in str(excinfo.value)  # no hint: the input was fully validated
@@ -187,30 +373,178 @@ def _steps():
     def noop(root, changes):
         return None
 
-    return {
-        None: Step(None, "0.9", noop),
-        "0.9": Step("0.9", "0.8", noop),
-        "0.8": Step("0.8", "0.7", noop),
-    }
+    down = [Step("0.10", "0.9", noop), Step("0.9", "0.8", noop), Step("0.8", "0.7", noop)]
+    up = [Step("0.7", "0.8", noop), Step("0.9", "0.10", noop)]  # none from 0.8 to 0.9
+    return down + up
 
 
 @pytest.mark.parametrize(
     ("source", "target", "expected"),
     [
-        (None, "0.9", [None]),  # head to the newest release
-        (None, "0.7", [None, "0.9", "0.8"]),  # all the way down
-        ("0.9", "0.7", ["0.9", "0.8"]),  # starts at a released version
+        ("0.10", "0.9", [("0.10", "0.9")]),
+        ("0.10", "0.7", [("0.10", "0.9"), ("0.9", "0.8"), ("0.8", "0.7")]),  # all the way down
         ("0.8", "0.8", []),
-        ("1.0", "0.8", [None, "0.9"]),  # an unreleased version is treated as the head
+        ("0.7", "0.10", [("0.7", "0.8"), ("0.9", "0.10")]),  # 0.8 to 0.9 only updates the version
+        ("0.8", "0.10", [("0.9", "0.10")]),
+        ("0.8", "0.9", []),
     ],
 )
 def test_plan(source, target, expected):
-    assert [s.source for s in _plan(source, target, _steps())] == expected
+    assert [(s.source, s.target) for s in _plan(source, target, _steps())] == expected
 
 
-def test_plan_without_exact_path_fails():
+def test_plan_down_without_exact_path_fails():
     with pytest.raises(NoMigrationPath):
         _plan("0.8", "0.6", _steps())  # no step below 0.7
+
+
+def test_newer_version_without_schema_is_migrated_down_as_the_latest(tmp_path):
+    with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 1\.0"):
+        result = migrate(_doc(tmp_path, TRACK, version="1.0"), to="0.7")
+    assert result.source_version == "1.0" and "track" not in result.xml
+
+
+# --- archives ------------------------------------------------------------------------------------
+
+FRAME_TRACK = '<track><bdiv/><seconds value="2"/><frame><src uri="assets/frames/2.jpg"/></frame>Hi.</track>'
+
+
+def _archive(tmp_path: Path, body: str, members: dict[str, bytes], version: str | None = "0.8") -> Path:
+    """An archive of the document ``body`` and ``members``, in that order (without OPC metadata, as found in
+    the wild); ``pages/1.png`` is stored uncompressed with a fixed date."""
+    path = tmp_path / "doc.dclx"
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("document.xml", _doc(tmp_path, body, version=version).read_bytes())
+        for name, data in members.items():
+            info = zipfile.ZipInfo(name, date_time=(2020, 1, 2, 3, 4, 6))
+            info.compress_type = zipfile.ZIP_STORED if name == "pages/1.png" else zipfile.ZIP_DEFLATED
+            info.external_attr = 0o640 << 16
+            archive.writestr(info, data)
+    return path
+
+
+def _members(path: Path) -> dict[str, bytes]:
+    with zipfile.ZipFile(path) as archive:
+        return {name: archive.read(name) for name in archive.namelist()}
+
+
+def test_archive_document_is_migrated_and_other_members_copied(tmp_path):
+    members = {
+        "pages/1.png": b"\x89PNG page",
+        "[Content_Types].xml": b"<Types/>",
+        "assets/": b"",
+        "assets/a.svg": b"<svg/>",
+    }
+    body = '<picture><caption>A</caption><caption>B</caption><src uri="assets/a.svg"/></picture>'
+    archive = _archive(tmp_path, body, members)
+    out = tmp_path / "out.dclx"
+    result = migrate(archive, to="0.7", output=out)
+
+    assert [c["kind"] for c in result.changes] == ["mapped"]
+    written = _members(out)
+    assert list(written) == ["document.xml", *members]
+    assert written["document.xml"].decode("utf-8") == result.xml and 'version="0.7"' in result.xml
+    assert {name: written[name] for name in members} == members
+    with zipfile.ZipFile(archive) as before, zipfile.ZipFile(out) as after:
+        for name in members:
+            old, new = before.getinfo(name), after.getinfo(name)
+            assert (new.date_time, new.compress_type, new.external_attr) == (
+                old.date_time,
+                old.compress_type,
+                old.external_attr,
+            )
+
+
+def test_archive_is_written_only_with_an_output_and_may_replace_the_input(tmp_path):
+    archive = _archive(tmp_path, "<text>x</text>", {"pages/1.png": b"page"})
+    original = archive.read_bytes()
+    result = migrate(archive, to="0.7")
+    assert 'version="0.7"' in result.xml and archive.read_bytes() == original
+
+    migrate(archive, to="0.7", output=archive)
+    assert _members(archive) == {"document.xml": result.xml.encode("utf-8"), "pages/1.png": b"page"}
+
+
+def test_xml_output_is_written(tmp_path):
+    out = tmp_path / "out.dclg"
+    result = migrate(_doc(tmp_path, TRACK), to="0.7", output=out)
+    assert out.read_text(encoding="utf-8") == result.xml
+
+
+def test_source_applies_to_an_archive(tmp_path, recwarn):
+    result = migrate(_archive(tmp_path, TRACK, {}, version=None), source="0.8", to="0.7")
+    assert result.source_version == "0.8" and "track" not in result.xml
+    assert not [w for w in recwarn if "No DocLang version declared" in str(w.message)]
+
+
+def test_media_and_assets_of_dropped_tracks_are_kept_and_reported(tmp_path):
+    members = {
+        "audio/1.mp3": b"a1",
+        "video/2.mp4": b"v2",
+        "assets/frames/2.jpg": b"frame",  # only referenced from a track
+        "assets/chart.svg": b"chart",  # still referenced
+        "assets/notes.txt": b"notes",  # never referenced
+        "audio/README": b"unrelated",
+    }
+    body = f'{TRACK}{FRAME_TRACK}<picture><src uri="./assets/chart.svg"/></picture>'
+    out = tmp_path / "out.dclx"
+    result = migrate(_archive(tmp_path, body, members), to="0.7", output=out)
+
+    assert [(c["kind"], c["location"], c["line"]) for c in result.changes] == [
+        ("dropped", "/doclang/track[1]", 2),
+        ("dropped", "/doclang/track", 2),  # recorded after the first was removed
+        ("orphaned", "audio/1.mp3", None),
+        ("orphaned", "video/2.mp4", None),
+        ("orphaned", "assets/frames/2.jpg", None),
+    ]
+    assert list(_members(out)) == ["document.xml", *members]
+
+
+def test_media_of_remaining_tracks_is_renumbered(tmp_path, monkeypatch):
+    def drop_first_track(root, changes):
+        track = root.find(f"{{{NS}}}track")
+        changes.record("dropped", track, "dropped")
+        root.remove(track)
+
+    _with_unreleased_head(monkeypatch, drop_first_track)
+    members = {"audio/1.mp3": b"a1", "audio/2.ogg": b"a2", "video/3.mp4": b"v3", "assets/frames/2.jpg": b"f"}
+    out = tmp_path / "out.dclx"
+    result = migrate(_archive(tmp_path, f"{TRACK}{FRAME_TRACK}{TRACK}", members, version=NEWEST), to=NEXT, output=out)
+
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("dropped", "/doclang/track[1]"),
+        ("removed", "audio/1.mp3"),  # it would pair with the old track 2
+        ("renamed", "audio/2.ogg"),
+        ("renamed", "video/3.mp4"),
+    ]
+    assert "audio/1.ogg" in result.changes[2]["message"]
+    assert _members(out) == {
+        "document.xml": result.xml.encode("utf-8"),
+        "audio/1.ogg": b"a2",
+        "video/2.mp4": b"v3",
+        "assets/frames/2.jpg": b"f",
+    }
+
+
+def test_strict_fails_on_the_dropped_elements_not_on_orphaned_members(tmp_path):
+    out = tmp_path / "out.dclx"
+    with pytest.raises(MigrationError, match="would change 1 part") as info:
+        migrate(_archive(tmp_path, TRACK, {"audio/1.mp3": b"a"}), to="0.7", output=out, strict=True)
+    assert [c["kind"] for c in info.value.changes] == ["dropped", "orphaned"]
+    assert not out.exists()
+
+
+@pytest.mark.parametrize(
+    ("names", "error"),
+    [(["pages/1.png"], "No document.xml"), (["document.xml", "../evil"], "Invalid archive member path")],
+)
+def test_unreadable_archives_are_rejected(tmp_path, names, error):
+    path = tmp_path / "bad.dclx"
+    with zipfile.ZipFile(path, "w") as archive:
+        for name in names:
+            archive.writestr(name, _doc(tmp_path, "<text>x</text>").read_bytes())
+    with pytest.raises(MigrationError, match=error):
+        migrate(path, to="0.7")
 
 
 # --- every valid fixture ---------------------------------------------------------------------------
@@ -224,3 +558,506 @@ def test_every_valid_fixture_migrates_to_the_newest_released_version(fixture):
 
     newest = max(_available_versions(), key=_version_key)
     assert migrate(fixture, to=newest).target_version == newest
+
+
+@pytest.mark.parametrize("fixture", sorted(VALID_DIR.glob("*.dclg")), ids=lambda f: f.stem)
+def test_every_valid_fixture_migrates_from_the_newest_release_to_the_head(fixture, tmp_path):
+    """The up steps keep documents valid: the result is validated against the development schemas."""
+    from lxml import etree
+
+    from doclang.validation import ValidationError, validate
+
+    tree = etree.parse(str(fixture))
+    tree.getroot().set("version", "0.8")
+    doc = tmp_path / fixture.name
+    tree.write(str(doc), encoding="UTF-8", xml_declaration=True)
+    try:
+        validate(doc, spec_version="0.8", allow_empty_namespace=True)
+    except ValidationError:
+        pytest.skip("uses what the newest release cannot express")
+    assert migrate(doc, to="0.9").target_version == "0.9"
+
+
+# --- file-based cases ----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "source", sorted(CASES_DIR.glob("*/*in.dclg")), ids=lambda f: f"{f.parent.name}/{f.name.removesuffix('.dclg')}"
+)
+def test_migration_case(source):
+    """The cases migrate to the version their folder names and give the matching out.dclg exactly.
+
+    Without it, one is written from the actual result, to review (and commit) before the test passes.
+    """
+    target = source.parent.name.split("_to_")[1]
+    expected = source.with_name(source.name.removesuffix("in.dclg") + "out.dclg")
+    actual = migrate(source, to=target).xml
+    if not expected.exists():
+        expected.write_text(actual, encoding="utf-8")
+        pytest.fail(f"wrote {expected.name} from the actual result: review it, then rerun")
+    assert actual == expected.read_text(encoding="utf-8")
+
+
+# --- <content> in <field_heading> down to 0.8 ------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text", "downgraded", "kinds"),
+    [
+        (
+            "<field_heading><italic>Contact:</italic><content>  </content>Address</field_heading>",
+            "<field_heading><italic>Contact:<content>  </content></italic>Address</field_heading>",
+            ["mapped"],
+        ),
+        (
+            "<field_heading>Contact:<content>  </content> <italic>Address</italic></field_heading>",
+            "<field_heading>Contact:<italic><content>  </content><content> </content>Address</italic></field_heading>",
+            ["mapped"],
+        ),
+        (
+            "<field_heading>Contact:<content>  </content>Address</field_heading>",
+            "<field_heading>Contact:  Address</field_heading>",
+            ["dropped"],
+        ),
+    ],
+)
+def test_content_in_a_field_heading_goes_into_a_formatting_element(text, downgraded, kinds):
+    """<field_heading> cannot hold <content>; it moves into a neighbouring formatting element, or is unwrapped."""
+    from lxml import etree
+
+    from doclang.migration._steps import v0_9_to_0_8
+    from doclang.migration._tree import Changes
+
+    root, changes = etree.fromstring(f'<doclang xmlns="{NS}">{text}</doclang>'.encode()), Changes()
+    v0_9_to_0_8.migrate(root, changes)
+    assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
+    assert [c["kind"] for c in changes.items] == kinds
+
+
+@pytest.mark.parametrize(
+    "folder", [d for d in sorted(CASES_DIR.iterdir()) if len(list(d.glob("*.out.dclg"))) > 1], ids=lambda d: d.name
+)
+def test_layouts_migrate_alike(folder):
+    """The layouts hold the same cases: their results have the same elements and read the same."""
+    from lxml import etree
+
+    def document(out: Path):
+        root = etree.fromstring(out.read_bytes())
+        return [(e.tag, dict(e.attrib)) for e in root.iter() if isinstance(e.tag, str)], _read(root)
+
+    documents = [document(out) for out in sorted(folder.glob("*.out.dclg"))]
+    assert all(d == documents[0] for d in documents)
+
+
+# --- semantic elements in <marker> down to 0.8 -----------------------------------------------------
+
+
+def test_text_with_text_level_content_in_a_marker_is_unwrapped(tmp_path):
+    body = "<list><ldiv><marker><text>a<bold>)</bold></text></marker></ldiv>x</list>"
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
+    assert "<marker>a<bold>)</bold></marker>" in result.xml
+    assert [(c["kind"], c["location"]) for c in result.changes] == [("mapped", "/doclang/list/ldiv/marker/text")]
+
+
+def test_other_semantic_elements_in_a_marker_are_dropped(tmp_path):
+    head = "".join(f'<location value="{v}"/>' for v in (1, 2, 3, 4))
+    body = (
+        f"<list><ldiv><marker>{head}<picture/>1<formula>x</formula><text>b <formula>y</formula></text>"
+        "</marker></ldiv>x</list>"
+    )
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
+    assert f"<marker>{head}1</marker>" in result.xml  # the marker's head stays
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("dropped", "/doclang/list/ldiv/marker/picture"),
+        ("dropped", "/doclang/list/ldiv/marker/formula"),
+        ("dropped", "/doclang/list/ldiv/marker/text"),  # not text-level only
+    ]
+
+
+def test_non_breaking_space_next_to_a_dropped_element_is_kept(tmp_path):
+    body = "<list><ldiv><marker>1<italic>a</italic>&#160;<picture/>\n</marker></ldiv>x</list>"
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
+    assert "<marker>1<italic>a</italic>\u00a0\n</marker>" in result.xml  # not whitespace in XML
+
+
+def test_nested_markers_are_unwrapped_from_the_inside(tmp_path):
+    body = "<list><ldiv><marker><marker><picture/><hint><italic>i</italic></hint></marker></marker></ldiv>x</list>"
+    result = migrate(_doc(tmp_path, body, version="0.9"), to="0.8")
+    assert "<marker><italic>i</italic></marker>" in result.xml
+    assert [(c["kind"], c["location"]) for c in result.changes] == [
+        ("mapped", "/doclang/list/ldiv/marker/marker"),
+        ("dropped", "/doclang/list/ldiv/marker/marker/picture"),
+        ("mapped", "/doclang/list/ldiv/marker/marker/hint"),
+    ]
+
+
+# --- unwrapping <content> in the 0.8 to 0.9 step ---------------------------------------------------
+
+
+def _read(root, rules: str = "0.9") -> list[str]:
+    """What the whitespace rules read, one string per run of inline content in a body.
+
+    Tags of inline elements are kept as markers (e.g. ``<bold>``), so that it shows which element a space belongs
+    to. Written independently of the steps; only the element classification is shared. With the 0.8 rules, every
+    text outside <content> is stripped and the pieces are joined directly; whitespace between words reads as one
+    space, as with the 0.9 rules.
+    """
+    import re
+
+    from doclang.migration._steps import v0_8_to_0_9
+
+    pieces: list[str] = []
+    items: list[tuple[str, str]] = []  # (kind, text) with kind "ws", "word", "literal" or "tag"
+
+    def add(text):
+        if rules == "0.8":
+            text = re.sub(r"[ \t\r\n]+", "\x00", (text or "").strip(" \t\r\n"))  # \x00: a space between words
+            items.extend(("word", part.replace("\x00", " ")) for part in [text] if part)
+            return
+        for part in re.split(r"([ \t\r\n]+)", text or ""):
+            if part:
+                items.append(("ws" if not part.strip(" \t\r\n") else "word", part))
+
+    def flush():
+        content = [i for i, (kind, _) in enumerate(items) if kind in ("word", "literal")]
+        if content:
+            out, in_sequence = [], False
+            for i, (kind, text) in enumerate(items):
+                if kind == "ws":
+                    if content[0] < i < content[-1] and not in_sequence:  # rule 2, then rules 3 and 4
+                        out.append(" ")
+                    in_sequence = True
+                    continue
+                if kind != "tag":
+                    in_sequence = False  # a word, or <content>, whose whitespace is a sequence of its own
+                out.append(text)
+            pieces.append("".join(out))
+        items.clear()
+
+    def walk(element):
+        add(element.text)
+        for child in element:
+            if v0_8_to_0_9._inline(child):
+                name = etree_localname(child)
+                if name == "content":
+                    items.append(("literal", child.text or ""))
+                else:
+                    items.append(("tag", f"<{name}>"))
+                    walk(child)
+                    items.append(("tag", f"</{name}>"))
+            elif isinstance(child.tag, str) and etree_localname(child) in v0_8_to_0_9._HEAD:
+                apart(child)  # disregarded here, e.g. a caption is read on its own
+            elif isinstance(child.tag, str) and etree_localname(child) in v0_8_to_0_9._SEMANTIC:
+                flush()  # e.g. one of two <text> paragraphs in a list item: a block of its own
+                visit(child)
+            elif isinstance(child.tag, str) and etree_localname(child) not in v0_8_to_0_9._DELIMITERS:
+                items.append(("literal", f"[{etree_localname(child)}]"))  # e.g. a checkbox: part of the text
+                apart(child)
+            elif not isinstance(child.tag, str):
+                pass  # a comment or processing instruction: disregarded
+            else:
+                flush()  # a delimiter
+                visit(child)
+            add(child.tail)
+
+    def apart(element):
+        """Read the text blocks within ``element`` on their own."""
+        outer = items[:]
+        items.clear()
+        visit(element)
+        items[:] = outer
+
+    def visit(element):
+        name = etree_localname(element)
+        if name in v0_8_to_0_9._RAW_TEXT or name in v0_8_to_0_9._VIRTUAL_TEXT:
+            walk(element)
+            flush()
+        else:
+            for child in element:
+                if isinstance(child.tag, str):
+                    visit(child)
+
+    visit(root)
+    return pieces
+
+
+def etree_localname(element) -> str:
+    from lxml import etree
+
+    return etree.QName(element).localname
+
+
+def _strip_only_and_full(xml: str):
+    from lxml import etree
+
+    from doclang.migration._steps import v0_8_to_0_9
+    from doclang.migration._tree import Changes
+
+    stripped = etree.fromstring(xml.encode("utf-8"))
+    v0_8_to_0_9._strip_texts(stripped)
+    full = etree.fromstring(xml.encode("utf-8"))
+    v0_8_to_0_9.migrate(full, Changes())
+    return stripped, full
+
+
+@pytest.mark.parametrize(
+    "source",
+    sorted((CASES_DIR / "0.8_to_0.9").glob("*in.dclg")) + sorted(VALID_DIR.glob("*.dclg")),
+    ids=lambda f: f.stem,
+)
+def test_unwrapping_content_does_not_change_the_reading(source):
+    stripped, full = _strip_only_and_full(source.read_text(encoding="utf-8"))
+    assert _read(full) == _read(stripped)
+
+
+@pytest.mark.parametrize(
+    ("text", "unwrapped"),
+    [
+        ("<text>a<content> b</content></text>", "<text>a b</text>"),
+        ("<text><content>a </content><bold>b</bold></text>", "<text>a <bold>b</bold></text>"),
+        ("<text><bold><content>a </content></bold>b</text>", "<text><bold>a </bold>b</text>"),  # the space stays bold
+        ("<list><ldiv/><content>a </content><italic>b</italic></list>", "<list><ldiv/>a <italic>b</italic></list>"),
+        ("<text><content>a b</content></text>", "<text>a b</text>"),
+    ],
+)
+def test_content_is_unwrapped_where_it_reads_the_same(text, unwrapped):
+    from lxml import etree
+
+    _, full = _strip_only_and_full(f'<doclang xmlns="{NS}">{text}</doclang>')
+    assert etree.tostring(full[0]).decode().replace(f' xmlns="{NS}"', "") == unwrapped
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "<text>a<content>  b</content></text>",  # two spaces would collapse
+        "<text>a<content>\nb</content></text>",  # a line break would read as a space
+        "<text>a<content>b\n</content>c</text>",  # also at its end
+        "<text>a<content>\n</content></text>",
+        "<text>a<content>\tb</content></text>",
+        "<text><content> a</content></text>",  # at the start of the body, the space would be dropped
+        "<text><content>a </content></text>",  # at its end, too
+        '<text><location value="1"/><content> a</content></text>',  # after the element head, too
+        "<text><bold><content> a</content></bold></text>",  # also within an inline element
+        "<text>a<content> </content><content> </content>b</text>",  # adjacent spaces would merge
+        "<list><ldiv/><content>a </content><ldiv/>b</list>",  # at the end of a list item
+        "<text>a<!-- c --><content> b</content></text>",  # next to a comment
+        "<code><content>def f():\n    pass</content></code>",
+    ],
+)
+def test_content_stays_where_unwrapping_would_change_the_reading(text):
+    _, full = _strip_only_and_full(f'<doclang xmlns="{NS}">{text}</doclang>')
+    assert full.find(f".//{{{NS}}}content") is not None
+
+
+@pytest.mark.parametrize(
+    ("turns", "reading"),
+    [
+        (  # pretty-printed
+            "\n  <voice>Alice</voice>\n  Hello\n  <bold>everyone</bold>,\n  welcome.\n  <voice>Bob</voice>Thanks!\n",
+            ["Alice", "Hello <bold>everyone</bold>, welcome.", "Bob", "Thanks!"],
+        ),
+        ("<voice>A</voice> Hi <voice/> (applause) ", ["A", "Hi", "(applause)"]),  # edges of a turn
+        ('All done. <bdiv/><seconds value="5"/> And next', ["All done.", "And next"]),  # a cue block ends a turn
+        ("<voice> Dr. <bold>Smith</bold> </voice>Hi", ["Dr. <bold>Smith</bold>", "Hi"]),  # <voice> is a block
+        ("It was <italic>very </italic> <bold>good</bold>", ["It was <italic>very </italic><bold>good</bold>"]),
+        ("First line\n  second line", ["First line second line"]),  # a line break reads as a space
+        ("First line<content>\n</content>second line", ["First line\nsecond line"]),
+    ],
+)
+def test_reader_reads_transcript_turns(turns, reading):
+    from lxml import etree
+
+    xml = f'<doclang xmlns="{NS}"><track><bdiv/><seconds value="2"/>{turns}</track></doclang>'
+    assert _read(etree.fromstring(xml)) == reading
+
+
+def test_reader_reads_elements_without_raw_text_as_part_of_the_text():
+    from lxml import etree
+
+    xml = (
+        f'<doclang xmlns="{NS}"><text>\n  <checkbox/> Accept the\n  <bold>terms</bold>, see\n'
+        "  <picture><caption> Fig. 1 </caption></picture> below.\n</text></doclang>"
+    )
+    assert _read(etree.fromstring(xml)) == [
+        "Fig. 1",  # the caption is a text block of its own
+        "[checkbox] Accept the <bold>terms</bold>, see [picture] below.",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("text", "reading"),
+    [
+        (  # the head of a nested element is disregarded: one sequence across it
+            '<text>Visit our <text><href uri="https://www.example.com"/>website</text> for more.</text>',
+            ["Visit our <text>website</text> for more."],
+        ),
+        (  # the head of the text block itself, too
+            '<text>\n  <location value="1"/><location value="2"/><location value="3"/><location value="4"/>\n  Hi</text>',
+            ["Hi"],
+        ),
+        ("<text>c <!-- note --> d<?pi x?>e</text>", ["c de"]),  # comments and processing instructions, too
+        (  # a caption is a text block of its own, with its own nested content
+            "<picture><caption> Fig. <bold>1</bold> </caption></picture>",
+            ["Fig. <bold>1</bold>"],
+        ),
+    ],
+)
+def test_reader_disregards_element_heads(text, reading):
+    from lxml import etree
+
+    assert _read(etree.fromstring(f'<doclang xmlns="{NS}">{text}</doclang>')) == reading
+
+
+@pytest.mark.parametrize(
+    ("text", "reading"),
+    [
+        (  # two paragraphs in a list item: blocks of their own
+            "<list><ldiv/><text>Apples.</text> <text>Pears.</text></list>",
+            ["Apples.", "Pears."],
+        ),
+        (  # with raw text, the item is a virtual <text> and the <text> is part of it
+            "<list><ldiv/>Fruit: <text>apples</text></list>",
+            ["Fruit: <text>apples</text>"],
+        ),
+        (  # the same for cells; formatting makes a cell a virtual <text> too
+            "<table><fcel/><text>a</text> <text>b</text><fcel/><bold>x</bold> <text>y</text><nl/></table>",
+            ["a", "b", "<bold>x</bold> <text>y</text>"],
+        ),
+    ],
+)
+def test_reader_reads_items_without_text_of_their_own_as_blocks(text, reading):
+    from lxml import etree
+
+    assert _read(etree.fromstring(f'<doclang xmlns="{NS}">{text}</doclang>')) == reading
+
+
+def test_reader_reads_the_spec_example():
+    from lxml import etree
+
+    xml = (
+        f'<doclang xmlns="{NS}"><text>\n  Water is H<subscript>2</subscript>O,\n  <bold>very </bold>\n'
+        "  <italic> clear</italic> and <content>two  spaces</content> apart.\n</text></doclang>"
+    )
+    assert _read(etree.fromstring(xml)) == [
+        "Water is H<subscript>2</subscript>O, <bold>very </bold><italic>clear</italic> and two  spaces apart."
+    ]
+
+
+# --- keeping spaces in the 0.9 to 0.8 step ---------------------------------------------------------
+
+
+def _downgraded(xml: str):
+    from lxml import etree
+
+    from doclang.migration._steps import v0_9_to_0_8
+    from doclang.migration._tree import Changes
+
+    root = etree.fromstring(xml.encode("utf-8"))
+    changes = Changes()
+    v0_9_to_0_8.migrate(root, changes)
+    return root, changes
+
+
+@pytest.mark.parametrize(
+    "source",
+    sorted((CASES_DIR / "0.9_to_0.8").glob("*in.dclg")) + sorted(VALID_DIR.glob("*.dclg")),
+    ids=lambda f: f.stem,
+)
+def test_downgrading_keeps_the_reading(source):
+    from lxml import etree
+
+    xml = source.read_text(encoding="utf-8")
+    root, changes = _downgraded(xml)
+    if changes.items:
+        pytest.skip("drops what the target cannot express")
+    assert _read(root, rules="0.8") == _read(etree.fromstring(xml.encode("utf-8")))
+
+
+@pytest.mark.parametrize(
+    ("text", "downgraded"),
+    [
+        ("<text>Hi <bold>there</bold></text>", "<text>Hi<content> </content><bold>there</bold></text>"),
+        ("<text>Hi\n  <bold>there</bold></text>", "<text>Hi<content> </content>\n  <bold>there</bold></text>"),
+        (
+            "<text><bold>very </bold> <italic>clear</italic></text>",  # the space stays bold
+            "<text><bold>very<content> </content></bold><italic>clear</italic></text>",
+        ),
+        ("<text>a <content>b</content></text>", "<text>a<content> </content><content>b</content></text>"),
+        (
+            "<list><ldiv/>a <bold>b</bold><ldiv/>c</list>",
+            "<list><ldiv/>a<content> </content><bold>b</bold><ldiv/>c</list>",
+        ),
+        ("<text>\n  two words\n</text>", "<text>\n  two words\n</text>"),  # between words, at the body's edges
+        ('<text><location value="1"/> <bold>a</bold></text>', '<text><location value="1"/> <bold>a</bold></text>'),
+        (  # paragraphs in a list item are blocks of their own: the whitespace between them is ignored
+            "<list><ldiv/><text>Apples.</text> <text>Pears.</text></list>",
+            "<list><ldiv/><text>Apples.</text> <text>Pears.</text></list>",
+        ),
+        (
+            "<list><ldiv/>Fruit: <text>apples</text></list>",
+            "<list><ldiv/>Fruit:<content> </content><text>apples</text></list>",
+        ),
+        (  # a comment is disregarded: one space across it
+            "<text>c <!-- note --> d</text>",
+            "<text>c<content> </content><!-- note -->d</text>",
+        ),
+        (  # the head of a nested element is disregarded
+            '<text>Visit our <text><href uri="u"/>website</text> now</text>',
+            '<text>Visit our<content> </content><text><href uri="u"/>website</text><content> </content>now</text>',
+        ),
+        (  # an element without raw text is part of the text, with a space on either side
+            "<text><checkbox/> Accept, see <picture/> below.</text>",
+            "<text><checkbox/><content> </content>Accept, see<content> </content><picture/><content> </content>"
+            "below.</text>",
+        ),
+    ],
+)
+def test_spaces_the_target_would_lose_become_content(text, downgraded):
+    from lxml import etree
+
+    root, _ = _downgraded(f'<doclang xmlns="{NS}">{text}</doclang>')
+    assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
+
+
+@pytest.mark.parametrize(
+    ("text", "downgraded", "kinds"),
+    [
+        (
+            "<field_heading><italic>Contact:</italic> Address</field_heading>",
+            "<field_heading><italic>Contact:<content> </content></italic>Address</field_heading>",
+            ["mapped"],
+        ),
+        (
+            "<field_heading>Contact: <italic>Address</italic></field_heading>",
+            "<field_heading>Contact:<italic><content> </content>Address</italic></field_heading>",
+            ["mapped"],
+        ),
+        (  # no formatting element next to it: the space is lost
+            "<field_heading>Accept <checkbox/></field_heading>",
+            "<field_heading>Accept<checkbox/></field_heading>",
+            ["dropped"],
+        ),
+    ],
+)
+def test_field_heading_spaces_go_into_a_formatting_element(text, downgraded, kinds):
+    """<field_heading> cannot hold <content>; the space takes the formatting of its neighbour instead."""
+    from lxml import etree
+
+    root, changes = _downgraded(f'<doclang xmlns="{NS}">{text}</doclang>')
+    assert etree.tostring(root[0]).decode().replace(f' xmlns="{NS}"', "") == downgraded
+    assert [c["kind"] for c in changes.items] == kinds
+
+
+@pytest.mark.parametrize("source", sorted((CASES_DIR / "0.9_to_0.8").glob("*in.dclg")), ids=lambda f: f.stem)
+def test_upgrading_again_unwraps_the_added_spaces(source):
+    from lxml import etree
+
+    from doclang.migration._steps import v0_8_to_0_9
+    from doclang.migration._tree import Changes
+
+    root, _ = _downgraded(source.read_text(encoding="utf-8"))
+    v0_8_to_0_9.migrate(root, Changes())
+    original = etree.fromstring(source.read_bytes())
+    assert len(root.findall(f".//{{{NS}}}content")) == len(original.findall(f".//{{{NS}}}content"))
+    assert _read(root) == _read(original)

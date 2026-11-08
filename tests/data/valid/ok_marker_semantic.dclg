@@ -1,0 +1,10 @@
+<doclang xmlns="https://www.doclang.ai/ns/v0">
+  <list class="unordered">
+    <ldiv><marker><picture><location value="40"/><location value="100"/><location value="48"/><location value="108"/></picture></marker></ldiv>
+    <text>Item with an image bullet</text>
+    <ldiv><marker><formula>\alpha</formula></marker></ldiv>
+    <text>Item with a formula as marker</text>
+    <ldiv><marker><text>a<bold>)</bold></text></marker></ldiv>
+    <text>Item with a text marker</text>
+  </list>
+</doclang>

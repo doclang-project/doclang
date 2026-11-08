@@ -15,7 +15,7 @@ from pathlib import Path
 from lxml import etree
 
 _SCHEMA_DIR = Path(__file__).resolve().parent
-_VERSION_RE = re.compile(r"^(\d+)\.(\d+)$")
+_VERSION_RE = re.compile(r"(\d+)\.(\d+)")
 _SCHEMA_VERSION_RE = re.compile(r'<xs:schema[^>]*\sversion="(\d+)\.(\d+)\.\d+"', re.DOTALL)
 
 
@@ -56,7 +56,7 @@ def _bundled_schema_paths() -> tuple[Path, Path]:
 
 
 def _version_key(version: str) -> tuple[int, int]:
-    match = _VERSION_RE.match(version)
+    match = _VERSION_RE.fullmatch(version)
     assert match is not None
     return int(match.group(1)), int(match.group(2))
 
@@ -88,7 +88,9 @@ def _available_versions() -> list[str]:
     versioned_dir = _SCHEMA_DIR / "schemas"
     if not versioned_dir.is_dir():
         return []
-    versions = [e.name for e in versioned_dir.iterdir() if _VERSION_RE.match(e.name) and _has_versioned_schemas(e.name)]
+    versions = [
+        e.name for e in versioned_dir.iterdir() if _VERSION_RE.fullmatch(e.name) and _has_versioned_schemas(e.name)
+    ]
     return sorted(versions, key=_version_key)
 
 
@@ -98,7 +100,7 @@ def _resolve_in_folders(requested: str) -> str | None:
     An exact match wins. From major version 1, an instance is compatible with any later minor
     of the same major, so the nearest newer minor with schemas is used.
     """
-    if not _VERSION_RE.match(requested):
+    if not _VERSION_RE.fullmatch(requested):
         return None
     available = _available_versions()
     if requested in available:

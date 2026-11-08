@@ -6,6 +6,7 @@ via the public ``validate()`` API.
 """
 
 import builtins
+import re
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -298,13 +299,20 @@ def test_08_document_validates_against_the_released_08_schema(tmp_path):
         assert validate(track_08, spec_version="0.8") is None
 
 
-def test_newer_declared_version_falls_back_to_the_released_head(tmp_path):
-    """The head is identical to the released 0.8 schema, so the fallback message may name it."""
-    newer = _versioned_doc(tmp_path, "0.9", _TRACK_BODY)
-    with pytest.warns(UserWarning, match=r"No schema for declared DocLang version 0\.9; .*latest schema \(0\.8\)\."):
-        assert validate(newer) is None
-    with pytest.raises(ValidationError, match=r"No schema for declared DocLang version '0\.9'"):
-        validate(newer, strict_declared_version=True)
+def test_newer_declared_version_falls_back_to_the_head(tmp_path):
+    """The fallback message names the head by its version if it is identical to that released schema, else as
+    unreleased."""
+    newest = max(_available_versions(), key=lambda v: tuple(map(int, v.split("."))))
+    major, minor = map(int, newest.split("."))
+    newer = f"{major}.{minor + 1}"
+    doc = _versioned_doc(tmp_path, newer, _TRACK_BODY)
+    head = rf"({re.escape(newest)}|unreleased development version)"
+    with pytest.warns(
+        UserWarning, match=rf"No schema for declared DocLang version {re.escape(newer)}; .*latest schema \({head}\)\."
+    ):
+        assert validate(doc) is None
+    with pytest.raises(ValidationError, match=rf"No schema for declared DocLang version '{re.escape(newer)}'"):
+        validate(doc, strict_declared_version=True)
 
 
 def test_version_attribute_only_constrained_to_format(tmp_path):
@@ -473,3 +481,29 @@ def test_fallback_warnings_describe_the_head(schema_dir, tmp_path):
         UserWarning, match=r"No schema for declared DocLang version 1\.4; .*\(unreleased development version\)"
     ):
         validate(_doc(tmp_path, "1.4"), xsd_only=True)
+
+
+_LOC = '<location value="10"/><location value="20"/><location value="30"/><location value="40"/>'
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        # non-first branches of union rule contexts
+        f'<heading level="1">stray{_LOC}</heading>',
+        f"<table><ecel/>stray{_LOC}<nl/></table>",
+        f"<index><fcel/>stray{_LOC}<nl/></index>",
+        f'<list class="unordered">stray{_LOC}<ldiv/>item</list>',
+        # text equal in value to the head must not be mistaken for it
+        '<list class="unordered"><ldiv/>stray<caption>stray</caption></list>',
+        "<table><fcel/>stray<caption>stray</caption><nl/></table>",
+    ],
+    ids=["heading", "table_ecel", "index_fcel", "list_own_head", "list_same_value", "table_same_value"],
+)
+def test_text_before_element_head_is_rejected(tmp_path, body):
+    path = tmp_path / "doc.dclg"
+    path.write_text(f'<doclang xmlns="https://www.doclang.ai/ns/v0">{body}</doclang>', encoding="utf-8")
+    with pytest.raises(ValidationError) as excinfo:
+        validate(path)
+    assert not excinfo.value.xsd_errors
+    assert any("before element head" in str(e) for e in excinfo.value.schematron_errors)
