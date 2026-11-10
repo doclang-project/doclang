@@ -16,6 +16,9 @@ from doclang._packaging import _document_file, _is_archive
 from doclang._schemas import UnsupportedVersionError, _select_schemas
 from doclang.migration import MigrationError
 from doclang.migration import migrate as migrate_document
+from doclang.normalization import NormalizationError
+from doclang.normalization import normalize as normalize_document
+from doclang.normalization import rules as list_normalization_rules
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
 from doclang.schematron import SchematronBackendNotFound
@@ -497,7 +500,134 @@ def migrate(
 
 def _format_change(change: dict[str, Any]) -> str:
     line = "" if change["line"] is None else f" (line {change['line']})"
-    return f"  {change['kind'].capitalize()}: {change['location']}{line}: {change['message']}"
+    rule = f" [{change['rule']}]" if "rule" in change else ""
+    return f"  {change['kind'].capitalize()}{rule}: {change['location']}{line}: {change['message']}"
+
+
+def _list_rules_callback(value: bool):
+    """List the normalization rules and exit."""
+    if value:
+        for rule in list_normalization_rules():
+            typer.echo(f"{rule['id']:<22} tier {rule['tier']}  {rule['description']}")
+        raise typer.Exit()
+
+
+@app.command(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
+)
+def normalize(
+    document: Path = typer.Argument(..., help="DocLang markup file (.dclg, .xml, …) or .dclx archive", exists=True),
+    tier: int = typer.Option(
+        1,
+        "--tier",
+        min=1,
+        max=2,
+        help="1: apply the deterministic rules only and report what tier 2 would change; 2: apply the heuristic "
+        "rules too",
+    ),
+    rule: Optional[list[str]] = typer.Option(
+        None, "--rule", "-r", help="Run only this rule (repeatable; see --list-rules)"
+    ),
+    output: Path | None = typer.Option(
+        None,
+        "-o",
+        "--output",
+        help="Write the normalized document (or archive) here (default: stdout; required for an archive)",
+    ),
+    in_place: bool = typer.Option(False, "--in-place", "-i", help="Overwrite the document"),
+    check: bool = typer.Option(
+        False, "--check", help="Write nothing; exit with 1 if a rule of the selected tier would change the document"
+    ),
+    input_validation: ValidationScope = typer.Option(
+        ValidationScope.all, "--input-validation", help="Validation of the document before normalizing"
+    ),
+    output_validation: ValidationScope = typer.Option(
+        ValidationScope.all, "--output-validation", help="Validation of the normalized document"
+    ),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Do not report changes and warnings"),
+    format: OutputFormat = typer.Option(OutputFormat.text, "--format", "-f", help="Output format"),
+    list_rules: bool = typer.Option(
+        False, "--list-rules", callback=_list_rules_callback, is_eager=True, help="List the rules and exit"
+    ),
+):
+    """
+    Normalize super/subscripts, symbols and inline math to the preferred representation.
+
+    Rewrites what the specification (Annex C, "Representing scripts, symbols and math") lists as equivalent but
+    not preferred, e.g. ℃ → °C, CO₂ → CO<subscript>2</subscript>, <formula>2x</formula><superscript>2</superscript>
+    → <formula>2x^{2}</formula>. Tier 1 rules are deterministic; tier 2 rules are heuristics that read the
+    surrounding text (e.g. x<superscript>2</superscript> → <formula>x^{2}</formula>) and are only applied with
+    --tier 2, otherwise reported as suggestions.
+
+    The normalized document goes to stdout (or --output); changes and suggestions go to stderr.
+
+    Examples:
+
+        doclang normalize document.dclg -o normalized.dclg
+        doclang normalize document.dclg --tier 2 --in-place
+        doclang normalize document.dclg --check
+        doclang normalize document.dclg --rule degree --rule trademark
+        doclang normalize --list-rules
+    """
+    if in_place and output is not None:
+        typer.echo("Error: pass either --in-place or --output, not both", err=True)
+        raise typer.Exit(1)
+    target = document if in_place else output
+    if check:
+        target = None
+    elif target is None and _is_archive(document):
+        typer.echo("Error: an archive cannot be written to stdout; pass --output (-o) or --in-place", err=True)
+        raise typer.Exit(1)
+    warning_messages: list[str] = []
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                result = normalize_document(
+                    document,
+                    tier=tier,
+                    rules=rule or None,
+                    output=target,
+                    input_validation=input_validation.value,
+                    output_validation=output_validation.value,
+                )
+            finally:
+                warning_messages = [str(w.message) for w in caught]
+    except (NormalizationError, UnsupportedVersionError, SchematronBackendNotFound) as exc:
+        if format == OutputFormat.json:
+            changes = exc.changes if isinstance(exc, NormalizationError) else []
+            typer.echo(json.dumps({"error": str(exc), "changes": changes, "notes": warning_messages}, indent=2))
+        else:
+            typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    if format == OutputFormat.json:
+        payload: dict[str, Any] = {
+            "changes": result.changes,
+            "suggestions": result.suggestions,
+            "notes": warning_messages,
+        }
+        if target is None and not check:
+            payload["xml"] = result.xml
+        typer.echo(json.dumps(payload, indent=2))
+    else:
+        if target is None and not check:
+            typer.echo(result.xml, nl=False)
+        if not quiet:
+            for message in warning_messages:
+                typer.echo(f"Warning: {message}", err=True)
+            for change in result.changes + result.suggestions:
+                typer.echo(_format_change(change), err=True)
+            summary = f"{len(result.changes)} change(s)"
+            if result.suggestions:
+                summary += f", {len(result.suggestions)} tier 2 suggestion(s) (apply with --tier 2)"
+            typer.echo(f"Normalized: {summary}" + (f": {target}" if target is not None else ""), err=True)
+    if check and result.changes:
+        raise typer.Exit(1)
 
 
 def _version_callback(value: bool):

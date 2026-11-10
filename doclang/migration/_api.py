@@ -235,7 +235,7 @@ def _validate(
     scope: str,
     *,
     allow_empty_namespace: bool,
-    failure: Callable[[ValidationError], MigrationError],
+    failure: Callable[[ValidationError], Exception],
     spec_version: str | None = None,
     head: bool = False,
 ) -> None:

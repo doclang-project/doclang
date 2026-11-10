@@ -470,15 +470,27 @@ seq 1 5 | while read n; do echo $n; done</content>
 
 ### Math and equations
 
-All math is authored as LaTeX inside <formula>, whether in standalone blocks or inlined within a semantic element (similar to code).
+All math is authored as LaTeX inside `<formula>`, whether in standalone blocks or inlined within a semantic element (similar to code).
+
+A `<formula>` should capture a whole mathematical expression, i.e. a span containing a variable, an operator or a relation, as one formula: it should not be split into several formulas, nor be combined with [`<superscript>`](#superscript), [`<subscript>`](#subscript) or Unicode math characters (such as `²` or `α`) to form the expression. A lone variable, such as `x`, `R²` or the parameter `α`, is an expression on its own. Scripts that are not math, such as chemical formulas, units or reference marks, are formatting instead (see [Formatting](#formatting)). Annex C lists the recommended representation for each case (see [Representing scripts, symbols and math](#representing-scripts-symbols-and-math)).
 
 Inline formula:
 
 ```xml
 <text>
   The famous relation <formula>E = mc^2</formula> connects mass and energy.
-  For small x, <formula>\sin x \approx x - x^3/3!</formula> holds.
+  For small <formula>x</formula>, <formula>\sin x \approx x - x^3/3!</formula> holds.
   The binomial: <formula>(a+b)^n = \sum_{k=0}^n \binom{n}{k} a^{n-k} b^k</formula>.
+</text>
+```
+
+Lone variables and numbers in scientific notation, next to chemistry and units, which stay formatting:
+
+```xml
+<text>
+  The fit gives <formula>R^{2} = 0.93</formula> for the parameter <formula>\alpha</formula>,
+  at a rate of <formula>3 \times 10^{-5}</formula> mol per km<superscript>2</superscript>
+  of CO<subscript>2</subscript> at 37 °C.
 </text>
 ```
 
@@ -1740,7 +1752,7 @@ under `<text>`, not mixed `<text>` and `<picture>`).
   <thread thread_id="1"/>
   <location value="10"/><location value="20"/>
   <location value="30"/><location value="40"/>
-  where τ<subscript>x,y,z</subscript> are the Pauli matrices acting
+  where <formula>\tau_{x,y,z}</formula> are the Pauli matrices acting
   on Nambu space. We consider a circular-shaped boundary, the nor-
 </text>
 
@@ -1759,7 +1771,7 @@ under `<text>`, not mixed `<text>` and `<picture>`).
   <thread thread_id="1"/>
   <location value="30"/><location value="40"/>
   <location value="50"/><location value="60"/>
-  mal direction of the boundary tangent for arbitrary angle θ is
+  mal direction of the boundary tangent for arbitrary angle <formula>\theta</formula> is
   <formula><!-- ... --></formula>
   <!-- ... -->
 </text>
@@ -2042,6 +2054,8 @@ Superscript and subscript:
   Answer: H<subscript>2</subscript>O.
 </text>
 ```
+
+[`<superscript>`](#superscript) and [`<subscript>`](#subscript) capture text that is raised or lowered without being math, such as chemical formulas, isotopes, units, ordinals and reference or footnote marks. A script that is part of a mathematical expression belongs in the expression's [`<formula>`](#math-and-equations) instead (e.g. `<formula>x^{2}</formula>`, not `x<superscript>2</superscript>`). Raised or lowered text should not be written with Unicode superscript or subscript characters (e.g. `CO₂` or `km²`), whereas symbols that are characters of their own, such as `°`, `™`, `®`, `©` or `μ`, should be. See [Representing scripts, symbols and math](#representing-scripts-symbols-and-math) for the recommended representation of each case.
 
 ### Page break with continuation
 
@@ -3588,6 +3602,49 @@ For the `label@value` of `<code>` elements, we recommend using the values define
 Additional special cases:
 - `other`: use when the code was examined but does not match any of the recommended values from above.
 - `undefined`: use when classification has not been performed (default [`label@value`](#label)).
+
+#### Representing scripts, symbols and math
+
+Text that is raised, lowered or mathematical can often be written in several equivalent ways in DocLang. To make instances consistent, e.g. for comparing or training on them, producers are recommended to use one representation per case, following this principle:
+
+- A [`<formula>`](#formula) is a mathematical expression written in full LaTeX: a span containing a variable, an operator or a relation, judged on the whole span rather than on the scripted token alone.
+- Everything else is typography: [`<superscript>`](#superscript) or [`<subscript>`](#subscript) when the source raises or lowers it, and a plain Unicode character for a symbol that is a character of its own (`°`, `™`, `μ`). Unicode superscript and subscript characters (`²`, `₂`, `ⁿ`) are not used.
+
+| Case | Recommended | Equivalent, not recommended | How to tell |
+| --- | --- | --- | --- |
+| Expression: `2x+b`, `∠ABC = 90°`, `f(x)=x²` | one `<formula>`, all LaTeX: `<formula>\angle ABC = 90^{\circ}</formula>` | split formulas; `<formula>2x</formula><superscript>2</superscript>`; Unicode inside a formula (`<formula>∠ABC = 90°</formula>`) | contains a variable, an operator or a relation |
+| Lone variable, with or without a script: `x`, `x²`, `Iₙ`, `R²` | `<formula>x</formula>`, `<formula>x^{2}</formula>` | `x`, `x<superscript>2</superscript>`, `x²` | a single (usually italic) letter used as a symbol, as in the expressions around it |
+| Greek letter as a variable: the parameter `α`, `ΔG`, `σ = 0.3` | `<formula>\alpha</formula>`, `<formula>\sigma = 0.3</formula>` | `α`, `σ = 0.3` as text | stands alone, often next to `=` or in "where … is" |
+| Scientific notation: `3 × 10⁻⁵` | `<formula>3 \times 10^{-5}</formula>` | `3 × 10<superscript>-5</superscript>` | a number, `×` and a power of ten; a unit after it stays text |
+| Chemistry: `CO₂`, `H₂O`, `Ca²⁺` | `CO<subscript>2</subscript>`, `Ca<superscript>2+</superscript>` | `CO₂`, `<formula>CO_2</formula>` | upright element symbols; a chemical equation with `+` and `→` is a formula |
+| Isotopes: `¹³C` | `<superscript>13</superscript>C` | `¹³C` | as chemistry |
+| Units: `km²`, `cm⁻¹`, `kg m⁻³` | `km<superscript>2</superscript>` | `km²`, `<formula>km^2</formula>` | an upright unit after a number or a slash |
+| Reference, affiliation and footnote marks | `<superscript>1</superscript>` | `¹`, `<formula>^{1}</formula>` | after a word, a name or punctuation, or opening a footnote |
+| Letters marking significance in table cells: `2.71ᵇ` | `2.71<superscript>b</superscript>` | `2.71ᵇ` | a number followed by letters, in a cell |
+| Ordinals: `30th`, `1er` | `30<superscript>th</superscript>` if raised in the source, `30th` if not | `<formula>30^{th}</formula>`, `2ⁿᵈ` | follow the source |
+| Degrees: `90°`, `37 °C` | `90°`, `37 °C` | `<formula>90^{\circ}</formula>`, `37<superscript>o</superscript>C`, `37 o C`, look-alike characters (`◦`, `˚`, `º`, `∘`) | a number followed by a degree sign |
+| `℃`, `℉` | `°C`, `°F` | `℃`, `℉` | always |
+| Tolerances: `20 °C ± 5 °C` | plain text | a formula | numbers with units and no variable |
+| `™`, `®`, `©` | the character | `<superscript>TM</superscript>`, `<formula>^{TM}</formula>` | always |
+| Greek letter in a name: `α-helix`, `β-carotene`, `PDGFRβ` | plain Unicode `α` | `<formula>\alpha</formula>-helix` | hyphenated to a word, or glued to a name |
+| Greek letter as a unit or prefix: `5 μm`, `470 kΩ` | plain Unicode | `5 <formula>\mu</formula>m` | after a number, before a unit letter |
+| Greek-language text | plain text | | ordinary words |
+
+Whether a letter is italic or upright, or a script raised in the source, can only be judged from the rendered source. Where the source is not available, as for a document converted from markup, producers should rely on the context described in the last column.
+
+Example:
+
+```xml
+<text>
+  We measured <formula>x^{2}</formula> and <formula>2x^{2} + b</formula>
+  for the parameter <formula>\alpha</formula> with <formula>p &lt; 0.05</formula>
+  at 37 °C, using 3 mg of <superscript>13</superscript>C-labelled CO<subscript>2</subscript>
+  per km<superscript>2</superscript> in the α-helix study by Smith<superscript>1</superscript>
+  for the 2<superscript>nd</superscript> time with Teflon™.
+</text>
+```
+
+The reference toolkit's `doclang normalize` command rewrites the equivalent representations above into the recommended ones; the rewrites it can make without judging the context are applied by default, the others on request.
 
 #### Custom vocabulary naming and namespacing
 
