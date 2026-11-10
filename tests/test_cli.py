@@ -243,3 +243,22 @@ def test_cli_validate_archive(tmp_path):
         zf.writestr("pages/1.png", b"page")
     missing = runner.invoke(app, ["validate", str(bad)])
     assert missing.exit_code == 1 and "No document.xml" in missing.output
+
+
+def test_cli_pack_with_source(tmp_path):
+    document = Path(__file__).resolve().parents[1] / "examples" / "archive-demo" / "document.xml"
+    original = tmp_path / "original.pdf"
+    original.write_bytes(b"%PDF-1.7\n")
+    out = tmp_path / "out.dclx"
+    args = ["pack", str(document), "-o", str(out), "--source", str(original)]
+
+    result = runner.invoke(app, [*args, "--source-mimetype", "application/pdf"])
+    assert result.exit_code == 0, result.output
+    with zipfile.ZipFile(out) as zf:
+        assert zf.read("source") == b"%PDF-1.7\n"
+        assert '<Override PartName="/source" ContentType="application/pdf"/>' in zf.read("[Content_Types].xml").decode(
+            "utf-8"
+        )
+
+    incomplete = runner.invoke(app, args)
+    assert incomplete.exit_code == 1 and "must be given together" in incomplete.output

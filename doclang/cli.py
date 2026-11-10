@@ -301,6 +301,19 @@ def pack(
         file_okay=True,
         dir_okay=False,
     ),
+    source_file: Path | None = typer.Option(
+        None,
+        "--source",
+        help="Original source document stored unchanged as /source (requires --source-mimetype)",
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+    ),
+    source_mimetype: str | None = typer.Option(
+        None,
+        "--source-mimetype",
+        help="MIME type of --source, e.g. application/pdf",
+    ),
     validate_before_pack: bool = typer.Option(False, "--validate", help="Validate document before packing"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
 ):
@@ -311,7 +324,9 @@ def pack(
     are placed under pages/. Optional whole-track audio/video (--audio-dir,
     --audio, --video-dir, --video) are placed under audio/ and video/ as
     {N}.{ext} for the Nth <track>. Optional payload files (--assets, --asset)
-    are placed under assets/ for URIs referenced in the markup. OPC metadata
+    are placed under assets/ for URIs referenced in the markup. An optional
+    original source document (--source with --source-mimetype) is stored
+    unchanged as /source, its MIME type recorded in [Content_Types].xml. OPC metadata
     ([Content_Types].xml, _rels/.rels) is generated automatically.
 
     By default, writes <document>.dclx next to the input file.
@@ -324,7 +339,11 @@ def pack(
         doclang pack markup.dclg --asset chart.svg=exports/diagram.svg
         doclang pack markup.dclg --audio-dir recordings/ --video-dir recordings/
         doclang pack markup.dclg --assets payload/ --validate
+        doclang pack markup.dclg --source report.pdf --source-mimetype application/pdf
     """
+    if (source_file is None) != (source_mimetype is None):
+        typer.echo("Error: --source and --source-mimetype must be given together", err=True)
+        raise typer.Exit(1)
     if pages_dir is not None and page_files:
         typer.echo("Error: --pages and --page are mutually exclusive", err=True)
         raise typer.Exit(1)
@@ -367,6 +386,8 @@ def pack(
             assets=assets,
             audio=audio,
             video=video,
+            source=source_file,
+            source_mimetype=source_mimetype,
             validate=validate_before_pack,
         )
     except ValidationError as exc:

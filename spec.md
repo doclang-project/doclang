@@ -3496,6 +3496,7 @@ pages/                 # optional — page images, e.g. 1.png, 2.png
 audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
 video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
 assets/                # optional — files referenced from markup
+source                 # optional — original source document (type in [Content_Types].xml)
 ```
 
 ##### `[Content_Types].xml` (required)
@@ -3547,6 +3548,17 @@ Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based posi
 ##### `assets/` (optional)
 
 Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
+
+##### `source` (optional)
+
+The root-level part `/source` is reserved for the original document from which the main DocLang instance was produced. It is a single file with no extension, holding the original bytes unmodified (no base64 encoding). Its MIME type is not stored in the archive as a separate file; when `/source` is present, `[Content_Types].xml` MUST contain an `<Override>` for it, e.g.:
+
+```xml
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <!-- … -->
+  <Override PartName="/source" ContentType="application/pdf"/>
+</Types>
+```
 
 #### Page alignment
 
