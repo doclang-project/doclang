@@ -140,6 +140,49 @@ By default the document is validated before the migration (against its own versi
 of `doclang validate`. As there, Schematron needs a backend (see [Installation](#installation)): without one,
 `doclang migrate` fails and tells you so, and you opt out explicitly, e.g. with the `xsd` scope for both.
 
+### Normalization
+
+Rewrite super/subscripts, symbols and inline math into the representation the specification recommends (Annex C,
+"Representing scripts, symbols and math"):
+
+```bash
+doclang normalize document.dclg -o normalized.dclg
+```
+
+The normalized document goes to stdout (or `-o FILE`, or back to the document with `--in-place`); every change is
+reported on stderr with its rule, location and a before → after excerpt, e.g.
+`Fixed [unicode-script]: /doclang/text (line 2): ₂ → <subscript>2</subscript>`.
+
+The rules come in two tiers (`doclang normalize --list-rules` lists them):
+
+- **Tier 1** rules are deterministic and applied by default: `℃` → `°C`; `<superscript>TM</superscript>` → `™`;
+  `<formula>90^{\circ}</formula>` → `90°`; `<formula>^{th}</formula>` → `<superscript>th</superscript>`; `CO₂` →
+  `CO<subscript>2</subscript>`; Unicode and formatting inside a formula → LaTeX; `3 × 10<superscript>-5</superscript>`
+  → `<formula>3 \times 10^{-5}</formula>`; `<formula>2x</formula><superscript>2</superscript>` →
+  `<formula>2x^{2}</formula>`; `<formula>a</formula> = <formula>b</formula>` → `<formula>a = b</formula>`.
+- **Tier 2** rules are heuristics that read the surrounding text and can be wrong, so they are only applied with
+  `--tier 2`; otherwise what they would change is reported as suggestions. They turn variables into formulas
+  (`x<superscript>2</superscript>`, `<italic>x</italic>`, `σ = 0.3`, `p < 0.05`, "where α is"), leaving chemistry
+  (`O<subscript>2</subscript>`), units (`5 m<superscript>2</superscript>`) and reference marks alone; they also turn
+  lone Greek formulas that are names or units back into text (`<formula>\alpha</formula>-helix` → `α-helix`), and
+  fix `90<superscript>o</superscript>` and label noise such as `<superscript>w</superscript>here`.
+
+Whether a letter is italic or a script raised on the page can only be judged from the page image, which the
+normalizer does not see; so ordinals, for example, are left as they are.
+
+#### More normalization scenarios
+
+```bash
+doclang normalize document.dclg --tier 2 --in-place        # apply the heuristic rules too
+doclang normalize document.dclg --check                    # exit with 1 if tier 1 would change anything
+doclang normalize document.dclg --rule degree -r trademark # only these rules
+doclang normalize document.dclx -o normalized.dclx         # an archive
+doclang normalize document.dclg --format json              # changes, suggestions and the document as JSON
+```
+
+As with `doclang migrate`, the document is validated before and the result after normalizing;
+`--input-validation` and `--output-validation` take `all` (default), `xsd`, `schematron` or `none`.
+
 ## Python API
 
 ### Validation
@@ -244,6 +287,21 @@ The input is validated before and the result after the migration; `input_validat
 (`"all"` by default, or `"xsd"`, `"schematron"`, `"none"`) select what runs. As with `validate()`, a missing
 Schematron backend raises `SchematronBackendNotFound`. An invalid input raises `MigrationError`; so does an invalid
 result, which indicates a bug in a migration step (or an invalid input that was not validated).
+
+### Normalization
+
+```python
+from doclang import normalize
+
+result = normalize("document.dclg", tier=1, output="normalized.dclg")
+for change in result.changes:  # {"rule", "tier", "kind": "fixed", "location", "line", "message"}
+    print(change["rule"], change["message"])
+for suggestion in result.suggestions:  # what tier 2 would change, with the kind "suggested"
+    print(suggestion["rule"], suggestion["message"])
+```
+
+`tier=2` applies the heuristic rules too, and `rules=["degree", ...]` runs only the given rules
+(`doclang.normalization.rules()` lists them). An invalid input, or an invalid result, raises `NormalizationError`.
 
 ## Validation Rules
 
