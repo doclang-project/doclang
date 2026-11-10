@@ -1,3 +1,7 @@
+## [v0.9.1](https://github.com/doclang-project/doclang/releases/tag/v0.9.1)
+
+* fix whitespace edge cases in migrate (#228)
+
 ## [v0.9.0](https://github.com/doclang-project/doclang/releases/tag/v0.9.0)
 
 * make tests survive a release (#223)
