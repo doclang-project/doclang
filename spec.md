@@ -3487,16 +3487,15 @@ An archive is a **package** of **parts** (files in the ZIP). Each part has a pat
 
 #### Layout
 
-```
-[Content_Types].xml    # required — OPC content types
-_rels/
-  .rels                # required — package → main document
-document.xml           # required — valid DocLang instance
-pages/                 # optional — page images, e.g. 1.png, 2.png
-audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
-video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
-assets/                # optional — files referenced from markup
-```
+| Part | Content |
+|---|---|
+| `[Content_Types].xml` | Required OPC content types |
+| `_rels/.rels` | Required relationship to the main document |
+| `document.xml` | Required DocLang instance |
+| `pages/` | Optional page images |
+| `assets/` | Optional files referenced by the markup, such as figure images |
+| `audio/` and `video/` | Optional whole-track recordings |
+| `source/` | Optional original source document and its MIME type |
 
 ##### `[Content_Types].xml` (required)
 
@@ -3547,6 +3546,17 @@ Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based posi
 ##### `assets/` (optional)
 
 Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
+
+##### `source/` (optional)
+
+The root-level `source/` directory is reserved for the original document from which the main DocLang instance was produced. Including the source is optional; if either of the following parts is present, both MUST be present.
+
+| Part | Definition |
+|------|------------|
+| `source/mimetype` | A UTF-8 text file containing only the MIME type of the original source document, such as `application/pdf`, with an optional final line ending. |
+| `source/document` | The original source document stored as its unmodified binary bytes, without base64 encoding or an additional file extension. |
+
+Both filenames are literal and have no extension. The package's `[Content_Types].xml` MUST contain an `<Override>` for `/source/mimetype` with content type `text/plain` and an `<Override>` for `/source/document` with the MIME type recorded in `source/mimetype`, excluding its optional final line ending.
 
 #### Page alignment
 

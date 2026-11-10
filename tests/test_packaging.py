@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import zipfile
 from pathlib import Path
+from xml.etree import ElementTree
 
 import pytest
 
@@ -42,6 +43,75 @@ def test_pack_markup_only_explicit_output(tmp_path: Path) -> None:
     assert created == output.resolve()
     members = _zip_members(created)
     assert "document.xml" in members
+
+
+@pytest.mark.parametrize("from_path", [False, True])
+@pytest.mark.parametrize("original", [b"%PDF-1.7\n\x00\xff\n", b""])
+def test_pack_with_original_source(tmp_path: Path, from_path: bool, original: bytes) -> None:
+    source_path = tmp_path / "original.pdf"
+    source_path.write_bytes(original)
+    source = source_path if from_path else original
+    output = tmp_path / "with-source.dclx"
+
+    pack(
+        ARCHIVE_DEMO / "document.xml",
+        output=output,
+        source=source,
+        source_mimetype="application/pdf",
+    )
+
+    with zipfile.ZipFile(output) as archive:
+        assert archive.read("source/document") == original
+        assert archive.read("source/mimetype") == b"application/pdf"
+        content_types = ElementTree.fromstring(archive.read("[Content_Types].xml"))
+    overrides = {
+        element.attrib["PartName"]: element.attrib["ContentType"]
+        for element in content_types
+        if element.tag.endswith("Override")
+    }
+    assert overrides["/source/document"] == "application/pdf"
+    assert overrides["/source/mimetype"] == "text/plain"
+
+
+def test_pack_rejects_incomplete_original_source(tmp_path: Path) -> None:
+    document = ARCHIVE_DEMO / "document.xml"
+    output = tmp_path / "incomplete.dclx"
+
+    with pytest.raises(PackagingError, match="provided together"):
+        pack(document, output=output, source=b"")
+    with pytest.raises(PackagingError, match="provided together"):
+        pack(document, output=output, source_mimetype="application/pdf")
+    assert not output.exists()
+
+
+def test_pack_rejects_invalid_source_mimetype(tmp_path: Path) -> None:
+    output = tmp_path / "invalid-mimetype.dclx"
+
+    with pytest.raises(PackagingError, match="Invalid source MIME type"):
+        pack(
+            ARCHIVE_DEMO / "document.xml",
+            output=output,
+            source=b"data",
+            source_mimetype='application/pdf" bad="true',
+        )
+    assert not output.exists()
+
+
+def test_pack_rejects_symlink_source(tmp_path: Path) -> None:
+    original = tmp_path / "original.pdf"
+    original.write_bytes(b"pdf")
+    source_link = tmp_path / "linked.pdf"
+    source_link.symlink_to(original)
+    output = tmp_path / "symlink-source.dclx"
+
+    with pytest.raises(PackagingError, match="symbolic link"):
+        pack(
+            ARCHIVE_DEMO / "document.xml",
+            output=output,
+            source=source_link,
+            source_mimetype="application/pdf",
+        )
+    assert not output.exists()
 
 
 def test_pack_with_pages_directory(tmp_path: Path) -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -60,6 +61,9 @@ AssetsInput = Union[
     Path,
     Mapping[str, Union[str, Path]],
 ]
+
+SourceInput = Union[str, Path, bytes]
+_SOURCE_MIMETYPE_PATTERN = re.compile(r"[A-Za-z0-9!#$&^_.+-]+/[A-Za-z0-9!#$&^_.+-]+\Z")
 
 
 class PackagingError(Exception):
@@ -193,8 +197,27 @@ def _place_assets(stage: Path, assets: AssetsInput) -> None:
     _copy_tree_into(Path(assets), assets_dir, label="Assets directory")
 
 
-def _write_opc_metadata(stage: Path) -> None:
-    (stage / "[Content_Types].xml").write_text(_CONTENT_TYPES_XML, encoding="utf-8")
+def _place_source(stage: Path, source: SourceInput, mimetype: str) -> None:
+    if _SOURCE_MIMETYPE_PATTERN.fullmatch(mimetype) is None:
+        raise PackagingError("Invalid source MIME type; expected type/subtype")
+    source_dir = stage / "source"
+    source_dir.mkdir()
+    if isinstance(source, bytes):
+        (source_dir / "document").write_bytes(source)
+    else:
+        _copy_file(Path(source), source_dir / "document", label="Source document")
+    (source_dir / "mimetype").write_text(mimetype, encoding="utf-8")
+
+
+def _write_opc_metadata(stage: Path, *, source_mimetype: str | None = None) -> None:
+    content_types = _CONTENT_TYPES_XML
+    if source_mimetype is not None:
+        overrides = (
+            '  <Override PartName="/source/mimetype" ContentType="text/plain"/>\n'
+            f'  <Override PartName="/source/document" ContentType="{source_mimetype}"/>\n'
+        )
+        content_types = content_types.replace("</Types>", f"{overrides}</Types>")
+    (stage / "[Content_Types].xml").write_text(content_types, encoding="utf-8")
     rels_dir = stage / "_rels"
     rels_dir.mkdir(parents=True, exist_ok=True)
     (rels_dir / ".rels").write_text(_RELS_XML, encoding="utf-8")
@@ -230,8 +253,12 @@ def _pack(
     assets: AssetsInput | None = None,
     audio: MediaInput | None = None,
     video: MediaInput | None = None,
+    source: SourceInput | None = None,
+    source_mimetype: str | None = None,
     validate: bool = False,
 ) -> Path:
+    if (source is None) != (source_mimetype is None):
+        raise PackagingError("source and source_mimetype must be provided together")
     document_path = Path(document)
     output_path = Path(output) if output is not None else document_path.with_suffix(".dclx")
 
@@ -246,7 +273,9 @@ def _pack(
             _place_audio(stage, audio)
         if video is not None:
             _place_video(stage, video)
-        _write_opc_metadata(stage)
+        if source is not None and source_mimetype is not None:
+            _place_source(stage, source, source_mimetype)
+        _write_opc_metadata(stage, source_mimetype=source_mimetype)
 
         if validate:
             from doclang.validation import validate as validate_document

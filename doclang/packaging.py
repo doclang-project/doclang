@@ -19,6 +19,8 @@ def pack(
     assets: (Union[str, Path] | Mapping[str, Union[str, Path]] | None) = None,
     audio: (Union[str, Path] | Sequence[Union[str, Path]] | Mapping[int, Union[str, Path]] | None) = None,
     video: (Union[str, Path] | Sequence[Union[str, Path]] | Mapping[int, Union[str, Path]] | None) = None,
+    source: Union[str, Path, bytes, None] = None,
+    source_mimetype: str | None = None,
     validate: bool = False,
 ) -> Path:
     """Pack a DocLang markup file and optional media into a ``.dclx`` OPC archive.
@@ -42,9 +44,13 @@ def pack(
     ``assets`` may be a directory (copied into ``assets/``) or a mapping of
     archive-relative asset path to source file.
 
-    Symbolic links are refused for ``pages``, ``audio``, ``video`` and ``assets``
-    (including entries inside directories) so pack does not follow link targets
-    into the archive.
+    ``source`` is the original document as raw bytes or a file path. Provide
+    ``source_mimetype`` with it. The archive stores the bytes unchanged in
+    ``source/document`` and the MIME type in ``source/mimetype``.
+
+    Symbolic links are refused for ``pages``, ``audio``, ``video``, ``assets``
+    and a source file (including entries inside directories) so pack does not
+    follow link targets into the archive.
 
     Returns the resolved path to the created archive.
 
@@ -59,5 +65,7 @@ def pack(
         assets=assets,
         audio=audio,
         video=video,
+        source=source,
+        source_mimetype=source_mimetype,
         validate=validate,
     )
