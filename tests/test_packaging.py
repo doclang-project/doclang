@@ -61,16 +61,28 @@ def test_pack_with_original_source(tmp_path: Path, from_path: bool, original: by
     )
 
     with zipfile.ZipFile(output) as archive:
-        assert archive.read("source/document") == original
-        assert archive.read("source/mimetype") == b"application/pdf"
+        assert archive.read("source") == original
+        assert not any(name.startswith("source/") for name in archive.namelist())
+    assert _overrides(output)["/source"] == "application/pdf"
+
+
+def _overrides(archive_path: Path) -> dict[str, str]:
+    with zipfile.ZipFile(archive_path) as archive:
         content_types = ElementTree.fromstring(archive.read("[Content_Types].xml"))
-    overrides = {
+    return {
         element.attrib["PartName"]: element.attrib["ContentType"]
         for element in content_types
         if element.tag.endswith("Override")
     }
-    assert overrides["/source/document"] == "application/pdf"
-    assert overrides["/source/mimetype"] == "text/plain"
+
+
+def test_pack_escapes_source_mimetype(tmp_path: Path) -> None:
+    output = tmp_path / "escaped.dclx"
+    mimetype = "application/x-a&b"
+
+    pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"data", source_mimetype=mimetype)
+
+    assert _overrides(output)["/source"] == mimetype
 
 
 def test_pack_rejects_incomplete_original_source(tmp_path: Path) -> None:

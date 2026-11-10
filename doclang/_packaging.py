@@ -13,6 +13,7 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
+from xml.sax.saxutils import quoteattr
 
 _CONTENT_TYPES_XML = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -200,23 +201,17 @@ def _place_assets(stage: Path, assets: AssetsInput) -> None:
 def _place_source(stage: Path, source: SourceInput, mimetype: str) -> None:
     if _SOURCE_MIMETYPE_PATTERN.fullmatch(mimetype) is None:
         raise PackagingError("Invalid source MIME type; expected type/subtype")
-    source_dir = stage / "source"
-    source_dir.mkdir()
     if isinstance(source, bytes):
-        (source_dir / "document").write_bytes(source)
+        (stage / "source").write_bytes(source)
     else:
-        _copy_file(Path(source), source_dir / "document", label="Source document")
-    (source_dir / "mimetype").write_text(mimetype, encoding="utf-8")
+        _copy_file(Path(source), stage / "source", label="Source document")
 
 
 def _write_opc_metadata(stage: Path, *, source_mimetype: str | None = None) -> None:
     content_types = _CONTENT_TYPES_XML
     if source_mimetype is not None:
-        overrides = (
-            '  <Override PartName="/source/mimetype" ContentType="text/plain"/>\n'
-            f'  <Override PartName="/source/document" ContentType="{source_mimetype}"/>\n'
-        )
-        content_types = content_types.replace("</Types>", f"{overrides}</Types>")
+        override = f'  <Override PartName="/source" ContentType={quoteattr(source_mimetype)}/>\n'
+        content_types = content_types.replace("</Types>", f"{override}</Types>")
     (stage / "[Content_Types].xml").write_text(content_types, encoding="utf-8")
     rels_dir = stage / "_rels"
     rels_dir.mkdir(parents=True, exist_ok=True)

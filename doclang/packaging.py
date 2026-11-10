@@ -45,8 +45,9 @@ def pack(
     archive-relative asset path to source file.
 
     ``source`` is the original document as raw bytes or a file path. Provide
-    ``source_mimetype`` with it. The archive stores the bytes unchanged in
-    ``source/document`` and the MIME type in ``source/mimetype``.
+    ``source_mimetype`` with it. The archive stores the bytes unchanged in the
+    root-level ``source`` part and records the MIME type as that part's
+    content type in ``[Content_Types].xml``.
 
     Symbolic links are refused for ``pages``, ``audio``, ``video``, ``assets``
     and a source file (including entries inside directories) so pack does not
