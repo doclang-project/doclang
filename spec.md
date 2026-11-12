@@ -33,17 +33,22 @@ It covers the following aspects:
 
 The following documents are referred to in the text in such a way that some or all of their content constitutes requirements of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. Optimized Table Tokenization for Table Structure Recognition (OTSL), https://doi.org/10.1007/978-3-031-41679-8_3
-2. W3C XML 1.0 Specification (Fifth Edition)
-3. W3C XML Schema Definition Language (XSD) 1.0 (Second Edition): Part 1 (Structures) and Part 2 (Datatypes)
-4. IETF RFC 3629: UTF-8, a transformation format of ISO 10646
-5. IETF RFC 3986: Uniform Resource Identifier (URI): Generic Syntax
-6. IETF RFC 2397: The "data" URL scheme
-7. Semantic Versioning 2.0.0 (semver.org)
+1. XML 1.0, *Extensible Markup Language (XML) 1.0 (Fifth Edition)*, http://www.w3.org/TR/2008/REC-xml-20081126/
+2. XSD Part 1, *XML Schema Definition Language (XSD) 1.0 (Second Edition), Part 1: Structures*, http://www.w3.org/TR/2004/REC-xmlschema-1-20041028/
+3. XSD Part 2, *XML Schema Definition Language (XSD) 1.0 (Second Edition), Part 2: Datatypes*, https://www.w3.org/TR/2004/REC-xmlschema-2-20041028/
+4. ISO/IEC 19757-3, *Document Schema Definition Languages (DSDL) — Part 3: Rule-based validation, Schematron*, https://www.iso.org/standard/85625.html
+5. OTSL, *Optimized Table Tokenization for Table Structure Recognition (OTSL)*, https://doi.org/10.1007/978-3-031-41679-8_3
+6. RFC 3629, *UTF-8, a transformation format of ISO 10646*, https://www.rfc-editor.org/info/rfc3629/
+7. RFC 3986, *Uniform Resource Identifier (URI): Generic Syntax*, https://www.rfc-editor.org/info/rfc3986/
+8. RFC 2397, *The "data" URL scheme*, https://www.rfc-editor.org/info/rfc2397/
+9. Semver, *Semantic Versioning 2.0.0*, https://semver.org/
+10. DocLang Project, https://github.com/doclang-project
+11. ZIP, *.ZIP File Format Specification 6.3.10*, https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT
+12. ECMA-376 Part 2, *Open Packaging Conventions (OPC), 5th edition, December 2021*, https://www.ecma-international.org/publications-and-standards/standards/ecma-376/
 
 ## Terms and definitions
 
-For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [2].
+For the purposes of this document, the following terms and definitions apply. Terms adopted from XML are as defined in [XML 1.0](http://www.w3.org/TR/2008/REC-xml-20081126/).
 
 ### Abstract concepts
 
@@ -115,7 +120,7 @@ XML Schema Definition
 
 ## Conformance
 
-A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD [3] schema and Schematron rules) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
+A DocLang instance conforms to this document if it satisfies all the requirements specified in it. Schemas for checking instances (an XSD schema as defined in [XSD Part 1]](http://www.w3.org/TR/2004/REC-xmlschema-1-20041028/) and [XSD Part 2](https://www.w3.org/TR/2004/REC-xmlschema-2-20041028/) and Schematron rules as defined in [Schematron](https://www.iso.org/standard/85625.html)) are provided with the reference toolkit of the DocLang Project. They are aids, not a definition of conformance: in case of discrepancies, this document is authoritative.
 
 Requirements addressed to a producer, processor or validator apply to implementations acting in that role. A producer SHOULD ensure that the instances it produces conform, for example by validating its output and rejecting or repairing non-conforming results.
 
@@ -133,7 +138,7 @@ The `version` attribute is optional. If it is omitted, the version of the instan
 
 ### Compatibility
 
-The versions of this document follow the principles of Semantic Versioning [7] (considering X >= 1, and Y < Z):
+The versions of this document follow the principles of Semantic Versioning defined in [Semver](https://semver.org/) (considering X >= 1, and Y < Z):
 
 - A DocLang instance that conforms to version `X.Y` also conforms to version `X.Z`.
 - A DocLang instance that conforms to version `X.Z` need not conform to version `X.Y`.
@@ -228,8 +233,8 @@ While the details are specified in the sections further below, this snippet show
 
 ### Content encoding and whitespace handling
 
-As DocLang is XML, standard XML [2] encoding rules apply — for example:
-- any provided XML prolog defines the encoding, otherwise UTF-8 [4] is assumed
+As DocLang is XML, standard XML encoding rules, as defined in [XML 1.0](http://www.w3.org/TR/2008/REC-xml-20081126/), apply — for example:
+- any provided XML prolog defines the encoding, otherwise UTF-8 as defined in [RFC 3629](https://www.rfc-editor.org/info/rfc3629/) is assumed
 - special characters reserved by XML, such as `<`, can be represented either by escaping with the respective XML entities (e.g. `<` becomes `&lt;`) or by using CDATA section syntax (e.g. raw text `<foo>` can be represented as `<![CDATA[<foo>]]>`.)
 
 In this section, *whitespace* means any of the following characters:
@@ -308,7 +313,7 @@ Non-normative recommendation guidelines are covered in [Recommendations](#annex-
 
 Planned extensions are discussed in [Future extensions](#annex-d-informative-future-extensions).
 
-A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
+A reference toolkit for DocLang is provided by the DocLang Project (see [DocLang Project](https://github.com/doclang-project)).
 
 ## Usage examples
 
@@ -357,8 +362,8 @@ In case of page-layout information, the coordinates are provided only at the sem
 ### Pictures
 
 Pictures are captured with the `<picture>` element and may be specialized via the `class` attribute, as detailed
-in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI [5] capturing the image
-either by reference (e.g. https URL) or as base64-encoded data (data URI [6]).
+in the [reference](#picture). The picture data can be provided via the `<src>` element as a URI defined in [RFC 3986](https://www.rfc-editor.org/info/rfc3986/) capturing the image
+either by reference (e.g. https URL) or as base64-encoded data (data URI defined in [RFC 2397](https://www.rfc-editor.org/info/rfc2397/)).
 
 Picture by reference URI:
 
@@ -664,7 +669,7 @@ Notes
 
 ### Tables
 
-A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL [1] structural elements (e.g., `<fcel/>`, `<ched/>`).
+A table is defined by a `<table>` element, that contains cells, as delimited by the respective OTSL structural elements (e.g., `<fcel/>`, `<ched/>`) as defined in [OTSL](https://doi.org/10.1007/978-3-031-41679-8_3)).
 This means that a non-empty `<table>` element body must begin with such an OTSL structural element.
 
 Similarly to lists above, while a cell can naturally contain any semantic element sequence, it may also be a virtual [`<text>`](#text), i.e. unwrapped text content.
@@ -3481,7 +3486,7 @@ None (empty element).
 
 ### Annex B (normative): DocLang archive format
 
-A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
+A **DocLang archive** is a ZIP file, as defined in [ZIP]](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT)), using the Open Packaging Conventions (OPC) as defined in [ECMA-376 Part 2](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/)) container model. Recommended extension: **`.dclx`**.
 
 An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part.
 
@@ -4252,4 +4257,4 @@ To avoid collisions, custom metadata SHOULD always be properly namespaced, as il
 
 The following lists the documents which are cited informatively in this document, as well as other information resources. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
 
-1. ISO 639-3 *Codes for the representation of names of languages*
+1. ISO 639-3 *Codes for the representation of names of languages*, https://iso639-3.sil.org/
