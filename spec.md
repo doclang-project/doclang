@@ -3595,7 +3595,7 @@ Content inside [`<custom>`](#custom) is implementation-defined and not governed 
 To improve interoperability and reduce naming collisions, the following recommendations apply:
 
 - Producers of shared custom vocabularies should use formal XML namespaces with stable namespace URIs.
-- Processors should treat the namespace URI as the namespace identifier and should not assume semantic meaning from prefix names alone.
+- Processors should treat the namespace URI as the namespace identifier and shall not assume semantic meaning from prefix names alone.
 - For private or local use where formal namespaces are not used, producers should use collision-resistant element names prefixed with a stable organization or project identifier (e.g. `acme_`).
 - Producers should avoid ambiguous generic names such as `item`, `meta`, or `data` unless these are clearly scoped by namespace or equivalent prefixing.
 - Producers should document custom vocabularies (intended meaning, value domains, and versioning policy) when documents are shared across tools or organizations.
@@ -3741,6 +3741,8 @@ The token vocabulary trades off size and inference cost:
 ### Annex D (informative): Future extensions
 
 These features are considered for future versions of Doclang.
+
+**Note:** Although the following clauses contain normative language this section is informative and implementations do not need to comply with these clauses to be compliant with this specification.
 
 #### Horizontal threading
 
