@@ -3780,7 +3780,7 @@ Below we list the reserved core metadata elements to be used within `<head>`:
 - `page_size`, the actual page size. An element without the `page_no` attribute defines the default size for all pages, when `page_no` is specified it is counted from 1.
 - `language`, Identifies the (human) language of the document, e.g., English, German, French, Spanish, Japanese. The content MUST be an [ISO 639-3](https://iso639-3.sil.org/about) language identifier. Optional attributes: `classifier` (the tool/method used, e.g., fastText) and `score` (confidence in [0, 1]). Multiple `language` entries MAY be provided.
 - `generated_by`, upstream pipeline information, e.g. vision language model (VLM) ID
-- `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and 0<=Scores<=1. This can be one or more.
+- `topic`, topic that the document is most likely to fall in such as Science and Technology, Legal, etc. The topics should preferrably come from some taxonomy. Classifier defines the classifier used for classifying into the given topic and score is the confidence score of classifier and Scores ∈ [0, 1]. This can be one or more.
 - `summary`, a summary of the document (document-level; distinct from element-head [`<summary>`](#summary) on individual components)
 - `document_hash`, Hash of the source document, whereas hash_function defines the algorithm used to compute the hash, e.g., SHA2. This can be one or more.
 
