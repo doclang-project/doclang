@@ -90,11 +90,12 @@ def validate(
 
     For an archive, its ``document.xml`` is validated, and, unless ``xsd_only`` or ``schematron_only`` is set,
     the rules of Annex B on its other parts are checked too (reported as ``ValidationError.archive_errors``):
-    the OPC metadata, the page images and whole-track media beyond the pages and ``<track>`` elements of the
-    document, and ``<src>`` URIs that resolve to no part. Parts that nothing accounts for (neither OPC metadata
-    nor a relationship target, a page image or whole-track media, or referenced from the markup) are reported
-    as :class:`UserWarning`. The archive rules apply as of the spec version they were introduced in (Annex B
-    in 0.8): that of ``spec_version`` if given, else the declared one, else the latest.
+    the OPC metadata, the original source and its descriptor, the page images and whole-track media beyond the
+    pages and ``<track>`` elements of the document, and ``<src>`` URIs that resolve to no part. Parts that nothing
+    accounts for (neither OPC metadata nor a relationship target, a page image or whole-track media, or
+    referenced from the markup) are reported as :class:`UserWarning`. The archive rules apply as of the spec
+    version they were introduced in (Annex B in 0.8): that of ``spec_version`` if given, else the declared one,
+    else the latest.
 
     The spec version to validate against is ``spec_version`` if given, else the ``version``
     attribute of the root element. If neither is set the version is unspecified: the latest schema

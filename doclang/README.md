@@ -93,6 +93,9 @@ doclang pack markup.dclg --pages screenshots/
 doclang pack markup.dclg --page a.png --page b.png
 doclang pack markup.dclg --asset chart.svg=exports/diagram.svg
 doclang pack markup.dclg --assets payload/
+doclang pack markup.dclg --source report.pdf --keep-source-name   # kept as source.pdf
+doclang pack markup.dclg --source upload.bin --source-name "Q3 report.pdf"   # also kept as source.pdf
+doclang pack markup.dclg --audio episode-12.mp3 --source episode-12.mp3 --keep-source-name   # reuses audio/1.mp3
 doclang pack markup.dclg --validate
 ```
 

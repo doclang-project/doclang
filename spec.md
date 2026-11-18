@@ -3483,20 +3483,19 @@ None (empty element).
 
 A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
-An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part.
+An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part and, optionally, the original source.
 
 #### Layout
 
 ```
-[Content_Types].xml    # required — OPC content types
+[Content_Types].xml     # required — OPC content types
 _rels/
-  .rels                # required — package → main document
-document.xml           # required — valid DocLang instance
-pages/                 # optional — page images, e.g. 1.png, 2.png
-audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
-video/                 # optional — whole-track video, e.g. 3.mp4, 4.mkv
-assets/                # optional — files referenced from markup
-source                 # optional — original source document (type in [Content_Types].xml)
+  .rels                 # required — identifies the DocLang instance and, optionally, the original source
+document.xml            # required — valid DocLang instance
+pages/                  # optional — page images, e.g. 1.png, 2.png
+audio/                  # optional — whole-track audio, e.g. 2.mp3, 4.ogg
+video/                  # optional — whole-track video, e.g. 3.mp4, 4.mkv
+assets/                 # optional — files referenced from markup
 ```
 
 Relative URIs in the markup resolve from the archive root. The relative URI of a [`<src>`](#src) MUST resolve to a part of the archive. Every part SHOULD be one of: OPC metadata (`[Content_Types].xml` and relationship parts such as `_rels/.rels`), the target of a relationship, a page image or whole-track media file aligned with a page or [`<track>`](#track), or a part referenced by a relative URI in the markup.
@@ -3520,7 +3519,7 @@ Example:
 
 ##### `_rels/.rels` (required)
 
-Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
+Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`. MAY contain one relationship of type `http://doclang.ai/ns/package/2026/relationships/source` and, only together with it, one of type `http://doclang.ai/ns/package/2026/relationships/source-metadata` (see [Original source](#original-source-optional)).
 
 Example:
 
@@ -3551,15 +3550,48 @@ Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based posi
 
 Optional payload referenced by relative URIs in markup (e.g. `<src uri="assets/chart.svg"/>`). URIs resolve from the archive root.
 
-##### `source` (optional)
+##### Original source (optional)
 
-The root-level part `/source` is reserved for the original document from which the main DocLang instance was produced. It is a single file with no extension, holding the original bytes unmodified (no base64 encoding). Its MIME type is not stored in the archive as a separate file; when `/source` is present, `[Content_Types].xml` MUST contain an `<Override>` for it, e.g.:
+An archive MAY carry the original document from which the main DocLang instance was produced (e.g. a PDF, a word-processing document or an audio recording), its bytes unmodified (no base64 encoding). Its part is identified by the package relationship of type `http://doclang.ai/ns/package/2026/relationships/source` in `_rels/.rels`. Consumers MUST locate the original source through this relationship and MUST NOT rely on the part's path. The relationship MUST target a part of the archive (not an external resource), and that part MUST have a content type in `[Content_Types].xml`, through a `<Default>` for its extension or an `<Override>` for its path.
+
+Producers SHOULD store the original source:
+
+- as `/source.<ext>`, where `<ext>` is the extension of the original file name, or its last two extensions (e.g. `/source.tar.gz`), so that a `<Default>` for the last extension declares its content type;
+- as `/source`, with an `<Override>`, when the original has no reliable extension;
+- or, when the archive already contains the same bytes (e.g. converting a single MP3 file whose bytes are also `audio/1.mp3`, or an asset), by targeting that part, without a second copy.
+
+The name of the part is only a storage name: it does not convey the original file name. A producer MAY record the original file name in a **source descriptor**: an XML part identified by the package relationship of type `http://doclang.ai/ns/package/2026/relationships/source-metadata`, which MUST NOT be present without the `source` relationship. The descriptor has the content type `application/vnd.doclang.source-metadata+xml`, and its root element is `source` in the namespace `http://doclang.ai/ns/package/2026/source-metadata`, with an optional `name` attribute holding the original file name. Consumers SHOULD ignore attributes and child elements of the descriptor that they do not recognize. Recommended part name: `/source-metadata.xml`. Without a descriptor, the original file name is unknown.
+
+Example, for an archive produced from a single recording `episode-12.mp3`, whose bytes are also the whole-track audio of the first track. `_rels/.rels`:
+
+```xml
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://doclang.ai/ns/package/2026/relationships/document"
+    Target="document.xml"/>
+  <Relationship Id="rId2"
+    Type="http://doclang.ai/ns/package/2026/relationships/source"
+    Target="audio/1.mp3"/>
+  <Relationship Id="rId3"
+    Type="http://doclang.ai/ns/package/2026/relationships/source-metadata"
+    Target="source-metadata.xml"/>
+</Relationships>
+```
+
+`[Content_Types].xml`:
 
 ```xml
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <!-- … -->
-  <Override PartName="/source" ContentType="application/pdf"/>
+  <Default Extension="mp3" ContentType="audio/mpeg"/>
+  <Override PartName="/source-metadata.xml" ContentType="application/vnd.doclang.source-metadata+xml"/>
 </Types>
+```
+
+`source-metadata.xml`:
+
+```xml
+<source xmlns="http://doclang.ai/ns/package/2026/source-metadata" name="episode-12.mp3"/>
 ```
 
 #### Page alignment
