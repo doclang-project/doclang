@@ -5,6 +5,7 @@ Provides XSD validation function for DocLang XML documents.
 """
 
 import re
+from functools import cache
 from pathlib import Path
 from typing import Any, Union
 
@@ -12,6 +13,14 @@ from lxml import etree
 
 from doclang._schemas import _bundled_xsd_path
 from doclang.utils import _ensure_namespace, _parse_doclang_document, _parse_xml
+
+
+@cache
+def _compiled_schema(xsd_file: str, mtime_ns: int) -> etree.XMLSchema:
+    """Parse and compile an XSD once per file (``mtime_ns`` invalidates the entry when the file changes)."""
+    with open(xsd_file, "rb") as f:
+        # Bundled/trusted schema: hardened parse only (no DocLang DTD policy).
+        return etree.XMLSchema(_parse_xml(f))
 
 
 def _validate_xsd_at(
@@ -37,10 +46,7 @@ def _validate_xsd_at(
         Validation errors as a list of dicts with 'line' and 'message' keys
     """
     try:
-        with open(xsd_file, "rb") as f:
-            # Bundled/trusted schema: hardened parse only (no DocLang DTD policy).
-            schema_doc = _parse_xml(f)
-            schema = etree.XMLSchema(schema_doc)
+        schema = _compiled_schema(str(xsd_file), Path(xsd_file).stat().st_mtime_ns)
 
         with open(xml_file, "rb") as f:
             xml_doc = _parse_doclang_document(f)

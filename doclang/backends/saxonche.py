@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from lxml import etree
 
@@ -123,7 +124,55 @@ def _transpile_schematron_to_xslt(sch_file: Path, *, verbose: bool = False) -> s
 
 
 class SaxoncheValidator:
-    """Schematron validator backed by Saxon/C (saxonche)."""
+    """Schematron validator backed by Saxon/C (saxonche).
+
+    One instance keeps a single Saxon processor and the compiled XSLT of every Schematron file it has
+    seen, so reusing it for several documents transpiles and compiles each schema only once. Call
+    :meth:`close` (or use the instance as a context manager) to release the processor when done.
+    """
+
+    def __init__(self) -> None:
+        self._proc: Any = None
+        self._xslt_proc: Any = None
+        self._executables: dict[tuple[str, int], Any] = {}
+
+    def close(self) -> None:
+        """Release the Saxon processor and the compiled schemas."""
+        self._executables.clear()
+        self._xslt_proc = None
+        if self._proc is not None:
+            self._proc.__exit__(None, None, None)
+            self._proc = None
+
+    def __enter__(self) -> SaxoncheValidator:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
+    def _executable(self, schema_path: Path, *, verbose: bool) -> Any:
+        """The compiled XSLT for a Schematron file, built on first use."""
+        _require_saxonche_backend()
+        from saxonche import PySaxonProcessor
+
+        if self._proc is None:
+            self._proc = PySaxonProcessor(license=False).__enter__()
+            self._xslt_proc = self._proc.new_xslt30_processor()
+            if verbose:
+                print(f"Using XSLT processor version: {self._proc.version}")
+
+        # Keyed on the modification time so an edited schema is not served stale.
+        key = (str(schema_path), schema_path.stat().st_mtime_ns)
+        executable = self._executables.get(key)
+        if executable is None:
+            if verbose:
+                print("Transpiling Schematron to XSLT 3.0...")
+            xslt_text = _transpile_schematron_to_xslt(schema_path, verbose=verbose)
+            if verbose:
+                print("Compiling generated XSLT...")
+            executable = self._xslt_proc.compile_stylesheet(stylesheet_text=xslt_text)
+            self._executables[key] = executable
+        return executable
 
     def validate(
         self,
@@ -133,9 +182,6 @@ class SaxoncheValidator:
         allow_empty_namespace: bool = False,
         verbose: bool = False,
     ) -> list[SchematronViolation]:
-        _require_saxonche_backend()
-        from saxonche import PySaxonProcessor
-
         if verbose:
             print(f"Using Schematron file: {schema_path}")
 
@@ -145,35 +191,20 @@ class SaxoncheValidator:
         if allow_empty_namespace:
             xml_doc = _ensure_namespace(xml_doc)
 
+        xslt_executable = self._executable(schema_path, verbose=verbose)
+
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".xml", delete=True) as tmp:
             # Never re-emit a DOCTYPE: Saxon would otherwise expand entities.
             _write_xml_without_dtd(xml_doc, tmp)
             tmp.flush()
-            tmp_xml_path = tmp.name
 
-            with PySaxonProcessor(license=False) as proc:
-                if verbose:
-                    print(f"Using XSLT processor version: {proc.version}")
+            if verbose:
+                print("Executing Schematron validation...")
 
-                xslt_proc = proc.new_xslt30_processor()
+            result = xslt_executable.transform_to_string(source_file=tmp.name)
 
-                if verbose:
-                    print("Transpiling Schematron to XSLT 3.0...")
+            if not result:
+                return []
 
-                xslt_text = _transpile_schematron_to_xslt(schema_path, verbose=verbose)
-
-                if verbose:
-                    print("Compiling generated XSLT...")
-
-                xslt_executable = xslt_proc.compile_stylesheet(stylesheet_text=xslt_text)
-
-                if verbose:
-                    print("Executing Schematron validation...")
-
-                result = xslt_executable.transform_to_string(source_file=tmp_xml_path)
-
-                if not result:
-                    return []
-
-                result_doc = etree.fromstring(result.encode("utf-8"))
-                return _svrl_failed_asserts_to_violations(result_doc)
+            result_doc = etree.fromstring(result.encode("utf-8"))
+            return _svrl_failed_asserts_to_violations(result_doc)

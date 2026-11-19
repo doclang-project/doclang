@@ -18,7 +18,7 @@ from doclang.migration import MigrationError
 from doclang.migration import migrate as migrate_document
 from doclang.packaging import PackagingError
 from doclang.packaging import pack as pack_document
-from doclang.schematron import SchematronBackendNotFound
+from doclang.schematron import SchematronBackendNotFound, SchematronValidator, _default_schematron_validator
 from doclang.utils import _VERSION
 from doclang.validation import ValidationError, VersionNote
 from doclang.validation import validate as validate_document
@@ -53,7 +53,18 @@ class OutputFormat(str, Enum):
 )
 def validate(
     ctx: typer.Context,
-    xml_file: Path = typer.Argument(..., help="XML file or .dclx archive to validate", exists=True),
+    xml_file: Optional[Path] = typer.Argument(None, help="XML file or .dclx archive to validate", exists=True),
+    filelist: Optional[Path] = typer.Option(
+        None,
+        "--filelist",
+        help=(
+            "File containing a list of files to validate, one path per line, or '-' to read the list from "
+            "standard input (blank lines and lines starting with '#' are ignored)"
+        ),
+        exists=True,
+        dir_okay=False,
+        allow_dash=True,
+    ),
     xsd_only: bool = typer.Option(False, "--xsd-only", help="Validate XSD only"),
     schematron_only: bool = typer.Option(False, "--schematron-only", help="Validate Schematron only"),
     allow_empty_namespace: bool = typer.Option(
@@ -101,7 +112,95 @@ def validate(
         doclang validate document.xml --spec-version 0.7
         doclang validate document.xml --spec-version 0.7 --strict-xsd-version-attr
         doclang validate document.xml --format json
+        doclang validate --filelist files.txt
+        find . -name "*.dclg" | doclang validate --filelist -
     """
+    files: list[Path] = []
+    if xml_file is not None:
+        files.append(xml_file)
+    if filelist is not None:
+        try:
+            if str(filelist) == "-":
+                lines = typer.get_text_stream("stdin").read().splitlines()
+            else:
+                lines = filelist.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError) as exc:
+            typer.echo(f"Error: cannot read file list {filelist}: {exc}", err=True)
+            raise typer.Exit(1)
+        files.extend(Path(line.strip()) for line in lines if line.strip() and not line.strip().startswith("#"))
+    if not files:
+        typer.echo("Error: provide an XML_FILE argument or --filelist", err=True)
+        raise typer.Exit(2)
+
+    # One validator for all files: it keeps the compiled Schematron, so each schema is processed once.
+    schematron: Optional[SchematronValidator] = None
+    if not xsd_only:
+        try:
+            schematron = _default_schematron_validator()
+        except SchematronBackendNotFound:
+            pass  # reported for each file by validate_document
+        else:
+            ctx.call_on_close(schematron.close)  # type: ignore[attr-defined]
+
+    seen_schemas: set[Path] = set()
+    failed = 0
+    for path in files:
+        if not path.exists():
+            typer.echo(f"Error: file not found: {path}", err=True)
+            failed += 1
+            continue
+        try:
+            _validate_one(
+                ctx,
+                path,
+                seen_schemas=seen_schemas,
+                schematron=schematron,
+                xsd_only=xsd_only,
+                schematron_only=schematron_only,
+                allow_empty_namespace=allow_empty_namespace,
+                spec_version=spec_version,
+                strict_xsd_version_attr=strict_xsd_version_attr,
+                strict_declared_version=strict_declared_version,
+                quiet=quiet,
+                verbose=verbose,
+                format=format,
+            )
+        except typer.Exit as exc:
+            if exc.exit_code:
+                failed += 1
+
+    if len(files) > 1 and not quiet and format == OutputFormat.text:
+        typer.echo(f"Validated {len(files)} files: {len(files) - failed} passed, {failed} failed")
+    if failed:
+        raise typer.Exit(1)
+
+
+def _schema_line(schema: Optional[Path], seen_schemas: set[Path]) -> str:
+    """Verbose line for a schema: processed on first use, then reused from the in-memory cache."""
+    if schema is None:
+        return "Schema: n/a"
+    status = "reused, already processed" if schema in seen_schemas else "processing"
+    seen_schemas.add(schema)
+    return f"Schema: {schema} ({status})"
+
+
+def _validate_one(
+    ctx: typer.Context,
+    xml_file: Path,
+    *,
+    seen_schemas: set[Path],
+    schematron: Optional[SchematronValidator],
+    xsd_only: bool,
+    schematron_only: bool,
+    allow_empty_namespace: bool,
+    spec_version: Optional[str],
+    strict_xsd_version_attr: bool,
+    strict_declared_version: bool,
+    quiet: bool,
+    verbose: bool,
+    format: OutputFormat,
+) -> None:
+    """Validate a single file; raises typer.Exit(1) on failure."""
     try:
         document = ctx.with_resource(_document_file(xml_file))
     except PackagingError as exc:
@@ -133,6 +232,7 @@ def validate(
                 validate_document(
                     document,
                     allow_empty_namespace=allow_empty_namespace,
+                    schematron=schematron,
                     xsd_only=xsd_only,
                     schematron_only=schematron_only,
                     spec_version=spec_version,
@@ -159,7 +259,7 @@ def validate(
             if not schematron_only:
                 if verbose:
                     typer.echo("XSD Validation")
-                    typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
+                    typer.echo(_schema_line(bundled_xsd, seen_schemas))
                 if not exc.xsd_errors:
                     typer.echo("XSD validation passed")
                 else:
@@ -173,7 +273,7 @@ def validate(
             if not xsd_only:
                 if verbose:
                     typer.echo("Schematron Validation")
-                    typer.echo(f"Schema: {bundled_sch or 'n/a'}")
+                    typer.echo(_schema_line(bundled_sch, seen_schemas))
                 if not exc.schematron_errors:
                     typer.echo("Schematron validation passed")
                 else:
@@ -194,13 +294,13 @@ def validate(
         if not schematron_only:
             if verbose:
                 typer.echo("XSD Validation")
-                typer.echo(f"Schema: {bundled_xsd or 'n/a'}")
+                typer.echo(_schema_line(bundled_xsd, seen_schemas))
             typer.echo("XSD validation passed")
 
         if not xsd_only:
             if verbose:
                 typer.echo("Schematron Validation")
-                typer.echo(f"Schema: {bundled_sch or 'n/a'}")
+                typer.echo(_schema_line(bundled_sch, seen_schemas))
             typer.echo("Schematron validation passed")
 
     if format == OutputFormat.json:
