@@ -526,6 +526,42 @@ def test_media_of_remaining_tracks_is_renumbered(tmp_path, monkeypatch):
     }
 
 
+def test_package_relationships_and_overrides_follow_renamed_media(tmp_path, monkeypatch):
+    def drop_first_track(root, changes):
+        track = root.find(f"{{{NS}}}track")
+        changes.record("dropped", track, "dropped")
+        root.remove(track)
+
+    _with_unreleased_head(monkeypatch, drop_first_track)
+    source = "http://doclang.ai/ns/package/2026/relationships/source"
+    rels = (
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        f'<Relationship Id="rId1" Type="{source}" Target="/audio/1.mp3"/></Relationships>'
+    )
+    content_types = (
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="mp3" ContentType="audio/mpeg"/>'
+        '<Override PartName="/audio/2.wav" ContentType="audio/x-wav"/></Types>'
+    )
+    members = {
+        "_rels/.rels": rels.encode(),
+        "[Content_Types].xml": content_types.encode(),
+        "audio/1.mp3": b"a1",  # the source, and the removed track's media
+        "audio/2.wav": b"a2",
+    }
+    out = tmp_path / "out.dclx"
+    result = migrate(_archive(tmp_path, f"{TRACK}{TRACK}", members, version=NEWEST), to=NEXT, output=out)
+
+    assert [(c["kind"], c["location"]) for c in result.changes][1:] == [
+        ("renamed", "audio/1.mp3"),  # kept as the source, out of the tracks' way
+        ("renamed", "audio/2.wav"),
+    ]
+    written = _members(out)
+    assert (written["source.mp3"], written["audio/1.wav"]) == (b"a1", b"a2")
+    assert 'Target="/source.mp3"' in written["_rels/.rels"].decode()
+    assert 'PartName="/audio/1.wav"' in written["[Content_Types].xml"].decode()
+
+
 def test_strict_fails_on_the_dropped_elements_not_on_orphaned_members(tmp_path):
     out = tmp_path / "out.dclx"
     with pytest.raises(MigrationError, match="would change 1 part") as info:

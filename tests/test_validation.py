@@ -663,3 +663,70 @@ def test_reference_rules_apply_from_0_10(tmp_path: Path, version: str, applies: 
     document = _REFERENCING.format(version=f' version="{version}"')
     found = _warnings_and_errors(_archive(tmp_path, {"assets/b.png": b""}, document=document))
     assert (found != ([], [])) is applies
+
+
+# The source rules apply from 0.10.
+_SOURCE_DOCUMENT = _DOCUMENT.replace('version="0.9"', 'version="0.10"')
+_DESCRIPTOR = b'<source xmlns="http://doclang.ai/ns/package/2026/source-metadata" name="episode.mp3"/>'
+_DESCRIPTOR_TYPE = (
+    '<Override PartName="/source-metadata.xml" ContentType="application/vnd.doclang.source-metadata+xml"/></Types>'
+)
+
+
+@pytest.mark.filterwarnings("ignore:No schema for declared DocLang version 0.10")
+@pytest.mark.parametrize(
+    "members",
+    [
+        {"_rels/.rels": _rels(("source", "source.mp3")), "source.mp3": b""},
+        {"_rels/.rels": _rels(("source", "/audio/1.mp3")), "audio/1.mp3": b""},  # an existing part, no second copy
+        {
+            "_rels/.rels": _rels(("source", "source")),
+            "source": b"%PDF",
+            "[Content_Types].xml": _CONTENT_TYPES.replace(
+                "</Types>", '<Override PartName="/SOURCE" ContentType="application/pdf"/></Types>'
+            ),
+        },
+        {
+            "_rels/.rels": _rels(("source", "source.mp3"), ("source-metadata", "source-metadata.xml")),
+            "source.mp3": b"",
+            "source-metadata.xml": _DESCRIPTOR,
+            "[Content_Types].xml": _CONTENT_TYPES.replace("</Types>", _DESCRIPTOR_TYPE),
+        },
+    ],
+)
+def test_valid_archive_with_source(tmp_path: Path, members):
+    assert _archive_errors(_archive(tmp_path, members, document=_SOURCE_DOCUMENT)) == []
+
+
+@pytest.mark.filterwarnings("ignore:No schema for declared DocLang version 0.10")
+@pytest.mark.parametrize(
+    ("members", "location", "message"),
+    [
+        ({"_rels/.rels": _rels(("source", "source.mp3"))}, "_rels/.rels", "The source part 'source.mp3' is missing"),
+        ({"_rels/.rels": _rels(("source", "source.pdf")), "source.pdf": b""}, "source.pdf", "No content type"),
+        (
+            {"_rels/.rels": _rels(("source", "http://example.com/a.pdf"))},
+            "_rels/.rels",
+            "must target a part of the archive",
+        ),
+        (
+            {"_rels/.rels": _rels(("source", "a.mp3"), ("source", "b.mp3")), "a.mp3": b"", "b.mp3": b""},
+            "_rels/.rels",
+            "More than one http://doclang.ai/ns/package/2026/relationships/source relationship",
+        ),
+        (
+            {"_rels/.rels": _rels(("source-metadata", "s.mp3")), "s.mp3": _DESCRIPTOR},
+            "_rels/.rels",
+            "source-metadata relationship without a source relationship",
+        ),
+        (
+            {"_rels/.rels": _rels(("source", "a.mp3"), ("source-metadata", "s.mp3")), "a.mp3": b"", "s.mp3": b"<x/>"},
+            "s.mp3",
+            "The root element must be source",
+        ),
+    ],
+)
+def test_invalid_archive_with_source(tmp_path: Path, members, location, message):
+    errors = _archive_errors(_archive(tmp_path, members, document=_SOURCE_DOCUMENT))
+    assert [e[0] for e in errors] == [location]
+    assert message in errors[0][1]

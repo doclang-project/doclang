@@ -258,15 +258,15 @@ def test_cli_validate_reports_archive_errors(tmp_path):
     assert valid.exit_code == 0 and "Archive validation passed" in valid.output
 
     with zipfile.ZipFile(archive, "a") as zf:
-        zf.writestr("video/2.mp4", b"beyond the tracks")
+        zf.writestr("audio/2.wav", b"beyond the tracks")
 
     text = runner.invoke(app, ["validate", str(archive)])
     assert text.exit_code == 1
-    assert "Archive validation failed" in text.output and "video/2.mp4" in text.output
+    assert "Archive validation failed" in text.output and "audio/2.wav" in text.output
 
     as_json = runner.invoke(app, ["validate", str(archive), "--format", "json"])
     payload = json.loads(as_json.stdout)
-    assert [e["location"] for e in payload["archive"]["errors"]] == ["video/2.mp4"]
+    assert [e["location"] for e in payload["archive"]["errors"]] == ["audio/2.wav"]
     assert payload["xsd"]["valid"] and payload["schematron"]["valid"]
 
     xsd_only = runner.invoke(app, ["validate", str(archive), "--xsd-only"])
@@ -275,18 +275,37 @@ def test_cli_validate_reports_archive_errors(tmp_path):
 
 def test_cli_pack_with_source(tmp_path):
     document = Path(__file__).resolve().parents[1] / "examples" / "archive-demo" / "document.xml"
-    original = tmp_path / "original.pdf"
+    original = tmp_path / "upload.bin"
     original.write_bytes(b"%PDF-1.7\n")
     out = tmp_path / "out.dclx"
-    args = ["pack", str(document), "-o", str(out), "--source", str(original)]
+    args = ["pack", str(document), "-o", str(out), "--source", str(original), "--source-name", "report.pdf"]
 
     result = runner.invoke(app, [*args, "--source-mimetype", "application/pdf"])
     assert result.exit_code == 0, result.output
     with zipfile.ZipFile(out) as zf:
-        assert zf.read("source") == b"%PDF-1.7\n"
-        assert '<Override PartName="/source" ContentType="application/pdf"/>' in zf.read("[Content_Types].xml").decode(
-            "utf-8"
-        )
+        assert zf.read("source.pdf") == b"%PDF-1.7\n"
+        assert 'name="report.pdf"' in zf.read("source-metadata.xml").decode("utf-8")
+        assert 'Target="source.pdf"' in zf.read("_rels/.rels").decode("utf-8")
 
-    incomplete = runner.invoke(app, args)
-    assert incomplete.exit_code == 1 and "must be given together" in incomplete.output
+    unknown_type = runner.invoke(app, [*args[:-1], "report.xyz"])
+    assert unknown_type.exit_code == 1 and "No content type known" in unknown_type.output
+
+
+def test_cli_pack_reuses_an_already_packed_source(tmp_path):
+    demo = Path(__file__).resolve().parents[1] / "examples" / "archive-demo"
+    out = tmp_path / "out.dclx"
+    args = ["pack", str(demo / "document.xml"), "-o", str(out), "--audio-dir", str(demo / "audio")]
+
+    source = ["--source", str(demo / "audio" / "1.wav")]
+
+    result = runner.invoke(app, [*args, *source, "--keep-source-name"])
+    assert result.exit_code == 0, result.output
+    with zipfile.ZipFile(out) as zf:
+        assert 'Target="audio/1.wav"' in zf.read("_rels/.rels").decode("utf-8")
+        assert "source.wav" not in zf.namelist()
+        assert 'name="1.wav"' in zf.read("source-metadata.xml").decode("utf-8")
+
+    both = runner.invoke(app, [*args, *source, "--keep-source-name", "--source-name", "x.wav"])
+    assert both.exit_code == 1 and "mutually exclusive" in both.output
+    no_source = runner.invoke(app, [*args, "--keep-source-name"])
+    assert no_source.exit_code == 1 and "needs --source" in no_source.output

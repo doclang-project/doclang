@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 import pytest
 
 from doclang import PackagingError, ValidationError, pack
+from doclang._packaging import _check_archive
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE_DEMO = REPO_ROOT / "examples" / "archive-demo"
@@ -45,35 +46,182 @@ def test_pack_markup_only_explicit_output(tmp_path: Path) -> None:
     assert "document.xml" in members
 
 
+SOURCE_RELATIONSHIP = "http://doclang.ai/ns/package/2026/relationships/source"
+SOURCE_METADATA_RELATIONSHIP = "http://doclang.ai/ns/package/2026/relationships/source-metadata"
+
+
+def _content_types(archive_path: Path) -> tuple[dict[str, str], dict[str, str]]:
+    """The ``<Default>`` content types by extension and the ``<Override>`` ones by part name."""
+    with zipfile.ZipFile(archive_path) as archive:
+        content_types = ElementTree.fromstring(archive.read("[Content_Types].xml"))
+    defaults = {e.attrib["Extension"]: e.attrib["ContentType"] for e in content_types if e.tag.endswith("Default")}
+    overrides = {e.attrib["PartName"]: e.attrib["ContentType"] for e in content_types if e.tag.endswith("Override")}
+    return defaults, overrides
+
+
+def _relationships(archive_path: Path) -> dict[str, str]:
+    """The targets of the package relationships by type."""
+    with zipfile.ZipFile(archive_path) as archive:
+        rels = ElementTree.fromstring(archive.read("_rels/.rels"))
+    return {e.attrib["Type"]: e.attrib["Target"] for e in rels}
+
+
 @pytest.mark.parametrize("from_path", [False, True])
 @pytest.mark.parametrize("original", [b"%PDF-1.7\n\x00\xff\n", b""])
-def test_pack_with_original_source(tmp_path: Path, from_path: bool, original: bytes) -> None:
+def test_pack_source_is_stored_with_the_extension_of_its_name(tmp_path: Path, from_path: bool, original: bytes) -> None:
     source_path = tmp_path / "original.pdf"
     source_path.write_bytes(original)
-    source = source_path if from_path else original
     output = tmp_path / "with-source.dclx"
 
     pack(
         ARCHIVE_DEMO / "document.xml",
         output=output,
-        source=source,
+        source=source_path if from_path else original,
+        source_name=None if from_path else "original.pdf",
         source_mimetype="application/pdf",
     )
 
     with zipfile.ZipFile(output) as archive:
-        assert archive.read("source") == original
-        assert not any(name.startswith("source/") for name in archive.namelist())
-    assert _overrides(output)["/source"] == "application/pdf"
+        assert archive.read("source.pdf") == original
+    defaults, overrides = _content_types(output)
+    assert defaults["pdf"] == "application/pdf" and "/source.pdf" not in overrides
+    assert _relationships(output)[SOURCE_RELATIONSHIP] == "source.pdf"
+    assert _check_archive(output, None) == ([], [])
 
 
-def _overrides(archive_path: Path) -> dict[str, str]:
-    with zipfile.ZipFile(archive_path) as archive:
-        content_types = ElementTree.fromstring(archive.read("[Content_Types].xml"))
-    return {
-        element.attrib["PartName"]: element.attrib["ContentType"]
-        for element in content_types
-        if element.tag.endswith("Override")
-    }
+def test_pack_source_with_a_known_extension_needs_no_mimetype(tmp_path: Path) -> None:
+    recording = tmp_path / "Episode 12.MP3"
+    recording.write_bytes(b"mp3")
+    output = tmp_path / "out.dclx"
+
+    pack(ARCHIVE_DEMO / "document.xml", output=output, source=recording)
+
+    assert "source.mp3" in _zip_members(output)
+    defaults, overrides = _content_types(output)
+    assert defaults["mp3"] == "audio/mpeg" and "/source.mp3" not in overrides
+    assert SOURCE_METADATA_RELATIONSHIP not in _relationships(output)  # the original name is opt-in
+    assert "source-metadata.xml" not in _zip_members(output)
+
+
+@pytest.mark.parametrize("name", [None, "notes", "archive.tar~", ".bashrc", "x.rels"])
+def test_pack_source_without_a_reliable_extension_gets_an_override(tmp_path: Path, name: str | None) -> None:
+    output = tmp_path / "out.dclx"
+
+    pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"data", source_name=name, source_mimetype="text/plain")
+
+    assert "source" in _zip_members(output)
+    assert _content_types(output)[1]["/source"] == "text/plain"
+    assert _relationships(output)[SOURCE_RELATIONSHIP] == "source"
+    assert _check_archive(output, None) == ([], [])
+
+
+def test_pack_source_mimetype_differing_from_the_default_gets_an_override(tmp_path: Path) -> None:
+    output = tmp_path / "out.dclx"
+
+    pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"v", source_name="clip.ogg", source_mimetype="video/ogg")
+
+    defaults, overrides = _content_types(output)
+    assert overrides["/source.ogg"] == "video/ogg" and "ogg" not in defaults  # no part left for the default
+
+
+def test_pack_declares_only_the_extensions_present(tmp_path: Path) -> None:
+    output = tmp_path / "out.dclx"
+
+    pack(
+        ARCHIVE_DEMO / "document.xml", output=output, audio=ARCHIVE_DEMO / "audio", source=b"%PDF", source_name="a.pdf"
+    )
+
+    defaults, _ = _content_types(output)
+    assert set(defaults) == {"rels", "wav", "pdf"}
+
+
+def test_pack_source_without_a_content_type_is_refused(tmp_path: Path) -> None:
+    output = tmp_path / "out.dclx"
+    with pytest.raises(PackagingError, match="No content type known"):
+        pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"data")
+    with pytest.raises(PackagingError, match="No content type known"):
+        pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"data", source_name="report.xyz")
+    assert not output.exists()
+
+
+def test_pack_source_name_is_recorded_in_a_descriptor(tmp_path: Path) -> None:
+    original = tmp_path / "upload-3f2a.bin"
+    original.write_bytes(b"%PDF")
+    output = tmp_path / "out.dclx"
+
+    pack(
+        ARCHIVE_DEMO / "document.xml",
+        output=output,
+        source=original,
+        source_name='Q3 "final" & co.pdf',
+        source_mimetype="application/pdf",
+    )
+
+    relationships = _relationships(output)
+    assert relationships[SOURCE_RELATIONSHIP] == "source.pdf"  # the extension of the original name
+    assert relationships[SOURCE_METADATA_RELATIONSHIP] == "source-metadata.xml"
+    with zipfile.ZipFile(output) as archive:
+        descriptor = ElementTree.fromstring(archive.read("source-metadata.xml"))
+    assert descriptor.tag == "{http://doclang.ai/ns/package/2026/source-metadata}source"
+    assert descriptor.attrib == {"name": 'Q3 "final" & co.pdf'}
+    assert _content_types(output)[1]["/source-metadata.xml"] == "application/vnd.doclang.source-metadata+xml"
+    assert _check_archive(output, None) == ([], [])
+
+
+@pytest.mark.parametrize(
+    ("name", "part"),
+    [
+        ("backup.tar.gz", "source.tar.gz"),
+        ("Report.Final.PDF", "source.final.pdf"),
+        ("a.b.c.gz", "source.c.gz"),  # at most two extensions
+        ("x.tar~.gz", "source.gz"),  # only reliable ones
+        ("tar.gz", "source.gz"),  # the stem is not an extension
+        ("data.xml", "source.xml"),  # no clash with the descriptor
+    ],
+)
+def test_pack_source_keeps_up_to_two_extensions(tmp_path: Path, name: str, part: str) -> None:
+    output = tmp_path / "out.dclx"
+
+    pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"x", source_name=name, source_mimetype="text/x-test")
+
+    relationships = _relationships(output)
+    assert relationships[SOURCE_RELATIONSHIP] == part
+    assert relationships[SOURCE_METADATA_RELATIONSHIP] == "source-metadata.xml"
+    defaults, overrides = _content_types(output)
+    assert defaults.get(part.rsplit(".", 1)[1]) == "text/x-test" or overrides.get(f"/{part}") == "text/x-test"
+    assert _check_archive(output, None) == ([], [])
+
+
+@pytest.mark.parametrize("as_mapping", [False, True])
+def test_pack_reuses_a_source_file_already_packed(tmp_path: Path, as_mapping: bool) -> None:
+    output = tmp_path / "out.dclx"
+    recording = ARCHIVE_DEMO / "audio" / "1.wav"
+
+    pack(
+        ARCHIVE_DEMO / "document.xml",
+        output=output,
+        audio={1: recording} if as_mapping else ARCHIVE_DEMO / "audio",
+        source=recording,
+        source_name="episode-12.wav",
+    )
+
+    assert _relationships(output)[SOURCE_RELATIONSHIP] == "audio/1.wav"
+    assert "source.wav" not in _zip_members(output)  # no second copy
+    assert _check_archive(output, None) == ([], [])
+
+
+def test_pack_rejects_inconsistent_source_options(tmp_path: Path) -> None:
+    document = ARCHIVE_DEMO / "document.xml"
+    output = tmp_path / "bad.dclx"
+
+    with pytest.raises(PackagingError, match="need source"):
+        pack(document, output=output, source_mimetype="application/pdf")
+    with pytest.raises(PackagingError, match="need source"):
+        pack(document, output=output, source_name="a.pdf")
+    for name in ["", "dir/a.pdf", "a\nb.pdf"]:
+        with pytest.raises(PackagingError, match="Invalid source file name"):
+            pack(document, output=output, source=b"", source_name=name, source_mimetype="application/pdf")
+    assert not output.exists()
 
 
 def test_pack_escapes_source_mimetype(tmp_path: Path) -> None:
@@ -82,18 +230,7 @@ def test_pack_escapes_source_mimetype(tmp_path: Path) -> None:
 
     pack(ARCHIVE_DEMO / "document.xml", output=output, source=b"data", source_mimetype=mimetype)
 
-    assert _overrides(output)["/source"] == mimetype
-
-
-def test_pack_rejects_incomplete_original_source(tmp_path: Path) -> None:
-    document = ARCHIVE_DEMO / "document.xml"
-    output = tmp_path / "incomplete.dclx"
-
-    with pytest.raises(PackagingError, match="provided together"):
-        pack(document, output=output, source=b"")
-    with pytest.raises(PackagingError, match="provided together"):
-        pack(document, output=output, source_mimetype="application/pdf")
-    assert not output.exists()
+    assert _content_types(output)[1]["/source"] == mimetype
 
 
 def test_pack_rejects_invalid_source_mimetype(tmp_path: Path) -> None:

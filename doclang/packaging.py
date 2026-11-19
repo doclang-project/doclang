@@ -21,6 +21,7 @@ def pack(
     video: (Union[str, Path] | Sequence[Union[str, Path]] | Mapping[int, Union[str, Path]] | None) = None,
     source: Union[str, Path, bytes, None] = None,
     source_mimetype: str | None = None,
+    source_name: str | None = None,
     validate: bool = False,
 ) -> Path:
     """Pack a DocLang markup file and optional media into a ``.dclx`` OPC archive.
@@ -44,10 +45,22 @@ def pack(
     ``assets`` may be a directory (copied into ``assets/``) or a mapping of
     archive-relative asset path to source file.
 
-    ``source`` is the original document as raw bytes or a file path. Provide
-    ``source_mimetype`` with it. The archive stores the bytes unchanged in the
-    root-level ``source`` part and records the MIME type as that part's
-    content type in ``[Content_Types].xml``.
+    ``source`` is the original document (from which the markup was produced) as
+    raw bytes or a file path. The archive stores the bytes unchanged in the part
+    ``source.<ext>``, with the extension(s) of the original file name (up to
+    two, e.g. ``source.tar.gz``) (``source_name``
+    if given, else the file's own name), or in ``source`` without a reliable one,
+    and locates it with a package relationship in ``_rels/.rels``. A source file
+    that is also packed otherwise (e.g. as ``audio`` when converting a single
+    recording) is not stored twice: the relationship targets that part.
+
+    ``source_mimetype`` is the original's MIME type. It is needed when the part's
+    extension has no content type yet (always for bytes without ``source_name``),
+    and is recorded in ``[Content_Types].xml``.
+
+    ``source_name`` is the original file name. When given, it is recorded in a
+    source descriptor part (``source-metadata.xml``); otherwise the original name is not
+    kept, as the part's name is only a storage name.
 
     Symbolic links are refused for ``pages``, ``audio``, ``video``, ``assets``
     and a source file (including entries inside directories) so pack does not
@@ -68,5 +81,6 @@ def pack(
         video=video,
         source=source,
         source_mimetype=source_mimetype,
+        source_name=source_name,
         validate=validate,
     )
