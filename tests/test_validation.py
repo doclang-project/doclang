@@ -8,6 +8,9 @@ via the public ``validate()`` API.
 import builtins
 import re
 import sys
+import warnings
+import zipfile
+from collections.abc import Mapping
 from pathlib import Path
 from unittest.mock import patch
 
@@ -505,3 +508,158 @@ def test_text_before_element_head_is_rejected(tmp_path, body):
         validate(path)
     assert not excinfo.value.xsd_errors
     assert any("before element head" in str(e) for e in excinfo.value.schematron_errors)
+
+
+# --- archives --------------------------------------------------------------------------------------
+
+_CONTENT_TYPES = (
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    '<Default Extension="png" ContentType="image/png"/><Default Extension="mp3" ContentType="audio/mpeg"/>'
+    '<Default Extension="ogg" ContentType="audio/ogg"/>'
+    '<Override PartName="/document.xml" ContentType="application/vnd.doclang.document+xml"/></Types>'
+)
+
+
+def _rels(*relationships: tuple[str, str]) -> str:
+    """``_rels/.rels`` with the document relationship and ``relationships`` (type suffix, target; an ``http:``
+    target is external)."""
+    elements = "".join(
+        f'<Relationship Id="rId{n}" Type="http://doclang.ai/ns/package/2026/relationships/{kind}" Target="{target}"'
+        + (' TargetMode="External"' if target.startswith("http:") else "")
+        + "/>"
+        for n, (kind, target) in enumerate([("document", "document.xml"), *relationships], start=1)
+    )
+    return f'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">{elements}</Relationships>'
+
+
+_RELS = _rels()
+# Two pages and one <track>.
+_DOCUMENT = (
+    '<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.9">'
+    '<text>One.</text><page_break/><track><bdiv/><seconds value="1"/>Hi.</track></doclang>'
+)
+
+
+def _archive(tmp_path: Path, members: Mapping[str, bytes | str | None], *, document: str = _DOCUMENT) -> Path:
+    """An archive of ``document`` (by default two pages and one ``<track>``) with valid OPC metadata, unless
+    ``members`` replaces it or (with None) leaves it out."""
+    path = tmp_path / "doc.dclx"
+    base = {"[Content_Types].xml": _CONTENT_TYPES, "_rels/.rels": _RELS, "document.xml": document}
+    with zipfile.ZipFile(path, "w") as archive:
+        for name, data in {**base, **members}.items():
+            if data is not None:
+                archive.writestr(name, data)
+    return path
+
+
+def _archive_errors(path: Path, **options) -> list[tuple[str, str]]:
+    try:
+        validate(path, **options)
+    except ValidationError as exc:
+        assert not exc.xsd_errors and not exc.schematron_errors
+        assert "Archive validation failed" in str(exc)
+        return [(e["location"], e["message"]) for e in exc.archive_errors]
+    return []
+
+
+def test_valid_archive(tmp_path: Path):
+    members = {"pages/1.png": b"", "pages/2.png": b"", "audio/1.mp3": b"", "assets/a.png": b""}
+    assert _archive_errors(_archive(tmp_path, members)) == []
+
+
+@pytest.mark.parametrize(
+    ("members", "location", "message"),
+    [
+        ({"[Content_Types].xml": None}, "[Content_Types].xml", "Missing"),
+        ({"[Content_Types].xml": "<Types"}, "[Content_Types].xml", "Not well-formed XML"),
+        (
+            {"[Content_Types].xml": _CONTENT_TYPES.replace("document+xml", "other+xml")},
+            "[Content_Types].xml",
+            "No <Override> for /document.xml",
+        ),
+        ({"assets/data.json": b"{}"}, "assets/data.json", "No content type"),
+        ({"source": b"%PDF"}, "source", "No content type"),
+        ({"_rels/.rels": None}, "_rels/.rels", "Missing"),
+        (
+            {"_rels/.rels": _RELS.replace('Target="document.xml"', 'Target="other.xml"')},
+            "_rels/.rels",
+            "must target document.xml",
+        ),
+        ({"_rels/.rels": _RELS.replace("/document", "/other")}, "_rels/.rels", "found 0"),
+        ({"pages/3.png": b""}, "pages/3.png", "the document has 2 page(s)"),
+        ({"audio/2.mp3": b""}, "audio/2.mp3", "the document has 1 <track>(s)"),
+        ({"audio/1.mp3": b"", "audio/1.ogg": b""}, "audio/1.ogg", "More than one audio file for <track> 1"),
+    ],
+)
+def test_invalid_archive(tmp_path: Path, members, location, message):
+    errors = _archive_errors(_archive(tmp_path, members))
+    assert [e[0] for e in errors] == [location]
+    assert message in errors[0][1]
+
+
+def test_archive_rules_are_skipped_before_0_8_and_for_partial_validation(tmp_path: Path):
+    """0.7 has no archive format (e.g. a migration to 0.7 keeps the media of the removed tracks)."""
+    document = '<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7"><text>Hi.</text></doclang>'
+    archive = _archive(tmp_path, {"audio/1.mp3": b"", "[Content_Types].xml": None}, document=document)
+    assert _archive_errors(archive) == []
+
+    archive = _archive(tmp_path, {"audio/2.mp3": b""})
+    assert _archive_errors(archive, xsd_only=True) == []
+    assert _archive_errors(archive, schematron_only=True) == []
+
+
+def test_archive_errors_come_with_document_errors(tmp_path: Path):
+    document = '<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.9"><unknown/></doclang>'
+    path = _archive(tmp_path, {"audio/1.mp3": b""}, document=document)
+    with pytest.raises(ValidationError) as info:
+        validate(path)
+    assert info.value.xsd_errors and [e["location"] for e in info.value.archive_errors] == ["audio/1.mp3"]
+    assert "Archive validation failed" in str(info.value)
+
+
+# Referenced parts: an image (<src>) and a linked attachment (<href>); "#x" refers into the document.
+_REFERENCING = (
+    '<doclang xmlns="https://www.doclang.ai/ns/v0"{version}><picture><src uri="assets/a.png"/></picture>'
+    '<text><href uri="assets/c.png"/>Report</text><text><href uri="#x"/>here</text></doclang>'
+)
+
+
+def _warnings_and_errors(path: Path) -> tuple[list[str], list[tuple[str, str]]]:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        errors = _archive_errors(path)
+    return [str(w.message) for w in caught if "declared" not in str(w.message)], errors
+
+
+def test_referenced_and_accounted_for_parts(tmp_path: Path):
+    members: dict[str, bytes | str | None] = {
+        "assets/a.png": b"",
+        "assets/c.png": b"",
+        "pages/1.png": b"",
+        "_rels/.rels": _rels(("thumbnail", "assets/thumbnail.png")),  # any relationship accounts for its target
+        "assets/thumbnail.png": b"",
+        "assets/_rels/a.png.rels": _rels().replace('Target="document.xml"', 'Target="b.png"'),  # of a part
+        "assets/b.png": b"",
+    }
+    assert _warnings_and_errors(_archive(tmp_path, members, document=_REFERENCING.format(version=""))) == ([], [])
+
+
+def test_missing_and_unaccounted_for_parts(tmp_path: Path):
+    members = {"pages/cover.png": b"", "notes.png": b"", "assets/b.png": b""}
+    found = _warnings_and_errors(_archive(tmp_path, members, document=_REFERENCING.format(version="")))
+    assert found == (
+        [
+            f"{part}: Not referenced by the markup or a relationship, nor a page image or whole-track media"
+            for part in ("pages/cover.png", "notes.png", "assets/b.png")
+        ],
+        [("document.xml", "The <src> URI of 'assets/a.png' does not resolve to a part of the archive")],
+    )
+
+
+@pytest.mark.parametrize(("version", "applies"), [("0.9", False), ("0.10", True)])
+def test_reference_rules_apply_from_0_10(tmp_path: Path, version: str, applies: bool):
+    """The archive rules apply as of the declared version, even one without schemas of its own."""
+    document = _REFERENCING.format(version=f' version="{version}"')
+    found = _warnings_and_errors(_archive(tmp_path, {"assets/b.png": b""}, document=document))
+    assert (found != ([], [])) is applies

@@ -9,36 +9,18 @@ tracks remain (it would pair with another track).
 
 from __future__ import annotations
 
-import posixpath
-import re
 from collections.abc import Iterable
-from urllib.parse import unquote, urlsplit
 
 from lxml import etree
 
-from doclang.migration._tree import Changes, is_element, local_name
-
-_TRACK_MEDIA_RE = re.compile(r"(audio|video)/([1-9][0-9]*)(\.[^/]+)")
-
-
-def tracks(root: etree._Element) -> list[etree._Element]:
-    """The ``<track>`` elements in document order, nested ones included (as Annex B counts them)."""
-    return [e for e in root.iter() if is_element(e) and local_name(e) == "track"]
+from doclang._packaging import _TRACK_MEDIA_RE, _markup_references
+from doclang._packaging import _tracks as tracks
+from doclang.migration._tree import Changes
 
 
 def asset_references(root: etree._Element) -> set[str]:
     """The ``assets/`` members referenced by ``<src uri>`` (URIs resolve from the archive root)."""
-    references = set()
-    for element in root.iter():
-        if not is_element(element) or local_name(element) != "src" or element.get("uri") is None:
-            continue
-        uri = urlsplit(element.get("uri", ""))
-        if uri.scheme or uri.netloc:
-            continue
-        path = posixpath.normpath(unquote(uri.path)).lstrip("/")
-        if path.startswith("assets/"):
-            references.add(path)
-    return references
+    return {part for part in _markup_references(root)[0] if part.startswith("assets/")}
 
 
 def member_renames(

@@ -1,9 +1,10 @@
-"""Public validation API for DocLang XML documents."""
+"""Public validation API for DocLang XML documents and archives."""
 
 import warnings
 from pathlib import Path
 from typing import Any, Union
 
+from doclang._packaging import _archive_rules_apply, _archive_rules_version, _check_archive, _document_file, _is_archive
 from doclang._schemas import (
     UnsupportedVersionError,
     _declared_version,
@@ -44,9 +45,11 @@ class ValidationError(Exception):
         *,
         xsd_errors: list[dict[str, Any]],
         schematron_errors: list[dict[str, Any]],
+        archive_errors: list[dict[str, Any]] | None = None,
     ) -> None:
         self.xsd_errors = xsd_errors
         self.schematron_errors = schematron_errors
+        self.archive_errors = archive_errors or []
         super().__init__(self._format_message())
 
     def _format_message(self) -> str:
@@ -65,6 +68,10 @@ class ValidationError(Exception):
                     lines.append(f"  {error['location']}: {error['message']}")
                 else:
                     lines.append(f"  {error.get('error', 'Unknown error')}")
+        if self.archive_errors:
+            lines.append("Archive validation failed:")
+            for error in self.archive_errors:
+                lines.append(f"  {error['location']}: {error['message']}")
         return "\n".join(lines)
 
 
@@ -79,7 +86,15 @@ def validate(
     strict_xsd_version_attr: bool = False,
     strict_declared_version: bool = False,
 ) -> None:
-    """Validate a DocLang XML file using the bundled reference XSD and Schematron rules.
+    """Validate a DocLang XML file or ``.dclx`` archive using the bundled reference XSD and Schematron rules.
+
+    For an archive, its ``document.xml`` is validated, and, unless ``xsd_only`` or ``schematron_only`` is set,
+    the rules of Annex B on its other parts are checked too (reported as ``ValidationError.archive_errors``):
+    the OPC metadata, the page images and whole-track media beyond the pages and ``<track>`` elements of the
+    document, and ``<src>`` URIs that resolve to no part. Parts that nothing accounts for (neither OPC metadata
+    nor a relationship target, a page image or whole-track media, or referenced from the markup) are reported
+    as :class:`UserWarning`. The archive rules apply as of the spec version they were introduced in (Annex B
+    in 0.8): that of ``spec_version`` if given, else the declared one, else the latest.
 
     The spec version to validate against is ``spec_version`` if given, else the ``version``
     attribute of the root element. If neither is set the version is unspecified: the latest schema
@@ -98,11 +113,51 @@ def validate(
 
     Raises :class:`ValidationError` on failure, including when the document declares a
     version that is not supported.
+    Raises :class:`~doclang.PackagingError` for an archive that cannot be read.
     Raises :class:`UnsupportedVersionError` when ``spec_version`` is not supported.
     Raises :class:`SchematronBackendNotFound` when Schematron validation is requested
     but no backend is available.
     """
-    path = Path(xml_file)
+    options: dict[str, Any] = {
+        "allow_empty_namespace": allow_empty_namespace,
+        "xsd_only": xsd_only,
+        "schematron_only": schematron_only,
+        "schematron": schematron,
+        "spec_version": spec_version,
+        "strict_xsd_version_attr": strict_xsd_version_attr,
+        "strict_declared_version": strict_declared_version,
+    }
+    archive_errors: list[dict[str, Any]] = []
+    if not _is_archive(xml_file):
+        xsd_errors, schematron_errors = _validate_document(Path(xml_file), **options)
+    else:
+        with _document_file(xml_file) as document:  # first: refuses unreadable archives
+            xsd_errors, schematron_errors = _validate_document(document, **options)
+            version = _archive_rules_version(document, spec_version)
+        if not xsd_only and not schematron_only and _archive_rules_apply(version):
+            archive_errors, archive_warnings = _check_archive(xml_file, version)
+            for warning in archive_warnings:
+                warnings.warn(f"{warning['location']}: {warning['message']}", UserWarning, stacklevel=2)
+    if xsd_errors or schematron_errors or archive_errors:
+        raise ValidationError(
+            xsd_errors=xsd_errors,
+            schematron_errors=schematron_errors,
+            archive_errors=archive_errors,
+        )
+
+
+def _validate_document(
+    path: Path,
+    *,
+    allow_empty_namespace: bool,
+    xsd_only: bool,
+    schematron_only: bool,
+    schematron: SchematronValidator | None,
+    spec_version: str | None,
+    strict_xsd_version_attr: bool,
+    strict_declared_version: bool,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """The XSD and Schematron errors of the markup file ``path`` (see :func:`validate`)."""
     xsd_errors: list[dict[str, Any]] = []
     schematron_errors: list[dict[str, Any]] = []
 
@@ -111,7 +166,7 @@ def validate(
     except UnsupportedVersionError as exc:
         if spec_version is not None:
             raise
-        raise ValidationError(xsd_errors=[{"error": str(exc)}], schematron_errors=[]) from exc
+        return [{"error": str(exc)}], []
     declared_version = _declared_version(path)
     # Schemas that enumerate the allowed `version` values (0.7) would reject a differing declared
     # version on that attribute alone; for those the declared version is replaced in memory.
@@ -126,7 +181,7 @@ def validate(
         warnings.warn(
             f"Document declares version {declared_version}; validating as {selection.version} as requested.",
             UserWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
         if rewrite_declared_version:
             warnings.warn(
@@ -137,20 +192,20 @@ def validate(
                 "Use --strict-xsd-version-attr (strict_xsd_version_attr=True in Python) to apply the XSD's "
                 "version check as is.",
                 VersionNote,
-                stacklevel=2,
+                stacklevel=3,
             )
     elif not selection.declared:
         warnings.warn(
             f"No DocLang version declared; validating against the latest schema ({_head_description()}).",
             UserWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
     elif selection.head_fallback_for is not None:
         warnings.warn(
             f"No schema for declared DocLang version {selection.head_fallback_for}; "
             f"validating against the latest schema ({_head_description()}).",
             UserWarning,
-            stacklevel=2,
+            stacklevel=3,
         )
 
     if not schematron_only:
@@ -176,8 +231,4 @@ def validate(
         except Exception as exc:
             schematron_errors = [{"error": str(exc)}]
 
-    if xsd_errors or schematron_errors:
-        raise ValidationError(
-            xsd_errors=xsd_errors,
-            schematron_errors=schematron_errors,
-        )
+    return xsd_errors, schematron_errors
