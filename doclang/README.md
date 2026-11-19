@@ -29,7 +29,7 @@ On a minimal install, pass `xsd_only=True` for XSD-only validation, or supply a 
 
 ```bash
 doclang validate my_document.dclg
-doclang validate my_archive.dclx   # validates the archive's document.xml
+doclang validate my_archive.dclx   # validates the archive's document.xml and its other parts (Annex B)
 ```
 
 The schema is chosen as follows:

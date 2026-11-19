@@ -3499,6 +3499,8 @@ assets/                # optional — files referenced from markup
 source                 # optional — original source document (type in [Content_Types].xml)
 ```
 
+Relative URIs in the markup resolve from the archive root. The relative URI of a [`<src>`](#src) MUST resolve to a part of the archive. Every part SHOULD be one of: OPC metadata (`[Content_Types].xml` and relationship parts such as `_rels/.rels`), the target of a relationship, a page image or whole-track media file aligned with a page or [`<track>`](#track), or a part referenced by a relative URI in the markup.
+
 ##### `[Content_Types].xml` (required)
 
 Declares content types for package parts. MUST include an `<Override>` for `/document.xml` with content type `application/vnd.doclang.document+xml`, and a `<Default>` (or per-part `<Override>`) for **every** extension present in the package. SHOULD declare defaults for common image extensions used under `pages/` (`png`, `jpg`, `jpeg`, `webp`), for audio/video extensions used under `audio/` / `video/` (e.g. `mp3` → `audio/mpeg`, `m4a` → `audio/mp4`, `ogg`/`opus` → `audio/ogg`, `wav` → `audio/wav`, `flac` → `audio/flac`, `mp4` → `video/mp4`, `webm` → `video/webm`, `mkv` → `video/x-matroska`, `mov` → `video/quicktime`), and for `.rels` parts. This media type may be registered with the Internet Assigned Numbers Authority (IANA) in a future revision; conformance does not depend on registration.

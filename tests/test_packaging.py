@@ -288,6 +288,16 @@ def test_pack_validate_invalid_document(tmp_path: Path) -> None:
     assert not output.exists()
 
 
+def test_pack_validate_checks_the_archive(tmp_path: Path) -> None:
+    output = tmp_path / "out.dclx"
+    recording = ARCHIVE_DEMO / "audio" / "1.wav"
+
+    with pytest.raises(ValidationError, match=r"audio/2\.wav: Whole-track media for <track> 2"):
+        pack(ARCHIVE_DEMO / "document.xml", output=output, audio=[recording, recording], validate=True)
+
+    assert not output.exists()
+
+
 def test_pack_missing_document(tmp_path: Path) -> None:
     with pytest.raises(PackagingError, match="Document not found"):
         pack(tmp_path / "missing.dclg")

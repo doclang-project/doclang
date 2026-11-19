@@ -5,5 +5,6 @@
   <Default Extension="jpg" ContentType="image/jpeg"/>
   <Default Extension="jpeg" ContentType="image/jpeg"/>
   <Default Extension="webp" ContentType="image/webp"/>
+  <Default Extension="wav" ContentType="audio/wav"/>
   <Override PartName="/document.xml" ContentType="application/vnd.doclang.document+xml"/>
 </Types>

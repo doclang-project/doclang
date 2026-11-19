@@ -245,6 +245,34 @@ def test_cli_validate_archive(tmp_path):
     assert missing.exit_code == 1 and "No document.xml" in missing.output
 
 
+def test_cli_validate_reports_archive_errors(tmp_path):
+    import json
+
+    demo = Path(__file__).resolve().parents[1] / "examples" / "archive-demo"
+    archive = tmp_path / "demo.dclx"
+    packed = runner.invoke(
+        app, ["pack", str(demo / "document.xml"), "-o", str(archive), "--audio-dir", str(demo / "audio")]
+    )
+    assert packed.exit_code == 0, packed.output
+    valid = runner.invoke(app, ["validate", str(archive)])
+    assert valid.exit_code == 0 and "Archive validation passed" in valid.output
+
+    with zipfile.ZipFile(archive, "a") as zf:
+        zf.writestr("video/2.mp4", b"beyond the tracks")
+
+    text = runner.invoke(app, ["validate", str(archive)])
+    assert text.exit_code == 1
+    assert "Archive validation failed" in text.output and "video/2.mp4" in text.output
+
+    as_json = runner.invoke(app, ["validate", str(archive), "--format", "json"])
+    payload = json.loads(as_json.stdout)
+    assert [e["location"] for e in payload["archive"]["errors"]] == ["video/2.mp4"]
+    assert payload["xsd"]["valid"] and payload["schematron"]["valid"]
+
+    xsd_only = runner.invoke(app, ["validate", str(archive), "--xsd-only"])
+    assert xsd_only.exit_code == 0 and "Archive" not in xsd_only.output
+
+
 def test_cli_pack_with_source(tmp_path):
     document = Path(__file__).resolve().parents[1] / "examples" / "archive-demo" / "document.xml"
     original = tmp_path / "original.pdf"

@@ -4,16 +4,40 @@ from __future__ import annotations
 
 import copy
 import os
+import posixpath
 import re
 import shutil
 import tempfile
 import time
 import zipfile
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
+from urllib.parse import unquote, urlsplit
 from xml.sax.saxutils import quoteattr
+
+from lxml import etree
+
+from doclang._schemas import _VERSION_RE, _declared_version, _version_key
+
+_CONTENT_TYPES_NAMESPACE = "http://schemas.openxmlformats.org/package/2006/content-types"
+_RELATIONSHIPS_NAMESPACE = "http://schemas.openxmlformats.org/package/2006/relationships"
+_DOCUMENT_RELATIONSHIP = "http://doclang.ai/ns/package/2026/relationships/document"
+_DOCUMENT_CONTENT_TYPE = "application/vnd.doclang.document+xml"
+
+# Positional parts: ``pages/{N}.{ext}`` align with the N-th page, ``audio/{N}.{ext}`` and ``video/{N}.{ext}`` with
+# the N-th ``<track>``.
+_PAGE_RE = re.compile(r"pages/([1-9][0-9]*)(\.[^/]+)")
+_TRACK_MEDIA_RE = re.compile(r"(audio|video)/([1-9][0-9]*)(\.[^/]+)")
+# Relationship parts: ``_rels/.rels`` (of the package) and ``{folder}/_rels/{name}.rels`` (of the part
+# ``{folder}/{name}``).
+_RELATIONSHIP_PART_RE = re.compile(r"((?:[^/]+/)*)_rels/([^/]*)\.rels")
+
+# The first spec version with Annex B (the archive format), and the one with its rules on references from the
+# markup and on parts not accounted for.
+_FIRST_ARCHIVE_VERSION = (0, 8)
+_REFERENCES_VERSION = (0, 10)
 
 _CONTENT_TYPES_XML = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -272,12 +296,17 @@ def _pack(
             _place_source(stage, source, source_mimetype)
         _write_opc_metadata(stage, source_mimetype=source_mimetype)
 
-        if validate:
+        if validate:  # the archive, before it replaces any existing output
             from doclang.validation import validate as validate_document
 
-            validate_document(stage / "document.xml")
-
-        _create_zip(stage, output_path)
+            with tempfile.TemporaryDirectory() as zip_dir:
+                archive = Path(zip_dir) / output_path.name
+                _create_zip(stage, archive)
+                validate_document(archive)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(archive, output_path)
+        else:
+            _create_zip(stage, output_path)
 
     return output_path.resolve()
 
@@ -358,3 +387,218 @@ def _write_archive(
     except BaseException:
         temp_path.unlink(missing_ok=True)
         raise
+
+
+# --- archive rules (Annex B) -------------------------------------------------------------------------
+
+
+def _archive_rules_version(document: Path, spec_version: str | None) -> tuple[int, int] | None:
+    """The spec version whose archive rules apply to the archive of the markup file ``document``:
+    ``spec_version`` if given, else the declared one, else None (the latest). A declared version counts even
+    without bundled schemas, as the archive rules are not part of the schemas."""
+    version = spec_version if spec_version is not None else _declared_version(document)
+    return _version_key(version) if version is not None and _VERSION_RE.fullmatch(version) else None
+
+
+def _archive_rules_apply(version: tuple[int, int] | None, since: tuple[int, int] = _FIRST_ARCHIVE_VERSION) -> bool:
+    """Whether archive rules introduced in the spec version ``since`` apply to a document of the spec ``version``
+    (None for the latest)."""
+    return version is None or version >= since
+
+
+def _extension(part: str) -> str | None:
+    """The extension of the part ``part`` (as OPC matches ``<Default>``), lowercased, or None."""
+    name = part.rsplit("/", 1)[-1]
+    return name.rsplit(".", 1)[1].lower() if "." in name else None
+
+
+def _parse_xml(data: bytes) -> etree._Element:
+    return etree.fromstring(data, etree.XMLParser(resolve_entities=False, no_network=True))
+
+
+def _relationship_target_part(target: str, base: str = "") -> str:
+    """The part an internal relationship's target refers to: relative to the folder ``base`` (e.g. ``audio/``) of
+    the part whose relationships it is, which is the root for package relationships."""
+    path = unquote(urlsplit(target).path)
+    return posixpath.normpath(path if path.startswith("/") else f"/{base}{path}").lstrip("/")
+
+
+def _package_relationships(archive: zipfile.ZipFile) -> list[etree._Element] | None:
+    """The ``<Relationship>`` elements of ``_rels/.rels``, or None if there is none (raises on bad XML)."""
+    if "_rels/.rels" not in archive.namelist():
+        return None
+    return list(_parse_xml(archive.read("_rels/.rels")).iterfind(f"{{{_RELATIONSHIPS_NAMESPACE}}}Relationship"))
+
+
+def _content_type_maps(archive: zipfile.ZipFile) -> tuple[dict[str, str], dict[str, str]]:
+    """The ``<Default>`` content types by lowercased extension and the ``<Override>`` ones by lowercased part
+    name (OPC compares both case-insensitively); empty without ``[Content_Types].xml`` (raises on bad XML)."""
+    defaults: dict[str, str] = {}
+    overrides: dict[str, str] = {}
+    if "[Content_Types].xml" in archive.namelist():
+        root = _parse_xml(archive.read("[Content_Types].xml"))
+        for element in root.iterfind(f"{{{_CONTENT_TYPES_NAMESPACE}}}Default"):
+            defaults[element.get("Extension", "").lower()] = element.get("ContentType", "")
+        for element in root.iterfind(f"{{{_CONTENT_TYPES_NAMESPACE}}}Override"):
+            overrides[element.get("PartName", "").lstrip("/").lower()] = element.get("ContentType", "")
+    return defaults, overrides
+
+
+def _local_name(node: etree._Element) -> str | None:
+    """The local name of an element, or None for comments and processing instructions."""
+    return etree.QName(node).localname if isinstance(node.tag, str) else None
+
+
+def _tracks(root: etree._Element) -> list[etree._Element]:
+    """The ``<track>`` elements in document order, nested ones included (as Annex B counts them)."""
+    return [e for e in root.iter() if _local_name(e) == "track"]
+
+
+def _page_count(root: etree._Element) -> int:
+    """The number of pages of the document ``root``: its ``<page_break/>`` elements outside ``<head>``, plus one."""
+    return 1 + sum(
+        1
+        for e in root.iter()
+        if _local_name(e) == "page_break" and not any(_local_name(a) == "head" for a in e.iterancestors())
+    )
+
+
+def _markup_references(root: etree._Element) -> tuple[set[str], set[str]]:
+    """The parts that the relative URIs of the ``<src>`` and of the ``<href>`` elements of the markup ``root``
+    refer to (they resolve from the archive root)."""
+    sources: set[str] = set()
+    links: set[str] = set()
+    for element in root.iter():
+        name = _local_name(element)
+        if name not in ("src", "href") or element.get("uri") is None:
+            continue
+        uri = urlsplit(element.get("uri", ""))
+        part = posixpath.normpath("/" + unquote(uri.path)).lstrip("/")
+        if not uri.scheme and not uri.netloc and part:
+            (sources if name == "src" else links).add(part)
+    return sources, links
+
+
+def _relationship_targets_of_parts(archive: zipfile.ZipFile, parts: list[str]) -> set[str]:
+    """The parts targeted by the internal relationships of the package and of its parts (relationship parts that
+    are not well-formed are skipped)."""
+    targets = set()
+    for name in parts:
+        match = _RELATIONSHIP_PART_RE.fullmatch(name)
+        if match is None:
+            continue
+        try:
+            root = _parse_xml(archive.read(name))
+        except etree.XMLSyntaxError:
+            continue
+        for relationship in root.iterfind(f"{{{_RELATIONSHIPS_NAMESPACE}}}Relationship"):
+            if relationship.get("TargetMode") != "External":
+                targets.add(_relationship_target_part(relationship.get("Target", ""), match[1]))
+    return targets
+
+
+Problems = list[dict[str, str]]
+"""Archive rule violations, each with the ``location`` (a part name) and a ``message``."""
+
+
+def _check_archive(path: Union[str, Path], version: tuple[int, int] | None) -> tuple[Problems, Problems]:
+    """The errors and warnings on the rules of Annex B for a document of the spec ``version`` (None for the
+    latest) in the archive ``path``, apart from the validity of its ``document.xml``: the OPC metadata
+    (``[Content_Types].xml``, ``_rels/.rels``), the positional parts (``pages/``, ``audio/``, ``video/``), and
+    the parts referenced from the markup or not accounted for. The archive must be readable (see
+    ``_read_archive``).
+    """
+    errors: Problems = []
+    warnings: Problems = []
+
+    def error(location: str, message: str) -> None:
+        errors.append({"location": location, "message": message})
+
+    def warning(location: str, message: str) -> None:
+        warnings.append({"location": location, "message": message})
+
+    with zipfile.ZipFile(path) as archive:
+        parts = [name for name in archive.namelist() if not name.endswith("/")]
+        _check_content_types(archive, parts, error)
+        _check_package_relationships(archive, error)
+        try:
+            root = _parse_xml(archive.read("document.xml"))
+        except etree.XMLSyntaxError:
+            return errors, warnings  # reported by the validation of document.xml
+        _check_positional_parts(root, parts, error)
+        if _archive_rules_apply(version, _REFERENCES_VERSION):
+            _check_references(root, parts, _relationship_targets_of_parts(archive, parts), error, warning)
+    return errors, warnings
+
+
+def _check_content_types(archive: zipfile.ZipFile, parts: list[str], error: Callable[[str, str], None]) -> None:
+    if "[Content_Types].xml" not in parts:
+        error("[Content_Types].xml", "Missing")
+        return
+    try:
+        defaults, overrides = _content_type_maps(archive)
+    except etree.XMLSyntaxError as exc:
+        error("[Content_Types].xml", f"Not well-formed XML: {exc}")
+        return
+    if overrides.get("document.xml") != _DOCUMENT_CONTENT_TYPE:
+        error("[Content_Types].xml", f"No <Override> for /document.xml with the content type {_DOCUMENT_CONTENT_TYPE}")
+    for part in parts:
+        extension = _extension(part)
+        if part != "[Content_Types].xml" and part.lower() not in overrides and extension not in defaults:
+            error(part, "No content type in [Content_Types].xml")
+
+
+def _check_package_relationships(archive: zipfile.ZipFile, error: Callable[[str, str], None]) -> None:
+    try:
+        relationships = _package_relationships(archive)
+    except etree.XMLSyntaxError as exc:
+        error("_rels/.rels", f"Not well-formed XML: {exc}")
+        return
+    if relationships is None:
+        error("_rels/.rels", "Missing")
+        return
+    documents = [r for r in relationships if r.get("Type") == _DOCUMENT_RELATIONSHIP]
+    if len(documents) != 1:
+        error("_rels/.rels", f"Expected one {_DOCUMENT_RELATIONSHIP} relationship, found {len(documents)}")
+    elif (
+        documents[0].get("TargetMode") == "External"
+        or _relationship_target_part(documents[0].get("Target", "")) != "document.xml"
+    ):
+        error("_rels/.rels", f"The {_DOCUMENT_RELATIONSHIP} relationship must target document.xml")
+
+
+def _check_positional_parts(root: etree._Element, parts: list[str], error: Callable[[str, str], None]) -> None:
+    pages, tracks = _page_count(root), len(_tracks(root))
+    media: dict[tuple[str, str], str] = {}
+    for part in sorted(parts):
+        page = _PAGE_RE.fullmatch(part)
+        track_media = _TRACK_MEDIA_RE.fullmatch(part)
+        if page and int(page[1]) > pages:
+            error(part, f"Image of page {page[1]}, but the document has {pages} page(s)")
+        elif track_media:
+            kind, number = track_media[1], track_media[2]
+            if int(number) > tracks:
+                error(part, f"Whole-track media for <track> {number}, but the document has {tracks} <track>(s)")
+            first = media.setdefault((kind, number), part)
+            if first != part:
+                error(part, f"More than one {kind} file for <track> {number} (also {first})")
+
+
+def _check_references(
+    root: etree._Element,
+    parts: list[str],
+    relationship_targets: set[str],
+    error: Callable[[str, str], None],
+    warning: Callable[[str, str], None],
+) -> None:
+    sources, links = _markup_references(root)
+    for part in sorted(sources.difference(parts)):
+        error("document.xml", f"The <src> URI of {part!r} does not resolve to a part of the archive")
+    accounted = sources | links | relationship_targets
+    for part in parts:
+        if not (
+            part == "[Content_Types].xml"
+            or part in accounted
+            or any(pattern.fullmatch(part) for pattern in (_RELATIONSHIP_PART_RE, _PAGE_RE, _TRACK_MEDIA_RE))
+        ):
+            warning(part, "Not referenced by the markup or a relationship, nor a page image or whole-track media")

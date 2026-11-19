@@ -57,7 +57,7 @@ def pack(
 
     Raises :class:`PackagingError` on packaging failure (including symbolic links).
     Raises :class:`~doclang.ValidationError` when ``validate=True`` and the
-    document fails validation.
+    archive fails validation (its document or the archive rules of Annex B).
     """
     return _pack(
         document,
