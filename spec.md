@@ -1,6 +1,6 @@
 # DocLang: Universal AI Document Format
 
-Version: 0.9
+Version: 0.10
 
 ## Introduction
 
