@@ -449,6 +449,48 @@ def generate_reference_content(
     return "".join(output_lines)
 
 
+def heading_anchor(heading_text):
+    """GitHub-style anchor for a heading: lowercase, drop punctuation, spaces to hyphens"""
+    text = re.sub(r"[^\w\- ]", "", heading_text.strip().lower())
+    return text.replace(" ", "-")
+
+
+def renumber_heading_links(reference_content, spec_text):
+    """Rewrite links to headings whose anchors changed because of heading numbers.
+
+    The spreadsheet refers to headings by their unnumbered anchor (e.g. `#omitted-version`),
+    while spec.md headings carry numbers (e.g. `### 5.2 Omitted version`, anchor `#52-omitted-version`).
+    Anchors that already resolve to a heading in spec.md, or that map ambiguously, are left untouched.
+    """
+    existing_anchors = set()
+    unnumbered_to_numbered = defaultdict(set)
+    in_fence = False
+    for line in spec_text.split("\n"):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        match = re.match(r"#{1,6}\s+(.*?)\s*#*\s*$", line)
+        if not match:
+            continue
+        title = match.group(1)
+        anchor = heading_anchor(title)
+        existing_anchors.add(anchor)
+        unnumbered = re.match(r"\d+(?:\.\d+)*\.?\s+(.*)", title)
+        if unnumbered:
+            unnumbered_to_numbered[heading_anchor(unnumbered.group(1))].add(anchor)
+
+    def replace(match):
+        anchor = match.group(1)
+        candidates = unnumbered_to_numbered.get(anchor)
+        if anchor not in existing_anchors and candidates and len(candidates) == 1:
+            return f"](#{next(iter(candidates))})"
+        return match.group(0)
+
+    return re.sub(r"\]\(#([^)\s]+)\)", replace, reference_content)
+
+
 def update_spec_appendix(reference_content, spec_file, check=False):
     """Update the Reference section in spec.md with generated reference content
 
@@ -479,6 +521,8 @@ def update_spec_appendix(reference_content, spec_file, check=False):
         # Reconstruct: through Reference header + new content + from next appendix section on
         before_reference = spec_content[: match_reference.end()]
         from_next_section = spec_content[match_next.start() :]
+        # Heading numbers in spec.md change anchors; adapt relative links accordingly
+        reference_content = renumber_heading_links(reference_content, before_reference + from_next_section)
         # Strip trailing whitespace from reference content to avoid extra blank lines
         new_content = before_reference + reference_content.rstrip() + "\n\n" + from_next_section
 
