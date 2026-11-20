@@ -359,6 +359,36 @@ def test_pack_with_video_directory_preserves_names(tmp_path: Path) -> None:
     assert "video/3.webm" in _zip_members(output)
 
 
+@pytest.mark.parametrize(
+    ("kind", "extension", "content_type"),
+    [
+        ("audio", "wma", "audio/x-ms-wma"),
+        ("audio", "aiff", "audio/x-aiff"),
+        ("video", "wmv", "video/x-ms-wmv"),
+        ("video", "avi", "video/x-msvideo"),
+        ("video", "mpg", "video/mpeg"),
+        ("video", "m4v", "video/x-m4v"),
+        ("video", "flv", "video/x-flv"),
+    ],
+)
+def test_pack_labels_legacy_media_containers(tmp_path: Path, kind: str, extension: str, content_type: str) -> None:
+    media = tmp_path / f"clip.{extension}"
+    media.write_bytes(b"media")
+    output = tmp_path / "legacy.dclx"
+
+    pack(
+        ARCHIVE_DEMO / "document.xml",
+        output=output,
+        pages=ARCHIVE_DEMO / "pages",
+        audio={1: media} if kind == "audio" else None,
+        video={1: media} if kind == "video" else None,
+        validate=True,
+    )
+
+    assert f"{kind}/1.{extension}" in _zip_members(output)
+    assert _content_types(output)[0][extension] == content_type
+
+
 def test_pack_rejects_zero_audio_track_number(tmp_path: Path) -> None:
     document = VALID_DIR / "ok_track_frame_audio.dclg"
     source = tmp_path / "a.mp3"
