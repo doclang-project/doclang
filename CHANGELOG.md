@@ -1,3 +1,8 @@
+## [v0.10.1](https://github.com/doclang-project/doclang/releases/tag/v0.10.1)
+
+* fix source example comments in tooling README (#244)
+* add default content types for legacy audio and video formats (#246)
+
 ## [v0.10.0](https://github.com/doclang-project/doclang/releases/tag/v0.10.0)
 
 * locate the original source of DCLX archives by relationship (#239)
