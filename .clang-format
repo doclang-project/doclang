@@ -1,0 +1,12 @@
+BasedOnStyle: GNU
+Standard: c++20
+NamespaceIndentation: All
+InsertBraces: true
+SpaceBeforeParens: Never
+ColumnLimit: 100
+BreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+AllowShortFunctionsOnASingleLine: None
+PointerAlignment: Left
+SortIncludes: Never
+EmptyLineAfterAccessModifier: Always
