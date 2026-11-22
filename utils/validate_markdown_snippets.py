@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from doclang import ValidationError, validate
+from doclang.utils import _DOCLANG_NAMESPACE
 
 _XML_FENCE_RE = re.compile(r"^```xml\n(.*?)^```", re.MULTILINE | re.DOTALL)
 _TOP_LEVEL_ELLIPSIS_RE = re.compile(r"^(\s*)\.\.\.(\s*)$")
@@ -34,6 +35,7 @@ _NON_DOCLANG_ROOT_RE = re.compile(
     r"^\s*(?:<\?xml[^?]*\?\>\s*)?<(Types|Relationships)\b",
     re.IGNORECASE,
 )
+_ROOT_NAMESPACE_RE = re.compile(r"^\s*(?:<\?xml[^?]*\?\>\s*)?<[\w.-]+\s[^>]*?\bxmlns=\"([^\"]*)\"")
 
 _DEFAULT_MARKDOWN_FILES = (
     Path("spec.md"),
@@ -98,7 +100,8 @@ def _replace_top_level_ellipsis(content: str) -> str:
 
 def _is_skippable_snippet(content: str) -> bool:
     """Return True for XML examples that are not DocLang document fragments."""
-    return bool(_NON_DOCLANG_ROOT_RE.match(content))
+    namespace = _ROOT_NAMESPACE_RE.match(content)
+    return bool(_NON_DOCLANG_ROOT_RE.match(content)) or (namespace is not None and namespace[1] != _DOCLANG_NAMESPACE)
 
 
 def _prepare_snippet_for_validation(content: str) -> str:

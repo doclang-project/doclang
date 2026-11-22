@@ -29,7 +29,7 @@ On a minimal install, pass `xsd_only=True` for XSD-only validation, or supply a 
 
 ```bash
 doclang validate my_document.dclg
-doclang validate my_archive.dclx   # validates the archive's document.xml
+doclang validate my_archive.dclx   # validates the archive's document.xml and its other parts (Annex B)
 ```
 
 The schema is chosen as follows:
@@ -93,6 +93,9 @@ doclang pack markup.dclg --pages screenshots/
 doclang pack markup.dclg --page a.png --page b.png
 doclang pack markup.dclg --asset chart.svg=exports/diagram.svg
 doclang pack markup.dclg --assets payload/
+doclang pack markup.dclg --source report.pdf --keep-source-name   # source.pdf, original name "report.pdf"
+doclang pack markup.dclg --source upload.bin --source-name "Q3 report.pdf"   # source.pdf, original name "Q3 report.pdf"
+doclang pack markup.dclg --audio episode-12.mp3 --source episode-12.mp3 --keep-source-name   # reuses audio/1.mp3
 doclang pack markup.dclg --validate
 ```
 

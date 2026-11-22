@@ -1,3 +1,21 @@
+## [v0.10.1](https://github.com/doclang-project/doclang/releases/tag/v0.10.1)
+
+* fix source example comments in tooling README (#244)
+* add default content types for legacy audio and video formats (#246)
+
+## [v0.10.0](https://github.com/doclang-project/doclang/releases/tag/v0.10.0)
+
+* locate the original source of DCLX archives by relationship (#239)
+* validate the rules of DCLX archives (#241)
+* restart ordered-list numbering in DOCX export (#225)
+* refine annex references from the body text (#232)
+* add optional original source to DCLX archives (#236)
+* fix whitespace edge cases in migrate (#228)
+
+## [v0.9.1](https://github.com/doclang-project/doclang/releases/tag/v0.9.1)
+
+* fix whitespace edge cases in migrate (#228)
+
 ## [v0.9.0](https://github.com/doclang-project/doclang/releases/tag/v0.9.0)
 
 * make tests survive a release (#223)

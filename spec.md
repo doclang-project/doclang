@@ -1,6 +1,6 @@
 # DocLang: Universal AI Document Format
 
-Version: 0.9
+Version: 0.10
 
 ## Introduction
 
@@ -300,13 +300,13 @@ In the example further below:
 
 DocLang markup is encoded as XML. Recommended file extension: **`.dclg`**.
 
-The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Reference](#annex-a-normative-reference).
+The individual DocLang elements and attributes, as well as DocLang's contextual rules are specified in [Annex A](#annex-a-normative-reference).
 
-The DocLang archive format is defined in [DocLang Archive Format](#annex-b-normative-doclang-archive-format).
+The DocLang archive format is specified in [Annex B](#annex-b-normative-doclang-archive-format).
 
-Non-normative recommendation guidelines are covered in [Recommendations](#annex-c-informative-recommendations).
+For recommendations, see [Annex C](#annex-c-informative-recommendations).
 
-Planned extensions are discussed in [Future extensions](#annex-d-informative-future-extensions).
+For planned extensions, see [Annex D](#annex-d-informative-future-extensions).
 
 A reference toolkit for DocLang is provided by the [DocLang Project](https://github.com/doclang-project).
 
@@ -3483,7 +3483,7 @@ None (empty element).
 
 A **DocLang archive** is a [ZIP](https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.3.10.TXT) file using the [Open Packaging Conventions (OPC)](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/) container model. Recommended extension: **`.dclx`**.
 
-An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part.
+An archive is a **package** of **parts** (files in the ZIP). Each part has a path (e.g. `/document.xml`) and a content type declared in `[Content_Types].xml`. The package root relationship file `_rels/.rels` identifies the main DocLang instance part and, optionally, the original source.
 
 #### Layout
 
@@ -3492,7 +3492,7 @@ The following layout identifies the required parts and reserved optional paths o
 ```text
 [Content_Types].xml     # required — OPC content types
 _rels/
-  .rels                # required — package → main document
+  .rels                # required — identifies the main document and, optionally, the original source
 document.xml           # required — valid DocLang instance
 pages/                 # optional — page images, e.g. 1.png, 2.png
 audio/                 # optional — whole-track audio, e.g. 2.mp3, 4.ogg
@@ -3508,12 +3508,11 @@ annotations/           # optional — annotations and derived DocLang documents
   concepts.dclg        # optional — document concepts
   references.dclg      # optional — bibliographic references
 governance/            # optional — governance-related information
-source/                # optional — original source document
-  mimetype             # required with source — original document's MIME type
-  document             # required with source — original document bytes
 ```
 
 Optional paths do not require explicit directory entries in the ZIP. An archive MAY omit any optional part or directory, subject to the requirements for related parts specified below.
+
+Relative URIs in the markup resolve from the archive root. The relative URI of a [`<src>`](#src) MUST resolve to a part of the archive. Every part SHOULD be one of the parts defined in this annex, the target of a relationship, or a part referenced by a relative URI in the markup.
 
 #### Reserved paths
 
@@ -3530,7 +3529,6 @@ The paths listed below are reserved for their specified purposes. Producers MUST
 | `assets/` | Payloads referenced by URI from DocLang markup. |
 | `annotations/` | DocLang annotation tables and derived DocLang documents. |
 | `governance/` | Governance-related information associated with the document or package. |
-| `source/` | The original source document and its MIME type. |
 
 Reserved names are case-sensitive. For example, `Pages/1.png` does not identify the page image `pages/1.png`.
 
@@ -3563,7 +3561,7 @@ Example:
 
 ##### `_rels/.rels` (required)
 
-Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`.
+Package-level relationships. MUST contain exactly one relationship of type `http://doclang.ai/ns/package/2026/relationships/document` targeting `document.xml`. MAY contain one relationship of type `http://doclang.ai/ns/package/2026/relationships/source` and, only together with it, one of type `http://doclang.ai/ns/package/2026/relationships/source-metadata` (see [Original source](#original-source-optional)).
 
 Example:
 
@@ -3592,7 +3590,7 @@ Optional whole-track media. Name files `{N}.{ext}` where `N` is the 1-based posi
 
 ##### `assets/` (optional)
 
-Optional payloads referenced by relative URIs in DocLang markup. Relative package URIs resolve from the archive root.
+Optional payloads referenced by relative URIs in DocLang markup.
 
 This directory may contain picture images, track covers, cue frames, audio clips, and other referenced payloads. Filenames and subdirectory names within `assets/` are application-defined. For example, `<src uri="assets/pictures/chart.svg"/>` identifies the part `assets/pictures/chart.svg`.
 
@@ -3720,16 +3718,49 @@ The root-level `governance/` directory is reserved for governance-related inform
 
 Readers MAY ignore governance parts they do not recognize. Each part MUST have a content type declared through the package's OPC metadata.
 
-##### `source/` (optional)
+##### Original source (optional)
 
-The root-level `source/` directory is reserved for the original document from which the main DocLang instance was produced. Including the source is optional; if either of the following parts is present, both MUST be present.
+An archive MAY carry the original document from which the main DocLang instance was produced (e.g. a PDF, a word-processing document or an audio recording), its bytes unmodified (no base64 encoding). Its part is identified by the package relationship of type `http://doclang.ai/ns/package/2026/relationships/source` in `_rels/.rels`. Consumers MUST locate the original source through this relationship and MUST NOT rely on the part's path. The relationship MUST target a part of the archive (not an external resource), and that part MUST have a content type in `[Content_Types].xml`, through a `<Default>` for its extension or an `<Override>` for its path.
 
-| Part | Definition |
-|------|------------|
-| `source/mimetype` | A UTF-8 text file containing only the MIME type of the original source document, such as `application/pdf`, with an optional final line ending. |
-| `source/document` | The original source document stored as its unmodified binary bytes, without base64 encoding or an additional file extension. |
+Producers SHOULD store the original source:
 
-Both filenames are literal and have no extension. The package's `[Content_Types].xml` MUST contain an `<Override>` for `/source/mimetype` with content type `text/plain` and an `<Override>` for `/source/document` with the MIME type recorded in `source/mimetype`, excluding its optional final line ending.
+- as `/source.<ext>`, where `<ext>` is the extension of the original file name, or its last two extensions (e.g. `/source.tar.gz`), so that a `<Default>` for the last extension declares its content type;
+- as `/source`, with an `<Override>`, when the original has no reliable extension;
+- or, when the archive already contains the same bytes (e.g. converting a single MP3 file whose bytes are also `audio/1.mp3`, or an asset), by targeting that part, without a second copy.
+
+The name of the part is only a storage name: it does not convey the original file name. A producer MAY record the original file name in a **source descriptor**: an XML part identified by the package relationship of type `http://doclang.ai/ns/package/2026/relationships/source-metadata`, which MUST NOT be present without the `source` relationship. The descriptor has the content type `application/vnd.doclang.source-metadata+xml`, and its root element is `source` in the namespace `http://doclang.ai/ns/package/2026/source-metadata`, with an optional `name` attribute holding the original file name. Consumers SHOULD ignore attributes and child elements of the descriptor that they do not recognize. Recommended part name: `/source-metadata.xml`. Without a descriptor, the original file name is unknown.
+
+Example, for an archive produced from a single recording `episode-12.mp3`, whose bytes are also the whole-track audio of the first track. `_rels/.rels`:
+
+```xml
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://doclang.ai/ns/package/2026/relationships/document"
+    Target="document.xml"/>
+  <Relationship Id="rId2"
+    Type="http://doclang.ai/ns/package/2026/relationships/source"
+    Target="audio/1.mp3"/>
+  <Relationship Id="rId3"
+    Type="http://doclang.ai/ns/package/2026/relationships/source-metadata"
+    Target="source-metadata.xml"/>
+</Relationships>
+```
+
+`[Content_Types].xml`:
+
+```xml
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <!-- … -->
+  <Default Extension="mp3" ContentType="audio/mpeg"/>
+  <Override PartName="/source-metadata.xml" ContentType="application/vnd.doclang.source-metadata+xml"/>
+</Types>
+```
+
+`source-metadata.xml`:
+
+```xml
+<source xmlns="http://doclang.ai/ns/package/2026/source-metadata" name="episode-12.mp3"/>
+```
 
 #### Page alignment
 

@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 import typer
 
-from doclang._packaging import _document_file, _is_archive
+from doclang._packaging import _archive_rules_apply, _archive_rules_version, _document_file, _is_archive
 from doclang._schemas import UnsupportedVersionError, _select_schemas
 from doclang.migration import MigrationError
 from doclang.migration import migrate as migrate_document
@@ -91,7 +91,12 @@ def validate(
     """
     Validate XML document against bundled XSD schema and Schematron rules.
 
-    For a .dclx archive, its document.xml is validated.
+    For a .dclx archive, its document.xml is validated, and (unless --xsd-only
+    or --schematron-only) its other parts are checked against the archive rules
+    (Annex B, from version 0.8): the OPC metadata, the original source and its
+    descriptor, page images and whole-track media beyond the pages and <track>
+    elements of the document, and <src> URIs that resolve to no part. Parts
+    that nothing accounts for are warned about.
 
     Examples:
 
@@ -118,6 +123,12 @@ def validate(
     except FileNotFoundError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
+    check_archive = (
+        _is_archive(xml_file)
+        and not xsd_only
+        and not schematron_only
+        and _archive_rules_apply(_archive_rules_version(document, spec_version))
+    )
     bundled_xsd = selection.xsd if selection else None
     bundled_sch = selection.sch if selection else None
 
@@ -131,7 +142,7 @@ def validate(
             warnings.simplefilter("always")
             try:
                 validate_document(
-                    document,
+                    xml_file,
                     allow_empty_namespace=allow_empty_namespace,
                     xsd_only=xsd_only,
                     schematron_only=schematron_only,
@@ -152,8 +163,10 @@ def validate(
         results: dict[str, Any] = {
             "xsd": {"valid": not exc.xsd_errors, "errors": exc.xsd_errors},
             "schematron": {"valid": not exc.schematron_errors, "errors": exc.schematron_errors},
-            "notes": notes,
         }
+        if check_archive:
+            results["archive"] = {"valid": not exc.archive_errors, "errors": exc.archive_errors}
+        results["notes"] = notes
 
         if not quiet and format == OutputFormat.text:
             if not schematron_only:
@@ -174,13 +187,10 @@ def validate(
                 if verbose:
                     typer.echo("Schematron Validation")
                     typer.echo(f"Schema: {bundled_sch or 'n/a'}")
-                if not exc.schematron_errors:
-                    typer.echo("Schematron validation passed")
-                else:
-                    typer.echo("Schematron validation failed")
-                    for error in exc.schematron_errors:
-                        typer.echo(f"  {error['location']}")
-                        typer.echo(f"    {error['message']}")
+                _echo_located_errors("Schematron", exc.schematron_errors)
+
+            if check_archive:
+                _echo_located_errors("Archive", exc.archive_errors)
 
         if format == OutputFormat.json:
             typer.echo(json.dumps(results, indent=2))
@@ -203,20 +213,30 @@ def validate(
                 typer.echo(f"Schema: {bundled_sch or 'n/a'}")
             typer.echo("Schematron validation passed")
 
+        if check_archive:
+            typer.echo("Archive validation passed")
+
     if format == OutputFormat.json:
+        sections = ["xsd", "schematron", "archive"] if check_archive else ["xsd", "schematron"]
         typer.echo(
             json.dumps(
-                {
-                    "xsd": {"valid": True, "errors": []},
-                    "schematron": {"valid": True, "errors": []},
-                    "notes": notes,
-                },
+                {**{section: {"valid": True, "errors": []} for section in sections}, "notes": notes},
                 indent=2,
             )
         )
     elif not quiet:
         typer.echo("-" * 60)
         typer.echo("VALIDATION SUCCESSFUL")
+
+
+def _echo_located_errors(kind: str, errors: list[dict[str, Any]]) -> None:
+    if not errors:
+        typer.echo(f"{kind} validation passed")
+        return
+    typer.echo(f"{kind} validation failed")
+    for error in errors:
+        typer.echo(f"  {error['location']}")
+        typer.echo(f"    {error['message']}")
 
 
 def _parse_asset_mapping(value: str) -> tuple[str, Path]:
@@ -301,6 +321,32 @@ def pack(
         file_okay=True,
         dir_okay=False,
     ),
+    source_file: Path | None = typer.Option(
+        None,
+        "--source",
+        help=(
+            "Original source document, stored unchanged as source.<ext> (or source without an extension), "
+            "unless it is already packed, e.g. as --audio"
+        ),
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+    ),
+    source_mimetype: str | None = typer.Option(
+        None,
+        "--source-mimetype",
+        help="MIME type of the original source, e.g. application/pdf (needed if its extension has no known type)",
+    ),
+    source_name: str | None = typer.Option(
+        None,
+        "--source-name",
+        help="Original file name of the source, recorded in a source descriptor (source-metadata.xml)",
+    ),
+    keep_source_name: bool = typer.Option(
+        False,
+        "--keep-source-name",
+        help="Record the --source file's own name as its original file name (instead of --source-name)",
+    ),
     validate_before_pack: bool = typer.Option(False, "--validate", help="Validate document before packing"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Quiet mode (exit code only)"),
 ):
@@ -311,8 +357,12 @@ def pack(
     are placed under pages/. Optional whole-track audio/video (--audio-dir,
     --audio, --video-dir, --video) are placed under audio/ and video/ as
     {N}.{ext} for the Nth <track>. Optional payload files (--assets, --asset)
-    are placed under assets/ for URIs referenced in the markup. OPC metadata
-    ([Content_Types].xml, _rels/.rels) is generated automatically.
+    are placed under assets/ for URIs referenced in the markup. An optional
+    original source document (--source) is stored unchanged as source.<ext>
+    (unless it is already packed, e.g. as --audio, which is then reused) and
+    located through a package relationship; --keep-source-name also records
+    its file name, or --source-name another original file name. OPC metadata ([Content_Types].xml, _rels/.rels) is
+    generated automatically.
 
     By default, writes <document>.dclx next to the input file.
 
@@ -324,6 +374,8 @@ def pack(
         doclang pack markup.dclg --asset chart.svg=exports/diagram.svg
         doclang pack markup.dclg --audio-dir recordings/ --video-dir recordings/
         doclang pack markup.dclg --assets payload/ --validate
+        doclang pack markup.dclg --source report.pdf --source-name "Q3 report.pdf"
+        doclang pack markup.dclg --audio episode-12.mp3 --source episode-12.mp3 --keep-source-name
     """
     if pages_dir is not None and page_files:
         typer.echo("Error: --pages and --page are mutually exclusive", err=True)
@@ -337,6 +389,14 @@ def pack(
     if video_dir is not None and video_files:
         typer.echo("Error: --video-dir and --video are mutually exclusive", err=True)
         raise typer.Exit(1)
+    if keep_source_name and source_name is not None:
+        typer.echo("Error: --keep-source-name and --source-name are mutually exclusive", err=True)
+        raise typer.Exit(1)
+    if keep_source_name:
+        if source_file is None:
+            typer.echo("Error: --keep-source-name needs --source", err=True)
+            raise typer.Exit(1)
+        source_name = source_file.name
 
     output_path = output or document.with_suffix(".dclx")
 
@@ -367,6 +427,9 @@ def pack(
             assets=assets,
             audio=audio,
             video=video,
+            source=source_file,
+            source_mimetype=source_mimetype,
+            source_name=source_name,
             validate=validate_before_pack,
         )
     except ValidationError as exc:

@@ -5,14 +5,14 @@ from __future__ import annotations
 import re
 import tempfile
 import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Union
 
 from lxml import etree
 
-from doclang._packaging import PackagingError, _is_archive, _read_archive, _write_archive
+from doclang._packaging import PackagingError, _is_archive, _read_archive, _relationship_targets, _write_archive
 from doclang._schemas import UnsupportedVersionError, _available_versions, _head_description, _version_key
 from doclang.migration import _archive
 from doclang.migration._plan import NoMigrationPath, _load_steps, _plan
@@ -123,7 +123,9 @@ def migrate(
     with tempfile.TemporaryDirectory() as tmp:
         document_path = Path(tmp) / "document.xml"
         document_path.write_bytes(document)
-        result, renames = _migrate(document_path, [m.filename for m in members], **options)
+        result, renames = _migrate(
+            document_path, [m.filename for m in members], relationship_targets=_relationship_targets(path), **options
+        )
     if output is not None:
         _write_archive(path, output, result.xml.encode("utf-8"), renames)
     return result
@@ -133,6 +135,7 @@ def _migrate(
     path: Path,
     members: Sequence[str] | None,
     *,
+    relationship_targets: Collection[str] = (),
     to: str,
     source: str | None,
     strict: bool,
@@ -140,7 +143,7 @@ def _migrate(
     output_validation: str,
 ) -> tuple[MigrationResult, dict[str, str | None]]:
     """Migrate the XML file ``path`` (see :func:`migrate`), with the renames of the archive ``members`` (or
-    of none, if it is no archive's)."""
+    of none, if it is no archive's); ``relationship_targets`` are the members targeted by package relationships."""
     available = _available_versions()
     newest = max(available, key=_version_key) if available else None
     head = _head_version(newest)
@@ -191,7 +194,9 @@ def _migrate(
     tracks, assets = _archive.tracks(root), _archive.asset_references(root)
     for step in steps:
         step.apply(root, changes)
-    renames = {} if members is None else _archive.member_renames(members, tracks, assets, root, changes)
+    renames = (
+        {} if members is None else _archive.member_renames(members, tracks, assets, root, changes, relationship_targets)
+    )
 
     changed = [c for c in changes.items if c["kind"] != "orphaned"]
     if strict and changed:

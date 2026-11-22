@@ -703,10 +703,49 @@ def _strip_html_comments_outside_code(md_text: str) -> str:
     return "".join(out)
 
 
+def _new_restarted_list_num_id(document: DocxDocument, style_name: str) -> Optional[int]:
+    """Create a new Word list instance (w:num) based on the numbering of `style_name`.
+
+    The new instance restarts at 1, so a new ordered list doesn't continue the
+    numbering of earlier lists. Returns None if the style has no numbering.
+
+    python-docx has no API for creating list instances, so this edits the numbering
+    part's XML (via the public `numbering_part.element`).
+    """
+    try:
+        style_el = document.styles[style_name].element
+        base_num_id = style_el.find(f"{qn('w:pPr')}/{qn('w:numPr')}/{qn('w:numId')}").get(qn("w:val"))
+        numbering = document.part.numbering_part.element
+        nums = numbering.findall(qn("w:num"))
+        base_num = next(n for n in nums if n.get(qn("w:numId")) == base_num_id)
+        abstract_id = base_num.find(qn("w:abstractNumId")).get(qn("w:val"))
+        new_id = max(int(n.get(qn("w:numId"))) for n in nums) + 1
+
+        num = OxmlElement("w:num")
+        num.set(qn("w:numId"), str(new_id))
+        abstract = OxmlElement("w:abstractNumId")
+        abstract.set(qn("w:val"), abstract_id)
+        num.append(abstract)
+        override = OxmlElement("w:lvlOverride")
+        override.set(qn("w:ilvl"), "0")
+        start = OxmlElement("w:startOverride")
+        start.set(qn("w:val"), "1")
+        override.append(start)
+        num.append(override)
+        # w:num elements must stay grouped before any trailing w:numIdMacAtCleanup
+        nums[-1].addnext(num)
+        return new_id
+    except Exception:
+        return None
+
+
 def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path) -> None:
     lines = md_text.splitlines()
     i = 0
     para_buf: list[str] = []
+    # Word list instance for the current ordered list; reset at every heading and
+    # whenever other content interrupts the list, so numbering restarts at 1.
+    ordered_num_id: Optional[int] = None
     # Track the last seen Markdown heading level to place sub-headers
     current_heading_level: int = 1
     next_bookmark_id = 0
@@ -718,6 +757,19 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
 
     while i < len(lines):
         line = lines[i]
+
+        # An ordered list continues across blank lines, ordered items, nested bullets
+        # and indented content; anything else (heading, paragraph, top-level bullet,
+        # table, ...) interrupts it, so the next ordered list restarts at 1.
+        if ordered_num_id is not None and line.strip():
+            mb_cont = _LIST_BULLET_RE.match(line)
+            continues = (
+                _LIST_ORDERED_RE.match(line) is not None
+                or (mb_cont is not None and list_level_for_indent(mb_cont.group("indent")) > 0)
+                or (mb_cont is None and line[0] in " \t")
+            )
+            if not continues:
+                ordered_num_id = None
 
         # Handle <details> wrapper with <summary> header: inject a sub-heading and
         # skip wrapper/comment lines; keep inner content for normal parsing.
@@ -896,6 +948,12 @@ def parse_markdown_to_docx(document: DocxDocument, md_text: str, base_dir: Path)
                 text = mo.group("text")
                 level = list_level_for_indent(indent)
                 p = document.add_paragraph(style="List Number")
+                if ordered_num_id is None:
+                    ordered_num_id = _new_restarted_list_num_id(document, "List Number")
+                if ordered_num_id is not None:
+                    num_pr = p._p.get_or_add_pPr().get_or_add_numPr()
+                    num_pr.get_or_add_ilvl().val = 0
+                    num_pr.get_or_add_numId().val = ordered_num_id
                 _add_inline_formatted_runs(p, text)
             # Indent to reflect nesting level
             try:
